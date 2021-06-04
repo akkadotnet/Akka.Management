@@ -27,9 +27,9 @@
   <PropertyGroup>
     <LibraryFramework>netstandard2.0</LibraryFramework>
     <TestsNetCoreFramework>netcoreapp3.1</TestsNetCoreFramework>
-    <NBenchVersion>1.2.2</NBenchVersion>
     <XunitVersion>2.4.1</XunitVersion>
     <TestSdkVersion>16.9.4</TestSdkVersion>
+    <AkkaVersion>1.4.20</AkkaVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
   <ItemGroup>
