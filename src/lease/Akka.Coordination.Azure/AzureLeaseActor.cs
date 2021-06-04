@@ -24,6 +24,7 @@ namespace Akka.Coordination.Azure
     {
         public enum State
         {
+            Starting,
             Idle,
             PendingRead,
             Granting,
@@ -108,6 +109,15 @@ namespace Akka.Coordination.Azure
 
         public interface ICommand{}
 
+        /// <summary>
+        /// Acquire the <see cref="BlobLeaseClient"/> reference for this lease.
+        /// </summary>
+        public sealed class Init : ICommand
+        {
+            public static readonly Init Instance = new Init();
+            private Init(){}
+        }
+
         public sealed class Acquire : ICommand
         {
             public Acquire(Action<Exception> leaseLostCallback = null)
@@ -182,6 +192,7 @@ namespace Akka.Coordination.Azure
         private readonly AzureLeaseConfig _azureConfig;
         private readonly LeaseSettings _settings;
         private BlobServiceClient _client;
+        private BlobLeaseClient _leaseClient;
         private readonly string _leaseName;
         private AtomicBoolean _granted;
         private readonly ILoggingAdapter _log = Context.GetLogger();
@@ -193,14 +204,35 @@ namespace Akka.Coordination.Azure
             _leaseName = leaseName;
             _granted = granted;
 
-            StartWith(State.Idle, ReadRequired.Instance);
+            StartWith(State.Starting, ReadRequired.Instance);
+            When(State.Starting, Starting);
             When(State.Idle, Idle);
+        }
+
+        private State<State, IData> Starting(Event<IData> fsmevent)
+        {
+            switch (fsmevent.FsmEvent)
+            {
+                case Init _:
+                    var self = Self;
+                    GetLeaseClient(5).PipeTo(self);
+                    return Stay();
+                case BlobLeaseClient client:
+                    _leaseClient = client;
+                    return GoTo(State.Idle);
+                default:
+                    Unhandled(fsmevent);
+                    return Stay();
+            }
         }
 
         private State<State, IData> Idle(Event<IData> fsmevent)
         {
             switch (fsmevent.FsmEvent)
             {
+                case Acquire a when fsmevent.StateData is ReadRequired:
+                    GetLeaseClient()
+
                 default:
                     Unhandled(fsmevent);
                     return Stay();
@@ -211,7 +243,7 @@ namespace Akka.Coordination.Azure
         {
             _log.Debug("Initializing Azure Container Storage...");
             _client = new BlobServiceClient(_azureConfig.ConnectionString);
-
+            Self.Tell(Init.Instance); // acquire the leaseclient
             base.PreStart();
         }
 
