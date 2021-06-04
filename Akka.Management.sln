@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29230.47
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{79D71264-186B-4F62-8930-35DD9ECCAF3B}"
+	ProjectSection(SolutionItems) = preProject
+		build.cmd = build.cmd
+		build.fsx = build.fsx
+		build.ps1 = build.ps1
+		build.sh = build.sh
+		src\Directory.Build.props = src\Directory.Build.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "management", "management", "{9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Management", "src\management\Akka.Management\Akka.Management.csproj", "{C251CBCC-A7F4-40DC-9B93-F3FE514FD7DE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Management.Tests", "src\management\Akka.Management.Tests\Akka.Management.Tests.csproj", "{5FD15B48-DECC-4742-AB9C-6F8517B12C6D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C251CBCC-A7F4-40DC-9B93-F3FE514FD7DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C251CBCC-A7F4-40DC-9B93-F3FE514FD7DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C251CBCC-A7F4-40DC-9B93-F3FE514FD7DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C251CBCC-A7F4-40DC-9B93-F3FE514FD7DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FD15B48-DECC-4742-AB9C-6F8517B12C6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FD15B48-DECC-4742-AB9C-6F8517B12C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FD15B48-DECC-4742-AB9C-6F8517B12C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FD15B48-DECC-4742-AB9C-6F8517B12C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C251CBCC-A7F4-40DC-9B93-F3FE514FD7DE} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
+		{5FD15B48-DECC-4742-AB9C-6F8517B12C6D} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
+	EndGlobalSection
+EndGlobal
