@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>$(LibraryFramework)</TargetFramework>
+    <Description>Your description here.</Description>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>
