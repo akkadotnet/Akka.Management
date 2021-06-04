@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	<TargetFramework>$(LibraryFramework)</TargetFramework>
+	<Description>Akka.Coordination Lease provider for Azure Blob Storage</Description>
+  </PropertyGroup>
+	
+  <ItemGroup>
+    <EmbeddedResource Include="reference.conf" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Akka.Coordination" Version="$(AkkaVersion)" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.8.4" />
+	</ItemGroup>
+</Project>
