@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
+using Akka.Event;
 using Akka.Util;
 using Akka.Util.Internal;
 
@@ -32,6 +33,15 @@ namespace Akka.Coordination.Azure
         {
             _system = actorSystem;
             _leaseTaken = leaseTaken;
+            _log = Logging.GetLogger(_system, typeof(AzureLease));
+
+            // per https://docs.microsoft.com/en-us/rest/api/storageservices/naming-and-referencing-containers--blobs--and-metadata
+            _leaseName = Uri.EscapeUriString(Settings.LeaseName);
+            if (_leaseName != Settings.LeaseName)
+            {
+                _log.Info("Original lease name [{0}] sanitized for Azure Blob Storage: [{1}]",
+                    Settings.LeaseName, _leaseName);
+            }
         }
 
         public AzureLease(LeaseSettings settings, ExtendedActorSystem actorSystem) 
@@ -41,7 +51,8 @@ namespace Akka.Coordination.Azure
 
         private readonly ExtendedActorSystem _system;
         private readonly AtomicBoolean _leaseTaken;
-
+        private readonly ILoggingAdapter _log;
+        private string _leaseName;
 
 
         public override async Task<bool> Acquire()

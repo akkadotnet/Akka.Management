@@ -3,6 +3,7 @@
   <PropertyGroup>
 	<TargetFramework>$(LibraryFramework)</TargetFramework>
 	<Description>Akka.Coordination Lease provider for Azure Blob Storage</Description>
+	<LangVersion>8</LangVersion>
   </PropertyGroup>
 	
   <ItemGroup>
