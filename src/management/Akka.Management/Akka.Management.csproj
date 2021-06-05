@@ -1,12 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>$(LibraryFramework)</TargetFramework>
+    <LangVersion>8.0</LangVersion>
     <Description>Your description here.</Description>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
+    <EmbeddedResource Include="Resources\reference.conf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Akka" Version="$(AkkaVersion)" />
   </ItemGroup>
 
 </Project>
