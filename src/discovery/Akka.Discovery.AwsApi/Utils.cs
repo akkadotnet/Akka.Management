@@ -34,9 +34,9 @@ namespace Akka.Discovery.AwsApi
             // 10/8 prefix
             // 172.16/12 prefix
             // 192.168/16 prefix
-            return (raw[3] & 0xFF) == 10
-                   || ((raw[3] & 0xFF) == 172 && (raw[2] & 0xF0) == 16)
-                   || ((raw[3] & 0xFF) == 192 && (raw[2] & 0xF0) == 168);
+            return (raw[0] & 0xFF) == 10
+                   || ((raw[0] & 0xFF) == 172 && (raw[1] & 0xF0) == 16)
+                   || ((raw[0] & 0xFF) == 192 && (raw[1] & 0xFF) == 168);
         }
     }
     

@@ -34,7 +34,7 @@ namespace Akka.Discovery.AwsApi.Ecs
         private readonly string _cluster;
         private readonly List<Tag> _tags = new List<Tag>();
 
-        private readonly AmazonECSClient _clientDoNotUseDirectly;
+        private AmazonECSClient _clientDoNotUseDirectly;
 
         private AmazonECSClient EcsClient
         {
@@ -43,7 +43,8 @@ namespace Akka.Discovery.AwsApi.Ecs
                 if (_clientDoNotUseDirectly != null)
                     return _clientDoNotUseDirectly;
 
-                return new AmazonECSClient(new AmazonECSConfig());
+                _clientDoNotUseDirectly = new AmazonECSClient(new AmazonECSConfig());
+                return _clientDoNotUseDirectly;
             }
         }
         

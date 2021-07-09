@@ -22,10 +22,13 @@ namespace Akka.Discovery.AwsApi.Ec2
             var kvpList = filtersString.Split(';');
             foreach (var kvp in kvpList)
             {
+                if(string.IsNullOrEmpty(kvp))
+                    continue;
+                
                 var pair = kvp.Split('=');
                 if (pair.Length != 2)
                     throw new ConfigurationException($"Failed to parse one of the key-value pairs in filters: {kvp}");
-                filters.Add(new Filter(pair[0], pair[1].Split(',').ToList()));
+                filters.Add(new Filter(pair[0], pair[1].Split(',').Where(s => !string.IsNullOrWhiteSpace(s)).ToList()));
             }
 
             return filters;
