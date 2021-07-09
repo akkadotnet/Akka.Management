@@ -15,7 +15,7 @@ namespace Akka.Discovery.AwsApi.Ec2
 {
     public sealed class Ec2TagBasedServiceDiscovery : ServiceDiscovery
     {
-        private static List<Filter> ParseFiltersString(string filtersString)
+        internal static List<Filter> ParseFiltersString(string filtersString)
         {
             var filters = new List<Filter>();
             
