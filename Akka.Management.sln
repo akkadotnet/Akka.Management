@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.AwsApi", "sr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.AwsApi.Tests", "src\discovery\Akka.Discovery.AwsApi.Tests\Akka.Discovery.AwsApi.Tests.csproj", "{1EE92CD1-D24A-48A7-919E-6BAB3357704B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.AwsApi.Integration.Tests", "src\discovery\Akka.Discovery.AwsApi.Integration.Tests\Akka.Discovery.AwsApi.Integration.Tests.csproj", "{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{1EE92CD1-D24A-48A7-919E-6BAB3357704B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1EE92CD1-D24A-48A7-919E-6BAB3357704B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1EE92CD1-D24A-48A7-919E-6BAB3357704B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -55,6 +61,7 @@ Global
 		{5FD15B48-DECC-4742-AB9C-6F8517B12C6D} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
 		{4B2C5766-0B33-4FE0-BEA0-0B58321444BC} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
 		{1EE92CD1-D24A-48A7-919E-6BAB3357704B} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
+		{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}

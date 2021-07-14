@@ -43,7 +43,20 @@ namespace Akka.Discovery.AwsApi.Ecs
                 if (_clientDoNotUseDirectly != null)
                     return _clientDoNotUseDirectly;
 
-                _clientDoNotUseDirectly = new AmazonECSClient(new AmazonECSConfig());
+                var clientConfig = new AmazonECSConfig();
+                if (_config.HasPath("endpoint"))
+                {
+                    var endpoint = _config.GetString("endpoint");
+                    clientConfig.ServiceURL = endpoint;
+                }
+
+                if (_config.HasPath("region"))
+                {
+                    var region = _config.GetString("region");
+                    clientConfig.RegionEndpoint = RegionEndpoint.GetBySystemName(region);
+                }
+
+                _clientDoNotUseDirectly = new AmazonECSClient(clientConfig);
                 return _clientDoNotUseDirectly;
             }
         }

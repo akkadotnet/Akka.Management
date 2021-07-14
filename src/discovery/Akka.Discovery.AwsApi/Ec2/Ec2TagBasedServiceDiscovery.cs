@@ -71,6 +71,12 @@ namespace Akka.Discovery.AwsApi.Ec2
                     }
                 }
 
+                if (_config.HasPath("endpoint"))
+                {
+                    var endpoint = _config.GetString("endpoint");
+                    clientConfig.ServiceURL = endpoint;
+                }
+
                 if (_config.HasPath("region"))
                 {
                     var region = _config.GetString("region");
