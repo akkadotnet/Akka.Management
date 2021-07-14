@@ -1,13 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Akka.Actor;
 using Akka.Configuration;
-using Akka.Event;
-using Amazon.CloudFormation;
-using Amazon.CloudFormation.Model;
-using Amazon.EC2;
-using Amazon.Runtime;
-using Amazon.S3;
+using Akka.Discovery.AwsApi.Ec2;
+using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -33,48 +30,22 @@ akka {{
   }} 
 }}"); 
         private readonly LocalStackFixture _fixture;
-        private readonly ServiceDiscovery _discovery;
-
-        private const string StackName = "AkkaManagementIntegrationTestEC2TagBased";
-        private const int InstanceCount = 3;
-        
-        private readonly List<string> _clusterPublicIps = new List<string>();
-        private readonly List<string> _clusterPrivateIps = new List<string>();
         
         public AwsIntegrationSpec(ITestOutputHelper output, LocalStackFixture fixture) 
             : base(Config(fixture), nameof(AwsIntegrationSpec), output)
         {
             _fixture = fixture;
-            _discovery = Discovery.Get(Sys).LoadServiceDiscovery("Ec2TagBasedServiceDiscovery");
-
-            
-/*
-            string template;
-            using(Stream stream = GetType().Assembly.GetManifestResourceStream("akka-cluster.json"))
-            {
-                using (var reader = new StreamReader(stream))
-                {
-                    template = reader.ReadToEnd();
-                }
-            }
-
-            var createStackRequest = new CreateStackRequest
-            {
-                Capabilities = new List<string> {"CAPABILITY_IAM"},
-                StackName = StackName,
-                TemplateBody = template,
-                Parameters = new List<Parameter>
-                {
-                    new Parameter()
-                }
-            };
-*/
         }
         
         [Fact]
-        public void Test1()
+        public async Task DiscoveryShouldBeAbleToLookupAwsEc2Instances()
         {
-            var client = _fixture.S3Client;
+            var discovery = new Ec2TagBasedServiceDiscovery((ExtendedActorSystem)Sys);
+            var lookup = new Lookup("fake-api");
+            var resolved = await discovery.Lookup(lookup, TimeSpan.FromSeconds(5));
+            resolved.Addresses.Count.Should().Be(4);
+            resolved.Addresses.Select(a => a.Address.ToString()).Should().BeEquivalentTo(_fixture.IpAddresses);
         }
+
     }
 }

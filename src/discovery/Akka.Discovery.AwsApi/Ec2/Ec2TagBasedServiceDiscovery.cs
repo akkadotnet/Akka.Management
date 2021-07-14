@@ -10,6 +10,7 @@ using Akka.Event;
 using Amazon;
 using Amazon.EC2;
 using Amazon.EC2.Model;
+using Amazon.Runtime;
 
 namespace Akka.Discovery.AwsApi.Ec2
 {
@@ -83,7 +84,9 @@ namespace Akka.Discovery.AwsApi.Ec2
                     clientConfig.RegionEndpoint = RegionEndpoint.GetBySystemName(region);
                 }
                 
-                _ec2ClientDoNotUseDirectly = new AmazonEC2Client(clientConfig);
+                _ec2ClientDoNotUseDirectly = new AmazonEC2Client(
+                    new AnonymousAWSCredentials(),
+                    clientConfig);
                 return _ec2ClientDoNotUseDirectly;
             }
         }

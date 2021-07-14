@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Amazon.CloudFormation;
@@ -34,6 +33,7 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
         public AmazonCloudFormationClient CfCClient { get; private set; }
         public AmazonEC2Client Ec2Client { get; private set; }
         public AmazonS3Client S3Client { get; private set; }
+        public List<string> IpAddresses { get; } = new List<string>();
         
         public LocalStackFixture()
         {
@@ -48,11 +48,6 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
             _client = config.CreateClient();
             
             var rnd = new Random();
-            //EdgePort = rnd.Next(9000, 10000);
-            //CloudFormationPort = EdgePort + 1;
-            //S3Port  = EdgePort + 2;
-            //Ec2Port  = EdgePort + 3;
-            
             Port = rnd.Next(9000, 10000);
         }
         
@@ -103,6 +98,7 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
                 {
                     "AWS_ACCESS_KEY_ID=test",
                     "AWS_SECRET_ACCESS_KEY=test",
+                    "DEBUG=1",
                 }
             });
 
@@ -156,13 +152,6 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
                 {
                     ServiceURL = Endpoint,
                 });
-            
-            /*
-            // Create bucket
-            var bucketResponse = await S3Client.PutBucketAsync(BucketName);
-            if (bucketResponse.HttpStatusCode != HttpStatusCode.OK)
-                throw new Exception("Failed to create bucket");
-            */
             
             // Create VPC
             var vpcResponse = await Ec2Client.CreateVpcAsync(new CreateVpcRequest
@@ -273,7 +262,6 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
             });
             var securityGroupId = groupResponse.GroupId;
             
-            /*
             // Open port 22
             await Ec2Client.AuthorizeSecurityGroupIngressAsync(new AuthorizeSecurityGroupIngressRequest
             {
@@ -283,6 +271,7 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
                     new IpPermission
                     {
                         IpProtocol = "tcp",
+                        FromPort = 22,
                         ToPort = 22,
                         Ipv4Ranges = new List<IpRange>
                         {
@@ -304,6 +293,7 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
                     new IpPermission
                     {
                         IpProtocol = "tcp",
+                        FromPort = 80,
                         ToPort = 80,
                         Ipv4Ranges = new List<IpRange>
                         {
@@ -315,7 +305,6 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
                     }
                 }
             });
-            */
             #endregion
             
             // Create key-pair
@@ -326,10 +315,11 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
             });
             var keyPairMaterial = keyPairResponse.KeyPair.KeyMaterial; // the PEM
 
-            await Ec2Client.RunInstancesAsync(new RunInstancesRequest
+            var instanceResponse = await Ec2Client.RunInstancesAsync(new RunInstancesRequest
             {
                 ImageId = "ami-fake",
                 InstanceType = InstanceType.T2Micro,
+                SubnetId = publicSubnetId,
                 MinCount = 2,
                 MaxCount = 2,
                 SecurityGroupIds = new List<string> {securityGroupId},
@@ -338,8 +328,54 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
                 {
                     new InstanceNetworkInterfaceSpecification
                     {
+                        DeviceIndex = 0,
                         AssociatePublicIpAddress = true,
                         SubnetId = publicSubnetId
+                    }
+                }
+            });
+            var instanceIds = new List<string>();
+            foreach (var instance in instanceResponse.Reservation.Instances)
+            {
+                instanceIds.Add(instance.InstanceId);
+                IpAddresses.Add(instance.PrivateIpAddress);
+            }
+            
+            instanceResponse = await Ec2Client.RunInstancesAsync(new RunInstancesRequest
+            {
+                ImageId = "ami-fake",
+                InstanceType = InstanceType.T2Micro, 
+                SubnetId = privateSubnetId,
+                MinCount = 2,
+                MaxCount = 2,
+                SecurityGroupIds = new List<string> {securityGroupId},
+                KeyName = keyName,
+                NetworkInterfaces = new List<InstanceNetworkInterfaceSpecification>
+                {
+                    new InstanceNetworkInterfaceSpecification
+                    {
+                        DeviceIndex = 0,
+                        AssociatePublicIpAddress = true,
+                        SubnetId = privateSubnetId
+                    }
+                }
+            });
+            foreach (var instance in instanceResponse.Reservation.Instances)
+            {
+                instanceIds.Add(instance.InstanceId);
+                IpAddresses.Add(instance.PrivateIpAddress);
+            }
+
+            // Tag instance with service name
+            await Ec2Client.CreateTagsAsync(new CreateTagsRequest
+            {
+                Resources = instanceIds,
+                Tags = new List<Tag>
+                {
+                    new Tag
+                    {
+                        Key = "service",
+                        Value = "fake-api"
                     }
                 }
             });
@@ -348,9 +384,7 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
             {
                 VpcId = vpcId,
                 EnableDnsHostnames = true
-            });
-            
-            
+            });            
         }
 
         public async Task DisposeAsync()
@@ -359,11 +393,11 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
             {
                 // Delay to make sure that all tests has completed cleanup.
                 await Task.Delay(TimeSpan.FromSeconds(5));
-
+    
                 // Kill the container, we can't simply stop the container because Redis can hung indefinetly
                 // if we simply stop the container.
                 await _client.Containers.KillContainerAsync(_containerName, new ContainerKillParameters());
-
+    
                 await _client.Containers.RemoveContainerAsync(_containerName,
                     new ContainerRemoveParameters {Force = true});
                 _client.Dispose();
