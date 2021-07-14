@@ -37,9 +37,11 @@ akka {{
             _fixture = fixture;
         }
         
-        [Fact]
+        [SkippableFact]
         public async Task DiscoveryShouldBeAbleToLookupAwsEc2Instances()
         {
+            Skip.If(_fixture.IsWindows, "LocalStack docker image only available for Linux OS");
+            
             var discovery = new Ec2TagBasedServiceDiscovery((ExtendedActorSystem)Sys);
             var lookup = new Lookup("fake-api");
             var resolved = await discovery.Lookup(lookup, TimeSpan.FromSeconds(5));

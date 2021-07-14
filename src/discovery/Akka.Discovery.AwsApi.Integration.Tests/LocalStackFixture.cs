@@ -35,13 +35,20 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
         public AmazonS3Client S3Client { get; private set; }
         public List<string> IpAddresses { get; } = new List<string>();
         
+        public bool IsWindows { get; }
+        
         public LocalStackFixture()
         {
             DockerClientConfiguration config;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 config = new DockerClientConfiguration(new Uri("unix://var/run/docker.sock"));
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                config = new DockerClientConfiguration(new Uri("npipe://./pipe/docker_engine"));
+            {
+                // config = new DockerClientConfiguration(new Uri("npipe://./pipe/docker_engine"));
+                // LocalStack is linux only, we're skipping all tests if we're running in widows.
+                IsWindows = true;
+                return;
+            }
             else
                 throw new NotSupportedException($"Unsupported OS [{RuntimeInformation.OSDescription}]");
 
@@ -57,6 +64,9 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
 
         public async Task InitializeAsync()
         {
+            if (IsWindows)
+                return;
+            
             var images = await _client.Images.ListImagesAsync(new ImagesListParameters
             {
                 Filters = new Dictionary<string, IDictionary<string, bool>>
