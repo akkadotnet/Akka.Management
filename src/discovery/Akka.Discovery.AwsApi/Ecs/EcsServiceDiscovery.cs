@@ -13,7 +13,7 @@ using EcsTask = Amazon.ECS.Model.Task;
 
 namespace Akka.Discovery.AwsApi.Ecs
 {
-    public sealed class EcsServiceDiscovery : ServiceDiscovery
+    internal sealed class EcsServiceDiscovery : ServiceDiscovery
     {
         private static Either<string, IPAddress> ContainerAddress
         {
