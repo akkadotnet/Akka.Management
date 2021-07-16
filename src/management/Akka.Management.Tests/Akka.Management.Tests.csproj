@@ -8,7 +8,9 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
     <PackageReference Include="xunit" Version="$(XunitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitVersion)" />
+    <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
   </ItemGroup>
+
 
   <ItemGroup>
     <ProjectReference Include="..\Akka.Management\Akka.Management.csproj" />

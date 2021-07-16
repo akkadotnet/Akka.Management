@@ -13,9 +13,9 @@ open Fake.DocFxHelper
 let configuration = "Release"
 
 // Metadata used when signing packages and DLLs
-let signingName = "My Library"
-let signingDescription = "My REALLY COOL Library"
-let signingUrl = "https://signing.is.cool/"
+let signingName = "Akka.Management"
+let signingDescription = "Akka.NET Cluster management and bootstrapping libraries"
+let signingUrl = "https://getakka.net/"
 
 // Read release notes and version
 let solutionFile = FindFirstMatchingFile "*.sln" __SOURCE_DIRECTORY__  // dynamically look up the solution
@@ -57,8 +57,8 @@ Target "Clean" (fun _ ->
 )
 
 Target "AssemblyInfo" (fun _ ->
-    XmlPokeInnerText "./src/common.props" "//Project/PropertyGroup/VersionPrefix" releaseNotes.AssemblyVersion    
-    XmlPokeInnerText "./src/common.props" "//Project/PropertyGroup/PackageReleaseNotes" (releaseNotes.Notes |> String.concat "\n")
+    XmlPokeInnerText "./src/Directory.Build.props" "//Project/PropertyGroup/VersionPrefix" releaseNotes.AssemblyVersion    
+    XmlPokeInnerText "./src/Directory.Build.props" "//Project/PropertyGroup/PackageReleaseNotes" (releaseNotes.Notes |> String.concat "\n")
 )
 
 Target "Build" (fun _ ->          
