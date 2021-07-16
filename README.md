@@ -3,7 +3,7 @@ Akka.NET cluster management, bootstrapping, and more.
 
 ## Supported Plugins
 
-* [`Akka.Discovery.AwsApi`](/Akka.Discovery.AwsApi) - Akka.Cluster bootstrapping using EC2 and the AWS API.
+* [`Akka.Discovery.AwsApi`](/src/Akka.Discovery.AwsApi) - Akka.Cluster bootstrapping using EC2 and the AWS API.
 
 ## Build Instructions
 
