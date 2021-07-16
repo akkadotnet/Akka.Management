@@ -1,7 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFramework>$(LibraryFramework)</TargetFramework>
+        <Description>Remote actor support for Akka.NET</Description>
+        <PackageTags>$(AkkaPackageTags);AWS;EC2;Amazon Web Services;EC2;</PackageTags>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
