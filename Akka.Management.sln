@@ -18,6 +18,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Management", "src\mana
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Management.Tests", "src\management\Akka.Management.Tests\Akka.Management.Tests.csproj", "{5FD15B48-DECC-4742-AB9C-6F8517B12C6D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cluster.bootstrap", "cluster.bootstrap", "{BE5F4907-68EB-4092-B49D-5E973A1BBC8B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Management.Cluster.Bootstrap", "src\cluster.bootstrap\Akka.Management.Cluster.Bootstrap\Akka.Management.Cluster.Bootstrap.csproj", "{1E6DC42F-E7DD-4924-8768-58BB2D35F534}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +36,10 @@ Global
 		{5FD15B48-DECC-4742-AB9C-6F8517B12C6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5FD15B48-DECC-4742-AB9C-6F8517B12C6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5FD15B48-DECC-4742-AB9C-6F8517B12C6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E6DC42F-E7DD-4924-8768-58BB2D35F534}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E6DC42F-E7DD-4924-8768-58BB2D35F534}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E6DC42F-E7DD-4924-8768-58BB2D35F534}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E6DC42F-E7DD-4924-8768-58BB2D35F534}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -39,6 +47,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{C251CBCC-A7F4-40DC-9B93-F3FE514FD7DE} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
 		{5FD15B48-DECC-4742-AB9C-6F8517B12C6D} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
+		{1E6DC42F-E7DD-4924-8768-58BB2D35F534} = {BE5F4907-68EB-4092-B49D-5E973A1BBC8B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}

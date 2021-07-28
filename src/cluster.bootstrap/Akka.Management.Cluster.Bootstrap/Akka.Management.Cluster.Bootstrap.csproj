@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>$(LibraryFramework)</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
+      <PackageReference Include="Akka.Discovery" Version="1.4.21-beta1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\management\Akka.Management\Akka.Management.csproj" />
+    </ItemGroup>
+
+</Project>
