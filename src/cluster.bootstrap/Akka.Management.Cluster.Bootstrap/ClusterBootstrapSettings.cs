@@ -112,6 +112,10 @@ namespace Akka.Management.Cluster.Bootstrap
         {
             _log = log;
 
+            ManagementBasePath = config.GetString("akka.management.http.base-path");
+            if (string.IsNullOrWhiteSpace(ManagementBasePath))
+                ManagementBasePath = null;
+
             var bootConfig = config.GetConfig("akka.management.cluster.bootstrap");
             NewClusterEnabled = bootConfig.GetBoolean("new-cluster-enabled");
             ContactPointDiscovery = new ContactPointDiscoverySettings(bootConfig);
@@ -119,6 +123,7 @@ namespace Akka.Management.Cluster.Bootstrap
             JoinDecider = new JoinDeciderSettings(bootConfig);
         }
 
+        public string ManagementBasePath { get; }
         public bool NewClusterEnabled { get; }
         public ContactPointDiscoverySettings ContactPointDiscovery { get; }
         public ContactPointSettings ContactPoint { get; }

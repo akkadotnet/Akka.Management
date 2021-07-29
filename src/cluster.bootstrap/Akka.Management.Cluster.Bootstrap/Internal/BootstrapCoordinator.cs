@@ -22,8 +22,44 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         {
             public sealed class InitiateBootstrapping
             {
-                public static readonly InitiateBootstrapping Instance = new InitiateBootstrapping();
-                private InitiateBootstrapping() { }
+                public InitiateBootstrapping(Uri selfContactPoint)
+                {
+                    SelfContactPoint = selfContactPoint;
+                }
+
+                public Uri SelfContactPoint { get; }
+            }
+            
+            public sealed class ObtainedSeedNodesObservation : IDeadLetterSuppression
+            {
+                public ObtainedSeedNodesObservation(
+                    DateTimeOffset observedAt, 
+                    ResolvedTarget contactPoint, 
+                    Address seedNodesSourceAddress, 
+                    ImmutableHashSet<Address> observedSeedNodes)
+                {
+                    ObservedAt = observedAt;
+                    ContactPoint = contactPoint;
+                    SeedNodesSourceAddress = seedNodesSourceAddress;
+                    ObservedSeedNodes = observedSeedNodes;
+                }
+
+                public DateTimeOffset ObservedAt { get; }
+                public ResolvedTarget ContactPoint { get; }
+                public Address SeedNodesSourceAddress { get; }
+                public ImmutableHashSet<Address> ObservedSeedNodes { get; }
+            }
+            
+            public sealed class ProbingFailed : IDeadLetterSuppression
+            {
+                public ProbingFailed(ResolvedTarget contactPoint, Exception cause)
+                {
+                    ContactPoint = contactPoint;
+                    Cause = cause;
+                }
+
+                public ResolvedTarget ContactPoint { get; }
+                public Exception Cause { get; }
             }
         }
         
@@ -97,6 +133,8 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         private bool _decisionInProgress;
         private int _discoveryFailedBackoffCounter;
 
+        private List<IActorRef> _children = new List<IActorRef>();
+
         public BootstrapCoordinator(ServiceDiscovery discovery, IJoinDecider joinDecider, ClusterBootstrapSettings settings)
         {
             _discovery = discovery;
@@ -164,13 +202,15 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             {
                 switch (message)
                 {
-                    case Protocol.InitiateBootstrapping _:
-                        _log.Info("Locating service members. Using discovery [{0}], join decider [{1}]",
+                    case Protocol.InitiateBootstrapping msg:
+                        var scheme = msg.SelfContactPoint.Scheme; 
+                        _log.Info("Locating service members. Using discovery [{0}], join decider [{1}], scheme [{2}]",
                             _discovery.GetType().Name,
-                            _joinDecider.GetType().Name
+                            _joinDecider.GetType().Name,
+                            scheme
                         );
                         DiscoverContactPoints();
-                        Context.Become(Bootstrapping(Sender));
+                        Become(Bootstrapping(Sender, scheme));
                         return true;
                     default:
                         return false;
@@ -178,7 +218,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             };
         }
 
-        private Receive Bootstrapping(IActorRef replyTo)
+        private Receive Bootstrapping(IActorRef replyTo, string selfContactPointScheme)
         {
             return message =>
             {
@@ -202,7 +242,8 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                             string.Join(", ", contactPoints),
                             string.Join(", ", FormatContactPoints(filteredContactPoints))
                         );
-                        OnContactPointsResolved(filteredContactPoints);
+                        OnContactPointsResolved(filteredContactPoints, selfContactPointScheme);
+                        
                         ResetDiscoveryInterval(); // in case we were backed-off, we reset back to healthy intervals
                         StartSingleDiscoveryTimer(); // keep looking in case other nodes join the discovery
                         return true;
@@ -213,6 +254,37 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                         BackoffDiscoveryInterval();
                         StartSingleDiscoveryTimer();
                         return true;
+
+                    case Protocol.ObtainedSeedNodesObservation msg:
+                    {
+                        if (_lastContactObservation != null)
+                        {
+                            var observedAt = msg.ObservedAt;
+                            var contactPoint = msg.ContactPoint;
+                            var infoFromAddress = msg.SeedNodesSourceAddress;
+                            var observedSeedNodes = msg.ObservedSeedNodes;
+                            var contacts = _lastContactObservation;
+                            if (contacts.ObservedContactPoints.Contains(contactPoint))
+                            {
+                                _log.Info("Contact point [{}] returned [{}] seed-nodes [{}]",
+                                    infoFromAddress,
+                                    observedSeedNodes.Count,
+                                    string.Join(", ", observedSeedNodes)
+                                );
+
+                                _seedNodesObservations = _seedNodesObservations.SetItem(
+                                    contactPoint,
+                                    new SeedNodesObservation(observedAt, contactPoint, infoFromAddress,
+                                        observedSeedNodes));
+                            }
+                            
+                            // if we got seed nodes it is likely that it should join those immediately
+                            if(!observedSeedNodes.IsEmpty)
+                                Decide();
+                        }
+
+                        return true;
+                    }
 
                     case DecideTick _:
                         Decide();
@@ -253,7 +325,32 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                                 Context.Stop(Self);
                                 break;
                         }
-
+                        return true;
+                    
+                    case Protocol.ProbingFailed f:
+                    {
+                        var contactPoint = f.ContactPoint;
+                        if (_lastContactObservation != null)
+                        {
+                            var contacts = _lastContactObservation;
+                            if (contacts.ObservedContactPoints.Contains(contactPoint))
+                            {
+                                _log.Info("Received signal that probing has failed, scheduling contact point probing again");
+                                // child actor will have terminated now, so we ride on another discovery round to cause looking up
+                                // target nodes and if the same still exists, that would cause probing it again
+                                //
+                                // we do this in order to not keep probing nodes which simply have been removed from the deployment
+                            }
+                        }
+                        
+                        // remove the previous observation since it might be obsolete
+                        _seedNodesObservations = _seedNodesObservations.Remove(contactPoint);
+                        StartSingleDiscoveryTimer();
+                        return true;
+                    }
+                    
+                    case Terminated msg:
+                        _children.Remove(msg.ActorRef);
                         return true;
 
                     default:
@@ -271,7 +368,9 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             _discovery.Lookup(_lookup, _settings.ContactPointDiscovery.ResolveTimeout).PipeTo(Self);
         }
 
-        private void OnContactPointsResolved(IEnumerable<ResolvedTarget> contactPoints)
+        private void OnContactPointsResolved(
+            IEnumerable<ResolvedTarget> contactPoints,
+            string selfContactPointScheme)
         {
             var newObservation = new ServiceContactsObservation(DateTime.Now, contactPoints.ToImmutableHashSet());
             _lastContactObservation = _lastContactObservation != null
@@ -281,6 +380,61 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             // remove observations from contact points that are not included any more
             _seedNodesObservations = _seedNodesObservations
                 .Where(kvp => newObservation.ObservedContactPoints.Contains(kvp.Key)).ToImmutableDictionary();
+
+            foreach (var child in _children)
+            {
+                child.Tell(PoisonPill.Instance);
+            }
+            
+            // wait until all children are dead
+            while (_children.Count > 0)
+            { }
+            
+            foreach (var target in newObservation.ObservedContactPoints)
+            {
+                var child = EnsureProbing(selfContactPointScheme, target);
+                if (child != null)
+                {
+                    Context.Watch(child);
+                    _children.Add(child);
+                }
+            }
+        }
+
+        private IActorRef EnsureProbing(string selfContactPointScheme, ResolvedTarget contactPoint)
+        {
+            var targetPort = contactPoint.Port ?? _settings.ContactPoint.FallbackPort;
+            var rawBaseUri = $"{selfContactPointScheme}://{contactPoint.Address}:{targetPort}";
+            if (!string.IsNullOrEmpty(_settings.ManagementBasePath))
+                rawBaseUri += $"/{_settings.ManagementBasePath}";
+            var baseUri = new Uri(rawBaseUri);
+
+            var childActorName = ContactPointBootstrap.Name(baseUri.Host, baseUri.Port);
+            _log.Debug($"Ensuring probing actor: {childActorName}");
+            
+            // This should never really happen in well configured env, but it may happen that someone is confused with ports
+            // and we end up trying to probe (using http for example) a port that actually is our own remoting port.
+            // We actively bail out of this case and log a warning instead.
+            var aboutToProbeSelfAddress =
+                baseUri.Host == (_cluster.SelfAddress.Host ?? "---") &&
+                baseUri.Port == (_cluster.SelfAddress.Port ?? -1);
+
+            if (aboutToProbeSelfAddress)
+            {
+                _log.Warning(
+                    "Misconfiguration detected! Attempted to start probing a contact-point which address [{0}] " +
+                    "matches our local remoting address [{1}]. Avoiding probing this address. Consider double checking your service " +
+                    "discovery and port configurations.",
+                    baseUri,
+                    _cluster.SelfAddress);
+                return null;
+            }
+
+            var child = Context.Child(childActorName);
+            if (child != null)
+                return child;
+            var props = ContactPointBootstrap.Props(_settings, contactPoint, baseUri);
+            return Context.ActorOf(props, childActorName);
         }
 
         private void Decide()

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Discovery;
@@ -39,6 +41,10 @@ namespace Akka.Management.Cluster.Bootstrap
         private readonly Lazy<ServiceDiscovery> _discovery;
         private readonly IJoinDecider _joinDecider;
 
+        private readonly TaskCompletionSource<Uri> _selfContactPointTcs = new TaskCompletionSource<Uri>();
+
+        internal Task<Uri> SelfContactPointUri => _selfContactPointTcs.Task; 
+        
         public ClusterBootstrap(ExtendedActorSystem system)
         {
             _system = system;
@@ -76,7 +82,24 @@ namespace Akka.Management.Cluster.Bootstrap
             }
         }
 
-        public void Start()
+        internal void SetSelfContactPoint(Uri baseUri)
+            => _selfContactPointTcs.SetResult(baseUri);
+
+        internal void EnsureSelfContactPoint()
+        {
+            _system.Scheduler.Advanced.ScheduleOnce(TimeSpan.FromSeconds(10), () =>
+            {
+                if (!SelfContactPointUri.IsCompleted)
+                {
+                    _selfContactPointTcs.SetCanceled();
+                    _selfContactPointTcs.SetException(new TaskCanceledException("Awaiting ClusterBootstrap.SelfContactPointUri timed out."));
+                    _log.Error("'Bootstrap.selfContactPoint' was NOT set, but is required for the bootstrap to work " +
+                               "if binding bootstrap routes manually and not via akka-management.");
+                }
+            });
+        }
+        
+        public async Task Start()
         {
             var settingsSeedNodes = Akka.Cluster.Cluster.Get(_system).Settings.SeedNodes; 
             if (!settingsSeedNodes.IsEmpty)
@@ -93,10 +116,15 @@ namespace Akka.Management.Cluster.Bootstrap
             {
                 _log.Info("Initiating bootstrap procedure using {0} method...",
                     _settings.ContactPointDiscovery.DiscoveryMethod);
+                
+                EnsureSelfContactPoint();
                 var bootstrapProps = BootstrapCoordinator.Props(_discovery.Value, _joinDecider, _settings);
                 var bootstrap = _system.SystemActorOf(bootstrapProps, "bootstrapCoordinator");
                 
-                bootstrap.Tell(BootstrapCoordinator.Protocol.InitiateBootstrapping.Instance);
+                // Bootstrap already logs in several other execution points when it can't form a cluster, and why.
+                var uri = await SelfContactPointUri;
+                bootstrap.Tell(new BootstrapCoordinator.Protocol.InitiateBootstrapping(uri));
+                
                 return;
             }
 

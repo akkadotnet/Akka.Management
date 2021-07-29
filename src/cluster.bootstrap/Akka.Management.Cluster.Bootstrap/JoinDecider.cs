@@ -75,7 +75,7 @@ namespace Akka.Management.Cluster.Bootstrap
 
     public sealed class SeedNodesObservation
     {
-        public SeedNodesObservation(DateTime observedAt, ServiceDiscovery.ResolvedTarget contactPoint, Address sourceAddress, ImmutableHashSet<Address> seedNodes)
+        public SeedNodesObservation(DateTimeOffset observedAt, ServiceDiscovery.ResolvedTarget contactPoint, Address sourceAddress, ImmutableHashSet<Address> seedNodes)
         {
             ObservedAt = observedAt;
             ContactPoint = contactPoint;
@@ -88,7 +88,7 @@ namespace Akka.Management.Cluster.Bootstrap
         /// The entry is removed if no reply was received within the `probing-failure-timeout` meaning that it
         /// is unreachable or not running.
         /// </summary>
-        public DateTime ObservedAt { get; }
+        public DateTimeOffset ObservedAt { get; }
         public ServiceDiscovery.ResolvedTarget ContactPoint { get; }
         public Address SourceAddress { get; }
         public ImmutableHashSet<Address> SeedNodes { get; }
