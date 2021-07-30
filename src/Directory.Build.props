@@ -1,10 +1,11 @@
 <Project>
   <PropertyGroup>
-	<Copyright>Copyright © 2013-2021 Akka.NET Team</Copyright>
-	<Authors>Akka.NET Team</Authors>
-	<VersionPrefix>0.1.0</VersionPrefix>
-    <PackageReleaseNotes>First release</PackageReleaseNotes>
-	<PackageIconUrl>https://getakka.net/images/akkalogo.png</PackageIconUrl>
+    <Copyright>Copyright © 2013-2021 Akka.NET Team</Copyright>
+    <Authors>Akka.NET Team</Authors>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <PackageReleaseNotes>First beta release
+Added support for [`Akka.Discovery.AwsApi`](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/Akka.Discovery.AwsApi)</PackageReleaseNotes>
+    <PackageIconUrl>https://getakka.net/images/akkalogo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/akkadotnet/Akka.Management</PackageProjectUrl>
     <License>        
       Copyright (c) .NET Foundation and Contributors
@@ -25,11 +26,12 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
+    <AkkaPackageTags>akka;actors;actor model;Akka;concurrency;service discovery;cluster;clustering;</AkkaPackageTags>
     <LibraryFramework>netstandard2.0</LibraryFramework>
     <TestsNetCoreFramework>netcoreapp3.1</TestsNetCoreFramework>
     <XunitVersion>2.4.1</XunitVersion>
     <TestSdkVersion>16.9.4</TestSdkVersion>
-    <AkkaVersion>1.4.20</AkkaVersion>
+    <AkkaVersion>1.4.21</AkkaVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
   <ItemGroup>
