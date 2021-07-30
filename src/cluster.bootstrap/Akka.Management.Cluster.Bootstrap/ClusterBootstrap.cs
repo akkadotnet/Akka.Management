@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Discovery;
 using Akka.Event;
+using Akka.Http.Dsl;
+using Akka.Management.Cluster.Bootstrap.ContactPoint;
 using Akka.Management.Cluster.Bootstrap.Internal;
 using Akka.Util;
 
 namespace Akka.Management.Cluster.Bootstrap
 {
-    public class ClusterBootstrap : IExtension
+    public class ClusterBootstrap : IManagementRouteProvider
     {
         internal static class Internal
         {
@@ -43,7 +44,7 @@ namespace Akka.Management.Cluster.Bootstrap
 
         private readonly TaskCompletionSource<Uri> _selfContactPointTcs = new TaskCompletionSource<Uri>();
 
-        internal Task<Uri> SelfContactPointUri => _selfContactPointTcs.Task; 
+        private Task<Uri> SelfContactPointUri => _selfContactPointTcs.Task; 
         
         public ClusterBootstrap(ExtendedActorSystem system)
         {
@@ -78,14 +79,14 @@ namespace Akka.Management.Cluster.Bootstrap
             if (autoStart)
             {
                 _log.Info("ClusterBootstrap loaded through 'akka.extensions' auto starting bootstrap.");
-                Get(system).Start();
+                Get(system).Start().Wait();
             }
         }
 
-        internal void SetSelfContactPoint(Uri baseUri)
+        private void SetSelfContactPoint(Uri baseUri)
             => _selfContactPointTcs.SetResult(baseUri);
 
-        internal void EnsureSelfContactPoint()
+        private void EnsureSelfContactPoint()
         {
             _system.Scheduler.Advanced.ScheduleOnce(TimeSpan.FromSeconds(10), () =>
             {
@@ -122,13 +123,21 @@ namespace Akka.Management.Cluster.Bootstrap
                 var bootstrap = _system.SystemActorOf(bootstrapProps, "bootstrapCoordinator");
                 
                 // Bootstrap already logs in several other execution points when it can't form a cluster, and why.
-                var uri = await SelfContactPointUri;
+                var uri = await SelfContactPointUri.ConfigureAwait(false);
                 bootstrap.Tell(new BootstrapCoordinator.Protocol.InitiateBootstrapping(uri));
                 
                 return;
             }
 
-            _log.Warning("Bootstrap already initiated, yet start() method was called again. Ignoring.");
+            _log.Warning("Bootstrap already initiated, yet Start() method was called again. Ignoring.");
+        }
+
+        public Route Routes(ManagementRouteProviderSettings routeProviderSettings)
+        {
+            _log.Info($"Using self contact point address: {routeProviderSettings.SelfBaseUri}");
+            SetSelfContactPoint(routeProviderSettings.SelfBaseUri);
+
+            return new HttpClusterBootstrapRoutes(_settings).Routes;
         }
     }
     

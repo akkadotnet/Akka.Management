@@ -18,10 +18,10 @@ using static Akka.Management.Cluster.Bootstrap.Internal.BootstrapCoordinator.Pro
 
 namespace Akka.Management.Cluster.Bootstrap.Internal
 {
-    internal class ContactPointBootstrap : ReceiveActor, IWithTimers
+    internal class HttpContactPointBootstrap : ReceiveActor, IWithTimers
     {
         public static Props Props(ClusterBootstrapSettings settings, ResolvedTarget contactPoint, Uri baseUri)
-            => Actor.Props.Create(() => new ContactPointBootstrap(settings, contactPoint, baseUri));
+            => Actor.Props.Create(() => new HttpContactPointBootstrap(settings, contactPoint, baseUri));
         
         public static string Name(string host, int port)
         {
@@ -65,7 +65,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         private void ResetProbingKeepFailingWithinDeadline()
             => _probingKeepFailingDeadline = DateTimeOffset.Now + _settings.ContactPoint.ProbingFailureTimeout;
 
-        public ContactPointBootstrap(ClusterBootstrapSettings settings, ResolvedTarget contactPoint, Uri baseUri)
+        public HttpContactPointBootstrap(ClusterBootstrapSettings settings, ResolvedTarget contactPoint, Uri baseUri)
         {
             _cluster = Akka.Cluster.Cluster.Get(Context.System);
             
@@ -126,7 +126,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 }
             });
 
-            Receive<BootstrapProtocol.SeedNodes>(response =>
+            Receive<HttpBootstrapJsonProtocol.SeedNodes>(response =>
             {
                 NotifyParentAboutSeedNodes(response);
                 ResetProbingKeepFailingWithinDeadline();
@@ -154,7 +154,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             var body = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
             {
-                Self.Tell(JsonConvert.DeserializeObject<BootstrapProtocol.SeedNodes>(body)); 
+                Self.Tell(JsonConvert.DeserializeObject<HttpBootstrapJsonProtocol.SeedNodes>(body)); 
             }
             else
             {
@@ -163,7 +163,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             }
         }
         
-        private void NotifyParentAboutSeedNodes(BootstrapProtocol.SeedNodes members)
+        private void NotifyParentAboutSeedNodes(HttpBootstrapJsonProtocol.SeedNodes members)
         {
             var seedAddresses = members.Nodes.Select(n => n.Node).ToImmutableHashSet();
             Context.Parent.Tell(new ObtainedSeedNodesObservation(

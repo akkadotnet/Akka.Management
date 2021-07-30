@@ -4,7 +4,7 @@ using Akka.Cluster;
 
 namespace Akka.Management.Cluster.Bootstrap.ContactPoint
 {
-    public class BootstrapProtocol
+    public class HttpBootstrapJsonProtocol
     {
         public sealed class SeedNode
         {

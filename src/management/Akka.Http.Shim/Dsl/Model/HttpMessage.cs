@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Immutable;
+using System.Net;
 using Akka.Annotations;
 using Akka.IO;
+using Microsoft.AspNetCore.Http;
 
 namespace Akka.Http.Dsl.Model
 {
@@ -15,6 +18,7 @@ namespace Akka.Http.Dsl.Model
         /// </summary>
         public abstract ResponseEntity Entity { get; }
 
+        /*
         /// <summary>
         /// Returns a copy of this message with the entity set to the given one.
         /// </summary>
@@ -28,6 +32,7 @@ namespace Akka.Http.Dsl.Model
 
         public T WithEntity(string contentType, string content) =>
             WithEntity((RequestEntity)HttpEntity.Create(contentType, content));
+        */
     }
 
     /// <summary>
@@ -38,31 +43,35 @@ namespace Akka.Http.Dsl.Model
         /// <summary>
         /// Returns the Http method of this request.
         /// </summary>
-        public string Method { get; }
+        public string Method => _request.Method;
 
         /// <summary>
         /// Returns the Uri of this request.
         /// </summary>
-        public string Path { get; }
+        public PathString Path => _request.Path;
+
+        public IPAddress Peer => _request.HttpContext.Connection.RemoteIpAddress;
 
         /// <summary>
         /// Returns the entity of this request.
         /// </summary>
         public override ResponseEntity Entity { get; }
 
-        /// <summary>
-        /// Returns a default request to be modified using the `WithX` methods.
-        /// </summary>
-        public static HttpRequest Create(string method, string path, ResponseEntity entity = null) =>
-            new HttpRequest(method, path, entity);
+        private readonly Microsoft.AspNetCore.Http.HttpRequest _request;
 
-        private HttpRequest(string method, string path, ResponseEntity entity)
+        public static HttpRequest Create(Microsoft.AspNetCore.Http.HttpRequest request) =>
+            new HttpRequest(request);
+
+        private HttpRequest(Microsoft.AspNetCore.Http.HttpRequest request)
         {
-            Method = method;
-            Path = path;
-            Entity = entity;
-        }
+            _request = request;
+            var input = new byte[Convert.ToInt32(request.ContentLength)];
+            request.Body.Read(input, 0, input.Length);
 
+            Entity = new RequestEntity(request.ContentType, ByteString.FromBytes(input));
+        }
+        
+        /*
         /// <inheritdoc />
         public override HttpRequest WithEntity(RequestEntity entity) => Copy(entity: entity);
 
@@ -78,6 +87,7 @@ namespace Akka.Http.Dsl.Model
 
         private HttpRequest Copy(string method = null, string path = null,RequestEntity entity = null) =>
             new HttpRequest(method ?? Method, path ?? Path, entity ?? Entity);
+        */
     }
 
     /// <summary>
@@ -116,6 +126,7 @@ namespace Akka.Http.Dsl.Model
             Protocol = protocol;
         }
 
+        /*
         /// <inheritdoc />
         public override HttpResponse WithEntity(RequestEntity entity) => Copy(entity: entity);
 
@@ -130,6 +141,7 @@ namespace Akka.Http.Dsl.Model
             ResponseEntity entity = null,
             string protocol = null) => 
             new HttpResponse(status ?? Status, headers ?? Headers, entity ?? Entity, protocol ?? Protocol);
+        */
 
         private bool Equals(HttpResponse other) => Status == other.Status &&
            Equals(Headers, other.Headers) &&

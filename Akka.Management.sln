@@ -22,6 +22,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Akka.Http.Shim", "src\manag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Management.Cluster.Bootstrap", "src\cluster.bootstrap\Akka.Management.Cluster.Bootstrap\Akka.Management.Cluster.Bootstrap.csproj", "{1E6DC42F-E7DD-4924-8768-58BB2D35F534}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Http.Shim.Tests", "src\management\Akka.Http.Shim.Tests\Akka.Http.Shim.Tests.csproj", "{F61AB32F-FAA4-4687-9666-8359FE3AC28A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cluster.bootstrap", "cluster.bootstrap", "{012DD1B7-8531-464D-B3DF-467E3F2AE2CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +48,10 @@ Global
 		{1E6DC42F-E7DD-4924-8768-58BB2D35F534}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E6DC42F-E7DD-4924-8768-58BB2D35F534}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E6DC42F-E7DD-4924-8768-58BB2D35F534}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F61AB32F-FAA4-4687-9666-8359FE3AC28A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F61AB32F-FAA4-4687-9666-8359FE3AC28A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F61AB32F-FAA4-4687-9666-8359FE3AC28A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F61AB32F-FAA4-4687-9666-8359FE3AC28A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -52,7 +60,8 @@ Global
 		{C251CBCC-A7F4-40DC-9B93-F3FE514FD7DE} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
 		{5FD15B48-DECC-4742-AB9C-6F8517B12C6D} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
 		{DC9C497E-4B8D-4D32-A1D5-569E349BDE17} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
-		{1E6DC42F-E7DD-4924-8768-58BB2D35F534} = {BE5F4907-68EB-4092-B49D-5E973A1BBC8B}		
+		{F61AB32F-FAA4-4687-9666-8359FE3AC28A} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
+		{1E6DC42F-E7DD-4924-8768-58BB2D35F534} = {012DD1B7-8531-464D-B3DF-467E3F2AE2CF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}

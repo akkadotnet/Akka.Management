@@ -14,4 +14,8 @@
     <PackageReference Include="Akka" Version="$(AkkaVersion)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Akka.Http.Shim\Akka.Http.Shim.csproj" />
+  </ItemGroup>
+
 </Project>

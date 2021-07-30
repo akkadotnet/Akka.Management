@@ -1,11 +1,11 @@
-using System;
 using System.Net;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Annotations;
 using Akka.Configuration;
+using Akka.Http.Dsl.Model;
+using Akka.Http.Dsl.Server;
 using Akka.Http.Dsl.Settings;
-using Akka.Http.Internal;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -18,6 +18,10 @@ namespace Akka.Http.Dsl
     using HttpRequest = Model.HttpRequest;
     using HttpResponse = Model.HttpResponse;
 
+    public delegate Task<RouteResult.IRouteResult> Route(RequestContext context);
+    public delegate Route RouteGenerator<T>(T obj);
+    
+    
     public sealed class HttpExt : IExtension
     {
         private readonly Config _config;
@@ -41,13 +45,14 @@ namespace Akka.Http.Dsl
         /// Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
         /// for processing all incoming connections.
         /// </summary>
-        public async Task<ServerBinding> BindAndHandleAsync(Func<HttpRequest, Task<HttpResponse>> handler, string hostname, int port, ServerSettings settings)
+        public async Task<ServerBinding> BindAndHandleAsync(Route route, string hostname, int port, ServerSettings settings)
         {
+            var localRoute = route;
             var host = WebHost.CreateDefaultBuilder()
                 .SuppressStatusMessages(true)
                 .ConfigureServices(services =>
                 {
-                    services.AddLogging(builder => builder.AddFilter("Microsoft", LogLevel.None));
+                    services.AddLogging(builder => builder.AddFilter("Microsoft", LogLevel.Debug));
                     services.AddRouting();
                 })
                 .Configure(app =>
@@ -55,22 +60,34 @@ namespace Akka.Http.Dsl
                     static bool Predicate(HttpContext context) =>
                         context.Request.Path.StartsWithSegments("", out var remaining); // && string.IsNullOrEmpty(remaining);
 
-                    app.UseMiddleware<HttpRequestMiddleware>();
+                    // Uncomment for server debugging
+                    //app.UseDeveloperExceptionPage();
                     
                     // Actual middleware that turns an Akka HttpResponse into an AspNetCore HttpResponse
                     app.MapWhen(Predicate, b => b.Run(async context =>
                     {
-                        var response = await handler(context.Features.Get<HttpRequest>());
-                        if (response != null)
+                        var requestContext = new RequestContext(HttpRequest.Create(context.Request), _system);
+                        
+                        var response = await localRoute(requestContext);
+                        switch (response)
                         {
-                            context.Response.StatusCode = response.Status;
-                            context.Response.ContentType = response.Entity.ContentType;
-                            await context.Response.WriteAsync(response.Entity.DataBytes.ToString());
+                            case null:
+                                context.Response.StatusCode = (int) HttpStatusCode.NotFound;
+                                break;
+                            case RouteResult.Rejected _:
+                                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
+                                break;
+                            case RouteResult.Complete complete:
+                                var r = complete.Response;
+                                context.Response.StatusCode = r.Status;
+                                context.Response.ContentType = r.Entity.ContentType;
+                                await context.Response.WriteAsync(r.Entity.DataBytes.ToString());
+                                break;
                         }
                     }));
 
                     // TODO: for debugging purposes only, remove
-                    app.Run(context => context.Response.WriteAsync("Akka-Http middleware seems to be ready."));
+                    // app.Run(context => context.Response.WriteAsync("Akka-Http middleware seems to be ready."));
                 })
                 .UseUrls($"http://{hostname}:{port}")
                 .Build();

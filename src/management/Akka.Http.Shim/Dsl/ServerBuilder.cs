@@ -59,15 +59,9 @@ namespace Akka.Http.Dsl
         /// <summary>
         /// Bind a new HTTP server and use the given asynchronous `handler` for processing all incoming connections.
         /// </summary>
-        public Task<ServerBinding> Bind(Func<HttpRequest, Task<HttpResponse>> handler) =>
-            _http.BindAndHandleAsync(handler, Hostname, Port, Settings);
+        public Task<ServerBinding> Bind(Route route) =>
+            _http.BindAndHandleAsync(route, Hostname, Port, Settings);
         
-        /// <summary>
-        /// Bind a new HTTP server at the given endpoint and uses the given `handler` for processing all incoming connections.
-        /// </summary>
-        public Task<ServerBinding> BindSync(Func<HttpRequest, HttpResponse> handler) =>
-            _http.BindAndHandleAsync(req => Task.FromResult(handler(req)), Hostname, Port, Settings);
-
         private ServerBuilder Copy(
             string hostname = null,
             int? port = null,

@@ -8,18 +8,20 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
 using Akka.Http.Dsl;
+using Akka.Http.Dsl.Server;
+using Akka.Http.Dsl.Settings;
 using Akka.Util;
 using static Akka.Predef;
 
 namespace Akka.Management
 {
-    using Route = Akka.Http.Dsl.Server.Route;
+    //using Route = Akka.Http.Dsl.Route;
     
     public class AkkaManagement : IExtension
     {
         private readonly ILoggingAdapter _log;
         private readonly ExtendedActorSystem _system;
-        private readonly ImmutableList<ManagementRouteProvider> _routeProviders;
+        private readonly ImmutableList<IManagementRouteProvider> _routeProviders;
         private readonly AtomicReference<Task<ServerBinding>> _bindingFuture = new AtomicReference<Task<ServerBinding>>();
 
         public AkkaManagementSettings Settings { get; }
@@ -41,14 +43,14 @@ namespace Akka.Management
         /// <para>Get the routes for the HTTP management endpoint.</para>
         /// <para>This method can be used to embed the Akka management routes in an existing Akka HTTP server.</para>
         /// </summary>
-        public Route[] Routes() => PrepareCombinedRoutes(ProviderSettings());
+        public Route Routes() => PrepareCombinedRoutes(ProviderSettings());
 
         /// <summary>
         /// <para>Amend the <see cref="ManagementRouteProviderSettings"/> and get the routes for the HTTP management endpoint.</para>
         /// <para>Use this when adding authentication and HTTPS.</para>
         /// <para>This method can be used to embed the Akka management routes in an existing Akka HTTP server.</para>
         /// </summary>
-        public Route[] Routes(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings) =>
+        public Route Routes(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings) =>
             PrepareCombinedRoutes(transformSettings(ProviderSettings()));
 
         /// <summary>
@@ -76,12 +78,13 @@ namespace Akka.Management
                 _log.Info("Binding Akka Management (HTTP) endpoint to: {0}:{1}", effectiveBindHostname, effectiveBindPort);
 
                 var combinedRoutes = PrepareCombinedRoutes(effectiveProviderSettings);
-                    
-                var serverBinding = await _system.Http().BindAndHandle(
-                    combinedRoutes,
-                    effectiveBindHostname,
-                    effectiveBindPort);
 
+                var baseBuilder = _system.Http()
+                    .NewServerAt(effectiveBindHostname, effectiveBindPort)
+                    .WithSettings(ServerSettings.Create(_system));
+
+                var serverBinding = await baseBuilder.Bind(combinedRoutes).ConfigureAwait(false);
+                
                 serverBindingPromise.SetResult(serverBinding);
 
                 var boundPort = ((DnsEndPoint)serverBinding.LocalAddress).Port;
@@ -127,13 +130,16 @@ namespace Akka.Management
             return ManagementRouteProviderSettings.Create(selfBaseUri, Settings.Http.RouteProvidersReadOnly);
         }
 
-        private Route[] PrepareCombinedRoutes(ManagementRouteProviderSettings providerSettings)
+        private Route PrepareCombinedRoutes(ManagementRouteProviderSettings providerSettings)
         {
             // TODO
-            static Route[] WrapWithAuthenticatorIfPresent(Route[] inner)
+            static Route WrapWithAuthenticatorIfPresent(Route inner)
             {
                 return inner;
             }
+            
+            if(_routeProviders.IsEmpty)
+                throw new ArgumentException("No routes configured for akka management! Double check your `akka.management.http.routes` config.");
 
             var combinedRoutes = _routeProviders
                 .Select(provider =>
@@ -141,21 +147,29 @@ namespace Akka.Management
                     _log.Info("Including HTTP management routes for {0}", Logging.SimpleName(provider));
                     return provider.Routes(providerSettings);
                 })
-                .SelectMany(route => route)
                 .ToArray();
 
-            return combinedRoutes.Length > 0
-                ? WrapWithAuthenticatorIfPresent(combinedRoutes)
-                : throw new ArgumentException("No routes configured for akka management! Double check your `akka.management.http.routes` config.");
+            return WrapWithAuthenticatorIfPresent(async request =>
+            {
+                foreach (var route in combinedRoutes)
+                {
+                    var result = await route(request).ConfigureAwait(false);
+                    if(result is null)
+                        continue;
+                    return result;
+                }
+
+                return null;
+            });
         }
 
-        private IEnumerable<ManagementRouteProvider> LoadRouteProviders()
+        private IEnumerable<IManagementRouteProvider> LoadRouteProviders()
         {
             foreach (var (name, fqcn) in Settings.Http.RouteProviders)
             {
-                var dynamic = DynamicAccess.CreateInstanceFor<ManagementRouteProvider>(fqcn, null);
+                var dynamic = DynamicAccess.CreateInstanceFor<IManagementRouteProvider>(fqcn, null);
                 var instanceTry = dynamic.RecoverWith(ex => ex is TypeLoadException || ex is MissingMethodException
-                    ? DynamicAccess.CreateInstanceFor<ManagementRouteProvider>(fqcn, _system)
+                    ? DynamicAccess.CreateInstanceFor<IManagementRouteProvider>(fqcn, _system)
                     : dynamic);
 
                 yield return instanceTry.IsSuccess switch

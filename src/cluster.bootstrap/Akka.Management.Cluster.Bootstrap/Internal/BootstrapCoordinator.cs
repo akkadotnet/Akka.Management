@@ -409,7 +409,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 rawBaseUri += $"/{_settings.ManagementBasePath}";
             var baseUri = new Uri(rawBaseUri);
 
-            var childActorName = ContactPointBootstrap.Name(baseUri.Host, baseUri.Port);
+            var childActorName = HttpContactPointBootstrap.Name(baseUri.Host, baseUri.Port);
             _log.Debug($"Ensuring probing actor: {childActorName}");
             
             // This should never really happen in well configured env, but it may happen that someone is confused with ports
@@ -433,7 +433,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             var child = Context.Child(childActorName);
             if (child != null)
                 return child;
-            var props = ContactPointBootstrap.Props(_settings, contactPoint, baseUri);
+            var props = HttpContactPointBootstrap.Props(_settings, contactPoint, baseUri);
             return Context.ActorOf(props, childActorName);
         }
 
