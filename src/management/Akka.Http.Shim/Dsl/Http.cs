@@ -24,13 +24,14 @@ namespace Akka.Http.Dsl
     
     public sealed class HttpExt : IExtension
     {
-        private readonly Config _config;
         private readonly ExtendedActorSystem _system;
+        private readonly ServerSettings _settings;
 
-        public HttpExt(Config config, ExtendedActorSystem system)
+        public HttpExt(ExtendedActorSystem system)
         {
-            _config = config;
             _system = system;
+            _system.Settings.InjectTopLevelFallback(Http.DefaultConfig());
+            _settings = ServerSettings.Create(_system);
         }
 
         /// <summary>
@@ -45,58 +46,39 @@ namespace Akka.Http.Dsl
         /// Convenience method which starts a new HTTP server at the given endpoint and uses the given `handler`
         /// for processing all incoming connections.
         /// </summary>
-        public async Task<ServerBinding> BindAndHandleAsync(Route route, string hostname, int port, ServerSettings settings)
+        public async Task<ServerBinding> BindAndHandleAsync(
+            Route route, 
+            string hostname = null, 
+            int? port = null, 
+            ServerSettings settings = null)
         {
-            var localRoute = route;
+            var effectiveSetting = settings ?? _settings;
+            var effectiveHostname = hostname ?? "localhost";
+            var effectivePort = port ?? effectiveSetting.DefaultHttpPort;
+            
             var host = WebHost.CreateDefaultBuilder()
                 .SuppressStatusMessages(true)
                 .ConfigureServices(services =>
                 {
                     services.AddLogging(builder => builder.AddFilter("Microsoft", LogLevel.Debug));
-                    services.AddRouting();
                 })
                 .Configure(app =>
                 {
-                    static bool Predicate(HttpContext context) =>
-                        context.Request.Path.StartsWithSegments("", out var remaining); // && string.IsNullOrEmpty(remaining);
-
                     // Uncomment for server debugging
                     //app.UseDeveloperExceptionPage();
-                    
-                    // Actual middleware that turns an Akka HttpResponse into an AspNetCore HttpResponse
-                    app.MapWhen(Predicate, b => b.Run(async context =>
-                    {
-                        var requestContext = new RequestContext(HttpRequest.Create(context.Request), _system);
-                        
-                        var response = await localRoute(requestContext);
-                        switch (response)
-                        {
-                            case null:
-                                context.Response.StatusCode = (int) HttpStatusCode.NotFound;
-                                break;
-                            case RouteResult.Rejected _:
-                                context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
-                                break;
-                            case RouteResult.Complete complete:
-                                var r = complete.Response;
-                                context.Response.StatusCode = r.Status;
-                                context.Response.ContentType = r.Entity.ContentType;
-                                await context.Response.WriteAsync(r.Entity.DataBytes.ToString());
-                                break;
-                        }
-                    }));
 
-                    // TODO: for debugging purposes only, remove
-                    // app.Run(context => context.Response.WriteAsync("Akka-Http middleware seems to be ready."));
+                    // Actual middleware that handles Akka.Http routing and adapts HttpRequest and HttpResponse
+                    // between Akka.Http and ASP.NET
+                    app.UseAkkaRouting(_system, route, effectiveSetting);
                 })
-                .UseUrls($"http://{hostname}:{port}")
+                .UseUrls($"http://{effectiveHostname}:{effectivePort}")
                 .Build();
 
             // Start listening...
             await host.StartAsync();
 
             return new ServerBinding(
-                new DnsEndPoint(hostname, port),
+                new DnsEndPoint(effectiveHostname, effectivePort),
                 async timeout =>
                 {
                     await host.StopAsync(timeout);
@@ -107,10 +89,15 @@ namespace Akka.Http.Dsl
 
     public class Http : ExtensionIdProvider<HttpExt>
     {
+        public static Config DefaultConfig()
+        {
+            return ConfigurationFactory.FromResource<HttpExt>("Akka.Http.Resources.reference.conf");
+        }
+        
         public new static HttpExt Get(ActorSystem system) => system.WithExtension<HttpExt, Http>();
 
         public override HttpExt CreateExtension(ExtendedActorSystem system) =>
-            new HttpExt(system.Settings.Config.GetConfig("akka.http"), system);
+            new HttpExt(system);
     }
 
     /// <summary>

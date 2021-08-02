@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Net;
-using System.Text;
 using System.Threading.Tasks;
-using Akka.Actor;
 using Akka.Cluster;
 using Akka.Http.Dsl;
 using Akka.Http.Dsl.Model;
@@ -32,7 +29,7 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
             {
                 return context =>
                 {
-                    if (context.Request.Method == HttpMethods.Get && context.Request.Path.Equals("bootstrap/seed-nodes"))
+                    if (context.Request.Method == HttpMethods.Get && context.Request.Path == "/bootstrap/seed-nodes")
                     {
                         return GetSeedNodes()(context);
                     }

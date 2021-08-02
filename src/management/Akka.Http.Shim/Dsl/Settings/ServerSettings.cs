@@ -15,19 +15,17 @@ namespace Akka.Http.Dsl.Settings
         public int DefaultHttpsPort { get; }
         public int TerminationDeadlineExceededResponse { get; }
 
+        // TODO: do a more complete settings here.
         public static ServerSettings Create(ExtendedActorSystem system)
         {
-            // TODO
-            // var c = system.Settings.Config.GetConfig("akka.http.server");
-            //
-            // return new ServerSettings(
-            //     c.GetString("server-header"),
-            //     c.GetBoolean("remote-address-attribute"),
-            //     c.GetInt("default-http-port"),
-            //     c.GetInt("default-https-port"),
-            //     TerminationDeadlineExceededResponseFrom(c));
-
-            return new ServerSettings("", false, 80, 443, 503);
+            var c = system.Settings.Config.GetConfig("akka.http.server");
+            
+            return new ServerSettings(
+                 c.GetString("server-header"),
+                 c.GetBoolean("remote-address-attribute"),
+                 c.GetInt("default-http-port"),
+                 c.GetInt("default-https-port"),
+                 TerminationDeadlineExceededResponseFrom(c));
         }
 
         private ServerSettings(string serverHeader, bool remoteAddressAttribute, int defaultHttpPort, int defaultHttpsPort, int terminationDeadlineExceededResponse)
