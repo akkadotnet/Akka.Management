@@ -52,7 +52,7 @@ namespace Akka.Http
                     break;
                 case RouteResult.Rejected reject:
                     // TODO: Do response error code conversion  
-                    switch (reject)
+                    switch (reject.Rejection)
                     {
                         default:
                             context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
