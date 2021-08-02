@@ -54,23 +54,18 @@ namespace Akka.Discovery.AwsApi.Ec2
             {
                 if (_ec2ClientDoNotUseDirectly != null) 
                     return _ec2ClientDoNotUseDirectly;
-                
-                AmazonEC2Config clientConfig;
-                if (string.IsNullOrWhiteSpace(_clientConfigFqcn))
+
+                Ec2ConfigurationProvider configProvider;
+                try
                 {
-                    clientConfig = DefaultClientConfiguration;
+                    configProvider = GetCustomClientConfigurationInstance(_clientConfigFqcn);
                 }
-                else
+                catch (Exception e)
                 {
-                    try
-                    {
-                        clientConfig = GetCustomClientConfigurationInstance(_clientConfigFqcn);
-                    }
-                    catch (Exception e)
-                    {
-                        throw new ConfigurationException($"Could not create instance of [{_clientConfigFqcn}]", e);
-                    }
+                    throw new ConfigurationException($"Could not create instance of [{_clientConfigFqcn}]", e);
                 }
+
+                var clientConfig = configProvider.ClientConfiguration;
 
                 if (_config.HasPath("endpoint"))
                 {
@@ -84,9 +79,7 @@ namespace Akka.Discovery.AwsApi.Ec2
                     clientConfig.RegionEndpoint = RegionEndpoint.GetBySystemName(region);
                 }
                 
-                _ec2ClientDoNotUseDirectly = new AmazonEC2Client(
-                    new AnonymousAWSCredentials(),
-                    clientConfig);
+                _ec2ClientDoNotUseDirectly = new AmazonEC2Client(configProvider.ClientCredentials, clientConfig);
                 return _ec2ClientDoNotUseDirectly;
             }
         }
@@ -178,16 +171,16 @@ namespace Akka.Discovery.AwsApi.Ec2
             return accumulator;
         }
         
-        private AmazonEC2Config GetCustomClientConfigurationInstance(string fqcn)
+        private Ec2ConfigurationProvider GetCustomClientConfigurationInstance(string fqcn)
         {
             var type = Type.GetType(fqcn);
             try
             {
-                return (AmazonEC2Config) Activator.CreateInstance(type, new object[]{_system});
+                return (Ec2ConfigurationProvider) Activator.CreateInstance(type, new object[]{_system});
             }
             catch (MissingMethodException)
             {
-                return (AmazonEC2Config) Activator.CreateInstance(type);
+                return (Ec2ConfigurationProvider) Activator.CreateInstance(type);
             }
         }
     }

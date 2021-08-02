@@ -16,9 +16,9 @@ akka {
     discovery {
         method = aws-api-ec2-tag-based
         aws-api-ec2-tag-based {
-            # Fully qualified class name of a class that extends Amazon.EC2.AmazonEC2Config with either 
+            # Fully qualified class name of a class that extends Akka.Discovery.AwsApi.Ec2.Ec2ConfigurationProvider with either 
             # a no arguments constructor or a single argument constructor that takes an ExtendedActorSystem
-            client-config = ""
+            client-config = "Akka.Discovery.AwsApi.Ec2.DefaultEc2ConfigurationProvider, Akka.Discovery.AwsApi"
 
             class = "Akka.Discovery.AwsApi.Ec2.Ec2TagBasedServiceDiscovery, Akka.Discovery.AwsApi"
 
@@ -44,6 +44,11 @@ akka {
     }
 }
 ```
+
+## Configuration
+To programatically configure the EC2 client, you can extend the `Akka.Discovery.AwsApi.Ec2.Ec2ConfigurationProvider`
+class. `Ec2ConfigurationProvider` exposes two abstract properties that needs to be overriden with your implementation,
+ClientConfiguration and ClientCredentials, that are used to instantiate the internal Ec2Client used to connect to AWS EC2.
 
 ## Notes
 - You will need to make sure that the proper privileges are in place for the discovery implementation to access the Amazon EC2 API. The simplest way to do this is by creating a IAM role that, at a minimum, allows the DescribeInstances action. Attach this IAM role to the EC2 instances that need to access the discovery implementation. See the [docs for IAM Roles for Amazon EC2](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html).
