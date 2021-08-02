@@ -20,12 +20,18 @@ akka {{
     method = ""aws-api-ec2-tag-based""
     aws-api-ec2-tag-based {{
       client-config = """"
+      credentials-provider = default-credential-provider
       class = ""Akka.Discovery.AwsApi.Ec2.Ec2TagBasedServiceDiscovery, Akka.Discovery.AwsApi""
       tag-key = ""service""
       filters = """"
       ports = []
       endpoint = ""{fixture.Endpoint}""
       # region = """"
+      default-credential-provider {{
+        # Fully qualified class name of a class that extends Akka.Discovery.AwsApi.Ec2.Ec2ConfigurationProvider with either 
+        # a no arguments constructor or a single argument constructor that takes an ExtendedActorSystem
+        class = ""Akka.Discovery.AwsApi.Ec2.DefaultEc2CredentialProvider, Akka.Discovery.AwsApi""    
+      }}
     }}
   }} 
 }}"); 

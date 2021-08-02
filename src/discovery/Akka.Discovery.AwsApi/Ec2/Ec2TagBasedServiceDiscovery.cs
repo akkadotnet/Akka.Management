@@ -92,7 +92,7 @@ namespace Akka.Discovery.AwsApi.Ec2
                 }
                 catch (Exception e)
                 {
-                    throw new ConfigurationException($"Could not create instance of [{_clientConfigFqcn}]", e);
+                    throw new ConfigurationException($"Could not create instance of [{_credentialProviderFqcn}]", e);
                 }
                 
                 _ec2ClientDoNotUseDirectly = new AmazonEC2Client(credentialProvider.ClientCredentials, clientConfig);
