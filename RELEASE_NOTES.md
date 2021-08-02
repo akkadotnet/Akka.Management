@@ -1,4 +1,4 @@
-#### 0.1.0-beta2 July 16 2021 ####
+#### 0.1.0-beta2 August 3 2021 ####
 * Added support for [EC2 Instance Metadata Service based credential](https://github.com/akkadotnet/Akka.Management/pull/14)
 
 #### 0.1.0-beta1 July 16 2021 ####
