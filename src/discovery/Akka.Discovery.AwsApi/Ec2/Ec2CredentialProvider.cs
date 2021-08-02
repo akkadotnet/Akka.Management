@@ -11,7 +11,7 @@ namespace Akka.Discovery.AwsApi.Ec2
         public abstract AWSCredentials ClientCredentials { get; }
     }
 
-    public sealed class DefaultEc2CredentialProvider : Ec2CredentialProvider
+    public sealed class AnonymousEc2CredentialProvider : Ec2CredentialProvider
     {
         public override AWSCredentials ClientCredentials { get; } = new AnonymousAWSCredentials();
     }

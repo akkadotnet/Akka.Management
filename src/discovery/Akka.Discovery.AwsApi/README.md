@@ -22,7 +22,7 @@ akka.discovery {
     # a no arguments constructor or a single argument constructor that takes an ExtendedActorSystem
     client-config = ""
     
-    credentials-provider = default-credential-provider
+    credentials-provider = instance-metadata-credential-provider
 
     tag-key = "service"
 
@@ -43,10 +43,10 @@ akka.discovery {
     #       Region will always win if both are declared.
     # region = ""
     
-    default-credential-provider {
+    anonymous-credential-provider {
         # Fully qualified class name of a class that extends Akka.Discovery.AwsApi.Ec2.Ec2ConfigurationProvider with either 
         # a no arguments constructor or a single argument constructor that takes an ExtendedActorSystem
-        class = "Akka.Discovery.AwsApi.Ec2.DefaultEc2CredentialProvider, Akka.Discovery.AwsApi"    
+        class = "Akka.Discovery.AwsApi.Ec2.AnonymousEc2CredentialProvider, Akka.Discovery.AwsApi"    
     }
     
     # This configuration provider leverages the EC2 instance metadata service to provide connection
@@ -76,11 +76,11 @@ You then provide the fully qualified class name of your implementation in the
 
 ### Client credentials configuration
 Client credentials are provided by the `Akka.Discovery.AwsApi.Ec2.Ec2CredentialProvider` abstract
-class. There are two implementation provided out of the box, `DefaultEc2CredentialProvider` and
+class. There are two implementation provided out of the box, `AnonymousEc2CredentialProvider` and
 `Ec2InstanceMetadataCredentialProvider`.
 
-#### DefaultEc2CredentialProvider
-`DefaultEc2CredentialProvider` is a very simple credential provider and will return
+#### AnonymousEc2CredentialProvider
+`AnonymousEc2CredentialProvider` is a very simple credential provider and will return
 an `AnonymousAWSCredentials`.
 
 #### Ec2InstanceMetadataCredentialProvider
