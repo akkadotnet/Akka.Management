@@ -39,6 +39,7 @@ namespace Akka.Discovery.AwsApi.Ec2
         private readonly ExtendedActorSystem _system;
         private readonly Configuration.Config _config;
         private readonly string _clientConfigFqcn;
+        private readonly string _credentialProviderFqcn;
         private readonly string _tagKey;
         private readonly List<Filter> _otherFilters;
         private readonly List<int> _preDefinedPorts;
@@ -54,7 +55,7 @@ namespace Akka.Discovery.AwsApi.Ec2
             {
                 if (_ec2ClientDoNotUseDirectly != null) 
                     return _ec2ClientDoNotUseDirectly;
-                
+
                 AmazonEC2Config clientConfig;
                 if (string.IsNullOrWhiteSpace(_clientConfigFqcn))
                 {
@@ -64,7 +65,7 @@ namespace Akka.Discovery.AwsApi.Ec2
                 {
                     try
                     {
-                        clientConfig = GetCustomClientConfigurationInstance(_clientConfigFqcn);
+                        clientConfig = CreateInstance<AmazonEC2Config>(_clientConfigFqcn);
                     }
                     catch (Exception e)
                     {
@@ -83,10 +84,18 @@ namespace Akka.Discovery.AwsApi.Ec2
                     var region = _config.GetString("region");
                     clientConfig.RegionEndpoint = RegionEndpoint.GetBySystemName(region);
                 }
+
+                Ec2CredentialProvider credentialProvider;
+                try
+                {
+                    credentialProvider = CreateInstance<Ec2CredentialProvider>(_credentialProviderFqcn);
+                }
+                catch (Exception e)
+                {
+                    throw new ConfigurationException($"Could not create instance of [{_credentialProviderFqcn}]", e);
+                }
                 
-                _ec2ClientDoNotUseDirectly = new AmazonEC2Client(
-                    new AnonymousAWSCredentials(),
-                    clientConfig);
+                _ec2ClientDoNotUseDirectly = new AmazonEC2Client(credentialProvider.ClientCredentials, clientConfig);
                 return _ec2ClientDoNotUseDirectly;
             }
         }
@@ -96,12 +105,17 @@ namespace Akka.Discovery.AwsApi.Ec2
             _system = system;
             _log = Logging.GetLogger(system, typeof(Ec2TagBasedServiceDiscovery));
             _config = _system.Settings.Config.GetConfig("akka.discovery.aws-api-ec2-tag-based");
-            _clientConfigFqcn = _config.GetString("client-config", null);
+            _clientConfigFqcn = _config.GetString("client-config");
             _tagKey = _config.GetString("tag-key");
+            
             var otherFiltersString = _config.GetString("filters");
             _otherFilters = ParseFiltersString(otherFiltersString);
+            
             _preDefinedPorts = _config.GetIntList("ports").ToList();
             _runningInstancesFilter = new Filter("instance-state-name", new List<string> {"running"});
+
+            var credProviderPath = _config.GetString("credentials-provider");
+            _credentialProviderFqcn = _config.GetString($"{credProviderPath}.class");
         }
         
         public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
@@ -178,17 +192,21 @@ namespace Akka.Discovery.AwsApi.Ec2
             return accumulator;
         }
         
-        private AmazonEC2Config GetCustomClientConfigurationInstance(string fqcn)
+        private T CreateInstance<T>(string fqcn)
         {
             var type = Type.GetType(fqcn);
+            if (type == null)
+                throw new ConfigurationException($"Could not reflect class with fully qualified class name [{fqcn}]");
+            
             try
             {
-                return (AmazonEC2Config) Activator.CreateInstance(type, new object[]{_system});
+                return (T) Activator.CreateInstance(type, _system);
             }
             catch (MissingMethodException)
             {
-                return (AmazonEC2Config) Activator.CreateInstance(type);
+                return (T) Activator.CreateInstance(type);
             }
         }
+
     }
 }
