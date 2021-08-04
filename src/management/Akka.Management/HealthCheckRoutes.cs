@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Http.Dsl;
 using Akka.Http.Dsl.Model;
@@ -18,7 +20,7 @@ namespace Akka.Management
         private readonly HealthCheckSettings _settings;
         
         // exposed for testing
-        internal HealthChecks HealthChecks { get; }
+        internal virtual HealthChecks HealthChecks { get; }
         
         public HealthCheckRoutes(ExtendedActorSystem system)
         {
@@ -26,29 +28,30 @@ namespace Akka.Management
             HealthChecks = new HealthChecksImpl(system, _settings);
         }
 
-        private HttpResponse HealthCheckResponse(Try<Either<string, Done>> result)
+        private async Task<HttpResponse> HealthCheckResponse(Func<Task<Either<string, Done>>> check)
         {
-            if (result.IsSuccess)
+            try
             {
-                if (result.Success.Value is Left<string, Done> left)
-                {
+                var result = await check();
+                if (result is Left<string, Done> left)
                     return HttpResponse.Create(
-                        status: (int)HttpStatusCode.InternalServerError, 
+                        status: (int) HttpStatusCode.InternalServerError,
                         entity: new RequestEntity(
                             contentType: ContentTypes.TextPlainUtf8,
-                            ByteString.FromString($"Not healthy: {left.Value}")));
-                }
+                            ByteString.FromString($"Not Healthy: {left.Value}")));
                 return HttpResponse.Create();
             }
-            
-            return HttpResponse.Create(
-                status: (int)HttpStatusCode.InternalServerError, 
-                entity: new RequestEntity(
-                    contentType: ContentTypes.TextPlainUtf8,
-                    ByteString.FromString($"Health Check Failed: {result.Failure}")));
+            catch (Exception e)
+            {
+                return HttpResponse.Create(
+                    status: (int)HttpStatusCode.InternalServerError, 
+                    entity: new RequestEntity(
+                        contentType: ContentTypes.TextPlainUtf8,
+                        ByteString.FromString($"Health Check Failed: {e.Message}")));
+            }
         }
         
-        public Route Routes(ManagementRouteProviderSettings settings)
+        public Route[] Routes(ManagementRouteProviderSettings settings)
         {
             return new Route[]
             {
@@ -56,15 +59,15 @@ namespace Akka.Management
                 {
                     if (context.Request.Method != HttpMethods.Get || context.Request.Path != _settings.ReadinessPath)
                         return null;
-                    return new RouteResult.Complete(HealthCheckResponse(await HealthChecks.ReadyResult()));
+                    return new RouteResult.Complete(await HealthCheckResponse(HealthChecks.ReadyResult));
                 },
                 async context =>
                 {
                     if (context.Request.Method != HttpMethods.Get || context.Request.Path != _settings.LivenessPath)
                         return null;
-                    return new RouteResult.Complete(HealthCheckResponse(await HealthChecks.AliveResult()));
+                    return new RouteResult.Complete(await HealthCheckResponse(HealthChecks.AliveResult));
                 },
-            }.Concat();
+            };
         }
     }
 }

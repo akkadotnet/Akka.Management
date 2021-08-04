@@ -11,6 +11,6 @@ namespace Akka.Management
         /// <summary>
         /// Routes to be exposed by Akka cluster management
         /// </summary>
-        Route Routes(ManagementRouteProviderSettings settings);
+        Route[] Routes(ManagementRouteProviderSettings settings);
     }
 }

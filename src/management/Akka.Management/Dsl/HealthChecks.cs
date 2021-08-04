@@ -10,9 +10,9 @@ namespace Akka.Management.Dsl
     internal abstract class HealthChecks
     {
         public abstract Task<bool> Ready();
-        public abstract Task<Try<Either<string, Done>>> ReadyResult();
+        public abstract Task<Either<string, Done>> ReadyResult();
         public abstract Task<bool> Alive();
-        public abstract Task<Try<Either<string, Done>>> AliveResult();
+        public abstract Task<Either<string, Done>> AliveResult();
     }
 
     public sealed class ReadinessCheckSetup : Setup

@@ -132,7 +132,7 @@ namespace Akka.Management.Cluster.Bootstrap
             _log.Warning("Bootstrap already initiated, yet Start() method was called again. Ignoring.");
         }
 
-        public Route Routes(ManagementRouteProviderSettings routeProviderSettings)
+        public Route[] Routes(ManagementRouteProviderSettings routeProviderSettings)
         {
             _log.Info($"Using self contact point address: {routeProviderSettings.SelfBaseUri}");
             SetSelfContactPoint(routeProviderSettings.SelfBaseUri);

@@ -19,6 +19,12 @@ namespace Akka.Management.Internal
         { }
     }
 
+    internal sealed class CheckTimeoutException : Exception
+    {
+        public CheckTimeoutException(string message) : base(message)
+        { }
+    }
+
     internal sealed class ClassNotFoundException : Exception
     { }
 
@@ -58,56 +64,48 @@ namespace Akka.Management.Internal
             var result = new List<IHealthCheck>();
             foreach (var check in checks)
             {
-                var loaded = TryLoadHealthCheck(check.Fqcn);
-                if (!loaded.IsSuccess)
+                try
                 {
-                    switch (loaded.Failure.Value)
-                    {
-                        case MissingMethodException e:
-                            throw new InvalidHealthCheckException(
-                                $"Health checks: [{check.Fqcn}] Must have an empty constructor or a constructor that takes an ActorSystem", e);
-                        case InvalidCastException e:
-                            throw new InvalidHealthCheckException(
-                                $"Health checks: [{check.Fqcn}] Must derive from IHealthCheck.", e);
-                        case ClassNotFoundException _:
-                            throw new InvalidHealthCheckException(
-                                $"Health checks: [{check.Fqcn}] Could not load class type.");
-                        case var e:
-                            throw new InvalidHealthCheckException("Uncaught exception from Health check construction.", e);
-                    }
+                    result.Add(LoadHealthCheck(check.Fqcn));
                 }
-                result.Add(loaded.Get());
+                catch (Exception ex)
+                {
+                    throw ex switch
+                    {
+                        MissingMethodException e => new InvalidHealthCheckException(
+                            $"Health checks: [{check.Fqcn}] Must have an empty constructor or a constructor that takes an ActorSystem.", e),
+                        InvalidCastException e => new InvalidHealthCheckException(
+                            $"Health checks: [{check.Fqcn}] Must implement Akka.Management.Dsl.IHealthCheck.", e),
+                        ClassNotFoundException _ => new InvalidHealthCheckException(
+                            $"Health checks: [{check.Fqcn}] Could not load class type."),
+                        var e => new InvalidHealthCheckException($"Health checks: [{check.Fqcn}] Uncaught exception from Health check construction.", e)
+                    };
+                }
             }
 
             return result.ToImmutableList();
         }
 
-        private Try<IHealthCheck> TryLoadHealthCheck(string fqcn)
+        private IHealthCheck LoadHealthCheck(string fqcn)
         {
             var type = Type.GetType(fqcn);
             if (type is null)
-                return new Try<IHealthCheck>(new ClassNotFoundException());
-            
-            return Try<IHealthCheck>.From(() => (IHealthCheck) Activator.CreateInstance(type, _system))
-                .RecoverWith(e =>
-                {
-                    if (!(e is MissingMethodException))
-                    {
-                        ExceptionDispatchInfo.Capture(e).Throw();
-                        return null;
-                    }
+                throw new ClassNotFoundException();
 
-                    return new Try<IHealthCheck>((IHealthCheck) Activator.CreateInstance(type));
-                });
+            try
+            {
+                return (IHealthCheck) Activator.CreateInstance(type, _system);
+            }
+            catch (MissingMethodException)
+            {
+                return (IHealthCheck) Activator.CreateInstance(type);
+            }
         }
         
         public override async Task<bool> Ready()
-        {
-            var result = await ReadyResult();
-            return result.IsSuccess && result.Success.Value is Right<string, Done>;
-        }
+            => (await ReadyResult()).IsRight;
 
-        public override async Task<Try<Either<string, Done>>> ReadyResult()
+        public override async Task<Either<string, Done>> ReadyResult()
         {
             try
             {
@@ -117,22 +115,19 @@ namespace Akka.Management.Internal
                     _log.Info(left.Value);
                 }
 
-                return new Try<Either<string, Done>>(result);
+                return result;
             }
             catch (Exception e)
             {
                 _log.Warning(e, e.Message);
-                return new Try<Either<string, Done>>(e);
+                throw;
             }
         }
 
         public override async Task<bool> Alive()
-        {
-            var result = await AliveResult();
-            return result.IsSuccess && result.Success.Value is Right<string, Done>;
-        }
+            => (await AliveResult()).IsRight;
 
-        public override async Task<Try<Either<string, Done>>> AliveResult()
+        public override async Task<Either<string, Done>> AliveResult()
         {
             try
             {
@@ -142,12 +137,12 @@ namespace Akka.Management.Internal
                     _log.Info(left.Value);
                 }
 
-                return new Try<Either<string, Done>>(result);
+                return result;
             }
             catch (Exception e)
             {
                 _log.Warning(e, e.Message);
-                return new Try<Either<string, Done>>(e);
+                throw;
             }
         }
 
@@ -159,20 +154,18 @@ namespace Akka.Management.Internal
                 var checkName = check.GetType().Name;
                 try
                 {
-                    if (!await check.Execute(cts.Token))
-                    {
-                        return new Left<string, Done>($"Check {checkName} not OK.");
-                    }
-
-                    return new Right<string, Done>(Done.Instance);
-                }
-                catch (TaskCanceledException)
-                {
-                    return new Left<string, Done>($"Check [{checkName}] timed out after {_settings.CheckTimeout}");
+                    var result = await check.Execute(cts.Token);
+                    return result
+                        ? (Either<string, Done>) new Right<string, Done>(Done.Instance)
+                        : new Left<string, Done>($"Check [{checkName}] not ok");
                 }
                 catch (Exception e)
                 {
-                    throw new CheckFailedException($"Check [{checkName}] failed: {e.Message}", e);
+                    if (e is TaskCanceledException)
+                        throw new CheckTimeoutException($"Check [{checkName}] timed out after {_settings.CheckTimeout.TotalMilliseconds} milliseconds.");
+
+                    throw new CheckFailedException(
+                        $"Check [{checkName}] failed: {e.Message}", e); 
                 }
             }
             

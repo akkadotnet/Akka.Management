@@ -23,19 +23,19 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
             _settings = settings;
         }
 
-        public Route Routes
+        public Route[] Routes
         {
             get
             {
-                return context =>
+                return new Route[]{async context =>
                 {
                     if (context.Request.Method == HttpMethods.Get && context.Request.Path == "/bootstrap/seed-nodes")
                     {
-                        return GetSeedNodes()(context);
+                        return await GetSeedNodes()(context);
                     }
 
                     return null;
-                };
+                }};
             }
         }
 

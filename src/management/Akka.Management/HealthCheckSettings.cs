@@ -53,7 +53,7 @@ namespace Akka.Management
             public string Fqcn { get; }
         }
         
-        private HealthCheckSettings(
+        internal HealthCheckSettings(
             ImmutableList<NamedHealthCheck> readinessChecks, 
             ImmutableList<NamedHealthCheck> livenessChecks, 
             string readinessPath,
@@ -62,7 +62,7 @@ namespace Akka.Management
         {
             ReadinessChecks = readinessChecks;
             LivenessChecks = livenessChecks;
-            ReadinessChecks = readinessChecks;
+            ReadinessPath = readinessPath;
             LivenessPath = livenessPath;
             CheckTimeout = checkTimeout;
         }
