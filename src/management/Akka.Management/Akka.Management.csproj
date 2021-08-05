@@ -2,8 +2,6 @@
   <PropertyGroup>
     <TargetFramework>$(LibraryFramework)</TargetFramework>
     <LangVersion>8.0</LangVersion>
-    <Description>Your description here.</Description>
-    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

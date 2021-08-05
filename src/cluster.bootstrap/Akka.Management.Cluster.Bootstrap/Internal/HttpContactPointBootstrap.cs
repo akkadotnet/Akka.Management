@@ -30,7 +30,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 (c >= 'a' && c <= 'z') || 
                 (c >= 'A' && c <= 'Z') || 
                 (c >= '0' && c <= '9') ||
-                validSymbols.Contains(c));
+                validSymbols.Contains(c)).ToArray();
             
             var sb = new StringBuilder("contactPointProbe-")
                 .Append(cleanHost)
@@ -56,11 +56,10 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         private readonly HttpClient _http;
         private readonly Akka.Cluster.Cluster _cluster;
         private readonly TimeSpan _probeInterval;
-        private readonly Uri _probeRequest;
+        private readonly string _probeRequest;
         private readonly TimeSpan _replyTimeout;
         
         private DateTimeOffset _probingKeepFailingDeadline;
-        private CancellationTokenSource _currentCancellationTokenSource;
 
         private void ResetProbingKeepFailingWithinDeadline()
             => _probingKeepFailingDeadline = DateTimeOffset.Now + _settings.ContactPoint.ProbingFailureTimeout;
@@ -81,6 +80,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
 
             _log = Context.GetLogger();
             _http = new HttpClient();
+            _http.Timeout = _settings.ContactPoint.ProbingFailureTimeout;
             _probeInterval = settings.ContactPoint.ProbeInterval;
             _probeRequest = ClusterBootstrapRequests.BootstrapSeedNodes(baseUri);
             
@@ -89,24 +89,33 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             Receive<ProbeTick>(_ =>
             {
                 _log.Debug("Probing [{0}] for seed nodes...", _probeRequest);
-                _currentCancellationTokenSource?.Dispose();
-                _currentCancellationTokenSource = new CancellationTokenSource(_settings.ContactPoint.ProbingFailureTimeout); 
-                _http.GetAsync(_probeRequest, _currentCancellationTokenSource.Token).ContinueWith(async task =>
+                var self = Self;
+                try
                 {
-                    if (task.IsCompleted && !task.IsCanceled && !task.IsFaulted)
+                    _http.GetAsync(_probeRequest).ContinueWith(task =>
                     {
-                        await HandleResponse(task.Result);
-                        return;
-                    }
+                        var response = task.Result;
+                        var bodyTask = response.Content.ReadAsStringAsync();
+                        bodyTask.Wait();
+                        var body = bodyTask.Result;
+                        if (response.StatusCode == HttpStatusCode.OK)
+                        {
+                            var nodes = JsonConvert.DeserializeObject<HttpBootstrapJsonProtocol.SeedNodes>(body);
+                            return (Status) new Status.Success(nodes);
+                        }
 
-                    if (task.IsCanceled)
-                    {
-                        Self.Tell(new Status.Failure(new TimeoutException($"Probing timeout of [{_baseUri}]")));
-                        return;
-                    }
-                    
-                    Self.Tell(new Status.Failure(task.Exception));
-                });
+                        return new Status.Failure(new IllegalStateException(
+                            $"Expected response '200 OK' but found {response.StatusCode}. Body: '{body}'"));
+                    }, TaskContinuationOptions.ExecuteSynchronously).PipeTo(self);
+                }
+                catch (TaskCanceledException)
+                {
+                    self.Tell(new Status.Failure(new TimeoutException($"Probing timeout of [{_baseUri}]")));
+                }
+                catch (Exception e)
+                {
+                    self.Tell(new Status.Failure(e));
+                }
             });
 
             Receive<Status.Failure>(fail =>
@@ -126,9 +135,10 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 }
             });
 
-            Receive<HttpBootstrapJsonProtocol.SeedNodes>(response =>
+            Receive<Status.Success>(success =>
             {
-                NotifyParentAboutSeedNodes(response);
+                var nodes = (HttpBootstrapJsonProtocol.SeedNodes) success.Status;
+                NotifyParentAboutSeedNodes(nodes);
                 ResetProbingKeepFailingWithinDeadline();
                 // we keep probing and looking if maybe a cluster does form after all
                 // (technically could be long polling or web-sockets, but that would need reconnect logic, so this is simpler)
@@ -139,30 +149,11 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         public ITimerScheduler Timers { get; set; }
         private TimeSpan EffectiveProbeInterval => _probeInterval + Jitter(_probeInterval);
 
-        protected override void PostStop()
+        protected override void PreStart()
         {
-            base.PostStop();
-            if (_currentCancellationTokenSource != null)
-            {
-                _currentCancellationTokenSource.Cancel();
-                _currentCancellationTokenSource.Dispose();
-            }
+            Self.Tell(ProbeTick.Instance);
         }
 
-        private async Task HandleResponse(HttpResponseMessage response)
-        {
-            var body = await response.Content.ReadAsStringAsync();
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                Self.Tell(JsonConvert.DeserializeObject<HttpBootstrapJsonProtocol.SeedNodes>(body)); 
-            }
-            else
-            {
-                Self.Tell(new Status.Failure(new IllegalStateException(
-                    $"Expected response '200 OK' but found {response.StatusCode}. Body: '{body}'")));
-            }
-        }
-        
         private void NotifyParentAboutSeedNodes(HttpBootstrapJsonProtocol.SeedNodes members)
         {
             var seedAddresses = members.Nodes.Select(n => n.Node).ToImmutableHashSet();

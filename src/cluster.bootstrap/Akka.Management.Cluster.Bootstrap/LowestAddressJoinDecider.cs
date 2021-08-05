@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Discovery;
+using Akka.Management.Cluster.Bootstrap.Util;
 
 namespace Akka.Management.Cluster.Bootstrap
 {
@@ -42,7 +43,19 @@ namespace Akka.Management.Cluster.Bootstrap
             }
             
             // No seed nodes
-            if (!IsConfirmedCommunicationWithAllContactPointsRequired(info))
+            var contactPointsWithoutSeedNodesObservation = ImmutableHashSet<ServiceDiscovery.ResolvedTarget>.Empty;
+
+            if (IsConfirmedCommunicationWithAllContactPointsRequired(info))
+            {
+                var builder = info.ContactPoints.ToBuilder();
+                foreach (var contact in info.SeedNodesObservations.Select(o => o.ContactPoint))
+                {
+                    builder.Remove(contact);
+                }
+                contactPointsWithoutSeedNodesObservation = builder.ToImmutableHashSet();
+            }
+
+            if (contactPointsWithoutSeedNodesObservation.IsEmpty)
             {
                 // got info from all contact points as expected
                 var lowestAddress = LowestAddressContactPoint(info);
@@ -60,7 +73,7 @@ namespace Akka.Management.Cluster.Bootstrap
                             "Exceeded stable margins without locating seed-nodes, however this node {0} is NOT the lowest address " +
                             "out of the discovered endpoints in this deployment, thus NOT joining self. Expecting node [{1}] " +
                             "(out of [{2}]) to perform the self-join and initiate the cluster.",
-                            ContactPointString(SelfContactPoint),
+                            ContactPointString(SelfContactPoint()),
                             lowestAddress == null ? "" : ContactPointString(lowestAddress),
                             string.Join(", ", info.ContactPoints.Select(ContactPointString)));
                 }
@@ -70,7 +83,7 @@ namespace Akka.Management.Cluster.Bootstrap
                         Log.Warning("Exceeded stable margins without locating seed-nodes, however this node {0} is configured with " +
                                     "new-cluster-enabled=off, thus NOT joining self. Expecting existing cluster or node [{1}] " +
                                     "(out of [{2}]) to perform the self-join and initiate the cluster.",
-                            ContactPointString(SelfContactPoint),
+                            ContactPointString(SelfContactPoint()),
                             lowestAddress == null ? "" : ContactPointString(lowestAddress),
                             string.Join(", ", info.ContactPoints.Select(ContactPointString)));
                 }
@@ -148,7 +161,8 @@ namespace Akka.Management.Cluster.Bootstrap
         {
             // Note that we are using info.seedNodesObservations and not info.contactPoints here, but that
             // is the same when isConfirmedCommunicationWithAllContactPointsRequired == true
-            var list = info.SeedNodesObservations.Select(o => o.ContactPoint).OrderBy(p => p.Address).ToList();
+            var list = info.SeedNodesObservations.Select(o => o.ContactPoint).ToList();
+            list.Sort(ResolvedTargetComparer.Instance);
             return list.Count == 0 ? null : list[0];
         }
     }

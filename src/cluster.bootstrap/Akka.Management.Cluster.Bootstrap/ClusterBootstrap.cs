@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
@@ -12,7 +13,7 @@ using Akka.Util;
 
 namespace Akka.Management.Cluster.Bootstrap
 {
-    public class ClusterBootstrap : IManagementRouteProvider
+    public class ClusterBootstrap : IExtension, IManagementRouteProvider
     {
         internal static class Internal
         {
@@ -38,61 +39,79 @@ namespace Akka.Management.Cluster.Bootstrap
         private readonly ExtendedActorSystem _system;
         private readonly ILoggingAdapter _log;
         private readonly AtomicReference<Internal.IBootstrapStep> _bootstrapStep; 
-        private readonly ClusterBootstrapSettings _settings;
-        private readonly Lazy<ServiceDiscovery> _discovery;
+        internal ClusterBootstrapSettings Settings { get; }
+        internal Lazy<ServiceDiscovery> Discovery { get; }
         private readonly IJoinDecider _joinDecider;
 
-        private readonly TaskCompletionSource<Uri> _selfContactPointTcs = new TaskCompletionSource<Uri>();
+        private readonly TaskCompletionSource<Uri> _selfContactPointTcs;
 
-        private Task<Uri> SelfContactPointUri => _selfContactPointTcs.Task; 
-        
+        internal Task<Uri> SelfContactPoint => _selfContactPointTcs.Task; 
+
         public ClusterBootstrap(ExtendedActorSystem system)
         {
+            _selfContactPointTcs = new TaskCompletionSource<Uri>();
+            
             _system = system;
             _log = Logging.GetLogger(system, typeof(ClusterBootstrap));
             _bootstrapStep= new AtomicReference<Internal.IBootstrapStep>(Internal.NotRunning.Instance);
-            _settings = new ClusterBootstrapSettings(system.Settings.Config, _log);
+            Settings = new ClusterBootstrapSettings(system.Settings.Config, _log);
 
-            _discovery = new Lazy<ServiceDiscovery>(() =>
+            Discovery = new Lazy<ServiceDiscovery>(() =>
             {
-                var method = _settings.ContactPointDiscovery.DiscoveryMethod; 
+                var method = Settings.ContactPointDiscovery.DiscoveryMethod; 
                 if (method == "akka.discovery")
                 {
-                    var discovery = Discovery.Discovery.Get(system).Default;
+                    var discovery = Akka.Discovery.Discovery.Get(system).Default;
                     _log.Info("Bootstrap using default `akka.discovery` method: {0}", Logging.SimpleName(discovery));
                     return discovery;
                 }
 
-                _log.Info("Bootstrap using `akka.discovery` method: {}", method);
-                return Discovery.Discovery.Get(system).LoadServiceDiscovery(method);
+                _log.Info("Bootstrap using `akka.discovery` method: {0}", method);
+                return Akka.Discovery.Discovery.Get(system).LoadServiceDiscovery(method);
             });
             
-            var joinDeciderType = Type.GetType(_settings.JoinDecider.ImplClass);
+            var joinDeciderType = Type.GetType(Settings.JoinDecider.ImplClass);
             if (joinDeciderType == null)
                 throw new ConfigurationException(
-                    $"Could not convert FQCN name into concrete type: [{_settings.JoinDecider.ImplClass}]");
+                    $"Could not convert FQCN name into concrete type: [{Settings.JoinDecider.ImplClass}]");
 
-            _joinDecider = (IJoinDecider)Activator.CreateInstance(joinDeciderType, system, _settings);
+            _joinDecider = (IJoinDecider)Activator.CreateInstance(joinDeciderType, system, Settings);
             
             var autoStart = system.Settings.Config.GetStringList("akka.extensions")
                 .Any(s => s.Contains(typeof(ClusterBootstrap).Name));
             if (autoStart)
             {
                 _log.Info("ClusterBootstrap loaded through 'akka.extensions' auto starting bootstrap.");
-                Get(system).Start().Wait();
+                // Akka Management hosts the HTTP routes used by bootstrap
+                // we can't let it block extension init, so run it in a different thread and let constructor complete
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        await AkkaManagement.Get(system).Start();
+                        await ClusterBootstrap.Get(system).Start();
+                    }
+                    catch (Exception e)
+                    {
+                        _log.Error(e, "Failed to autostart cluster bootstrap, terminating system");
+                        await system.Terminate();
+                    }
+                });
             }
         }
 
-        private void SetSelfContactPoint(Uri baseUri)
-            => _selfContactPointTcs.SetResult(baseUri);
+        internal void SetSelfContactPoint(Uri baseUri)
+        {
+            _selfContactPointTcs.SetResult(baseUri);
+        }
 
         private void EnsureSelfContactPoint()
         {
-            _system.Scheduler.Advanced.ScheduleOnce(TimeSpan.FromSeconds(10), () =>
+            Task.Run(async () =>
             {
-                if (!SelfContactPointUri.IsCompleted)
+                await Task.Delay(TimeSpan.FromSeconds(10));
+                if (!SelfContactPoint.IsCompleted)
                 {
-                    _selfContactPointTcs.SetCanceled();
                     _selfContactPointTcs.SetException(new TaskCanceledException("Awaiting ClusterBootstrap.SelfContactPointUri timed out."));
                     _log.Error("'Bootstrap.selfContactPoint' was NOT set, but is required for the bootstrap to work " +
                                "if binding bootstrap routes manually and not via akka-management.");
@@ -116,14 +135,17 @@ namespace Akka.Management.Cluster.Bootstrap
             if (_bootstrapStep.CompareAndSet(Internal.NotRunning.Instance, Internal.Initializing.Instance))
             {
                 _log.Info("Initiating bootstrap procedure using {0} method...",
-                    _settings.ContactPointDiscovery.DiscoveryMethod);
+                    Settings.ContactPointDiscovery.DiscoveryMethod);
                 
                 EnsureSelfContactPoint();
-                var bootstrapProps = BootstrapCoordinator.Props(_discovery.Value, _joinDecider, _settings);
+                var bootstrapProps = BootstrapCoordinator.Props(Discovery.Value, _joinDecider, Settings);
                 var bootstrap = _system.SystemActorOf(bootstrapProps, "bootstrapCoordinator");
                 
                 // Bootstrap already logs in several other execution points when it can't form a cluster, and why.
-                var uri = await SelfContactPointUri.ConfigureAwait(false);
+                if (!SelfContactPoint.IsCompleted)
+                    await SelfContactPoint;
+                
+                var uri = SelfContactPoint.Result;
                 bootstrap.Tell(new BootstrapCoordinator.Protocol.InitiateBootstrapping(uri));
                 
                 return;
@@ -137,7 +159,7 @@ namespace Akka.Management.Cluster.Bootstrap
             _log.Info($"Using self contact point address: {routeProviderSettings.SelfBaseUri}");
             SetSelfContactPoint(routeProviderSettings.SelfBaseUri);
 
-            return new HttpClusterBootstrapRoutes(_settings).Routes;
+            return new HttpClusterBootstrapRoutes(Settings).Routes;
         }
     }
     

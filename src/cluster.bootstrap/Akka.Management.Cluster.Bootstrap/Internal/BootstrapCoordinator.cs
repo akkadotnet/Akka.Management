@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Discovery;
 using Akka.Event;
@@ -77,17 +78,28 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         
         protected sealed class ServiceContactsObservation
         {
-            public ServiceContactsObservation(DateTime observedAt, ImmutableHashSet<ResolvedTarget> observedContactPoints)
+            public ServiceContactsObservation(DateTimeOffset observedAt, ImmutableHashSet<ResolvedTarget> observedContactPoints)
             {
                 ObservedAt = observedAt;
                 ObservedContactPoints = observedContactPoints;
             }
 
-            public DateTime ObservedAt { get; }
+            public DateTimeOffset ObservedAt { get; }
             public ImmutableHashSet<ResolvedTarget> ObservedContactPoints { get; }
 
             public bool MembersChanged(ServiceContactsObservation other)
-                => !ObservedContactPoints.Equals(other.ObservedContactPoints);
+            {
+                if (ObservedContactPoints.Count != other.ObservedContactPoints.Count)
+                    return true;
+                
+                foreach (var contact in other.ObservedContactPoints)
+                {
+                    if (!ObservedContactPoints.Contains(contact))
+                        return true;
+                }
+
+                return false;
+            }
 
             public ServiceContactsObservation SameOrChanged(ServiceContactsObservation other)
                 => MembersChanged(other) ? other : this;
@@ -95,7 +107,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         
         public ITimerScheduler Timers { get; set; }
 
-        private static IImmutableList<ResolvedTarget> SelectHosts(
+        internal static IImmutableList<ResolvedTarget> SelectHosts(
             Lookup lookup,
             int fallbackPort,
             bool filterOnFallbackPort,
@@ -132,8 +144,6 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             = ImmutableDictionary<ResolvedTarget, SeedNodesObservation>.Empty;
         private bool _decisionInProgress;
         private int _discoveryFailedBackoffCounter;
-
-        private List<IActorRef> _children = new List<IActorRef>();
 
         public BootstrapCoordinator(ServiceDiscovery discovery, IJoinDecider joinDecider, ClusterBootstrapSettings settings)
         {
@@ -266,7 +276,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                             var contacts = _lastContactObservation;
                             if (contacts.ObservedContactPoints.Contains(contactPoint))
                             {
-                                _log.Info("Contact point [{}] returned [{}] seed-nodes [{}]",
+                                _log.Info("Contact point [{0}] returned [{1}] seed-nodes [{0}]",
                                     infoFromAddress,
                                     observedSeedNodes.Count,
                                     string.Join(", ", observedSeedNodes)
@@ -349,10 +359,6 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                         return true;
                     }
                     
-                    case Terminated msg:
-                        _children.Remove(msg.ActorRef);
-                        return true;
-
                     default:
                         return false;
                 }
@@ -364,7 +370,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
 
         private void DiscoverContactPoints()
         {
-            _log.Info("Looking up [{}]", _lookup);
+            _log.Info("Looking up [{0}]", _lookup);
             _discovery.Lookup(_lookup, _settings.ContactPointDiscovery.ResolveTimeout).PipeTo(Self);
         }
 
@@ -372,7 +378,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             IEnumerable<ResolvedTarget> contactPoints,
             string selfContactPointScheme)
         {
-            var newObservation = new ServiceContactsObservation(DateTime.Now, contactPoints.ToImmutableHashSet());
+            var newObservation = new ServiceContactsObservation(DateTimeOffset.Now, contactPoints.ToImmutableHashSet());
             _lastContactObservation = _lastContactObservation != null
                 ? _lastContactObservation.SameOrChanged(newObservation)
                 : newObservation;
@@ -381,27 +387,13 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             _seedNodesObservations = _seedNodesObservations
                 .Where(kvp => newObservation.ObservedContactPoints.Contains(kvp.Key)).ToImmutableDictionary();
 
-            foreach (var child in _children)
-            {
-                child.Tell(PoisonPill.Instance);
-            }
-            
-            // wait until all children are dead
-            while (_children.Count > 0)
-            { }
-            
             foreach (var target in newObservation.ObservedContactPoints)
             {
-                var child = EnsureProbing(selfContactPointScheme, target);
-                if (child != null)
-                {
-                    Context.Watch(child);
-                    _children.Add(child);
-                }
+                EnsureProbing(selfContactPointScheme, target);
             }
         }
 
-        private IActorRef EnsureProbing(string selfContactPointScheme, ResolvedTarget contactPoint)
+        protected virtual IActorRef EnsureProbing(string selfContactPointScheme, ResolvedTarget contactPoint)
         {
             var targetPort = contactPoint.Port ?? _settings.ContactPoint.FallbackPort;
             var rawBaseUri = $"{selfContactPointScheme}://{contactPoint.Address}:{targetPort}";
@@ -431,7 +423,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             }
 
             var child = Context.Child(childActorName);
-            if (child != null)
+            if (!child.Equals(ActorRefs.Nobody))
                 return child;
             var props = HttpContactPointBootstrap.Props(_settings, contactPoint, baseUri);
             return Context.ActorOf(props, childActorName);
@@ -449,7 +441,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 return;
 
             var contacts = _lastContactObservation;
-            var currentTime = DateTime.Now;
+            var currentTime = DateTimeOffset.Now;
             
             // filter out old observations, in case the probing failures are not triggered
             bool IsObsolete(SeedNodesObservation obs)
@@ -470,11 +462,11 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 if (task.IsFaulted || task.IsCanceled)
                 {
                     _log.Error(task.Exception, "Join decision failed: {0}", task.Exception);
-                    Self.Tell(KeepProbing.Instance);
-                    return;
+                    return KeepProbing.Instance;
                 }
-                Self.Tell(task.Result);
-            });
+
+                return task.Result;
+            }, TaskContinuationOptions.ExecuteSynchronously).PipeTo(Self);
         }
     }
 }

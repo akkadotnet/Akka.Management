@@ -10,6 +10,7 @@ using Akka.Http.Dsl;
 using Akka.Http.Dsl.Model;
 using Akka.Http.Dsl.Server;
 using Akka.IO;
+using Akka.Management.Cluster.Bootstrap.Tests;
 using Akka.TestKit.Xunit2.Internals;
 using Akka.Util;
 using FluentAssertions;
@@ -68,7 +69,7 @@ namespace Akka.Management.Tests
         [Fact]
         public async Task ClusterManagementShouldStartAndStopWhenNotSettingAnySecurity()
         {
-            var httpPort = ThreadLocalRandom.Current.Next(10000, 15000);
+            var httpPort = SocketUtil.TemporaryTcpAddress("127.0.0.1").Port;
             var configClusterHttpManager = ConfigurationFactory.ParseString($@"
                 //#management-host-port
                 akka.management.http.hostname = ""127.0.0.1""

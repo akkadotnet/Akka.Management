@@ -13,4 +13,9 @@
       <ProjectReference Include="..\..\management\Akka.Management\Akka.Management.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="reference.conf" />
+      <EmbeddedResource Include="reference.conf" />
+    </ItemGroup>
+
 </Project>

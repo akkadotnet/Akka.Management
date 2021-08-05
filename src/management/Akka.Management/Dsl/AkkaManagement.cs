@@ -156,18 +156,59 @@ namespace Akka.Management
         {
             foreach (var (name, fqcn) in Settings.Http.RouteProviders)
             {
-                var dynamic = DynamicAccess.CreateInstanceFor<IManagementRouteProvider>(fqcn, null);
-                var instanceTry = dynamic.RecoverWith(ex => ex is TypeLoadException || ex is MissingMethodException
-                    ? DynamicAccess.CreateInstanceFor<IManagementRouteProvider>(fqcn, _system)
-                    : dynamic);
+                var type = Type.GetType(fqcn);
+                if (type == null)
+                    throw new ConfigurationException($"Could not load Type from FQCN [{fqcn}]");
 
-                yield return instanceTry.IsSuccess switch
+                if (typeof(IExtensionId).IsAssignableFrom(type))
                 {
-                    true => instanceTry.Get(),
-                    false when instanceTry.Failure.Value is TypeLoadException || instanceTry.Failure.Value is MissingMethodException =>
-                        throw new ArgumentException(nameof(fqcn), $"[{fqcn}] is not a 'ManagementRouteProvider'"),
-                    _ => throw new Exception($"While trying to load route provider extension [{name} = {fqcn}]", instanceTry.Failure.Value)
-                };
+                    if (!_system.TryGetExtension(type, out var extension))
+                    {
+                        try
+                        {
+                            try
+                            {
+                                extension = Activator.CreateInstance(type);
+                            }
+                            catch (MissingMethodException)
+                            {
+                                extension = Activator.CreateInstance(type, _system);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            throw new Exception($"While trying to load route provider extension [{name} = {fqcn}]", e);
+                        }
+                        
+                        extension = _system.RegisterExtension((IExtensionId)extension);
+                    }
+
+                    yield return (IManagementRouteProvider)extension;
+                }
+                else
+                {
+                    if (!typeof(IManagementRouteProvider).IsAssignableFrom(type))
+                        throw new ArgumentException(nameof(fqcn), $"[{fqcn}] is not a 'ManagementRouteProvider'");
+
+                    IManagementRouteProvider instance;
+                    try
+                    {
+                        try
+                        {
+                            instance = (IManagementRouteProvider) Activator.CreateInstance(type);
+                        }
+                        catch (MissingMethodException)
+                        {
+                            instance = (IManagementRouteProvider) Activator.CreateInstance(type, _system);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception($"While trying to load route provider extension [{name} = {fqcn}]", e);
+                    }
+
+                    yield return instance;
+                }
             }
         }
     }

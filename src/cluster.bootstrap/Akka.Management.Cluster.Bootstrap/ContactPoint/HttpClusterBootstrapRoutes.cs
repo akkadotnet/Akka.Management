@@ -71,9 +71,10 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
 
     public static class ClusterBootstrapRequests
     {
-        public static Uri BootstrapSeedNodes(Uri baseUri)
-        {
-            return new Uri(baseUri + "/bootstrap/seed-nodes");
-        }
+        public static string BootstrapSeedNodes(Uri baseUri)
+            => baseUri + "bootstrap/seed-nodes";
+        
+        public static string BootstrapSeedNodes(string baseUri)
+            => $"{baseUri}/bootstrap/seed-nodes";
     }
 }

@@ -50,8 +50,8 @@ namespace Akka.Management.Cluster.Bootstrap
         /// to facilitate calculation of durations.
         /// </param>
         public SeedNodesInformation(
-            DateTime currentTime, 
-            DateTime contactPointsChangedAt, 
+            DateTimeOffset currentTime, 
+            DateTimeOffset contactPointsChangedAt, 
             ImmutableHashSet<ServiceDiscovery.ResolvedTarget> contactPoints, 
             ImmutableHashSet<SeedNodesObservation> seedNodesObservations)
         {
@@ -61,8 +61,8 @@ namespace Akka.Management.Cluster.Bootstrap
             SeedNodesObservations = seedNodesObservations;
         }
 
-        public DateTime CurrentTime { get; }
-        public DateTime ContactPointsChangedAt { get; }
+        public DateTimeOffset CurrentTime { get; }
+        public DateTimeOffset ContactPointsChangedAt { get; }
         public ImmutableHashSet<ServiceDiscovery.ResolvedTarget> ContactPoints { get; }
         public ImmutableHashSet<SeedNodesObservation> SeedNodesObservations { get; }
 

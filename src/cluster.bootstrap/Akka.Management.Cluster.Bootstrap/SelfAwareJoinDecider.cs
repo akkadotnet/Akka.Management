@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Discovery;
@@ -27,24 +29,22 @@ namespace Akka.Management.Cluster.Bootstrap
         protected string ContactPointString(ServiceDiscovery.ResolvedTarget contactPoint)
             => $"{contactPoint.Host}:{(contactPoint.Port ?? 0)}";
 
-        public (string host, int port) SelfContactPoint
+        internal (string host, int port) SelfContactPoint()
         {
-            get
-            {
-                var selfAddress = Akka.Cluster.Cluster.Get(_system).SelfAddress;
-                return (selfAddress.Host, selfAddress.Port ?? 0);
-            }
+            var task = ClusterBootstrap.Get(_system).SelfContactPoint;
+            task.Wait();
+            return (task.Result.Host, task.Result.Port);
         }
 
         public bool CanJoinSelf(ServiceDiscovery.ResolvedTarget target, SeedNodesInformation info)
         {
-            var self = SelfContactPoint;
+            var self = SelfContactPoint();
             if (MatchesSelf(target, self))
                 return true;
             
             if (!info.ContactPoints.Any(t => MatchesSelf(t, self)))
             {
-                Log.Warning("Self contact point [{}] not found in targets {}",
+                Log.Warning("Self contact point [{0}] not found in targets {1}",
                     ContactPointString(self),
                     string.Join(", ", info.ContactPoints));
             }
@@ -59,8 +59,13 @@ namespace Akka.Management.Cluster.Bootstrap
         }
 
         public bool HostMatches(string host, ServiceDiscovery.ResolvedTarget target)
-            => host == target.Host || target.Address.ToString().Contains(host.Replace("\\", ""));
+        {
+            var cleaned = _hostReplaceRegex.Replace(host, "");
+            return host == target.Host || target.Address.ToString().Contains(cleaned);
+        }
 
         public abstract Task<IJoinDecision> Decide(SeedNodesInformation info);
+
+        private readonly Regex _hostReplaceRegex = new Regex("[\\[\\]]");
     }
 }

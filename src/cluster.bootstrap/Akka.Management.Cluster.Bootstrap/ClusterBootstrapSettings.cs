@@ -78,10 +78,15 @@ namespace Akka.Management.Cluster.Bootstrap
         
         public sealed class ContactPointSettings
         {
-            public ContactPointSettings(Config bootConfig)
+            public ContactPointSettings(Config bootConfig, Config config)
             {
                 var contactPointConfig = bootConfig.GetConfig("contact-point");
-                FallbackPort = contactPointConfig.GetInt("fallback-port");
+
+                var fallback = contactPointConfig.GetString("fallback-port");
+                FallbackPort = string.IsNullOrWhiteSpace(fallback) || fallback == "<fallback-port>"
+                    ? config.GetInt("akka.management.http.port")
+                    : int.Parse(fallback);
+                
                 FilterOnFallbackPort = contactPointConfig.GetBoolean("filter-on-fallback-port");
                 ProbingFailureTimeout = contactPointConfig.GetTimeSpan("probing-failure-timeout", null, false);
                 ProbeInterval = contactPointConfig.GetTimeSpan("probe-interval", null, false);
@@ -119,7 +124,7 @@ namespace Akka.Management.Cluster.Bootstrap
             var bootConfig = config.GetConfig("akka.management.cluster.bootstrap");
             NewClusterEnabled = bootConfig.GetBoolean("new-cluster-enabled");
             ContactPointDiscovery = new ContactPointDiscoverySettings(bootConfig);
-            ContactPoint = new ContactPointSettings(bootConfig);
+            ContactPoint = new ContactPointSettings(bootConfig, config);
             JoinDecider = new JoinDeciderSettings(bootConfig);
         }
 
