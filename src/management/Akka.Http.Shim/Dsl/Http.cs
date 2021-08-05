@@ -7,17 +7,13 @@ using Akka.Http.Dsl.Model;
 using Akka.Http.Dsl.Server;
 using Akka.Http.Dsl.Settings;
 using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Akka.Http.Dsl
 {
-    using HttpRequest = Model.HttpRequest;
-    using HttpResponse = Model.HttpResponse;
-
     public delegate Task<RouteResult.IRouteResult> Route(RequestContext context);
     public delegate Route RouteGenerator<T>(T obj);
     

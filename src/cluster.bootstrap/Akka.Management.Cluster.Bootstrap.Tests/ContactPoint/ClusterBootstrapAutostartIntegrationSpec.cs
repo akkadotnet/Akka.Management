@@ -16,7 +16,7 @@ using Xunit.Abstractions;
 
 namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
 {
-    public class ClusterBootstrapAutostartIntegrationSpec : TestKit.Xunit2.TestKit, IAsyncLifetime
+    public class ClusterBootstrapAutostartIntegrationSpec : TestKit.Xunit2.TestKit
     {
         private ImmutableDictionary<string, int> _remotingPorts = ImmutableDictionary<string, int>.Empty;
         private ImmutableDictionary<string, int> _contactPointPorts = ImmutableDictionary<string, int>.Empty;
@@ -129,6 +129,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         {
             await JoinDiscoveredDns();
             await TerminateOnAutostartFail();
+            await Terminate();
         }
         
         // join three DNS discovered nodes by forming new cluster (happy path)
@@ -154,12 +155,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             await systemA.WhenTerminated;
         }
 
-        public Task InitializeAsync()
-        {
-            return Task.CompletedTask;
-        }
-
-        public async Task DisposeAsync()
+        private async Task Terminate()
         {
             var tasks = new[]
             {
@@ -167,7 +163,6 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                 CoordinatedShutdown.Get(_systemB).Run(CoordinatedShutdown.ClrExitReason.Instance),
                 CoordinatedShutdown.Get(_systemC).Run(CoordinatedShutdown.ClrExitReason.Instance),
             };
-
             await Task.WhenAll(tasks);
         }
     }

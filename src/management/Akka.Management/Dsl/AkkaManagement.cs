@@ -8,7 +8,6 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
 using Akka.Http.Dsl;
-using Akka.Http.Dsl.Server;
 using Akka.Http.Dsl.Settings;
 using Akka.Http.Extensions;
 using Akka.Util;
@@ -36,6 +35,13 @@ namespace Akka.Management
             Settings = new AkkaManagementSettings(system.Settings.Config);
 
             _routeProviders = LoadRouteProviders().ToImmutableList();
+
+            var coordinatedShutdown = CoordinatedShutdown.Get(system);
+            coordinatedShutdown.AddTask(CoordinatedShutdown.PhaseBeforeClusterShutdown, "akka-management-exiting",
+                () =>
+                {
+                    return Stop().ContinueWith(t => Done.Instance);
+                });
         }
 
         public static AkkaManagement Get(ActorSystem system) => system.WithExtension<AkkaManagement, AkkaManagementProvider>();
@@ -89,7 +95,10 @@ namespace Akka.Management
                 serverBindingPromise.SetResult(serverBinding);
 
                 var boundPort = ((DnsEndPoint)serverBinding.LocalAddress).Port;
-                _log.Info("Bound Akka Management (HTTP) endpoint to: {0}:{1}", effectiveBindHostname, boundPort);
+                _log.Info(
+                    "Bound Akka Management (HTTP) endpoint to: {0}:{1}", 
+                    ((DnsEndPoint)serverBinding.LocalAddress).Host, 
+                    boundPort);
 
                 return effectiveProviderSettings.SelfBaseUri.WithPort(boundPort);
             }
@@ -115,8 +124,8 @@ namespace Akka.Management
                     // retry, CAS was not successful, someone else completed the stop()
                     continue;
                 }
-
                 var stopFuture = binding.Map(_ => _.Unbind()).Map(_ => Done.Instance);
+                _log.Info("Akka Management Stopped.");
                 return stopFuture;
             }
         }
