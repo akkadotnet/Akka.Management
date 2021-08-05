@@ -67,7 +67,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             {
                 var context = new DefaultHttpContext();
                 context.Request.Method = HttpMethods.Get;
-                context.Request.Path = ClusterBootstrapRequests.BootstrapSeedNodes("").ToString();
+                context.Request.Path = ClusterBootstrapRequests.BootstrapSeedNodes("");
             
                 var requestContext = new RequestContext(HttpRequest.Create(context.Request), Sys);
                 var response = (RouteResult.Complete) await _httpBootstrap.Routes.Concat()(requestContext);

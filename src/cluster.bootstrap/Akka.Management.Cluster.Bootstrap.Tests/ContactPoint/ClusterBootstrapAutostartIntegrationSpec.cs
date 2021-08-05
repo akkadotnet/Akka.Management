@@ -16,7 +16,7 @@ using Xunit.Abstractions;
 
 namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
 {
-    public class ClusterBootstrapAutostartIntegrationSpec : TestKit.Xunit2.TestKit
+    public class ClusterBootstrapAutostartIntegrationSpec : TestKit.Xunit2.TestKit, IAsyncLifetime
     {
         private ImmutableDictionary<string, int> _remotingPorts = ImmutableDictionary<string, int>.Empty;
         private ImmutableDictionary<string, int> _contactPointPorts = ImmutableDictionary<string, int>.Empty;
@@ -127,15 +127,8 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         [Fact(DisplayName = "Cluster Bootstrap auto start integration test")]
         public async Task StartSpec()
         {
-            try
-            {
-                await JoinDiscoveredDns();
-                await TerminateOnAutostartFail();
-            }
-            finally
-            {
-                Terminate();
-            }
+            await JoinDiscoveredDns();
+            await TerminateOnAutostartFail();
         }
         
         // join three DNS discovered nodes by forming new cluster (happy path)
@@ -161,23 +154,21 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             await systemA.WhenTerminated;
         }
 
-        private void Terminate()
+        public Task InitializeAsync()
         {
-            try
+            return Task.CompletedTask;
+        }
+
+        public async Task DisposeAsync()
+        {
+            var tasks = new[]
             {
-                Shutdown(_systemA);
-            }
-            finally
-            {
-                try
-                {
-                    Shutdown(_systemB);
-                }
-                finally
-                {
-                    Shutdown(_systemC);
-                }
-            }
+                CoordinatedShutdown.Get(_systemA).Run(CoordinatedShutdown.ClrExitReason.Instance),
+                CoordinatedShutdown.Get(_systemB).Run(CoordinatedShutdown.ClrExitReason.Instance),
+                CoordinatedShutdown.Get(_systemC).Run(CoordinatedShutdown.ClrExitReason.Instance),
+            };
+
+            await Task.WhenAll(tasks);
         }
     }
 }

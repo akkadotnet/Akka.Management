@@ -60,7 +60,7 @@ namespace Akka.Http.Dsl
                 .SuppressStatusMessages(true)
                 .ConfigureServices(services =>
                 {
-                    services.AddLogging(builder => builder.AddFilter("Microsoft", LogLevel.Debug));
+                    services.AddLogging(builder => builder.AddFilter("Microsoft", LogLevel.None));
                 })
                 .Configure(app =>
                 {
