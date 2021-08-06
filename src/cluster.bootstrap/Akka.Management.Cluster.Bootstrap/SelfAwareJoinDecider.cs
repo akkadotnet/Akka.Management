@@ -61,7 +61,7 @@ namespace Akka.Management.Cluster.Bootstrap
         public bool HostMatches(string host, ServiceDiscovery.ResolvedTarget target)
         {
             var cleaned = _hostReplaceRegex.Replace(host, "");
-            return host == target.Host || target.Address.ToString().Contains(cleaned);
+            return host == target.Host || (target.Address?.ToString() ?? "").Contains(cleaned);
         }
 
         public abstract Task<IJoinDecision> Decide(SeedNodesInformation info);
