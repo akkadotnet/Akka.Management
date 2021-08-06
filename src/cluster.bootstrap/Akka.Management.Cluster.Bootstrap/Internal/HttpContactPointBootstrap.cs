@@ -3,8 +3,8 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Event;
@@ -81,6 +81,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             _log = Context.GetLogger();
             _http = new HttpClient();
             _http.Timeout = _settings.ContactPoint.ProbingFailureTimeout;
+            
             _probeInterval = settings.ContactPoint.ProbeInterval;
             _probeRequest = ClusterBootstrapRequests.BootstrapSeedNodes(baseUri);
             
@@ -90,9 +91,11 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             {
                 _log.Debug("Probing [{0}] for seed nodes...", _probeRequest);
                 var self = Self;
-                try
+
+                var getTask = _http.GetAsync(_probeRequest);
+                getTask.ContinueWith(task =>
                 {
-                    _http.GetAsync(_probeRequest).ContinueWith(task =>
+                    if (task.IsCompleted)
                     {
                         var response = task.Result;
                         var bodyTask = response.Content.ReadAsStringAsync();
@@ -101,21 +104,34 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                         if (response.StatusCode == HttpStatusCode.OK)
                         {
                             var nodes = JsonConvert.DeserializeObject<HttpBootstrapJsonProtocol.SeedNodes>(body);
-                            return (Status) new Status.Success(nodes);
+                            return (object) new Status.Success(nodes);
                         }
-
                         return new Status.Failure(new IllegalStateException(
-                            $"Expected response '200 OK' but found {response.StatusCode}. Body: '{body}'"));
-                    }, TaskContinuationOptions.ExecuteSynchronously).PipeTo(self);
-                }
-                catch (TaskCanceledException)
-                {
-                    self.Tell(new Status.Failure(new TimeoutException($"Probing timeout of [{_baseUri}]")));
-                }
-                catch (Exception e)
-                {
-                    self.Tell(new Status.Failure(e));
-                }
+                            $"Expected response '200 OK' but found [{(int) response.StatusCode} {response.StatusCode}]. Body: '{body}'"));
+                    } 
+                    
+                    if (task.IsCanceled)
+                    {
+                        return new Status.Failure(new TimeoutException($"Probing timeout of [{_baseUri}]"));
+                    }
+                    
+                    foreach (var e in task.Exception.Flatten().InnerExceptions)
+                    {
+                        switch (e)
+                        {
+                            case TaskCanceledException _:
+                                return new Status.Failure(new TimeoutException($"Probing timeout of [{_baseUri}]"));
+                            case SocketException se:
+                                if (se.SocketErrorCode == SocketError.ConnectionRefused)
+                                {
+                                    return new Status.Failure(new SocketException((int) SocketError.ConnectionRefused));
+                                }
+                                break;
+                        }
+                    }
+                    return new Status.Failure(task.Exception);
+                    
+                }, TaskContinuationOptions.ExecuteSynchronously).PipeTo(self);
             });
 
             Receive<Status.Failure>(fail =>
