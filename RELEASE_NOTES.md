@@ -1,3 +1,6 @@
+#### 0.2.1-beta1 August 5 2021 ####
+* Fix [compatibility for Akka.Discovery.Config](https://github.com/akkadotnet/Akka.Management/pull/20)
+
 #### 0.2.0-beta1 August 5 2021 ####
 * Added support for [Akka.Management and Akka.Management.Cluster.Bootstrap](https://github.com/akkadotnet/Akka.Management/pull/13)
 
