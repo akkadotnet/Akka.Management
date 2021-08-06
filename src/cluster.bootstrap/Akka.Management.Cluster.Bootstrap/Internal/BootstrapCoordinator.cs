@@ -378,7 +378,9 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             IEnumerable<ResolvedTarget> contactPoints,
             string selfContactPointScheme)
         {
-            var newObservation = new ServiceContactsObservation(DateTimeOffset.Now, contactPoints.ToImmutableHashSet());
+            var newObservation = new ServiceContactsObservation(
+                DateTimeOffset.Now, 
+                contactPoints.Where(t => t.Host != null || t.Address != null).ToImmutableHashSet());
             _lastContactObservation = _lastContactObservation != null
                 ? _lastContactObservation.SameOrChanged(newObservation)
                 : newObservation;
@@ -395,8 +397,14 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
 
         protected virtual IActorRef EnsureProbing(string selfContactPointScheme, ResolvedTarget contactPoint)
         {
+            if (contactPoint.Address is null && contactPoint.Host is null)
+            {
+                _log.Warning("Contact point does not have address or host defined. Skipping.");
+                return null;
+            }
+            
             var targetPort = contactPoint.Port ?? _settings.ContactPoint.FallbackPort;
-            var rawBaseUri = $"{selfContactPointScheme}://{contactPoint.Address}:{targetPort}";
+            var rawBaseUri = $"{selfContactPointScheme}://{contactPoint.Address?.ToString() ?? contactPoint.Host}:{targetPort}";
             if (!string.IsNullOrEmpty(_settings.ManagementBasePath))
                 rawBaseUri += $"/{_settings.ManagementBasePath}";
             var baseUri = new Uri(rawBaseUri);
