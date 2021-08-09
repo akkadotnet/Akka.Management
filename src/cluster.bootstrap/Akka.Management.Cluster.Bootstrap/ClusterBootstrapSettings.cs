@@ -17,7 +17,7 @@ namespace Akka.Management.Cluster.Bootstrap
 
                 ServiceName = discoveryConfig.GetString("service-name");
                 if(string.IsNullOrEmpty(ServiceName) || ServiceName == "<service-name>")
-                    ServiceName = Environment.GetEnvironmentVariable("AKKA_CLUSTER_BOOTSTRAP_SERVICE_NAME");
+                    ServiceName = Environment.GetEnvironmentVariable("AKKA__CLUSTER__BOOTSTRAP__SERVICE_NAME");
 
                 ServiceNamespace = discoveryConfig.GetString("service-namespace");
                 if (string.IsNullOrEmpty(ServiceNamespace) || ServiceNamespace == "<service-namespace>")
