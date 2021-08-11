@@ -39,13 +39,13 @@ The following configuration is required, more details for each and additional co
 - `akka.management.cluster.bootstrap.contact-point-discovery.service-name`: a unique name in the deployment environment for this 
   cluster instance which is used to lookup peers in service discovery. If unset, it will be derived from the ActorSystem name.
 - `akka.management.cluster.bootstrap.contact-point-discovery.discovery-method`: the intended service discovery mechanism 
-  (from what choices Akka Discovery provides). If unset, falls back to the system-wide default from akka.discovery.method.
+  (from what choices [Akka Discovery](https://getakka.net/articles/discovery/index.html) provides). If unset, falls back to the system-wide default from akka.discovery.method.
 
 ## How It Works
 
 - Each node exposes an HTTP endpoint `/bootstrap/seed-nodes`. This is provided by Akka.Management.Cluster.Bootstrap and 
   exposed automatically by starting Akka.Management.
-  - `/bootstrap/seed-nodes` will query its internal cluster state and returns a list of members that are either in the up, weakly up, 
+- `/bootstrap/seed-nodes` will query its internal cluster state and returns a list of members that are either in the up, weakly up, 
     or joining state
 - During bootstrap each node queries service discovery repeatedly to get the initial contact points until at least the number 
   of contact points (and recommended exactly equal) as defined in contact-point-discovery.required-contact-point-nr has been found.

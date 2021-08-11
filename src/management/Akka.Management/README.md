@@ -39,7 +39,7 @@ the HTTP server serving the Management routes.
 
 You can do so by calling Stop() on AkkaManagement. This method return a Task to inform when the server has been stopped.
 
-```
+```C#
 val management = AkkaManagement(system)
 await management.start()
 //...

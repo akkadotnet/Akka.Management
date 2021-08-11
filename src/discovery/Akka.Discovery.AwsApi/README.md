@@ -78,10 +78,36 @@ akka.management.http.routes = {
 ```
 
 You then start the cluster bootstrapping process by calling:
-```
+```C#
 await AkkaManagement.Get(system).Start();
 await ClusterBootstrap.Get(system).Start();
 ```
+
+A more complete example:
+```C#
+var config = ConfigurationFactory
+    .ParseString(File.ReadAllText("application.conf"))
+    .WithFallback(ClusterBootstrap.DefaultConfiguration())
+    .WithFallback(AkkaManagementProvider.DefaultConfiguration());
+
+var system = ActorSystem.Create("my-system", config);
+var log = Logging.GetLogger(system, this);
+
+await AkkaManagement.Get(system).Start();
+await ClusterBootstrap.Get(system).Start();
+
+var cluster = Cluster.Get(system);
+cluster.RegisterOnMemberUp(() => {
+  var upMembers = cluster.State.Members
+      .Where(m => m.Status == MemberStatus.Up)
+      .Select(m => m.Address.ToString());
+
+  log.Info($"Current up members: [{string.Join(", ", upMembers)}]")
+});
+```
+
+> [!NOTE]
+> In order for for EC2 Discovery to work, you also need open its port on your EC2 instances (5885 by default)
 
 ## Configuration
 ### EC2 Client Configuration
