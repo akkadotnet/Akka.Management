@@ -1,3 +1,6 @@
+#### 0.2.1-beta2 August 12 2021 ####
+* Add [documentation](https://github.com/akkadotnet/Akka.Management/pull/25)
+
 #### 0.2.1-beta1 August 5 2021 ####
 * Fix [compatibility for Akka.Discovery.Config](https://github.com/akkadotnet/Akka.Management/pull/20)
 
