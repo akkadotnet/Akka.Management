@@ -1,7 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>$(LibraryFramework);net5.0</TargetFrameworks>
+        <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+        <Description>Cluster bootstrap module for Akka.NET</Description>
+        <PackageTags>$(AkkaPackageTags)</PackageTags>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>

@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>$(LibraryFramework);net5.0</TargetFrameworks>
-        <Description>Remote actor support for Akka.NET</Description>
+        <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+        <Description>Akka.NET discovery module for AWS</Description>
         <PackageTags>$(AkkaPackageTags);AWS;EC2;Amazon Web Services;EC2;</PackageTags>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>

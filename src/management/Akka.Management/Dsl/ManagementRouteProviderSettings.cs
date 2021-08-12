@@ -5,7 +5,7 @@ namespace Akka.Management
 {
     /// <summary>
     /// Settings object used to pass through information about the environment the routes will be running in,
-    /// from the component starting the actual HTTP server, to the <see cref="ManagementRouteProvider"/>.
+    /// from the component starting the actual HTTP server, to the <see cref="IManagementRouteProvider"/>.
     /// 
     /// Not for user extension.
     /// </summary>
