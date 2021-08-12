@@ -74,7 +74,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                 var nodes = JsonConvert.DeserializeObject<SeedNodes>(response.Response.Entity.DataBytes.ToString());
                 nodes.Nodes.IsEmpty.Should().BeFalse();
                 nodes.Nodes.Select(n => n.Node).Should().Contain(cluster.SelfAddress);
-            }, TimeSpan.FromSeconds(6));
+            });
         }
     }
 }
