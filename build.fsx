@@ -68,12 +68,37 @@ Target "AssemblyInfo" (fun _ ->
 
 Target "Build" (fun _ ->          
     let additionalArgs = if versionSuffix.Length > 0 then [sprintf "/p:VersionSuffix=%s" versionSuffix] else []
-    DotNetCli.Build
-        (fun p -> 
-            { p with
-                Project = solutionFile
-                Configuration = configuration
-                AdditionalArgs = additionalArgs }) // "Rebuild"  
+    let projects = !! "./src/**/*.*sproj"
+                   -- "./src/**/*.Tests.*sproj"
+    let testProjects = !! "./src/**/*.Tests.*sproj"
+        
+    let buildProject proj =
+        DotNetCli.Build
+            (fun p -> 
+                { p with
+                    Project = proj
+                    Configuration = configuration
+                    AdditionalArgs = additionalArgs }) // "Rebuild"
+            
+    projects |> Seq.iter buildProject
+    
+    let buildTestProject proj =
+        let frameworks =
+            match (isWindows) with
+            | true -> [|testNetFrameworkVersion; testNetCoreVersion; testNetVersion|]
+            | _ -> [|testNetCoreVersion; testNetVersion|]
+        let buildTestProjectWithFramework framework =
+            DotNetCli.Build
+                (fun p -> 
+                    { p with
+                        Project = proj
+                        Framework = framework
+                        Configuration = configuration
+                        AdditionalArgs = additionalArgs }) // "Rebuild"
+                
+        frameworks |> Seq.iter buildTestProjectWithFramework
+            
+    testProjects |> Seq.iter buildTestProject
 )
 
 
@@ -97,6 +122,30 @@ module internal ResultHandling =
     let failBuildIfXUnitReportedError errorLevel =
         buildErrorMessage
         >> Option.iter (failBuildWithMessage errorLevel)
+
+Target "RunTests" (fun _ ->
+    if (isWindows) then
+        let projects =
+            match (isWindows) with
+            | true -> !! "./src/**/*.Tests.*sproj"
+            | _ -> !! "./src/**/*.Tests.*sproj" // if you need to filter specs for Linux vs. Windows, do it here
+
+        let runSingleProject project =
+            let arguments =
+                match (hasTeamCity) with
+                | true -> (sprintf "test -c Release --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s --results-directory \"%s\" -- -parallel none -teamcity" testNetFrameworkVersion outputTests)
+                | false -> (sprintf "test -c Release --no-build --logger:trx --logger:\"console;verbosity=normal\" --framework %s --results-directory \"%s\" -- -parallel none" testNetFrameworkVersion outputTests)
+
+            let result = ExecProcess(fun info ->
+                info.FileName <- "dotnet"
+                info.WorkingDirectory <- (Directory.GetParent project).FullName
+                info.Arguments <- arguments) (TimeSpan.FromMinutes 30.0)
+
+            ResultHandling.failBuildIfXUnitReportedError TestRunnerErrorLevel.Error result
+
+        CreateDir outputTests
+        projects |> Seq.iter (runSingleProject)
+)
 
 Target "RunTestsNetCore" (fun _ ->
     let projects =
@@ -326,6 +375,7 @@ Target "Nuget" DoNothing
 "Clean" ==> "AssemblyInfo" ==> "Build" ==> "BuildRelease"
 
 // tests dependencies
+"Build" ==> "RunTests"
 "Build" ==> "RunTestsNetCore"
 "Build" ==> "RunTestsNet"
 "Build" ==> "NBench"
@@ -339,6 +389,7 @@ Target "Nuget" DoNothing
 
 // all
 "BuildRelease" ==> "All"
+"RunTests" ==> "All"
 "RunTestsNetCore" ==> "All"
 "RunTestsNet" ==> "All"
 "NBench" ==> "All"

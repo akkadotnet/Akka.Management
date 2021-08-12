@@ -28,6 +28,7 @@
     <AkkaPackageTags>akka;actors;actor model;Akka;concurrency;service discovery;cluster;clustering;</AkkaPackageTags>
     <LibraryFramework>netstandard2.0</LibraryFramework>
     <NetFramework>net5.0</NetFramework>
+    <TestsNetFramework>net471</TestsNetFramework>
     <TestsNetCoreFramework>netcoreapp3.1</TestsNetCoreFramework>
     <TestsNet>net5.0</TestsNet>
     <XunitVersion>2.4.1</XunitVersion>
