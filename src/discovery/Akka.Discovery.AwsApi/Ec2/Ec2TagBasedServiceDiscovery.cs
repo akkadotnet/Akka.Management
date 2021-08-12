@@ -143,7 +143,6 @@ namespace Akka.Discovery.AwsApi.Ec2
             var resolvedTargets = new List<ResolvedTarget>();
             foreach (var ip in ips)
             {
-                ResolvedTarget resolvedTarget; 
                 if (_preDefinedPorts.Count == 0)
                 {
                     resolvedTargets.Add(new ResolvedTarget(

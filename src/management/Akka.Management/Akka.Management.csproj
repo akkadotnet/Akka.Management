@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>$(LibraryFramework)</TargetFramework>
+    <TargetFrameworks>$(LibraryFramework);net5.0</TargetFrameworks>
     <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 

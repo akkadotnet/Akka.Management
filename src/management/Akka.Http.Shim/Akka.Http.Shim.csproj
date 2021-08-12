@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>$(LibraryFramework)</TargetFramework>
+    <TargetFrameworks>$(LibraryFramework);net5.0</TargetFrameworks>
     <RootNamespace>Akka.Http</RootNamespace>
     <LangVersion>8.0</LangVersion>
   </PropertyGroup>
@@ -16,7 +16,8 @@
 
   <ItemGroup>
     <PackageReference Include="Akka" Version="$(AkkaVersion)" />
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.2.0" />
+    <PackageReference Condition="'$(TargetFramework)' == '$(LibraryFramework)'" Include="Microsoft.AspNetCore" Version="2.2.0" />
+    <FrameworkReference Condition="'$(TargetFramework)' == 'net5.0'" Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

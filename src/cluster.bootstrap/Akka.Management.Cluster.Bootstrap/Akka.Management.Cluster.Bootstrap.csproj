@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>$(LibraryFramework)</TargetFramework>
+        <TargetFrameworks>$(LibraryFramework);net5.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>
