@@ -66,37 +66,79 @@ akka.discovery {
 }
 ```
 
+## Using Discovery Together with Akka.Management and Cluster.Bootstrap
+All discovery plugins are designed to work with Cluster.Bootstrap to provide an automated way to form a cluster that is not based
+on hard wired seeds configuration. Some HOCON configuration is needed to make discovery work with Cluster.Bootstrap:
+
+```
+akka.discovery.method = aws-api-ec2-tag-based
+akka.management.http.routes = {
+    cluster-bootstrap = "Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management.Cluster.Bootstrap"
+}
+```
+
+You then start the cluster bootstrapping process by calling:
+```C#
+await AkkaManagement.Get(system).Start();
+await ClusterBootstrap.Get(system).Start();
+```
+
+A more complete example:
+```C#
+var config = ConfigurationFactory
+    .ParseString(File.ReadAllText("application.conf"))
+    .WithFallback(ClusterBootstrap.DefaultConfiguration())
+    .WithFallback(AkkaManagementProvider.DefaultConfiguration());
+
+var system = ActorSystem.Create("my-system", config);
+var log = Logging.GetLogger(system, this);
+
+await AkkaManagement.Get(system).Start();
+await ClusterBootstrap.Get(system).Start();
+
+var cluster = Cluster.Get(system);
+cluster.RegisterOnMemberUp(() => {
+  var upMembers = cluster.State.Members
+      .Where(m => m.Status == MemberStatus.Up)
+      .Select(m => m.Address.ToString());
+
+  log.Info($"Current up members: [{string.Join(", ", upMembers)}]")
+});
+```
+
+> [!NOTE]
+> In order for for EC2 Discovery to work, you also need open its port on your EC2 instances (5885 by default)
+
 ## Configuration
-### Client configuration
+### EC2 Client Configuration
 You can extend the `Amazon.EC2.AmazonEC2Config` class to provide your own configuration
 implementation for the internal EC2 client; the extended class can have either an empty
 constructor or a constructor that takes an ExtendedActorSystem as a parameter. 
 You then provide the fully qualified class name of your implementation in the 
 `akka.discovery.aws-api-ec2-tag-based.client-config` property inside the HOCON configuration.
 
-### Client credentials configuration
+### EC2 Client Credentials Configuration
 Client credentials are provided by the `Akka.Discovery.AwsApi.Ec2.Ec2CredentialProvider` abstract
 class. There are two implementation provided out of the box, `AnonymousEc2CredentialProvider` and
 `Ec2InstanceMetadataCredentialProvider`.
 
-#### AnonymousEc2CredentialProvider
+#### Anonymous Ec2 Credential Provider
 `AnonymousEc2CredentialProvider` is a very simple credential provider and will return
 an `AnonymousAWSCredentials`.
 
-#### Ec2InstanceMetadataCredentialProvider
+#### Ec2 Instance Metadata Service Credential Provider
 `Ec2InstanceMetadataCredentialProvider` will try its best to retrieve the correct session
-credential provider using the AWS EC2 instance metadata API. It will return an `AnonymousAWSCredential`
+credential provider using the AWS EC2 Instance Metadata Service (IMDS) API. It will return an `AnonymousAWSCredential`
 if it fails to obtain a credential from the metadata API service.
 
-> __NOTE__
-> 
+> [!WARNING]
 > This method will only work if: 
 > - The discovery service is running inside an EC2 instance 
 > - The EC2 instance metadata service is __NOT__ disabled (AWS_EC2_METADATA_DISABLED environment variable is __NOT__ set)
 > - The IAM role of the instance is properly set, and
 > - The metadata options of the instance is set to use the IMDSv2 metadata service.
 
-#### Custom credential provider
+#### Custom Credential Provider
 To create a custom credential provider, you can extend the `Akka.Discovery.AwsApi.Ec2.Ec2CredentialProvider`
 abstract class. You then create a custom configuration section that points to this class inside the HOCON
 configuration file.
