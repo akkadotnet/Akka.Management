@@ -69,8 +69,17 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             
             var requestContext = new RequestContext(HttpRequest.Create(context.Request), Sys);
             var response = (RouteResult.Complete) await _httpBootstrap.Routes.Concat()(requestContext);
-            var nodes = JsonConvert.DeserializeObject<SeedNodes>(response.Response.Entity.DataBytes.ToString());
-            nodes.Nodes.Select(n => n.Node).Contains(cluster.SelfAddress).Should().BeTrue();
+
+            var responseString = response.Response.Entity.DataBytes.ToString();
+            var nodes = JsonConvert.DeserializeObject<SeedNodes>(responseString);
+            
+            var seedNodes = nodes.Nodes.Select(n => n.Node).ToList();
+            seedNodes.Contains(cluster.SelfAddress).Should()
+                .BeTrue(
+                    "Seed nodes should contain self address but it does not. Self address: [{0}], seed nodes: [{1}], response string: [{2}]",
+                    cluster.SelfAddress,
+                    string.Join(", ", seedNodes),
+                    responseString);
         }
     }
 }
