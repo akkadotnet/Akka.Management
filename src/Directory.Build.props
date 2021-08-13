@@ -33,7 +33,7 @@
     <XunitVersion>2.4.1</XunitVersion>
     <XUnitRunnerVersion>2.4.3</XUnitRunnerVersion>
     <CoverletVersion>1.3.0</CoverletVersion>
-    <FluentAssertionVersion>5.10.3</FluentAssertionVersion>
+    <FluentAssertionVersion>6.0.0</FluentAssertionVersion>
     <TestSdkVersion>16.11.0</TestSdkVersion>
     <AkkaVersion>1.4.23</AkkaVersion>
   </PropertyGroup>
