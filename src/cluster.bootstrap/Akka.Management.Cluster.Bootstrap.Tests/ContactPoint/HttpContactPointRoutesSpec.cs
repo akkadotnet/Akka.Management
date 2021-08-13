@@ -49,7 +49,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         }
 
         [Fact(DisplayName = "Http Bootstrap routes should include seed nodes when part of a cluster")]
-        public void IncludeSeedsWhenPartOfCluster()
+        public async Task IncludeSeedsWhenPartOfCluster()
         {
             var cluster = Akka.Cluster.Cluster.Get(Sys);
             cluster.Join(cluster.SelfAddress);
@@ -63,18 +63,15 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             var up = p.ExpectMsg<ClusterEvent.MemberUp>();
             up.Member.Should().Be(cluster.SelfMember);
 
-            AwaitAssert(async () =>
-            {
-                var context = new DefaultHttpContext();
-                context.Request.Method = HttpMethods.Get;
-                context.Request.Path = ClusterBootstrapRequests.BootstrapSeedNodes("");
+            var context = new DefaultHttpContext();
+            context.Request.Method = HttpMethods.Get;
+            context.Request.Path = ClusterBootstrapRequests.BootstrapSeedNodes("");
             
-                var requestContext = new RequestContext(HttpRequest.Create(context.Request), Sys);
-                var response = (RouteResult.Complete) await _httpBootstrap.Routes.Concat()(requestContext);
-                var nodes = JsonConvert.DeserializeObject<SeedNodes>(response.Response.Entity.DataBytes.ToString());
-                nodes.Nodes.IsEmpty.Should().BeFalse();
-                nodes.Nodes.Select(n => n.Node).Should().Contain(cluster.SelfAddress);
-            });
+            var requestContext = new RequestContext(HttpRequest.Create(context.Request), Sys);
+            var response = (RouteResult.Complete) await _httpBootstrap.Routes.Concat()(requestContext);
+            var nodes = JsonConvert.DeserializeObject<SeedNodes>(response.Response.Entity.DataBytes.ToString());
+            nodes.Nodes.IsEmpty.Should().BeFalse();
+            nodes.Nodes.Select(n => n.Node).Should().Contain(cluster.SelfAddress);
         }
     }
 }
