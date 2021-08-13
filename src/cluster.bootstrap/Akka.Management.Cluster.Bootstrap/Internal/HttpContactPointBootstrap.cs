@@ -57,7 +57,6 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         private readonly Akka.Cluster.Cluster _cluster;
         private readonly TimeSpan _probeInterval;
         private readonly string _probeRequest;
-        private readonly TimeSpan _replyTimeout;
         
         private DateTimeOffset _probingKeepFailingDeadline;
 
