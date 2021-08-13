@@ -34,7 +34,7 @@
     <XUnitRunnerVersion>2.4.3</XUnitRunnerVersion>
     <CoverletVersion>1.3.0</CoverletVersion>
     <FluentAssertionVersion>5.10.3</FluentAssertionVersion>
-    <TestSdkVersion>16.8.0</TestSdkVersion>
+    <TestSdkVersion>16.11.0</TestSdkVersion>
     <AkkaVersion>1.4.23</AkkaVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
