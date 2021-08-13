@@ -277,7 +277,7 @@ namespace Akka.Management.Tests
         }
         
         [Fact]
-        public async Task HealthCheckShouldProvideUsefulErrorIfUserCtorIsInvalid()
+        public void HealthCheckShouldProvideUsefulErrorIfUserCtorIsInvalid()
         {
             var o = new object();
             o.Invoking(_ =>
@@ -291,7 +291,7 @@ namespace Akka.Management.Tests
         }
 
         [Fact]
-        public async Task HealthCheckShouldProvideUsefulErrorIfInvalidType()
+        public void HealthCheckShouldProvideUsefulErrorIfInvalidType()
         {
             var o = new object();
             o.Invoking(_ =>
@@ -305,7 +305,7 @@ namespace Akka.Management.Tests
         }
 
         [Fact]
-        public async Task HealthCheckShouldProvideUsefulErrorIfClassNotFound()
+        public void HealthCheckShouldProvideUsefulErrorIfClassNotFound()
         {
             var o = new object();
             o.Invoking(_ =>
@@ -319,7 +319,7 @@ namespace Akka.Management.Tests
         }
         
         [Fact]
-        public async Task HealthCheckShouldProvideUsefulErrorIfCtorThrows()
+        public void HealthCheckShouldProvideUsefulErrorIfCtorThrows()
         {
             var o = new object();
             var inner = o.Invoking(_ =>
