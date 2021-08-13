@@ -70,8 +70,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             var requestContext = new RequestContext(HttpRequest.Create(context.Request), Sys);
             var response = (RouteResult.Complete) await _httpBootstrap.Routes.Concat()(requestContext);
             var nodes = JsonConvert.DeserializeObject<SeedNodes>(response.Response.Entity.DataBytes.ToString());
-            nodes.Nodes.IsEmpty.Should().BeFalse();
-            nodes.Nodes.Select(n => n.Node).Should().Contain(cluster.SelfAddress);
+            nodes.Nodes.Select(n => n.Node).Contains(cluster.SelfAddress).Should().BeTrue();
         }
     }
 }
