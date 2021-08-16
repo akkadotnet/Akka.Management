@@ -48,7 +48,9 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             response.Response.Entity.DataBytes.ToString().Should().Contain("\"Nodes\":[]");
         }
 
-        [Fact(DisplayName = "Http Bootstrap routes should include seed nodes when part of a cluster")]
+        [Fact( 
+            Skip = "Extremely racy in CI/CD",
+            DisplayName = "Http Bootstrap routes should include seed nodes when part of a cluster")]
         public async Task IncludeSeedsWhenPartOfCluster()
         {
             var cluster = Akka.Cluster.Cluster.Get(Sys);
@@ -69,8 +71,17 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             
             var requestContext = new RequestContext(HttpRequest.Create(context.Request), Sys);
             var response = (RouteResult.Complete) await _httpBootstrap.Routes.Concat()(requestContext);
-            var nodes = JsonConvert.DeserializeObject<SeedNodes>(response.Response.Entity.DataBytes.ToString());
-            nodes.Nodes.Select(n => n.Node).Contains(cluster.SelfAddress).Should().BeTrue();
+
+            var responseString = response.Response.Entity.DataBytes.ToString();
+            var nodes = JsonConvert.DeserializeObject<SeedNodes>(responseString);
+            
+            var seedNodes = nodes.Nodes.Select(n => n.Node).ToList();
+            seedNodes.Contains(cluster.SelfAddress).Should()
+                .BeTrue(
+                    "Seed nodes should contain self address but it does not. Self address: [{0}], seed nodes: [{1}], response string: [{2}]",
+                    cluster.SelfAddress,
+                    string.Join(", ", seedNodes),
+                    responseString);
         }
     }
 }
