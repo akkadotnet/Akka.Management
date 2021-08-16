@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>$(LibraryFramework)</TargetFramework>
-        <Description>Remote actor support for Akka.NET</Description>
+        <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+        <Description>Akka.NET discovery module for AWS</Description>
         <PackageTags>$(AkkaPackageTags);AWS;EC2;Amazon Web Services;EC2;</PackageTags>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="Akka.Discovery" Version="1.4.21-beta1" />
-      <PackageReference Include="AWSSDK.EC2" Version="3.7.16.2" />
-      <PackageReference Include="AWSSDK.ECS" Version="3.7.2.13" />
+      <PackageReference Include="AWSSDK.EC2" Version="3.7.20.5" />
+      <PackageReference Include="AWSSDK.ECS" Version="3.7.2.27" />
     </ItemGroup>
 
 </Project>

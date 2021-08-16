@@ -382,7 +382,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         }
 
         [Fact(DisplayName = "SelfAwareJoinDecider should return true if a target matches selfContactPoint")]
-        public async Task ReturnTrueIfATargetMatchesSelfContactPoint()
+        public void ReturnTrueIfATargetMatchesSelfContactPoint()
         {
             ClusterBootstrap.Get(System).SetSelfContactPoint(new Uri($"http://[240b:c0e0:202:5e2b:b424:2:0:450]:{ManagementPort}/test"));
             var decider = new LowestAddressJoinDecider(System, _settings);
@@ -395,7 +395,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         }
         
         [Fact(DisplayName = "SelfAwareJoinDecider should be able to join self if all conditions met")]
-        public async Task BeAbleToJoinSelfIfAllConditionsMet()
+        public void BeAbleToJoinSelfIfAllConditionsMet()
         {
             ClusterBootstrap.Get(System).SetSelfContactPoint(new Uri($"http://[240b:c0e0:202:5e2b:b424:2:0:450]:{ManagementPort}/test"));
             var decider = new LowestAddressJoinDecider(System, _settings);
@@ -460,7 +460,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         }
 
         [Fact(DisplayName = "SelfAwareJoinDecider (IPv6) should return true if a target matches selfContactPoint")]
-        public async Task ReturnTrueIfATargetMatchesSelfContactPoint()
+        public void ReturnTrueIfATargetMatchesSelfContactPoint()
         {
             ClusterBootstrap.Get(System).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
             var decider = new LowestAddressJoinDecider(System, _settings);
@@ -473,7 +473,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         }
         
         [Fact(DisplayName = "SelfAwareJoinDecider (IPv6) should be able to join self if all conditions met")]
-        public async Task BeAbleToJoinSelfIfAllConditionsMet()
+        public void BeAbleToJoinSelfIfAllConditionsMet()
         {
             ClusterBootstrap.Get(System).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
             var decider = new LowestAddressJoinDecider(System, _settings);
