@@ -67,7 +67,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.Internal
                 targetsToCheck.Count.Should().BeGreaterOrEqualTo(2);
                 targetsToCheck.Select(t => t.Host).Should().Contain("host1");
                 targetsToCheck.Select(t => t.Host).Should().Contain("host2");
-                targetsToCheck.Select(t => t.Port).ToHashSet().Should().BeEquivalentTo(new HashSet<int> {8558});
+                targetsToCheck.Select(t => t.Port).ToImmutableHashSet().Should().BeEquivalentTo(new HashSet<int> {8558});
             });
         }
 
@@ -97,7 +97,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.Internal
                 targetsToCheck.Count.Should().BeGreaterOrEqualTo(2);
                 targetsToCheck.Select(t => t.Host).Should().Contain("host1");
                 targetsToCheck.Select(t => t.Host).Should().Contain("host2");
-                targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToHashSet().Count.Should().Be(0);
+                targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count.Should().Be(0);
             });
         }
         

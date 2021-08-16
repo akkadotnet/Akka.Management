@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>$(TestsNetCoreFramework)</TargetFramework>
+        <TargetFrameworks>$(TestsNetCoreFramework);$(TestsNet)</TargetFrameworks>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Akka.TestKit.Xunit2" Version="1.4.21" />
+        <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
         <PackageReference Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
         <PackageReference Include="xunit" Version="$(XunitVersion)" />

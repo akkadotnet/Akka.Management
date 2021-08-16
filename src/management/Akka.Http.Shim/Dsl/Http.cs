@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Threading.Tasks;
 using Akka.Actor;
@@ -6,11 +7,16 @@ using Akka.Configuration;
 using Akka.Http.Dsl.Model;
 using Akka.Http.Dsl.Server;
 using Akka.Http.Dsl.Settings;
-using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+#if NET5_0
+using Microsoft.Extensions.Hosting;
+#else
+using Microsoft.AspNetCore;
+using Microsoft.Extensions.DependencyInjection;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+#endif
 
 namespace Akka.Http.Dsl
 {
@@ -51,7 +57,31 @@ namespace Akka.Http.Dsl
             var effectiveSetting = settings ?? _settings;
             var effectiveHostname = hostname ?? "localhost";
             var effectivePort = port ?? effectiveSetting.DefaultHttpPort;
-            
+
+#if NET5_0
+            var host = Host.CreateDefaultBuilder()
+                .ConfigureLogging((context, builder) =>
+                {
+                    builder.AddFilter("Microsoft", LogLevel.Error);
+                })
+                .ConfigureWebHostDefaults(builder =>
+                {
+                    builder
+                        .UseKestrel()
+                        .SuppressStatusMessages(true)
+                        .Configure(app =>
+                        {
+                            // Uncomment for server debugging
+                            app.UseDeveloperExceptionPage();
+
+                            // Actual middleware that handles Akka.Http routing and adapts HttpRequest and HttpResponse
+                            // between Akka.Http and ASP.NET
+                            app.UseAkkaRouting(_system, route, effectiveSetting);
+                        })
+                        .UseUrls($"http://{effectiveHostname}:{effectivePort}");
+                })
+                .Build();
+#else
             var host = WebHost.CreateDefaultBuilder()
                 .SuppressStatusMessages(true)
                 .ConfigureServices(services =>
@@ -61,7 +91,7 @@ namespace Akka.Http.Dsl
                 .Configure(app =>
                 {
                     // Uncomment for server debugging
-                    //app.UseDeveloperExceptionPage();
+                    app.UseDeveloperExceptionPage();
 
                     // Actual middleware that handles Akka.Http routing and adapts HttpRequest and HttpResponse
                     // between Akka.Http and ASP.NET
@@ -69,17 +99,20 @@ namespace Akka.Http.Dsl
                 })
                 .UseUrls($"http://{effectiveHostname}:{effectivePort}")
                 .Build();
+#endif
 
             // Start listening...
             await host.StartAsync();
 
-            return new ServerBinding(
+            var binding = new ServerBinding(
                 new DnsEndPoint(effectiveHostname, effectivePort),
                 async timeout =>
                 {
                     await host.StopAsync(timeout);
                     return HttpServerTerminated.Instance;
                 });
+            binding.AddToCoordinatedShutdown(TimeSpan.FromSeconds(5), _system);
+            return binding;
         }
     }
 

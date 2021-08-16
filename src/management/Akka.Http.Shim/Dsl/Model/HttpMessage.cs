@@ -66,7 +66,11 @@ namespace Akka.Http.Dsl.Model
         {
             _request = request;
             var input = new byte[Convert.ToInt32(request.ContentLength)];
+#if NET5_0
+            request.Body.ReadAsync(input, 0, input.Length).Wait();
+#else
             request.Body.Read(input, 0, input.Length);
+#endif
 
             Entity = new RequestEntity(request.ContentType, ByteString.FromBytes(input));
         }

@@ -45,7 +45,7 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 // config = new DockerClientConfiguration(new Uri("npipe://./pipe/docker_engine"));
-                // LocalStack is linux only, we're skipping all tests if we're running in widows.
+                // LocalStack is linux only, we're skipping all tests if we're running in windows.
                 IsWindows = true;
                 return;
             }
@@ -64,8 +64,8 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
 
         public async Task InitializeAsync()
         {
-            if (IsWindows)
-                return;
+            // LocalStack is linux only, we're skipping all tests if we're running in windows.
+            if (IsWindows) return;
             
             var images = await _client.Images.ListImagesAsync(new ImagesListParameters
             {
@@ -137,7 +137,11 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
                 }
                 stopwatch.Stop();
             }
+#if NET471
+            logStream.Dispose();
+#else
             await logStream.DisposeAsync();
+#endif
             if (line != "Ready.")
                 throw new Exception("LocalStack docker image failed to run.");
             

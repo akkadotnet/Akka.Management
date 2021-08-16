@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -15,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Xunit;
 using Xunit.Abstractions;
 using HttpResponse = Akka.Http.Dsl.Model.HttpResponse;
+using static Akka.Http.Dsl.Server.RouteResult;
 
 namespace Akka.Http.Shim.Tests
 {
@@ -65,25 +64,25 @@ namespace Akka.Http.Shim.Tests
 
         private Route RouteOne()
         {
-            return async context =>
+            return context =>
             {
                 var request = context.Request;
                 if (request.Method != HttpMethods.Get || request.Path != "/test/one")
-                    return null;
+                    return Task.FromResult<IRouteResult>(null);
 
-                return new RouteResult.Complete(HttpResponse.Create());
+                return Task.FromResult<IRouteResult>(new Complete(HttpResponse.Create()));
             };
         }
 
         private Route RouteTwo()
         {
-            return async context =>
+            return context =>
             {
                 var request = context.Request;
                 if (request.Method != HttpMethods.Get || request.Path != "/test/two")
-                    return null;
+                    return Task.FromResult<IRouteResult>(null);
 
-                return new RouteResult.Complete(HttpResponse.Create());
+                return Task.FromResult<IRouteResult>(new Complete(HttpResponse.Create())); 
             };
         }
     }

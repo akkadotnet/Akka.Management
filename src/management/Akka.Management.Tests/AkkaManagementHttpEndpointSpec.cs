@@ -8,16 +8,15 @@ using Akka.Configuration;
 using Akka.Event;
 using Akka.Http.Dsl;
 using Akka.Http.Dsl.Model;
-using Akka.Http.Dsl.Server;
 using Akka.IO;
 using Akka.Management.Cluster.Bootstrap.Tests;
 using Akka.TestKit.Xunit2.Internals;
-using Akka.Util;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Xunit;
 using Xunit.Abstractions;
 using HttpResponse = Akka.Http.Dsl.Model.HttpResponse;
+using static Akka.Http.Dsl.Server.RouteResult;
 
 namespace Akka.Management.Tests
 {
@@ -25,13 +24,13 @@ namespace Akka.Management.Tests
     {
         public Route[] Routes(ManagementRouteProviderSettings settings)
         {
-            return new Route[]{async ctx =>
+            return new Route[]{ctx =>
             {
                 if (ctx.Request.Method != HttpMethods.Get || ctx.Request.Path != "/dotnet")
-                    return null;
-                return new RouteResult.Complete(
+                    return Task.FromResult<IRouteResult>(null);
+                return Task.FromResult<IRouteResult>(new Complete(
                     HttpResponse.Create(entity: new ResponseEntity(ContentTypes.TextPlainUtf8,
-                        ByteString.FromString("hello .NET Core"))));
+                        ByteString.FromString("hello .NET Core")))));
             }} ;
         }
     }
@@ -40,13 +39,13 @@ namespace Akka.Management.Tests
     {
         public Route[] Routes(ManagementRouteProviderSettings settings)
         {
-            return new Route[]{async ctx =>
+            return new Route[]{ctx =>
             {
                 if (ctx.Request.Method != HttpMethods.Get || ctx.Request.Path != "/netfx")
-                    return null;
-                return new RouteResult.Complete(
+                    return Task.FromResult<IRouteResult>(null);
+                return Task.FromResult<IRouteResult>(new Complete(
                     HttpResponse.Create(entity: new ResponseEntity(ContentTypes.TextPlainUtf8,
-                        ByteString.FromString("hello .NET Framework"))));
+                        ByteString.FromString("hello .NET Framework")))));
             }};
         }
     }
@@ -103,6 +102,9 @@ namespace Akka.Management.Tests
             };
             
             var response = await client.GetAsync($"http://127.0.0.1:{httpPort}/dotnet");
+
+            _output.WriteLine(await response.Content.ReadAsStringAsync());
+            
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             (await response.Content.ReadAsStringAsync()).Should().Be("hello .NET Core");
             
@@ -131,7 +133,7 @@ namespace Akka.Management.Tests
         public static async Task WithCancellation(this Task task, CancellationToken token)
         {
             var tcs = new TaskCompletionSource<bool>();
-            await using (token.Register(() => tcs.TrySetResult(true)))
+            using (token.Register(() => tcs.TrySetResult(true)))
             {
                 if (task != await Task.WhenAny(task, tcs.Task))
                 {
