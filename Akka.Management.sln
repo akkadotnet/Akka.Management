@@ -36,6 +36,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.AwsApi.Integ
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Management.Cluster.Bootstrap.Tests", "src\cluster.bootstrap\Akka.Management.Cluster.Bootstrap.Tests\Akka.Management.Cluster.Bootstrap.Tests.csproj", "{5EEC076D-CD09-4093-B473-7BE8D66D698B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StressTest", "src\cluster.bootstrap\examples\StressTest\StressTest.csproj", "{3ADFF0D4-D17F-4850-B021-0A53B09811C0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{24FEBA95-1FC2-4AC2-8386-6AB13AE87056}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -78,6 +82,10 @@ Global
 		{5EEC076D-CD09-4093-B473-7BE8D66D698B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5EEC076D-CD09-4093-B473-7BE8D66D698B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5EEC076D-CD09-4093-B473-7BE8D66D698B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3ADFF0D4-D17F-4850-B021-0A53B09811C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3ADFF0D4-D17F-4850-B021-0A53B09811C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3ADFF0D4-D17F-4850-B021-0A53B09811C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3ADFF0D4-D17F-4850-B021-0A53B09811C0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -92,6 +100,8 @@ Global
 		{1EE92CD1-D24A-48A7-919E-6BAB3357704B} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
 		{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
 		{5EEC076D-CD09-4093-B473-7BE8D66D698B} = {012DD1B7-8531-464D-B3DF-467E3F2AE2CF}
+		{24FEBA95-1FC2-4AC2-8386-6AB13AE87056} = {012DD1B7-8531-464D-B3DF-467E3F2AE2CF}
+		{3ADFF0D4-D17F-4850-B021-0A53B09811C0} = {24FEBA95-1FC2-4AC2-8386-6AB13AE87056}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
