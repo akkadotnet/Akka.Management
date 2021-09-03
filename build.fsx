@@ -232,6 +232,7 @@ Target "CreateNuget" (fun _ ->
     let projects = !! "src/**/*.csproj" 
                    -- "src/**/*Tests.csproj" // Don't publish unit tests
                    -- "src/**/*Tests*.csproj"
+                   -- "src/**/examples/**/*.csproj"
 
     let runSingleProject project =
         DotNetCli.Pack
