@@ -1,3 +1,7 @@
+#### 0.2.1-beta4 September 4 2021 ####
+* [Fix erroneous failing probe messages after cluster formed](https://github.com/akkadotnet/Akka.Management/pull/79)
+* Update all AWSSDK versions
+
 #### 0.2.1-beta3 August 16 2021 ####
 * Add [.NET 5.0 support to Akka.Http.Shim](https://github.com/akkadotnet/Akka.Management/pull/29)
 * Bump [AWSSDK.ECS from 3.7.2.13 to 3.7.2.27](https://github.com/akkadotnet/Akka.Management/pull/32)
