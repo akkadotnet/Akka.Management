@@ -206,6 +206,16 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             StartPeriodicDecisionTimer();
         }
 
+        protected override void PostStop()
+        {
+            Timers.CancelAll();
+            foreach (var child in Context.GetChildren())
+            {
+                child.Tell(PoisonPill.Instance);
+            }
+            base.PostStop();
+        }
+
         private Receive Receive()
         {
             return message =>
@@ -228,7 +238,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             };
         }
 
-        private Receive Bootstrapping(IActorRef replyTo, string selfContactPointScheme)
+        protected virtual Receive Bootstrapping(IActorRef replyTo, string selfContactPointScheme)
         {
             return message =>
             {
@@ -431,8 +441,9 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             }
 
             var child = Context.Child(childActorName);
-            if (!child.Equals(ActorRefs.Nobody))
+            if (!child.IsNobody())
                 return child;
+            
             var props = HttpContactPointBootstrap.Props(_settings, contactPoint, baseUri);
             return Context.ActorOf(props, childActorName);
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -9,25 +10,21 @@ using Akka.Actor;
 using Akka.Cluster;
 using Akka.Configuration;
 using Akka.Discovery;
-using Akka.Event;
-using Akka.TestKit;
-using Akka.TestKit.Xunit2.Internals;
+using Akka.Management;
+using Akka.Management.Cluster.Bootstrap;
 using Akka.Util.Internal;
-using FluentAssertions;
-using Xunit;
-using Xunit.Abstractions;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
+namespace StressTest
 {
-    public class ClusterBootstrapAutostartIntegrationSpec : TestKit.Xunit2.TestKit
+    public class StressTest
     {
-        private const int ClusterSize = 3;
-        private const int ScaledSize = 3;
+        private readonly int _clusterSize;
+        private readonly int _scaledSize;
+        
+        private readonly TimeSpan _timeout = TimeSpan.FromSeconds(5);
         
         private readonly ImmutableDictionary<string, int> _remotingPorts = ImmutableDictionary<string, int>.Empty;
         private readonly ImmutableDictionary<string, int> _contactPointPorts = ImmutableDictionary<string, int>.Empty;
-
-        private readonly ITestOutputHelper _output;
 
         private readonly ImmutableList<string> _ids = ImmutableList<string>.Empty;
         private readonly ImmutableList<ActorSystem> _systems = ImmutableList<ActorSystem>.Empty;
@@ -35,16 +32,17 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         private readonly ImmutableList<Akka.Cluster.Cluster> _clusters = ImmutableList<Akka.Cluster.Cluster>.Empty;
         private readonly int _terminatedSystemCount;
         
-        public ClusterBootstrapAutostartIntegrationSpec(ITestOutputHelper output)
+        public StressTest(int clusterSize, int scaledSize)
         {
-            _output = output;
+            _clusterSize = clusterSize;
+            _scaledSize = scaledSize;
             
-            for (var i = 0; i < ClusterSize; i++)
+            for (var i = 0; i < _clusterSize; i++)
             {
                 _ids = _ids.Add(Guid.NewGuid().ToString()[..8]);
             }
 
-            var sysName = "ClusterBootstrapAutostartIntegrationSpec";
+            var sysName = "StressTest";
             var targets = new List<ServiceDiscovery.ResolvedTarget>();
             foreach (var id in _ids)
             {
@@ -53,8 +51,6 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                 
                 var system = ActorSystem.Create(sysName, Config(id));
                 _systems = _systems.Add(system);
-                var logger = ((ExtendedActorSystem)system).SystemActorOf(Props.Create(() => new TestOutputLogger(_output)), $"log-test-{id}");
-                logger.Tell(new InitializeLogger(system.EventStream));
 
                 var cluster = Akka.Cluster.Cluster.Get(system);
                 _clusters = _clusters.Add(cluster);
@@ -71,8 +67,8 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                 new Lookup(name, "management-auto", "tcp2"),
                 () => Task.FromResult(new ServiceDiscovery.Resolved(name, targets)));
             
-            _terminatedSystemCount = ClusterSize - ScaledSize;
-            _scaledDownSystems = _systems.Take(ScaledSize).ToImmutableList();
+            _terminatedSystemCount = _clusterSize - _scaledSize;
+            _scaledDownSystems = _systems.Take(_scaledSize).ToImmutableList();
         }
         
         private Config Config(string id)
@@ -80,8 +76,8 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             var managementPort = _contactPointPorts[id];
             var remotingPort = _remotingPorts[id];
             
-            _output.WriteLine($"System [{id}]: management port: {managementPort}");
-            _output.WriteLine($"System [{id}]:   remoting port: {remotingPort}");
+            Console.WriteLine($"System [{id}]: management port: {managementPort}");
+            Console.WriteLine($"System [{id}]:   remoting port: {remotingPort}");
 
             return ConfigurationFactory.ParseString($@"
                 akka {{
@@ -91,7 +87,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                     actor.provider = cluster
 
                     # this can be referred to in tests to use the mock discovery implementation
-                    discovery.mock-dns.class = ""Akka.Management.Cluster.Bootstrap.Tests.MockDiscovery, Akka.Management.Cluster.Bootstrap.Tests""
+                    discovery.mock-dns.class = ""StressTest.MockDiscovery, StressTest""
                     
                     remote.dot-netty.tcp.hostname = ""127.0.0.1""
                     remote.dot-netty.tcp.port = {remotingPort}
@@ -112,91 +108,52 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                     }}
                 }}")
                 .WithFallback(ClusterBootstrap.DefaultConfiguration())
-                .WithFallback(AkkaManagementProvider.DefaultConfiguration())
-                .WithFallback(TestKitBase.DefaultConfig);
+                .WithFallback(AkkaManagementProvider.DefaultConfiguration());
         }
 
-        [Fact(DisplayName = "Cluster Bootstrap auto start integration test")]
-        public void StartSpec()
+        public async Task StartTest()
         {
-            _output.WriteLine("=== Starting JoinDiscoveredDns()");
+            Console.WriteLine($"======= Start forming cluster with {_clusterSize} member nodes.");
             JoinDiscoveredDns();
-            _output.WriteLine("=== JoinDiscoveredDns() Success");
-            _output.WriteLine("=== Starting TerminateOnAutostartFail()");
-            TerminateOnAutostartFail();
-            _output.WriteLine("=== TerminateOnAutostartFail() Success");
-            _output.WriteLine("=== Starting ScaleDown()");
+            Console.WriteLine("======= Cluster successfully created.");
+            Console.WriteLine("======= Waiting for 1 minute to see if any unwanted behaviour occurs.");
+            await Task.Delay(TimeSpan.FromMinutes(1));
+            
+            Console.WriteLine($"======= Scaling down cluster to {_scaledSize} member nodes.");
             ScaleDown();
-            _output.WriteLine("=== ScaleDown() Success");
-            _output.WriteLine("=== Starting Terminate()");
+            Console.WriteLine($"======= Cluster scaled down to {_scaledSize} successfully.");
+            Console.WriteLine("======= Waiting for 1 minute to see if any unwanted behaviour occurs.");
+            await Task.Delay(TimeSpan.FromMinutes(1));
+
+            Console.WriteLine("======= Shutting down all nodes.");
             Terminate();
-            _output.WriteLine("=== Terminate() Success");
+            Console.WriteLine("======= All nodes shuts down successfully.");
         }
         
         // join three DNS discovered nodes by forming new cluster (happy path)
         private void JoinDiscoveredDns()
         {
-            var probeList = new List<(TestProbe, IActorRef)>();
-            foreach (var system in _systems)
-            {
-                // grab cluster bootstrap coordinator actor
-                var coordinatorProbe = CreateTestProbe(system);
-                var selection =
-                    system.ActorSelection("akka://ClusterBootstrapAutostartIntegrationSpec/system/bootstrapCoordinator");
-                IActorRef coordinator = null;
-                AwaitAssert(() =>
-                {
-                    selection.Tell(new Identify(null));
-                    var response = ExpectMsg<ActorIdentity>(TimeSpan.FromSeconds(10));
-                    coordinator = response.Subject;
-                    coordinator.Should().NotBeNull();
-                    coordinatorProbe.Watch(coordinator);
-                });
-                probeList.Add((coordinatorProbe, coordinator));
-            }
-
             // All nodes should join
-            var probe = CreateTestProbe(_systems[0]);
             var cluster = _clusters[0];
-            probe.AwaitAssert(() =>
-            {
-                cluster.State.Members.Count.Should().Be(ClusterSize);
-                cluster.State.Members.Count(m => m.Status == MemberStatus.Up).Should().Be(ClusterSize);
-            }, RemainingOrDefault * ClusterSize);
             
-            // cluster bootstrap coordinator should stop after joining
-            foreach (var tuple in probeList)
+            var complete = AwaitCondition(() =>
+                cluster.State.Members.Count == _clusterSize &&
+                    cluster.State.Members.Count(m => m.Status == MemberStatus.Up) == _clusterSize, 
+                _timeout * _clusterSize);
+
+            if(!complete)
             {
-                var (coordinatorProbe, coordinator) = tuple;
-                coordinatorProbe.ExpectTerminated(coordinator);
-                ((RepointableActorRef) coordinator).Children.ToList().Count.Should().Be(0);
+                var count = cluster.State.Members.Count;
+                var upCount = cluster.State.Members.Count(m => m.Status == MemberStatus.Up);
+                throw new Exception(
+                    $"Cluster failed to form after {_timeout * _clusterSize}. " +
+                    $"Cluster members: [{count}/{_clusterSize}]. " +
+                    $"Cluster up members: [{upCount}/{_clusterSize}]");
             }
         }
         
-        // terminate a system when autostart fails
-        private void TerminateOnAutostartFail()
-        {
-            var terminated = false;
-            
-            // failing because we re-use the same port for management here (but not for remoting
-            // as that itself terminates the system on start)
-            var systemA = ActorSystem.Create(
-                "System",
-                ConfigurationFactory.ParseString("akka.remote.dot-netty.tcp.port = 0")
-                    .WithFallback(Config(_ids[0])));
-            
-            systemA.WhenTerminated.ContinueWith(_ => terminated = true);
-            AwaitCondition(() => terminated, TimeSpan.FromSeconds(10));
-        }
-
         private void ScaleDown()
         {
-            if (_terminatedSystemCount == 0)
-            {
-                _output.WriteLine("===== Cluster size is equal to scaled cluster size. Skipping ScaleDown().");
-                return;
-            }
-            
             var counter = new AtomicCounter(0);
             
             _systems
@@ -210,8 +167,10 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                         });
                 });
             
-            AwaitCondition(() => counter.Current == _terminatedSystemCount, RemainingOrDefault * _terminatedSystemCount);
-            Thread.Sleep(TimeSpan.FromSeconds(10));
+            var complete = AwaitCondition(() => counter.Current == _terminatedSystemCount, _timeout * _terminatedSystemCount);
+            if (!complete)
+                throw new Exception($"Cluster failed to scale down from {_clusterSize} to {_scaledSize} nodes " +
+                                    $"within {_timeout * _terminatedSystemCount}");
         }
 
         private void Terminate()
@@ -220,9 +179,25 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             _scaledDownSystems
                 .ForEach(system => 
                     CoordinatedShutdown.Get(system).Run(CoordinatedShutdown.ClrExitReason.Instance)
-                        .ContinueWith(_ => counter.GetAndIncrement())); 
-            
-            AwaitCondition(() => counter.Current == ScaledSize, RemainingOrDefault * ScaledSize);
+                        .ContinueWith(_ => counter.GetAndIncrement()));
+
+            var complete = AwaitCondition(() => counter.Current == _scaledSize, _timeout * _scaledSize);
+            if (!complete)
+                throw new Exception($"Cluster did not shut down gracefully within {_timeout * _scaledSize}");
+        }
+
+        private bool AwaitCondition(Func<bool> condition, TimeSpan timeout)
+        {
+            var deadline = timeout.TotalMilliseconds;
+            var complete = false;
+            var watch = Stopwatch.StartNew();
+            while (!complete && watch.ElapsedMilliseconds < deadline)
+            {
+                complete = condition();
+                Thread.Sleep(100);
+            }
+            watch.Stop();
+            return complete;
         }
     }
 }
