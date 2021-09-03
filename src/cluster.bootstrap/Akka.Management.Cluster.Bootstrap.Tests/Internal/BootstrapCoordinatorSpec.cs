@@ -42,6 +42,74 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.Internal
             _discovery = new MockDiscovery(Sys);
         }
 
+        [Fact(DisplayName = "The bootstrap coordinator, after joining the cluster, should shut down")]
+        public void BootStrapCoordinatorShouldShutDownAfterJoiningCluster()
+        {
+            MockDiscovery.Set(
+                new Lookup(ServiceName, portName: null, protocol: "tcp"),
+                () => Task.FromResult(new Resolved(
+                    ServiceName,
+                    new List<ResolvedTarget>
+                    {
+                        new ResolvedTarget("host1", null, null),
+                        new ResolvedTarget("host1", null, null),
+                        new ResolvedTarget("host2", null, null),
+                        new ResolvedTarget("host2", null, null),
+                    })));
+
+            var targets = new AtomicReference<ImmutableList<ResolvedTarget>>(ImmutableList<ResolvedTarget>.Empty);
+            var coordinator = Sys.ActorOf(Props.Create(() => new TestBootstrapCoordinator(
+                _discovery, _joinDecider, _settings, targets)));
+            Watch(coordinator);
+            
+            coordinator.Tell(new InitiateBootstrapping(_selfUri));
+            AwaitAssert(() =>
+            {
+                var targetsToCheck = targets.Value;
+                targetsToCheck.Count.Should().BeGreaterOrEqualTo(2);
+                targetsToCheck.Select(t => t.Host).Should().Contain("host1");
+                targetsToCheck.Select(t => t.Host).Should().Contain("host2");
+                targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count.Should().Be(0);
+            });
+            
+            coordinator.Tell(new JoinOtherSeedNodes(new [] {Akka.Cluster.Cluster.Get(Sys).SelfAddress}.ToImmutableHashSet()));
+            ExpectTerminated(coordinator); // coordinator should stop itself after joining
+        }
+
+        [Fact(DisplayName = "The bootstrap coordinator, after joining self, should shut down")]
+        public void BootStrapCoordinatorShouldShutDownAfterJoiningSelf()
+        {
+            MockDiscovery.Set(
+                new Lookup(ServiceName, portName: null, protocol: "tcp"),
+                () => Task.FromResult(new Resolved(
+                    ServiceName,
+                    new List<ResolvedTarget>
+                    {
+                        new ResolvedTarget("host1", null, null),
+                        new ResolvedTarget("host1", null, null),
+                        new ResolvedTarget("host2", null, null),
+                        new ResolvedTarget("host2", null, null),
+                    })));
+
+            var targets = new AtomicReference<ImmutableList<ResolvedTarget>>(ImmutableList<ResolvedTarget>.Empty);
+            var coordinator = Sys.ActorOf(Props.Create(() => new TestBootstrapCoordinator(
+                _discovery, _joinDecider, _settings, targets)));
+            Watch(coordinator);
+            
+            coordinator.Tell(new InitiateBootstrapping(_selfUri));
+            AwaitAssert(() =>
+            {
+                var targetsToCheck = targets.Value;
+                targetsToCheck.Count.Should().BeGreaterOrEqualTo(2);
+                targetsToCheck.Select(t => t.Host).Should().Contain("host1");
+                targetsToCheck.Select(t => t.Host).Should().Contain("host2");
+                targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count.Should().Be(0);
+            });
+            
+            coordinator.Tell(JoinSelf.Instance);
+            ExpectTerminated(coordinator); // coordinator should stop itself after joining
+        }
+        
         [Fact(DisplayName = "The bootstrap coordinator, when avoiding named port lookups, should probe only on the Akka Management port")]
         public void BootStrapCoordinatorAvoidNamedPortLookupShouldProbeAkkaManagementPort()
         {

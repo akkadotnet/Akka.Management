@@ -59,6 +59,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         private readonly string _probeRequest;
         
         private DateTimeOffset _probingKeepFailingDeadline;
+        private bool _stopped = false;
 
         private void ResetProbingKeepFailingWithinDeadline()
             => _probingKeepFailingDeadline = DateTimeOffset.Now + _settings.ContactPoint.ProbingFailureTimeout;
@@ -94,47 +95,51 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 var getTask = _http.GetAsync(_probeRequest);
                 getTask.ContinueWith(task =>
                 {
-                    if (task.IsCompleted)
-                    {
-                        var response = task.Result;
-                        var bodyTask = response.Content.ReadAsStringAsync();
-                        bodyTask.Wait();
-                        var body = bodyTask.Result;
-                        if (response.StatusCode == HttpStatusCode.OK)
-                        {
-                            var nodes = JsonConvert.DeserializeObject<HttpBootstrapJsonProtocol.SeedNodes>(body);
-                            return (object) new Status.Success(nodes);
-                        }
-                        return new Status.Failure(new IllegalStateException(
-                            $"Expected response '200 OK' but found [{(int) response.StatusCode} {response.StatusCode}]. Body: '{body}'"));
-                    } 
-                    
+                    if (_stopped) return (Status) new Status.Success(null);
+
                     if (task.IsCanceled)
                     {
                         return new Status.Failure(new TimeoutException($"Probing timeout of [{_baseUri}]"));
                     }
-                    
-                    foreach (var e in task.Exception.Flatten().InnerExceptions)
+
+                    if (task.Exception != null)
                     {
-                        switch (e)
+                        foreach (var e in task.Exception.Flatten().InnerExceptions)
                         {
-                            case TaskCanceledException _:
-                                return new Status.Failure(new TimeoutException($"Probing timeout of [{_baseUri}]"));
-                            case SocketException se:
-                                if (se.SocketErrorCode == SocketError.ConnectionRefused)
-                                {
-                                    return new Status.Failure(new SocketException((int) SocketError.ConnectionRefused));
-                                }
-                                break;
+                            switch (e)
+                            {
+                                case TaskCanceledException _:
+                                    return new Status.Failure(new TimeoutException($"Probing timeout of [{_baseUri}]"));
+                                case SocketException se:
+                                    if (se.SocketErrorCode == SocketError.ConnectionRefused)
+                                    {
+                                        return new Status.Failure(se);
+                                    }
+                                    break;
+                            }
                         }
+                        return new Status.Failure(task.Exception);
                     }
-                    return new Status.Failure(task.Exception);
+                    
+                    var response = task.Result;
+                    var bodyTask = response.Content.ReadAsStringAsync();
+                    bodyTask.Wait();
+                    var body = bodyTask.Result;
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        var nodes = JsonConvert.DeserializeObject<HttpBootstrapJsonProtocol.SeedNodes>(body);
+                        return new Status.Success(nodes);
+                    }
+                    return new Status.Failure(new IllegalStateException(
+                        $"Expected response '200 OK' but found [{(int) response.StatusCode} {response.StatusCode}]. Body: '{body}'"));
                     
                 }, TaskContinuationOptions.ExecuteSynchronously).PipeTo(self);
             });
 
             Receive<Status.Failure>(fail =>
             {
+                if (_stopped) return;
+                
                 var cause = fail.Cause;
                 _log.Warning(cause, "Probing [{0}] failed due to: {1}", _probeRequest, cause.Message);
                 if (_probingKeepFailingDeadline.IsOverdue())
@@ -146,12 +151,15 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 else
                 {
                     // keep probing, hoping the request will eventually succeed
-                    ScheduleNextContactPointProbing();
+                    if(!_stopped)
+                        ScheduleNextContactPointProbing();
                 }
             });
 
             Receive<Status.Success>(success =>
             {
+                if (_stopped) return;
+                
                 var nodes = (HttpBootstrapJsonProtocol.SeedNodes) success.Status;
                 NotifyParentAboutSeedNodes(nodes);
                 ResetProbingKeepFailingWithinDeadline();
@@ -167,6 +175,13 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         protected override void PreStart()
         {
             Self.Tell(ProbeTick.Instance);
+        }
+
+        protected override void PostStop()
+        {
+            _stopped = true;
+            Timers.CancelAll();
+            base.PostStop();
         }
 
         private void NotifyParentAboutSeedNodes(HttpBootstrapJsonProtocol.SeedNodes members)
