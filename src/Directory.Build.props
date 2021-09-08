@@ -35,7 +35,7 @@
     <CoverletVersion>3.1.0</CoverletVersion>
     <FluentAssertionVersion>6.1.0</FluentAssertionVersion>
     <TestSdkVersion>16.11.0</TestSdkVersion>
-    <AkkaVersion>1.4.24</AkkaVersion>
+    <AkkaVersion>1.4.25</AkkaVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
   <ItemGroup>
