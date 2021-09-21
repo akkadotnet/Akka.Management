@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+        <Description>Akka.NET discovery module for AWS</Description>
+        <PackageTags>$(AkkaPackageTags);AWS;EC2;Amazon Web Services;EC2;</PackageTags>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Akka.Discovery" Version="1.4.21-beta1" />
+      <PackageReference Include="AWSSDK.EC2" Version="3.7.27.6" />
+      <PackageReference Include="AWSSDK.ECS" Version="3.7.2.40" />
+    </ItemGroup>
+
+</Project>

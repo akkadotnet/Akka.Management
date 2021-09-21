@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(TestsNetCoreFramework);$(TestsNet)</TargetFrameworks>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
+        <PackageReference Include="Akka.TestKit" Version="$(AkkaVersion)" />
+        <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
+        <PackageReference Include="AWSSDK.CloudFormation" Version="3.7.5.8" />
+        <PackageReference Include="AWSSDK.S3" Version="3.7.2.4" />
+        <PackageReference Include="Docker.DotNet" Version="3.125.5" />
+        <PackageReference Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
+        <PackageReference Include="xunit" Version="$(XunitVersion)" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVersion)">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="coverlet.collector" Version="$(CoverletVersion)">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Xunit.SkippableFact" Version="1.4.13" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Akka.Discovery.AwsApi\Akka.Discovery.AwsApi.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="akka-cluster.json" />
+      <EmbeddedResource Include="akka-cluster.json" />
+    </ItemGroup>
+
+</Project>

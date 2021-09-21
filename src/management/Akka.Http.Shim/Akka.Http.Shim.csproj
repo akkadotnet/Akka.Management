@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+    <PackageTags>$(AkkaPackageTags)</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>Akka.Http</RootNamespace>
+    <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\reference.conf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\reference.conf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Akka" Version="$(AkkaVersion)" />
+    <PackageReference Condition="'$(TargetFramework)' == '$(LibraryFramework)'" Include="Microsoft.AspNetCore" Version="2.2.0" />
+    <FrameworkReference Condition="'$(TargetFramework)' == '$(NetFramework)'" Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>
