@@ -24,21 +24,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "discovery", "discovery", "{
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Management.Cluster.Bootstrap", "src\cluster.bootstrap\Akka.Management.Cluster.Bootstrap\Akka.Management.Cluster.Bootstrap.csproj", "{1E6DC42F-E7DD-4924-8768-58BB2D35F534}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.AwsApi", "src\discovery\Akka.Discovery.AwsApi\Akka.Discovery.AwsApi.csproj", "{4B2C5766-0B33-4FE0-BEA0-0B58321444BC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.AwsApi", "src\discovery\aws\Akka.Discovery.AwsApi\Akka.Discovery.AwsApi.csproj", "{4B2C5766-0B33-4FE0-BEA0-0B58321444BC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Http.Shim.Tests", "src\management\Akka.Http.Shim.Tests\Akka.Http.Shim.Tests.csproj", "{F61AB32F-FAA4-4687-9666-8359FE3AC28A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.AwsApi.Tests", "src\discovery\Akka.Discovery.AwsApi.Tests\Akka.Discovery.AwsApi.Tests.csproj", "{1EE92CD1-D24A-48A7-919E-6BAB3357704B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.AwsApi.Tests", "src\discovery\aws\Akka.Discovery.AwsApi.Tests\Akka.Discovery.AwsApi.Tests.csproj", "{1EE92CD1-D24A-48A7-919E-6BAB3357704B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cluster.bootstrap", "cluster.bootstrap", "{012DD1B7-8531-464D-B3DF-467E3F2AE2CF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.AwsApi.Integration.Tests", "src\discovery\Akka.Discovery.AwsApi.Integration.Tests\Akka.Discovery.AwsApi.Integration.Tests.csproj", "{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.AwsApi.Integration.Tests", "src\discovery\aws\Akka.Discovery.AwsApi.Integration.Tests\Akka.Discovery.AwsApi.Integration.Tests.csproj", "{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Management.Cluster.Bootstrap.Tests", "src\cluster.bootstrap\Akka.Management.Cluster.Bootstrap.Tests\Akka.Management.Cluster.Bootstrap.Tests.csproj", "{5EEC076D-CD09-4093-B473-7BE8D66D698B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StressTest", "src\cluster.bootstrap\examples\StressTest\StressTest.csproj", "{3ADFF0D4-D17F-4850-B021-0A53B09811C0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{24FEBA95-1FC2-4AC2-8386-6AB13AE87056}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "aws", "aws", "{BC1617D3-254B-47FD-94A1-5563C512D8E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "kubernetes", "kubernetes", "{57F7B842-005E-4DC1-9B06-7B4F99986A7B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -96,12 +100,14 @@ Global
 		{DC9C497E-4B8D-4D32-A1D5-569E349BDE17} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
 		{F61AB32F-FAA4-4687-9666-8359FE3AC28A} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
 		{1E6DC42F-E7DD-4924-8768-58BB2D35F534} = {012DD1B7-8531-464D-B3DF-467E3F2AE2CF}
-		{4B2C5766-0B33-4FE0-BEA0-0B58321444BC} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
-		{1EE92CD1-D24A-48A7-919E-6BAB3357704B} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
-		{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
 		{5EEC076D-CD09-4093-B473-7BE8D66D698B} = {012DD1B7-8531-464D-B3DF-467E3F2AE2CF}
 		{24FEBA95-1FC2-4AC2-8386-6AB13AE87056} = {012DD1B7-8531-464D-B3DF-467E3F2AE2CF}
 		{3ADFF0D4-D17F-4850-B021-0A53B09811C0} = {24FEBA95-1FC2-4AC2-8386-6AB13AE87056}
+		{BC1617D3-254B-47FD-94A1-5563C512D8E8} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
+		{4B2C5766-0B33-4FE0-BEA0-0B58321444BC} = {BC1617D3-254B-47FD-94A1-5563C512D8E8}
+		{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6} = {BC1617D3-254B-47FD-94A1-5563C512D8E8}
+		{1EE92CD1-D24A-48A7-919E-6BAB3357704B} = {BC1617D3-254B-47FD-94A1-5563C512D8E8}
+		{57F7B842-005E-4DC1-9B06-7B4F99986A7B} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
