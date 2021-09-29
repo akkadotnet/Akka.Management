@@ -1,17 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>$(TestsNetCoreFramework);$(TestsNet)</TargetFrameworks>
+        <TargetFrameworks>$(TestsNetFramework);$(TestsNetCoreFramework);$(TestsNet)</TargetFrameworks>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
-        <PackageReference Include="Akka.TestKit" Version="$(AkkaVersion)" />
-        <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
-        <PackageReference Include="AWSSDK.CloudFormation" Version="3.7.5.4" />
-        <PackageReference Include="AWSSDK.S3" Version="3.7.2" />
-        <PackageReference Include="Docker.DotNet" Version="3.125.5" />
         <PackageReference Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
         <PackageReference Include="xunit" Version="$(XunitVersion)" />
@@ -23,16 +17,16 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Xunit.SkippableFact" Version="1.4.13" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Akka.Discovery.AwsApi\Akka.Discovery.AwsApi.csproj" />
+      <ProjectReference Include="..\Akka.Discovery.KubernetesApi\Akka.Discovery.KubernetesApi.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="akka-cluster.json" />
-      <EmbeddedResource Include="akka-cluster.json" />
+      <None Remove="multi-container-pod.json" />
+      <EmbeddedResource Include="multi-container-pod.json" />
+      <None Remove="pods.json" />
     </ItemGroup>
 
 </Project>
