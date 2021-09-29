@@ -1,3 +1,8 @@
+#### 0.2.2-beta1 September 29 2021 ####
+* Update to [Akka.NET v1.4.26](https://github.com/akkadotnet/akka.net/releases/tag/1.4.26)
+* [Added Akka.Discovery.KubernetesApi package](https://github.com/akkadotnet/Akka.Management/pull/145) - as the name implies, it uses the Kubernetes API to query for available pods to act as seed nodes.
+* Update all AWSSDK versions
+
 #### 0.2.1-beta4 September 4 2021 ####
 * [Fix erroneous failing probe messages after cluster formed](https://github.com/akkadotnet/Akka.Management/pull/79)
 * Update all AWSSDK versions
