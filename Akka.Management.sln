@@ -44,6 +44,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "aws", "aws", "{BC1617D3-254
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "kubernetes", "kubernetes", "{57F7B842-005E-4DC1-9B06-7B4F99986A7B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.KubernetesApi", "src\discovery\kubernetes\Akka.Discovery.KubernetesApi\Akka.Discovery.KubernetesApi.csproj", "{1E87E00E-637D-4AA8-8B02-1AE1885FC53F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.KubernetesApi.Tests", "src\discovery\kubernetes\Akka.Discovery.KubernetesApi.Tests\Akka.Discovery.KubernetesApi.Tests.csproj", "{FEE5FBF2-F53D-4939-A9A3-D8BF82BE97B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -90,6 +94,14 @@ Global
 		{3ADFF0D4-D17F-4850-B021-0A53B09811C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3ADFF0D4-D17F-4850-B021-0A53B09811C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3ADFF0D4-D17F-4850-B021-0A53B09811C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E87E00E-637D-4AA8-8B02-1AE1885FC53F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E87E00E-637D-4AA8-8B02-1AE1885FC53F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E87E00E-637D-4AA8-8B02-1AE1885FC53F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E87E00E-637D-4AA8-8B02-1AE1885FC53F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEE5FBF2-F53D-4939-A9A3-D8BF82BE97B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEE5FBF2-F53D-4939-A9A3-D8BF82BE97B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEE5FBF2-F53D-4939-A9A3-D8BF82BE97B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEE5FBF2-F53D-4939-A9A3-D8BF82BE97B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -108,6 +120,8 @@ Global
 		{6D56E8D4-9453-48A6-BF95-FD209FC9E6C6} = {BC1617D3-254B-47FD-94A1-5563C512D8E8}
 		{1EE92CD1-D24A-48A7-919E-6BAB3357704B} = {BC1617D3-254B-47FD-94A1-5563C512D8E8}
 		{57F7B842-005E-4DC1-9B06-7B4F99986A7B} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
+		{1E87E00E-637D-4AA8-8B02-1AE1885FC53F} = {57F7B842-005E-4DC1-9B06-7B4F99986A7B}
+		{FEE5FBF2-F53D-4939-A9A3-D8BF82BE97B4} = {57F7B842-005E-4DC1-9B06-7B4F99986A7B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
