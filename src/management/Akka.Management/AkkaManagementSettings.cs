@@ -9,19 +9,24 @@ namespace Akka.Management
     public class AkkaManagementSettings
     {
         public AkkaManagementSettings(Config config) => 
-            Http = new Http(config.GetConfig("akka.management"));
+            Http = new Http(config);
 
         public Http Http { get; }
     }
 
     public class Http
     {
-        public Http(Config managementConfig)
+        public Http(Config config)
         {
+            var managementConfig = config.GetConfig("akka.management");
             var cc = managementConfig.GetConfig("http");
 
             var hostname = cc.GetString("hostname");
-            Hostname = hostname == "<hostname>" || string.IsNullOrWhiteSpace(hostname) ? IPAddress.Any.ToString() : hostname;
+            if (string.IsNullOrWhiteSpace(hostname) || hostname.Equals("<hostname>"))
+                hostname = config.GetString("akka.remote.dot-netty.tcp.public-hostname");
+            if (string.IsNullOrWhiteSpace(hostname))
+                hostname = Dns.GetHostName();
+            Hostname = hostname;
 
             Port = cc.GetInt("port");
             if (Port < 0 || Port > 65535)
