@@ -109,6 +109,7 @@ namespace Akka.Management.Internal
         {
             try
             {
+                _log.Info(">>>>>>>>>>>>>>> Readiness endpoint called.");
                 var result = await Check(_readiness);
                 if (result is Left<string, Done> left)
                 {
@@ -131,6 +132,7 @@ namespace Akka.Management.Internal
         {
             try
             {
+                _log.Info(">>>>>>>>>>>>>>> Liveliness endpoint called.");
                 var result = await Check(_liveness);
                 if (result is Left<string, Done> left)
                 {
@@ -162,10 +164,10 @@ namespace Akka.Management.Internal
                 catch (Exception e)
                 {
                     if (e is TaskCanceledException)
-                        throw new CheckTimeoutException($"Check [{checkName}] timed out after {_settings.CheckTimeout.TotalMilliseconds} milliseconds.");
+                        return new Left<string, Done>(
+                            $"Check [{checkName}] timed out after {_settings.CheckTimeout.TotalMilliseconds} milliseconds.");
 
-                    throw new CheckFailedException(
-                        $"Check [{checkName}] failed: {e.Message}", e); 
+                    return new Left<string, Done>($"Check [{checkName}] failed: {e}");
                 }
             }
             

@@ -27,6 +27,7 @@ namespace Akka.Http
             _settings = options.Settings;
 
             _log = Logging.GetLogger(_system, typeof(AkkaRoutingMiddleware));
+            _log.Info(">>>>>>>>>>>>>> AkkaRoutingMiddleware started.");
         }
         
         /// <summary>
@@ -48,7 +49,7 @@ namespace Akka.Http
             {
                 case null:
                     context.Response.StatusCode = (int) HttpStatusCode.NotFound;
-                    _log.Info($"Request to path {context.Request.Path} rejected: [{HttpStatusCode.NotFound}]");
+                    _log.Info($">>>>>>>>>>>>> Request to path {context.Request.Path} rejected: [{HttpStatusCode.NotFound}]");
                     break;
                 case RouteResult.Rejected reject:
                     // TODO: Do response error code conversion  
@@ -58,14 +59,14 @@ namespace Akka.Http
                             context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
                             break;
                     }
-                    _log.Info($"Request to path {context.Request.Path} rejected: [{reject}]");
+                    _log.Info($">>>>>>>>>>>>> Request to path {context.Request.Path} rejected: [{reject}]");
                     break;
                 case RouteResult.Complete complete:
                     var r = complete.Response;
                     context.Response.StatusCode = r.Status;
                     context.Response.ContentType = r.Entity.ContentType;
                     await context.Response.WriteAsync(r.Entity.DataBytes.ToString());
-                    _log.Debug($"Request to path {context.Request.Path} completed successfully.");
+                    _log.Info($">>>>>>>>>>>>> Request to path {context.Request.Path} completed successfully.");
                     break;
             }
         }

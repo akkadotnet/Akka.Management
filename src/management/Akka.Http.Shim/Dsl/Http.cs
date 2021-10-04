@@ -4,18 +4,19 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Annotations;
 using Akka.Configuration;
+using Akka.Event;
 using Akka.Http.Dsl.Model;
 using Akka.Http.Dsl.Server;
 using Akka.Http.Dsl.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 #if NET5_0
 using Microsoft.Extensions.Hosting;
 #else
 using Microsoft.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
-using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 #endif
 
 namespace Akka.Http.Dsl
@@ -28,12 +29,14 @@ namespace Akka.Http.Dsl
     {
         private readonly ExtendedActorSystem _system;
         private readonly ServerSettings _settings;
+        private readonly ILoggingAdapter _log;
 
         public HttpExt(ExtendedActorSystem system)
         {
             _system = system;
             _system.Settings.InjectTopLevelFallback(Http.DefaultConfig());
             _settings = ServerSettings.Create(_system);
+            _log = Logging.GetLogger(system, this);
         }
 
         /// <summary>
@@ -103,11 +106,14 @@ namespace Akka.Http.Dsl
 
             // Start listening...
             await host.StartAsync();
+            _log.Info(">>>>>>>>>>>>>> HTTP Extension started");
 
             var binding = new ServerBinding(
                 new DnsEndPoint(effectiveHostname, effectivePort),
                 async timeout =>
                 {
+                    _log.Info(">>>>>>>>>>>>>> HTTP Extension stopped");
+                    
                     await host.StopAsync(timeout);
                     return HttpServerTerminated.Instance;
                 });
