@@ -106,13 +106,13 @@ namespace Akka.Http.Dsl
 
             // Start listening...
             await host.StartAsync();
-            _log.Info(">>>>>>>>>>>>>> HTTP Extension started");
+            _log.Info("HTTP Extension started");
 
             var binding = new ServerBinding(
                 new DnsEndPoint(effectiveHostname, effectivePort),
                 async timeout =>
                 {
-                    _log.Info(">>>>>>>>>>>>>> HTTP Extension stopped");
+                    _log.Info("HTTP Extension stopped");
                     
                     await host.StopAsync(timeout);
                     return HttpServerTerminated.Instance;
