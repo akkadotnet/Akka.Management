@@ -15,6 +15,7 @@ namespace Akka.Http
 {
     public class AkkaRoutingMiddleware
     {
+        private const bool Debug = true;
         private readonly ExtendedActorSystem _system;
         private readonly Route _routes;
         private readonly ServerSettings _settings;
@@ -27,6 +28,8 @@ namespace Akka.Http
             _settings = options.Settings;
 
             _log = Logging.GetLogger(_system, typeof(AkkaRoutingMiddleware));
+            if(Debug)
+                _log.Info(">>>>>>>>>>>>>> AkkaRoutingMiddleware started.");
         }
         
         /// <summary>
@@ -65,7 +68,10 @@ namespace Akka.Http
                     context.Response.StatusCode = r.Status;
                     context.Response.ContentType = r.Entity.ContentType;
                     await context.Response.WriteAsync(r.Entity.DataBytes.ToString());
-                    _log.Debug($"Request to path {context.Request.Path} completed successfully.");
+                    if(Debug)
+                        _log.Info($"Request to path {context.Request.Path} completed successfully.");
+                    else if(_log.IsDebugEnabled)
+                        _log.Debug($"Request to path {context.Request.Path} completed successfully.");
                     break;
             }
         }
