@@ -30,6 +30,7 @@ namespace Akka.Management.Internal
 
     internal sealed class HealthChecksImpl : HealthChecks
     {
+        private const bool Debug = true;
         private readonly ExtendedActorSystem _system;
         private readonly HealthCheckSettings _settings;
         private readonly ILoggingAdapter _log;
@@ -109,6 +110,10 @@ namespace Akka.Management.Internal
         {
             try
             {
+                if(Debug)
+                    _log.Info("Readiness endpoint called.");
+                else if(_log.IsDebugEnabled)
+                    _log.Debug("Readiness endpoint called.");
                 var result = await Check(_readiness);
                 if (result is Left<string, Done> left)
                 {
@@ -131,6 +136,10 @@ namespace Akka.Management.Internal
         {
             try
             {
+                if(Debug)
+                    _log.Info("Liveliness endpoint called.");
+                else if(_log.IsDebugEnabled)
+                    _log.Debug("Liveliness endpoint called.");
                 var result = await Check(_liveness);
                 if (result is Left<string, Done> left)
                 {
@@ -164,8 +173,7 @@ namespace Akka.Management.Internal
                     if (e is TaskCanceledException)
                         throw new CheckTimeoutException($"Check [{checkName}] timed out after {_settings.CheckTimeout.TotalMilliseconds} milliseconds.");
 
-                    throw new CheckFailedException(
-                        $"Check [{checkName}] failed: {e.Message}", e); 
+                    throw new CheckFailedException($"Check [{checkName}] failed: {e.Message}", e);
                 }
             }
             
