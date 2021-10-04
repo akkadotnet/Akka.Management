@@ -171,10 +171,9 @@ namespace Akka.Management.Internal
                 catch (Exception e)
                 {
                     if (e is TaskCanceledException)
-                        return new Left<string, Done>(
-                            $"Check [{checkName}] timed out after {_settings.CheckTimeout.TotalMilliseconds} milliseconds.");
+                        throw new CheckTimeoutException($"Check [{checkName}] timed out after {_settings.CheckTimeout.TotalMilliseconds} milliseconds.");
 
-                    return new Left<string, Done>($"Check [{checkName}] failed: {e}");
+                    throw new CheckFailedException($"Check [{checkName}] failed: {e.Message}", e);
                 }
             }
             
