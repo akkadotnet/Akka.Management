@@ -1,3 +1,6 @@
+#### 0.2.3-beta2 October 5 2021 ####
+* Fix [several minor bugs](https://github.com/akkadotnet/Akka.Management/pull/168) 
+
 #### 0.2.3-beta1 October 4 2021 ####
 * Fix Akka.Management [default host name bug](https://github.com/akkadotnet/Akka.Management/pull/156)
 
