@@ -275,6 +275,13 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                         StartSingleDiscoveryTimer();
                         return true;
 
+                    case Actor.Status.Failure ex:
+                        _log.Warning(ex.Cause, "Resolve attempt failed! Cause: {0}", ex.Cause);
+                        _lastContactObservation = null;
+                        BackoffDiscoveryInterval();
+                        StartSingleDiscoveryTimer();
+                        return true;
+
                     case Protocol.ObtainedSeedNodesObservation msg:
                     {
                         if (_lastContactObservation != null)
