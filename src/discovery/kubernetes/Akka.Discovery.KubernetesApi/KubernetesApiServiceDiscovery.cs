@@ -59,7 +59,7 @@ namespace Akka.Discovery.KubernetesApi
 
             var host = Environment.GetEnvironmentVariable(_settings.ApiServiceHostEnvName);
             var port = Environment.GetEnvironmentVariable(_settings.ApiServicePortEnvName);
-            config.Host = $"{host}:{port}";
+            config.Host = $"https://{host}:{port}";
             
             var client = new Kubernetes(config);
 
@@ -146,7 +146,7 @@ namespace Akka.Discovery.KubernetesApi
                 {
                     maybePort = itemSpec.Containers
                         .SelectMany(c => c.Ports)
-                        .FirstOrDefault(p => p.Name.Contains(portName))?.ContainerPort;
+                        .FirstOrDefault(p => p.Name?.Contains(portName) ?? false)?.ContainerPort;
                 }
                 
                 var hostOrIp = rawIp ? ip : $"{ip.Replace('.', '-')}.{podNamespace}.pod.{podDomain}";
