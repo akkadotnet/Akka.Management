@@ -23,9 +23,12 @@ namespace Akka.Management
 
             var hostname = cc.GetString("hostname");
             if (string.IsNullOrWhiteSpace(hostname) || hostname.Equals("<hostname>"))
-                hostname = config.GetString("akka.remote.dot-netty.tcp.public-hostname");
-            if (string.IsNullOrWhiteSpace(hostname))
-                hostname = Dns.GetHostName();
+            {
+                var addresses = Dns.GetHostAddresses(Dns.GetHostName());
+                hostname = addresses
+                    .First(ip => !Equals(ip, IPAddress.Any) && !Equals(ip, IPAddress.IPv6Any))
+                    .ToString();
+            }
             Hostname = hostname;
 
             Port = cc.GetInt("port");
