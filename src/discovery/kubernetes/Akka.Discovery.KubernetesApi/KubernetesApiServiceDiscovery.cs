@@ -66,7 +66,9 @@ namespace Akka.Discovery.KubernetesApi
             V1PodList podList;
             try
             {
-                podList = await client.ListNamespacedPodAsync(PodNamespace);
+                podList = await client.ListNamespacedPodAsync(
+                    namespaceParameter: PodNamespace,
+                    labelSelector: labelSelector);
             }
             catch (Exception e)
             {
