@@ -37,7 +37,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
     <CoverletVersion>3.1.0</CoverletVersion>
     <FluentAssertionVersion>6.1.0</FluentAssertionVersion>
     <TestSdkVersion>16.11.0</TestSdkVersion>
-    <AkkaVersion>1.4.26</AkkaVersion>
+    <AkkaVersion>1.4.27</AkkaVersion>
     <AkkaDiscoveryVersion>1.4.25-beta</AkkaDiscoveryVersion>
     <KubernetesClientVersion>4.0.26</KubernetesClientVersion>
   </PropertyGroup>
