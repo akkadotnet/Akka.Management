@@ -330,10 +330,6 @@ namespace Akka.Coordination.Kubernetes.Tests
         [Fact(DisplayName = "Kubernetes lease resource should timeout on remove lease")]
         public async Task ShouldTimeOutOnRemove()
         {
-            const string owner = "client1";
-            const string version = "2";
-            var timestamp = DateTime.UtcNow;
-
             try
             {
                 _wireMockServer.Given(Request.Create().UsingDelete().WithPath(LeaseApiPath))

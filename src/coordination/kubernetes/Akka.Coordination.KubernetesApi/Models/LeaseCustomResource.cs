@@ -24,9 +24,11 @@ namespace Akka.Coordination.KubernetesApi.Models
 
     internal sealed class LeaseSpec
     {
-        [Obsolete(message:"Used only for json deserialization")]
+        [Obsolete(message: "Used only for json deserialization")]
         public LeaseSpec()
-        { }
+        {
+            Owner = "";
+        }
         
         public LeaseSpec(string owner, DateTime time)
         {
