@@ -1,8 +1,14 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="HealthChecksImpl.cs" company="Akka.NET Project">
+//     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
+//     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
+// </copyright>
+//-----------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,7 +36,6 @@ namespace Akka.Management.Internal
 
     internal sealed class HealthChecksImpl : HealthChecks
     {
-        private const bool Debug = true;
         private readonly ExtendedActorSystem _system;
         private readonly HealthCheckSettings _settings;
         private readonly ILoggingAdapter _log;
@@ -110,9 +115,7 @@ namespace Akka.Management.Internal
         {
             try
             {
-                if(Debug)
-                    _log.Info("Readiness endpoint called.");
-                else if(_log.IsDebugEnabled)
+                if(_log.IsDebugEnabled)
                     _log.Debug("Readiness endpoint called.");
                 var result = await Check(_readiness);
                 if (result is Left<string, Done> left)
@@ -136,9 +139,7 @@ namespace Akka.Management.Internal
         {
             try
             {
-                if(Debug)
-                    _log.Info("Liveliness endpoint called.");
-                else if(_log.IsDebugEnabled)
+                if(_log.IsDebugEnabled)
                     _log.Debug("Liveliness endpoint called.");
                 var result = await Check(_liveness);
                 if (result is Left<string, Done> left)
