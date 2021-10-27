@@ -1,11 +1,10 @@
 using System;
 using Akka.Configuration;
-using Akka.Coordination.KubernetesApi;
 using FluentAssertions;
 using Xunit;
 
 #nullable enable
-namespace Akka.Coordination.Kubernetes.Tests
+namespace Akka.Coordination.KubernetesApi.Tests
 {
     public class KubernetesSettingsSpec
     {

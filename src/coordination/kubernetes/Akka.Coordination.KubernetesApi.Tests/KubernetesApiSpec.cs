@@ -3,7 +3,6 @@ using System.Net;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
-using Akka.Coordination.KubernetesApi;
 using Akka.Coordination.KubernetesApi.Internal;
 using Akka.Coordination.KubernetesApi.Models;
 using Akka.Util;
@@ -20,7 +19,7 @@ using Xunit;
 using Xunit.Abstractions;
 
 #nullable enable
-namespace Akka.Coordination.Kubernetes.Tests
+namespace Akka.Coordination.KubernetesApi.Tests
 {
     public class KubernetesApiSpec : TestKit.Xunit2.TestKit
     {

@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
-using Akka.Coordination.KubernetesApi;
 using Akka.TestKit;
 using Akka.Util;
 using FluentAssertions;
@@ -10,7 +9,7 @@ using Xunit;
 using Xunit.Abstractions;
 
 #nullable enable
-namespace Akka.Coordination.Kubernetes.Tests
+namespace Akka.Coordination.KubernetesApi.Tests
 {
 
     public class LeaseActorSpec : LeaseActorTest
