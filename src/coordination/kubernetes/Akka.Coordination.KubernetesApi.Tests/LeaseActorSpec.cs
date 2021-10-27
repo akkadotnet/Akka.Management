@@ -267,7 +267,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
         }
 
         [Fact(DisplayName = "heart beat conflict should set granted to false")]
-        public void HearBeatConflictShouldSSetGrantedToFalse()
+        public void HearBeatConflictShouldSetGrantedToFalse()
         {
             RunTest(() =>
             {
@@ -564,7 +564,9 @@ namespace Akka.Coordination.KubernetesApi.Tests
             => ConfigurationFactory.ParseString(@"
                 akka.loglevel=DEBUG
                 akka.stdout-loglevel=DEBUG
-                akka.actor.debug.fsm=true");
+                akka.actor.debug.fsm=true")
+                .WithFallback(Discovery.DiscoveryProvider.DefaultConfiguration())
+                .WithFallback(KubernetesLease.DefaultConfiguration);
 
         protected LeaseActorTest(string testName, ITestOutputHelper output): base(Config(), testName, output)
         {

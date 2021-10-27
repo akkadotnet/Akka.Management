@@ -85,18 +85,18 @@ namespace Akka.Coordination.KubernetesApi
                 IActorRef replyTo,
                 string version,
                 Action<Exception?> leaseLostCallback,
-                long? operationStartTime = null)
+                DateTime? operationStartTime = null)
             {
                 ReplyTo = replyTo;
                 Version = version;
                 LeaseLostCallback = leaseLostCallback;
-                OperationStartTime = operationStartTime ?? MonotonicClock.Ticks;
+                OperationStartTime = operationStartTime ?? DateTime.Now;
             }
 
             public IActorRef ReplyTo { get; }
             public string Version { get; }
             public Action<Exception?> LeaseLostCallback { get; }
-            public long OperationStartTime { get; }
+            public DateTime OperationStartTime { get; }
         }
         
         public sealed class GrantedVersion: IData
@@ -284,7 +284,7 @@ namespace Akka.Coordination.KubernetesApi
                 if (HasLeaseTimedOut(time))
                 {
                     _log.Warning(
-                        "Lease {0} has reached TTL. Owner {1} has failed to heartbeat, have they crashed?. Allowing {} to try and take lease",
+                        "Lease {0} has reached TTL. Owner {1} has failed to heartbeat, have they crashed?. Allowing {2} to try and take lease",
                         leaseName,
                         currentOwner,
                         _ownerName);
@@ -312,12 +312,12 @@ namespace Akka.Coordination.KubernetesApi
                     if (oldVersion == response.Value.Version)
                         throw new LeaseException(
                             $"Requirement failed: Update response from Kubernetes API should not return the same version: Response: {response.Value}. Client: {data}");
-                    var operationDuration = MonotonicClock.Ticks - operationStartTime;
-                    if (operationDuration > (_settings.TimeoutSettings.HeartbeatTimeout.Ticks / 2))
+                    var operationDuration = DateTime.Now - operationStartTime;
+                    if (operationDuration > new TimeSpan(_settings.TimeoutSettings.HeartbeatTimeout.Ticks / 2))
                     {
                         _log.Warning("API server took too long to respond to update: {0} ms. ",
-                            operationDuration.ToMilliSeconds());
-                        who.Tell(new Status.Failure(new LeaseTimeoutException($"API server took too long to respond: {operationDuration.ToMilliSeconds()}")));
+                            operationDuration.TotalMilliseconds);
+                        who.Tell(new Status.Failure(new LeaseTimeoutException($"API server took too long to respond: {operationDuration.TotalMilliseconds}")));
                         return GoTo(Idle.Instance).Using(ReadRequired.Instance);
                     }
 
@@ -365,7 +365,7 @@ namespace Akka.Coordination.KubernetesApi
                     case WriteResponse {Response: Right<LeaseResource, LeaseResource> resource}:
                         if (!resource.Value.Owner?.Contains(_ownerName) ?? false)
                             throw new LeaseException($"response from API server has different owner for success: {resource}");
-                        _log.Debug("Heartbeat: lease time updated: Version {}", resource.Value.Version);
+                        _log.Debug("Heartbeat: lease time updated: Version {0}", resource.Value.Version);
                         Timers!.StartSingleTimer("heartbeat", Heartbeat.Instance, settings.TimeoutSettings.HeartbeatInterval);
                         return Stay().Using(gv.Copy(version: resource.Value.Version));
                     
