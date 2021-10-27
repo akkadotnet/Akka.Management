@@ -90,7 +90,7 @@ namespace Akka.Coordination.KubernetesApi
                 ReplyTo = replyTo;
                 Version = version;
                 LeaseLostCallback = leaseLostCallback;
-                OperationStartTime = operationStartTime ?? DateTime.Now;
+                OperationStartTime = operationStartTime ?? DateTime.UtcNow;
             }
 
             public IActorRef ReplyTo { get; }
@@ -312,7 +312,7 @@ namespace Akka.Coordination.KubernetesApi
                     if (oldVersion == response.Value.Version)
                         throw new LeaseException(
                             $"Requirement failed: Update response from Kubernetes API should not return the same version: Response: {response.Value}. Client: {data}");
-                    var operationDuration = DateTime.Now - operationStartTime;
+                    var operationDuration = DateTime.UtcNow - operationStartTime;
                     if (operationDuration > new TimeSpan(_settings.TimeoutSettings.HeartbeatTimeout.Ticks / 2))
                     {
                         _log.Warning("API server took too long to respond to update: {0} ms. ",
