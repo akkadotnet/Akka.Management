@@ -4,6 +4,7 @@ using Akka.Coordination.KubernetesApi;
 using FluentAssertions;
 using Xunit;
 
+#nullable enable
 namespace Akka.Coordination.Kubernetes.Tests
 {
     public class KubernetesSettingsSpec
@@ -42,7 +43,7 @@ namespace Akka.Coordination.Kubernetes.Tests
         {
             Assert.Throws<ConfigurationException>(() =>
             {
-                var settings = Conf(@"
+                Conf(@"
                     lease-operation-timeout=5s
                     api-service-request-timeout=6s");
             }).Message.Should().Be("'api-service-request-timeout can not be less than 'lease-operation-timeout'");

@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Linq;
 using Akka.Actor;
 using Akka.Event;
 using Akka.Util;
+// ReSharper disable MemberCanBePrivate.Global
 
 #nullable enable
 namespace Akka.Coordination.KubernetesApi
@@ -117,7 +119,7 @@ namespace Akka.Coordination.KubernetesApi
         public interface ICommand { }
         public sealed class Acquire: ICommand
         {
-            public Acquire(Action<Exception?>? leaseLostCallback)
+            public Acquire(Action<Exception?>? leaseLostCallback = null)
             {
                 LeaseLostCallback = leaseLostCallback ?? EmptyAction;
             }
@@ -185,6 +187,7 @@ namespace Akka.Coordination.KubernetesApi
                 Reason = reason;
             }
 
+            // ReSharper disable once MemberHidesStaticFromOuterClass
             public string Reason { get; }
         }
 
@@ -199,7 +202,7 @@ namespace Akka.Coordination.KubernetesApi
         private readonly ILoggingAdapter _log;
         
 #pragma warning disable 8618
-        private LeaseActor(IKubernetesApi client, LeaseSettings settings, string leaseName, AtomicBoolean granted)
+        public LeaseActor(IKubernetesApi client, LeaseSettings settings, string leaseName, AtomicBoolean granted)
 #pragma warning restore 8618
         {
             _client = client;
@@ -214,30 +217,35 @@ namespace Akka.Coordination.KubernetesApi
             
             When(Idle.Instance, evt =>
             {
-                var acquire = (Acquire) evt.FsmEvent;
+                if (!(evt.FsmEvent is Acquire acquire))
+                    return null;
+                
                 switch (evt.StateData)
                 {
                     case ReadRequired _:
                         _client.ReadOrCreateLeaseResource(leaseName)
                             .ContinueWith(task => new ReadResponse(task.Result))
-                            .PipeTo(Self);
+                            .PipeTo(Self, failure: FlattenAggregateException);
                         return GoTo(PendingRead.Instance)
                             .Using(new PendingReadData(Sender, acquire.LeaseLostCallback));
                     case LeaseCleared cleared:
                         _client.UpdateLeaseResource(leaseName, _ownerName, cleared.Version)
                             .ContinueWith(task => new WriteResponse(task.Result))
-                            .PipeTo(Self);
+                            .PipeTo(Self, failure: FlattenAggregateException);
                         return GoTo(Granting.Instance)
                             .Using(new OperationInProgress(Sender, cleared.Version, acquire.LeaseLostCallback));
                     default:
-                        return Stay();
+                        return null;
                 }
             });
             
-            When(PendingRead.Instance, evt =>
+            When(PendingRead.Instance, @event =>
             {
-                var resource = ((ReadResponse) evt.FsmEvent).Response;
-                var data = (PendingReadData) evt.StateData;
+                if(!(@event.FsmEvent is ReadResponse evt))
+                    return null;
+                
+                var resource = evt.Response;
+                var data = (PendingReadData) @event.StateData;
                 var who = data.ReplyTo;
                 var leaseLost = data.LeaseLostCallback;
                 var version = resource.Version;
@@ -289,7 +297,10 @@ namespace Akka.Coordination.KubernetesApi
             
             When(Granting.Instance, @event =>
             {
-                var evt = ((WriteResponse) @event.FsmEvent).Response;
+                if (!(@event.FsmEvent is WriteResponse writeResponse))
+                    return null;
+                
+                var evt = writeResponse.Response;
                 var data = (OperationInProgress) @event.StateData;
                 var who = data.ReplyTo;
                 var oldVersion = data.Version;
@@ -326,7 +337,7 @@ namespace Akka.Coordination.KubernetesApi
                     who.Tell(LeaseAcquired.Instance);
                     _client.UpdateLeaseResource(leaseName, _ownerName, version)
                         .ContinueWith(t => new WriteResponse(t.Result))
-                        .PipeTo(Self);
+                        .PipeTo(Self, failure: FlattenAggregateException);
                     return Stay();
                 }
                 // The audacity, someone else has taken the lease :(
@@ -336,7 +347,9 @@ namespace Akka.Coordination.KubernetesApi
 
             When(Granted.Instance, evt =>
             {
-                var gv = (GrantedVersion) evt.StateData;
+                if (!(evt.StateData is GrantedVersion gv))
+                    return null;
+                
                 var version = gv.Version;
                 var leaseLost = gv.LeaseLostCallback;
 
@@ -346,7 +359,7 @@ namespace Akka.Coordination.KubernetesApi
                         _log.Debug("Heartbeat: updating lease time. Version {0}", version);
                         _client.UpdateLeaseResource(leaseName, _ownerName, version)
                             .ContinueWith(t => new WriteResponse(t.Result))
-                            .PipeTo(Self);
+                            .PipeTo(Self, failure: FlattenAggregateException);
                         return Stay();
                     
                     case WriteResponse {Response: Right<LeaseResource, LeaseResource> resource}:
@@ -372,7 +385,7 @@ namespace Akka.Coordination.KubernetesApi
                     case Release _:
                         _client.UpdateLeaseResource(leaseName, "", version)
                             .ContinueWith(t => new WriteResponse(t.Result))
-                            .PipeTo(Self);
+                            .PipeTo(Self, failure: FlattenAggregateException);
                         return GoTo(Releasing.Instance).Using(new OperationInProgress(Sender, version, leaseLost));
                     
                     case Acquire acquire:
@@ -380,14 +393,17 @@ namespace Akka.Coordination.KubernetesApi
                         return Stay().Using(gv.Copy(leaseLostCallback: acquire.LeaseLostCallback));
                     
                     default:
-                        return Stay();
+                        return null;
                 }
             });
             
             When(Releasing.Instance, @event =>
             {
+                if (!(@event.FsmEvent is WriteResponse writeResponse))
+                    return null;
+                
                 // FIXME deal with failure from releasing the the lock, currently handled in whenUnhandled but could retry to remove: https://github.com/lightbend/akka-commercial-addons/issues/502
-                var response = (Either<LeaseResource, LeaseResource>) @event.FsmEvent;
+                var response = writeResponse.Response;
                 var data = (OperationInProgress) @event.StateData;
                 var who = data.ReplyTo;
 
@@ -451,7 +467,7 @@ namespace Akka.Coordination.KubernetesApi
                         return GoTo(Idle.Instance).Using(ReadRequired.Instance);
                     
                     default:
-                        return Stay();
+                        return null;
                 }
             });
             
@@ -467,6 +483,19 @@ namespace Akka.Coordination.KubernetesApi
                     localGranted.GetAndSet(false);
                 }
             });
+            
+            Initialize();
+        }
+
+        private Status.Failure FlattenAggregateException(Exception e)
+        {
+            if (!(e is AggregateException agg)) 
+                return new Status.Failure(e);
+            
+            agg = agg.Flatten();
+            return agg.InnerExceptions.Count == 1 
+                ? new Status.Failure(agg.InnerExceptions.First()) 
+                : new Status.Failure(agg);
         }
 
         private void ExecuteLeaseLockCallback(Action<Exception?> callback, Exception? result)
@@ -486,7 +515,7 @@ namespace Akka.Coordination.KubernetesApi
         {
             _client.UpdateLeaseResource(_leaseName, _ownerName, version)
                 .ContinueWith(t => new WriteResponse(t.Result))
-                .PipeTo(Self);
+                .PipeTo(Self, failure: FlattenAggregateException);
             return GoTo(Granting.Instance).Using(new OperationInProgress(reply, version, leaseLost));
         }
 

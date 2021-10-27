@@ -9,6 +9,7 @@ using Akka.Event;
 using Akka.Util;
 using Akka.Util.Internal;
 
+#nullable enable
 namespace Akka.Coordination.KubernetesApi
 {
     public class KubernetesLease : Lease
@@ -21,35 +22,33 @@ namespace Akka.Coordination.KubernetesApi
 
         private static string TruncateTo63Characters(string name) => name.Substring(0, 63);
 
-        private static readonly Regex _rx1 = new Regex("[_.]");
-        private static readonly Regex _rx2 = new Regex("[^-a-z0-9]");
+        private static readonly Regex Rx1 = new Regex("[_.]");
+        private static readonly Regex Rx2 = new Regex("[^-a-z0-9]");
         private static string MakeDns1039Compatible(string name)
         {
             var normalized = name.Normalize(NormalizationForm.FormKD).ToLowerInvariant();
-            normalized = _rx1.Replace(normalized, "-");
-            normalized = _rx2.Replace(normalized, "");
+            normalized = Rx1.Replace(normalized, "-");
+            normalized = Rx2.Replace(normalized, "");
             return TruncateTo63Characters(normalized).Trim('_');
         }
 
-        private readonly ExtendedActorSystem _system;
         private readonly AtomicBoolean _leaseTaken;
         private readonly LeaseSettings _settings;
-        private readonly ILoggingAdapter _logger;
         private readonly TimeSpan _timeout;
         private readonly string _leaseName;
         private readonly IActorRef _leaseActor;
 
         public KubernetesLease(ExtendedActorSystem system, LeaseSettings settings) :
-            this(system, new AtomicBoolean(false), settings)
+            this(system, new AtomicBoolean(), settings)
         { }
 
+        // ReSharper disable once MemberCanBePrivate.Global
         public KubernetesLease(ExtendedActorSystem system, AtomicBoolean leaseTaken, LeaseSettings settings): base(settings)
         {
-            _system = system;
             _leaseTaken = leaseTaken;
             _settings = settings;
             
-            _logger = Logging.GetLogger(system, GetType());
+            ILoggingAdapter logger = Logging.GetLogger(system, GetType());
             var kubernetesSettings = KubernetesSettings.Create(system, settings.TimeoutSettings);
             var client = new KubernetesApiImpl(system, kubernetesSettings);
             _timeout = _settings.TimeoutSettings.OperationTimeout;
@@ -59,9 +58,9 @@ namespace Akka.Coordination.KubernetesApi
                 $"KubernetesLease{LeaseCounter.GetAndIncrement()}");
             
             if(!_leaseName.Equals(settings.LeaseName))
-                _logger.Info("Original lease name [{0}] sanitized for kubernetes: [{1}]", settings.LeaseName, _leaseName);
+                logger.Info("Original lease name [{0}] sanitized for kubernetes: [{1}]", settings.LeaseName, _leaseName);
 
-            _logger.Debug(
+            logger.Debug(
                 "Starting kubernetes lease actor [{0}] for lease [{1}], owner [{2}]",
                 _leaseActor,
                 _leaseName,
@@ -97,7 +96,7 @@ namespace Akka.Coordination.KubernetesApi
         public override Task<bool> Acquire()
             => Acquire(null);
 
-        public override Task<bool> Acquire(Action<Exception> leaseLostCallback)
+        public override Task<bool> Acquire(Action<Exception?>? leaseLostCallback)
         {
             // replace with transform once 2.11 dropped
             try

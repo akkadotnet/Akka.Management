@@ -3,6 +3,7 @@ using System;
 using k8s.Models;
 using Newtonsoft.Json;
 
+#nullable enable
 namespace Akka.Coordination.KubernetesApi.Models
 {
     internal class LeaseCustomResource: CustomResource<LeaseSpec>
@@ -27,23 +28,22 @@ namespace Akka.Coordination.KubernetesApi.Models
         [Obsolete(message: "Used only for json deserialization")]
         public LeaseSpec()
         {
-            Owner = "";
         }
         
-        public LeaseSpec(string owner, DateTime time)
+        public LeaseSpec(string? owner, DateTime time)
         {
             Owner = owner;
             Time = (long) time.TimeOfDay.TotalMilliseconds;
         }
         
-        public LeaseSpec(string owner, long time)
+        public LeaseSpec(string? owner, long time)
         {
             Owner = owner;
             Time = time;
         }
 
         [JsonProperty("owner")]
-        public string Owner { get; set; }
+        public string? Owner { get; set; }
         
         [JsonProperty("time")]
         public long Time { get; set; }

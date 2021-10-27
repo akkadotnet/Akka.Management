@@ -69,7 +69,7 @@ namespace Akka.Coordination.Kubernetes.Tests
             }
 
             // avoid touching slow CI filesystem
-            internal override string? ReadConfigVarFromFileSystem(string path, string name) => null;
+            protected override string? ReadConfigVarFromFileSystem(string path, string name) => null;
         }
         
         [Fact(DisplayName = "Kubernetes lease resource should be able to be created")]
@@ -95,7 +95,7 @@ namespace Akka.Coordination.Kubernetes.Tests
 
                 (await _underTest.RemoveLease(LeaseName)).Should().Be(Done.Instance);
                 var leaseRecord = await _underTest.ReadOrCreateLeaseResource(LeaseName);
-                leaseRecord.Owner.Should().Be("");
+                leaseRecord.Owner.Should().Be(null);
                 leaseRecord.Version.Should().NotBeNullOrEmpty();
                 leaseRecord.Version.Should().Be(version);
             }

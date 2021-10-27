@@ -22,21 +22,21 @@ namespace Akka.Coordination.KubernetesApi.Internal
     {
         private readonly KubernetesSettings _settings;
         private readonly ILoggingAdapter _log;
-        private readonly k8s.Kubernetes _client;
+        private readonly Kubernetes _client;
         private readonly string _namespace;
-        private readonly CustomResourceDefinition _crd;
+        private readonly LeaseCustomResourceDefinition _crd;
 
         private string Namespace =>
             _settings.Namespace
                 .DefaultIfNullOrWhitespace(ReadConfigVarFromFileSystem(_settings.NamespacePath, "namespace"))
-                .DefaultIfNullOrWhitespace("default");
+                .DefaultIfNullOrWhitespace("default") ?? "default";
         
         public KubernetesApiImpl(ActorSystem system, KubernetesSettings settings)
         {
             _settings = settings;
             _log = Logging.GetLogger(system, GetType());
             _namespace = Namespace;
-            _crd = CustomResourceDefinition.Create(_namespace);
+            _crd = LeaseCustomResourceDefinition.Create(_namespace);
             
             var config = KubernetesClientConfiguration.BuildDefaultConfig();
             if(!string.IsNullOrWhiteSpace(settings.ApiTokenPath))
@@ -51,7 +51,7 @@ namespace Akka.Coordination.KubernetesApi.Internal
             var port = Environment.GetEnvironmentVariable(settings.ApiServicePortEnvName);
             config.Host = $"{scheme}://{host}:{port}";
 
-            _client = new k8s.Kubernetes(config);
+            _client = new Kubernetes(config);
             _log.Debug("kubernetes access namespace: {0}. Secure: {1}", _namespace, settings.Secure);
         }
         
@@ -144,7 +144,7 @@ namespace Akka.Coordination.KubernetesApi.Internal
             }
         }
 
-        internal async Task<LeaseResource?> CreateLeaseResource(string name)
+        private async Task<LeaseResource?> CreateLeaseResource(string name)
         {
             var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
             try
@@ -198,8 +198,8 @@ namespace Akka.Coordination.KubernetesApi.Internal
                 throw new LeaseTimeoutException($"Timed out creating lease {name}. Is the API server up?", e);
             }
         }
-        
-        internal async Task<LeaseResource?> GetLeaseResource(string name)
+
+        private async Task<LeaseResource?> GetLeaseResource(string name)
         {
             var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
             try
@@ -310,13 +310,13 @@ namespace Akka.Coordination.KubernetesApi.Internal
             }
 
             return new LeaseResource(
-                lease.Spec.Owner,
+                string.IsNullOrWhiteSpace(lease.Spec.Owner) ? null : lease.Spec.Owner,
                 lease.Metadata.ResourceVersion,
                 lease.Spec.Time);
         }
         
         // This uses blocking IO, and so should only be used to read configuration at startup.
-        internal virtual string? ReadConfigVarFromFileSystem(string path, string name)
+        protected virtual string? ReadConfigVarFromFileSystem(string path, string name)
         {
             if (File.Exists(path))
             {

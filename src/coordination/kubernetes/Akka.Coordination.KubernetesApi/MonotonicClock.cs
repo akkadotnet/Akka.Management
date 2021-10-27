@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 
+#nullable enable
 namespace Akka.Coordination.KubernetesApi
 {
     public static class MonotonicClock
