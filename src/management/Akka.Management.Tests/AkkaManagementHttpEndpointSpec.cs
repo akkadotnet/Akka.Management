@@ -9,7 +9,6 @@ using Akka.Event;
 using Akka.Http.Dsl;
 using Akka.Http.Dsl.Model;
 using Akka.IO;
-using Akka.Management.Cluster.Bootstrap.Tests;
 using Akka.TestKit.Xunit2.Internals;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
