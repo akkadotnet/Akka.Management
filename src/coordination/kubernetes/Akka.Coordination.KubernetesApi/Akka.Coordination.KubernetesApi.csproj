@@ -2,7 +2,10 @@
 
     <PropertyGroup>
         <TargetFramework>$(LibraryFramework)</TargetFramework>
-        <LangVersion>8</LangVersion>
+        <Description>Akka.NET coordination module for Kubernetes</Description>
+        <PackageTags>$(AkkaPackageTags);Kubernetes;</PackageTags>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <LangVersion>8.0</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
