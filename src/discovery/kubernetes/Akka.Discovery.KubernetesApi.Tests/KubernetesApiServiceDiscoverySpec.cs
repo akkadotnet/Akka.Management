@@ -78,21 +78,45 @@ namespace Akka.Discovery.KubernetesApi.Tests
                             new V1ContainerPort(10001, name:"management"),
                             new V1ContainerPort(10002, name:"http"),
                         }),
+                        // Issue #223. If a pod container with an IP does not expose any port and port name is queried, Target will throw an NRE 
+                        new V1Container("akka-cluster-sidecar")
                     }),
-                    status: new V1PodStatus(podIP: "172.17.0.4", phase:"Running"),
+                    status: new V1PodStatus(podIP: "172.17.0.4", phase:"Running", containerStatuses: new List<V1ContainerStatus>
+                    {
+                        new V1ContainerStatus
+                        {
+                            Name = "akka-cluster-tooling-example",
+                            Ready = true,
+                            State = new V1ContainerState(running:new V1ContainerStateRunning())
+                        },
+                        new V1ContainerStatus
+                        {
+                            Name = "akka-cluster-sidecar",
+                            Ready = true,
+                            State = new V1ContainerState(running:new V1ContainerStateRunning())
+                        },
+                    }),
                     metadata: new V1ObjectMeta()),
-                // Issue #223. If a pod container with an IP does not expose any port and port name is queried, Target will throw an NRE 
                 new V1Pod(
                     spec: new V1PodSpec(new List<V1Container>
                     {
+                        // Issue #223. If a pod container with an IP does not expose any port and port name is queried, Target will throw an NRE
                         new V1Container("akka-cluster-tooling-example")
                     }),
-                    status: new V1PodStatus(podIP: "172.17.0.5", phase:"Running"),
+                    status: new V1PodStatus(podIP: "172.17.0.5", phase:"Running", containerStatuses: new List<V1ContainerStatus>
+                    {
+                        new V1ContainerStatus
+                        {
+                            Name = "akka-cluster-tooling-example",
+                            Ready = true,
+                            State = new V1ContainerState(running:new V1ContainerStateRunning())
+                        },
+                    }),
                     metadata: new V1ObjectMeta()),
             });
 
             var result =
-                KubernetesApiServiceDiscovery.Targets(podList, "management", "default", "cluster.local", false, null);
+                KubernetesApiServiceDiscovery.Targets(podList, "management", "default", "cluster.local", false, "akka-cluster-tooling-example");
             result.Should().BeEquivalentTo(new List<ServiceDiscovery.ResolvedTarget>
             {
                 new ServiceDiscovery.ResolvedTarget(

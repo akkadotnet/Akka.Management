@@ -155,8 +155,8 @@ namespace Akka.Discovery.KubernetesApi
                 if (portName != null)
                 {
                     // Bugfix #223, container might not expose ports, therefore should be excluded if port name is queried
-                    var validPort = itemSpec.Containers
-                        .Where(c => c.Ports != null)
+                    var validContainers = itemSpec.Containers.Where(c => c.Ports != null); 
+                    var validPort = validContainers
                         .SelectMany(c => c.Ports)
                         .FirstOrDefault(p => p.Name?.Contains(portName) ?? false);
 
