@@ -36,6 +36,8 @@ namespace Akka.Discovery.KubernetesApi
 
         private readonly ILoggingAdapter _log;
         private readonly KubernetesDiscoverySettings _settings;
+        private readonly Kubernetes _client;
+        private readonly string _host;
 
         private string PodNamespace =>
             _settings.PodNamespace
@@ -49,6 +51,17 @@ namespace Akka.Discovery.KubernetesApi
             
             if(_log.IsDebugEnabled)
                 _log.Debug("Settings {0}", _settings);
+            
+            var config = KubernetesClientConfiguration.BuildDefaultConfig();
+            config.TokenProvider = new TokenFileAuth(_settings.ApiTokenPath);
+            config.ClientCertificateFilePath = _settings.ApiCaPath;
+            config.Namespace = PodNamespace;
+
+            var host = Environment.GetEnvironmentVariable(_settings.ApiServiceHostEnvName);
+            var port = Environment.GetEnvironmentVariable(_settings.ApiServicePortEnvName);
+            _host = config.Host = $"https://{host}:{port}";
+            
+            _client = new Kubernetes(config);
         }
         
         public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
@@ -58,28 +71,17 @@ namespace Akka.Discovery.KubernetesApi
             if(_log.IsInfoEnabled)
                 _log.Info("Querying for pods with label selector: [{0}]. Namespace: [{1}]. Port: [{2}]",
                     labelSelector, PodNamespace, lookup.PortName);
-
-            var config = KubernetesClientConfiguration.BuildDefaultConfig();
-            config.TokenProvider = new TokenFileAuth(_settings.ApiTokenPath);
-            config.ClientCertificateFilePath = _settings.ApiCaPath;
-            config.Namespace = PodNamespace;
-
-            var host = Environment.GetEnvironmentVariable(_settings.ApiServiceHostEnvName);
-            var port = Environment.GetEnvironmentVariable(_settings.ApiServicePortEnvName);
-            config.Host = $"https://{host}:{port}";
             
-            var client = new Kubernetes(config);
-
             V1PodList podList;
             try
             {
-                podList = await client.ListNamespacedPodAsync(
+                podList = await _client.ListNamespacedPodAsync(
                     namespaceParameter: PodNamespace,
                     labelSelector: labelSelector);
             }
             catch (Exception e)
             {
-                throw new KubernetesApiException($"Failed to retrieve pod list from {config.Host}", e);
+                throw new KubernetesApiException($"Failed to retrieve pod list from {_host}", e);
             }
             
             var addresses = Targets(podList, lookup.PortName, PodNamespace, _settings.PodDomain, _settings.RawIp, _settings.ContainerName).ToList();
