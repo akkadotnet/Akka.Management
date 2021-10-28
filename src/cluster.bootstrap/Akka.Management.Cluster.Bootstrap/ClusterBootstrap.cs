@@ -59,6 +59,9 @@ namespace Akka.Management.Cluster.Bootstrap
             _selfContactPointTcs = new TaskCompletionSource<Uri>();
             
             _system = system;
+            _system.Settings.InjectTopLevelFallback(AkkaManagementProvider.DefaultConfiguration());
+            _system.Settings.InjectTopLevelFallback(DefaultConfiguration());
+            
             _log = Logging.GetLogger(system, typeof(ClusterBootstrap));
             _bootstrapStep= new AtomicReference<Internal.IBootstrapStep>(Internal.NotRunning.Instance);
             Settings = new ClusterBootstrapSettings(system.Settings.Config, _log);
