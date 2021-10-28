@@ -11,12 +11,15 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Event;
 using k8s;
 using k8s.Authentication;
 using k8s.Models;
+using Microsoft.Rest;
+using Microsoft.Rest.Serialization;
 
 #nullable enable
 namespace Akka.Discovery.KubernetesApi
@@ -30,8 +33,6 @@ namespace Akka.Discovery.KubernetesApi
             
             public KubernetesApiException(string message, Exception innerException) : base(message, innerException)
             { }
-
-            public override string StackTrace => "";
         }
 
         private readonly ILoggingAdapter _log;
@@ -71,13 +72,48 @@ namespace Akka.Discovery.KubernetesApi
             if(_log.IsInfoEnabled)
                 _log.Info("Querying for pods with label selector: [{0}]. Namespace: [{1}]. Port: [{2}]",
                     labelSelector, PodNamespace, lookup.PortName);
-            
+
+            var cts = new CancellationTokenSource(resolveTimeout);
             V1PodList podList;
             try
             {
-                podList = await _client.ListNamespacedPodAsync(
-                    namespaceParameter: PodNamespace,
-                    labelSelector: labelSelector);
+                var result = await _client.ListNamespacedPodWithHttpMessagesAsync(
+                        namespaceParameter: PodNamespace,
+                        labelSelector: labelSelector,
+                        cancellationToken: cts.Token)
+                    .ConfigureAwait(false);
+                podList = result.Body;
+            }
+            catch (SerializationException e)
+            {
+                _log.Warning(e, "Failed to deserialize Kubernetes API response. Status code: [{0}]. Response body: [{1}].");
+                podList = new V1PodList(new List<V1Pod>());
+            }
+            catch (HttpOperationException e)
+            {
+                switch (e.Response.StatusCode)
+                {
+                    case HttpStatusCode.Forbidden:
+                        _log.Warning(
+                            e,
+                            "Forbidden to communicate with Kubernetes API server; check RBAC settings. Reason: [{0}]. Response: [{1}]", 
+                            e.Response.ReasonPhrase, 
+                            e.Response.Content);
+                        throw new KubernetesException("Forbidden when communicating with the Kubernetes API. Check RBAC settings.", e);
+                    case var other:
+                        _log.Warning(
+                            e,
+                            "Non-200 when communicating with Kubernetes API server. Status code: [{0}:{1}]. Reason: [{2}]. Response body: [{3}]",
+                            (int)other,
+                            other,
+                            e.Response.ReasonPhrase, 
+                            e.Response.Content);
+                        throw new KubernetesException($"Non-200 from Kubernetes API server: {other}", e);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw new KubernetesException("Timed out while trying to retrieve pod list from {_host}");
             }
             catch (Exception e)
             {
