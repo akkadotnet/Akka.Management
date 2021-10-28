@@ -118,14 +118,13 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                         }}
                     }}
                 }}")
-                .WithFallback(ClusterBootstrap.DefaultConfiguration())
-                .WithFallback(AkkaManagementProvider.DefaultConfiguration())
                 .WithFallback(TestKitBase.DefaultConfig);
         }
 
         [Fact(DisplayName = "Cluster Bootstrap auto start integration test")]
         public void StartSpec()
         {
+            HoconShouldBeInjected();
             _output.WriteLine("=== Starting JoinDiscoveredDns()");
             JoinDiscoveredDns();
             _output.WriteLine("=== JoinDiscoveredDns() Success");
@@ -140,6 +139,16 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             _output.WriteLine("=== Terminate() Success");
         }
         
+        // Default hocon settings should be injected automatically when the module is started
+        private void HoconShouldBeInjected()
+        {
+            var exception = Record.Exception(() =>
+            {
+                var settings = new ClusterBootstrapSettings(_systems[0].Settings.Config, Log);
+            });
+            exception.Should().BeNull();
+        }
+
         // join three DNS discovered nodes by forming new cluster (happy path)
         private void JoinDiscoveredDns()
         {
