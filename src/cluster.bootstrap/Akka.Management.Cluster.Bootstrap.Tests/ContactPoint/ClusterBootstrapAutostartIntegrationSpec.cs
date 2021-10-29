@@ -28,6 +28,8 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
 {
     public class ClusterBootstrapAutostartIntegrationSpec : TestKit.Xunit2.TestKit
     {
+        private static readonly Config BaseConfig = 
+            ConfigurationFactory.ParseString("akka.remote.dot-netty.tcp.port = 0");
         private const int ClusterSize = 3;
         private const int ScaledSize = 3;
         
@@ -43,6 +45,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         private readonly int _terminatedSystemCount;
         
         public ClusterBootstrapAutostartIntegrationSpec(ITestOutputHelper output)
+            : base(BaseConfig, nameof(ClusterBootstrapAutostartIntegrationSpec), output)
         {
             _output = output;
             
@@ -144,7 +147,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         {
             var exception = Record.Exception(() =>
             {
-                var settings = new ClusterBootstrapSettings(_systems[0].Settings.Config, Log);
+                var settings = new ClusterBootstrapSettings(_systems[0].Settings.Config, NoLogger.Instance);
             });
             exception.Should().BeNull();
         }
