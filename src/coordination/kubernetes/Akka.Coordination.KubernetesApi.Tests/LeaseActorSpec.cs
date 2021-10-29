@@ -571,7 +571,8 @@ namespace Akka.Coordination.KubernetesApi.Tests
             => ConfigurationFactory.ParseString(@"
                 akka.loglevel=DEBUG
                 akka.stdout-loglevel=DEBUG
-                akka.actor.debug.fsm=true")
+                akka.actor.debug.fsm=true
+                akka.remote.dot-netty.tcp.port = 0")
                 .WithFallback(Discovery.DiscoveryProvider.DefaultConfiguration())
                 .WithFallback(KubernetesLease.DefaultConfiguration);
 

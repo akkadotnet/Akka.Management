@@ -23,6 +23,7 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
         private static Configuration.Config Config(LocalStackFixture fixture) => ConfigurationFactory.ParseString($@"
 akka {{
   actor.provider = ""cluster""
+  remote.dot-netty.tcp.port = 0
   discovery {{
     method = ""aws-api-ec2-tag-based""
     aws-api-ec2-tag-based {{

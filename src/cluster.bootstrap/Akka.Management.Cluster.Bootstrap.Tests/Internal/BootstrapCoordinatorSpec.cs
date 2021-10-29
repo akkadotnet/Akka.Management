@@ -29,6 +29,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.Internal
         private const string ServiceName = "bootstrap-coordinator-test-service";
         private static readonly Config Config = ConfigurationFactory.ParseString($@"
             akka.actor.provider = cluster
+            akka.remote.dot-netty.tcp.port = 0
             akka.management.cluster.bootstrap {{
                 contact-point-discovery.service-name = {ServiceName}
             }}")

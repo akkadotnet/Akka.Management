@@ -25,7 +25,10 @@ namespace Akka.Http.Shim.Tests
 {
     public class HttpSpec : TestKit.Xunit2.TestKit
     {
-        public HttpSpec(ITestOutputHelper output) : base(Config.Empty, nameof(HttpSpec), output)
+        private static readonly Config BaseConfig = 
+            ConfigurationFactory.ParseString("akka.remote.dot-netty.tcp.port = 0");
+        
+        public HttpSpec(ITestOutputHelper output) : base(BaseConfig, nameof(HttpSpec), output)
         { }
         
         [Fact]

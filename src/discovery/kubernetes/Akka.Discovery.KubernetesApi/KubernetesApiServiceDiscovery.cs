@@ -17,6 +17,7 @@ using Akka.Event;
 using k8s;
 using k8s.Authentication;
 using k8s.Models;
+using Microsoft.Rest;
 
 #nullable enable
 namespace Akka.Discovery.KubernetesApi
@@ -153,9 +154,16 @@ namespace Akka.Discovery.KubernetesApi
                 int? maybePort = null;
                 if (portName != null)
                 {
-                    maybePort = itemSpec.Containers
+                    // Bugfix #223, container might not expose ports, therefore should be excluded if port name is queried
+                    var validContainers = itemSpec.Containers.Where(c => c.Ports != null); 
+                    var validPort = validContainers
                         .SelectMany(c => c.Ports)
-                        .FirstOrDefault(p => p.Name?.Contains(portName) ?? false)?.ContainerPort;
+                        .FirstOrDefault(p => p.Name?.Contains(portName) ?? false);
+
+                    if (validPort == null)
+                        continue;
+                    
+                    maybePort = validPort.ContainerPort;
                 }
                 
                 var hostOrIp = rawIp ? ip : $"{ip.Replace('.', '-')}.{podNamespace}.pod.{podDomain}";

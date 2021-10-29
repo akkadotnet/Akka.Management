@@ -37,10 +37,12 @@ namespace Akka.Coordination.KubernetesApi.Tests
         private const string ApiPath = "/apis/akka.io/v1/namespaces/lease/leases";
         private const string LeaseApiPath = ApiPath + "/" + LeaseName;
         
-        private static Config Config()
-            => ConfigurationFactory.ParseString("akka.loglevel=DEBUG");
+        private static readonly Config BaseConfig = 
+            ConfigurationFactory.ParseString(@"
+                akka.loglevel=DEBUG
+                akka.remote.dot-netty.tcp.port = 0");
         
-        public KubernetesApiSpec(ITestOutputHelper output) : base(Config(), nameof(KubernetesApiSpec), output)
+        public KubernetesApiSpec(ITestOutputHelper output) : base(BaseConfig, nameof(KubernetesApiSpec), output)
         {
             _wireMockServer = WireMockServer.Start();
             
@@ -60,9 +62,9 @@ namespace Akka.Coordination.KubernetesApi.Tests
             _underTest = new MockKubernetesApi(Sys, _settings);
         }
         
-        protected override void Dispose(bool disposing)
+        protected override void AfterAll()
         {
-            base.Dispose(disposing);
+            base.AfterAll();
             _wireMockServer.Stop();
             Environment.SetEnvironmentVariable("KUBERNETES_SERVICE_HOST", null);
             Environment.SetEnvironmentVariable("KUBERNETES_SERVICE_PORT", null);

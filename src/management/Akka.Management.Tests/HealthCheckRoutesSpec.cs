@@ -27,7 +27,7 @@ namespace Akka.Management.Tests
 {
     public class HealthCheckRoutesSpec : TestKit.Xunit2.TestKit
     {
-        private static Config Config = Config.Empty
+        private static Config Config = ConfigurationFactory.ParseString("akka.remote.dot-netty.tcp.port = 0")
             .WithFallback(Akka.Http.Dsl.Http.DefaultConfig())
             .WithFallback(AkkaManagementProvider.DefaultConfiguration());
         

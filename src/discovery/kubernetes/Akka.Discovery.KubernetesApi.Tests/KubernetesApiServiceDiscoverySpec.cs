@@ -64,6 +64,68 @@ namespace Akka.Discovery.KubernetesApi.Tests
             });
         }
 
+        [Fact(DisplayName = "Issue #223: Targets should ignore containers with IP with no ports if port name is queried")]
+        public void TargetsIgnoreContainersWithNoPorts()
+        {
+            var podList = new V1PodList(new List<V1Pod>
+            {
+                new V1Pod(
+                    spec: new V1PodSpec(new List<V1Container>
+                    {
+                        new V1Container("akka-cluster-tooling-example", ports:new List<V1ContainerPort>
+                        {
+                            new V1ContainerPort(10000, name:"akka-remote"),
+                            new V1ContainerPort(10001, name:"management"),
+                            new V1ContainerPort(10002, name:"http"),
+                        }),
+                        // Issue #223. If a pod container with an IP does not expose any port and port name is queried, Target will throw an NRE 
+                        new V1Container("akka-cluster-sidecar")
+                    }),
+                    status: new V1PodStatus(podIP: "172.17.0.4", phase:"Running", containerStatuses: new List<V1ContainerStatus>
+                    {
+                        new V1ContainerStatus
+                        {
+                            Name = "akka-cluster-tooling-example",
+                            Ready = true,
+                            State = new V1ContainerState(running:new V1ContainerStateRunning())
+                        },
+                        new V1ContainerStatus
+                        {
+                            Name = "akka-cluster-sidecar",
+                            Ready = true,
+                            State = new V1ContainerState(running:new V1ContainerStateRunning())
+                        },
+                    }),
+                    metadata: new V1ObjectMeta()),
+                new V1Pod(
+                    spec: new V1PodSpec(new List<V1Container>
+                    {
+                        // Issue #223. If a pod container with an IP does not expose any port and port name is queried, Target will throw an NRE
+                        new V1Container("akka-cluster-tooling-example")
+                    }),
+                    status: new V1PodStatus(podIP: "172.17.0.5", phase:"Running", containerStatuses: new List<V1ContainerStatus>
+                    {
+                        new V1ContainerStatus
+                        {
+                            Name = "akka-cluster-tooling-example",
+                            Ready = true,
+                            State = new V1ContainerState(running:new V1ContainerStateRunning())
+                        },
+                    }),
+                    metadata: new V1ObjectMeta()),
+            });
+
+            var result =
+                KubernetesApiServiceDiscovery.Targets(podList, "management", "default", "cluster.local", false, "akka-cluster-tooling-example");
+            result.Should().BeEquivalentTo(new List<ServiceDiscovery.ResolvedTarget>
+            {
+                new ServiceDiscovery.ResolvedTarget(
+                    host: "172-17-0-4.default.pod.cluster.local",
+                    port: 10001,
+                    address: IPAddress.Parse("172.17.0.4"))
+            });
+        }
+        
         [Fact(DisplayName = "Targets should ignore deleted pods")]
         public void TargetsIgnoreDeletedPods()
         {
@@ -258,6 +320,8 @@ namespace Akka.Discovery.KubernetesApi.Tests
             var assembly = this.GetType().Assembly;
             using(var stream = assembly.GetManifestResourceStream(resourceName))
             {
+                if(stream == null)
+                    throw new Exception($"Invalid test resource name, could not load {resourceName} from manifest");
                 using (var reader = new StreamReader(stream))
                 {
                     return reader.ReadToEnd();
