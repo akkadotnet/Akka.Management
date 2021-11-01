@@ -36,8 +36,8 @@ namespace Akka.Discovery.KubernetesApi
 
         private readonly ILoggingAdapter _log;
         private readonly KubernetesDiscoverySettings _settings;
-        private readonly Kubernetes _client;
-        private readonly string _host;
+        private readonly Kubernetes? _client;
+        private readonly string? _host;
 
         private string PodNamespace =>
             _settings.PodNamespace
@@ -52,20 +52,34 @@ namespace Akka.Discovery.KubernetesApi
             if(_log.IsDebugEnabled)
                 _log.Debug("Settings {0}", _settings);
             
-            var config = KubernetesClientConfiguration.BuildDefaultConfig();
-            config.TokenProvider = new TokenFileAuth(_settings.ApiTokenPath);
-            config.ClientCertificateFilePath = _settings.ApiCaPath;
-            config.Namespace = PodNamespace;
-
             var host = Environment.GetEnvironmentVariable(_settings.ApiServiceHostEnvName);
             var port = Environment.GetEnvironmentVariable(_settings.ApiServicePortEnvName);
-            _host = config.Host = $"https://{host}:{port}";
-            
-            _client = new Kubernetes(config);
+            if(string.IsNullOrWhiteSpace(host))
+            {
+                _log.Error($"The Kubernetes host environment variable [{_settings.ApiServiceHostEnvName}] is empty, could not create Kubernetes client.");
+            } else if (string.IsNullOrWhiteSpace(port))
+            {
+                _log.Error($"The Kubernetes port environment variable [{_settings.ApiServicePortEnvName}] is empty, could not create Kubernetes client.");
+            }
+            else
+            {
+                var config = KubernetesClientConfiguration.BuildDefaultConfig();
+                config.TokenProvider = new TokenFileAuth(_settings.ApiTokenPath);
+                config.ClientCertificateFilePath = _settings.ApiCaPath;
+                config.Namespace = PodNamespace;
+                _host = config.Host = $"https://{host}:{port}";
+                _client = new Kubernetes(config);
+            }
         }
         
         public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
         {
+            if (_client == null)
+            {
+                _log.Error("Failed to perform Kubernetes API discovery lookup. The Kubernetes client was not configured properly.");
+                throw new KubernetesException("Failed to perform Kubernetes API discovery lookup. The Kubernetes client was not configured properly.");
+            }
+            
             var labelSelector = _settings.PodLabelSelector(lookup.ServiceName);
             
             if(_log.IsInfoEnabled)
