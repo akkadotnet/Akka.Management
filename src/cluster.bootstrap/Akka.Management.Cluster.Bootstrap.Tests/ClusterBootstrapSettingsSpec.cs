@@ -13,16 +13,15 @@ using Xunit;
 
 namespace Akka.Management.Cluster.Bootstrap.Tests
 {
-    public class ClusterBootstrapSettingsSpec : TestKit.Xunit2.TestKit
+    public class ClusterBootstrapSettingsSpec
     {
-        private readonly Config _config = Config.Empty
-            .WithFallback(ClusterBootstrap.DefaultConfiguration())
-            .WithFallback(AkkaManagementProvider.DefaultConfiguration());
-        
         [Fact(DisplayName = "ClusterBootstrapSettings should have expected defaults")]
         public void HaveExpectedDefaults()
         {
-            var settings = new ClusterBootstrapSettings(_config, NoLogger.Instance);
+            var config = ClusterBootstrap.DefaultConfiguration()
+                .WithFallback(AkkaManagementProvider.DefaultConfiguration());
+            
+            var settings = new ClusterBootstrapSettings(config, NoLogger.Instance);
             settings.NewClusterEnabled.Should().BeTrue();
             
             settings.ContactPointDiscovery.ServiceName.Should().BeNull();

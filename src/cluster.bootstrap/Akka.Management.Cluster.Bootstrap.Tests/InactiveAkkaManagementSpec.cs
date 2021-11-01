@@ -25,6 +25,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
 akka.loglevel = DEBUG
 akka.actor.provider = cluster
 akka.discovery.method = config
+akka.remote.dot-netty.tcp.port = 0
 ")
             .WithFallback(DiscoveryProvider.DefaultConfiguration());
         

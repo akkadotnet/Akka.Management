@@ -109,7 +109,10 @@ namespace Akka.Management.Tests
 
         private readonly ExtendedActorSystem _eas;
         
-        public HealthCheckSpec(ITestOutputHelper helper) : base(nameof(HealthCheckSpec), helper)
+        private static readonly Config BaseConfig = 
+            ConfigurationFactory.ParseString("akka.remote.dot-netty.tcp.port = 0");
+        
+        public HealthCheckSpec(ITestOutputHelper helper) : base(BaseConfig, nameof(HealthCheckSpec), helper)
         {
             _eas = (ExtendedActorSystem) Sys;
         }
