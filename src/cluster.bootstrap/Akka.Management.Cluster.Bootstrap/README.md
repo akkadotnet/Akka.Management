@@ -41,6 +41,12 @@ The following configuration is required, more details for each and additional co
 - `akka.management.cluster.bootstrap.contact-point-discovery.discovery-method`: the intended service discovery mechanism 
   (from what choices [Akka Discovery](https://getakka.net/articles/discovery/index.html) provides). If unset, falls back to the system-wide default from akka.discovery.method.
 
+### Exposed Akka.Management REST API Endpoint
+`Akka.Management.Cluster.Bootstrap` will add a new REST HTTP API endpoint to the `Akka.Management` HTTP 
+server at the address `http://{host}:{port}/bootstrap/seed-nodes`. Calling a GET on this endpoint will 
+return a JSON document containing the Akka cluster address of the node and a list of up to 5 seed nodes 
+from the that Akka node.
+
 ## How It Works
 
 - Each node exposes an HTTP endpoint `/bootstrap/seed-nodes`. This is provided by Akka.Management.Cluster.Bootstrap and 
@@ -59,7 +65,6 @@ Please see the [complete bootstrap process documentation](./docs/BOOTSTRAP_PROCE
 
 ## Joining Mechanism Precedence
 As Akka Cluster allows nodes to join to a cluster using multiple different methods, the precedence of each method is strictly defined and is as follows:
-
 
 - If akka.cluster.seed-nodes (in your HOCON configuration) are non-empty, those nodes will be joined, 
   and bootstrap will NOT execute even if start() is called or autostart through configuration is enabled, 

@@ -28,6 +28,13 @@ number to bind for the HTTP Server for Http Cluster Management:
   akka.management.http.bind-port = 8558
 ```
 
+## Exposed REST API Endpoints
+Two Akka.Management REST API endpoints are exposed by default, the health check endpoint at 
+`http://{host}:{port}/health` and readiness check endpoint at `http://{host}:{port}/alive`; endpoint
+paths are configurable inside the HOCON configuration. Both endpoints will return a 200-OK if all of 
+its callbacks returns a `Done` instance. If any of the callbacks returns a string, the endpoint will 
+return a 500-Internal Server Error code and includes the string reason message inside the HTTP body.
+
 ## Security
 
 Note that http protocol is used by default and, as of now, there is no way to set up security on any HTTP endpoints. Management endpoints
