@@ -194,6 +194,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         {
             _stopped = true;
             _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
             Timers.CancelAll();
             base.PostStop();
         }
