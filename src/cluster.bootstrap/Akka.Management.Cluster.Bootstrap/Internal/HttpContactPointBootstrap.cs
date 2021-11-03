@@ -12,6 +12,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Event;
@@ -64,6 +65,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         private readonly Akka.Cluster.Cluster _cluster;
         private readonly TimeSpan _probeInterval;
         private readonly string _probeRequest;
+        private readonly CancellationTokenSource _cancellationTokenSource;
         
         private DateTimeOffset _probingKeepFailingDeadline;
         private bool _stopped = false;
@@ -91,6 +93,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             
             _probeInterval = settings.ContactPoint.ProbeInterval;
             _probeRequest = ClusterBootstrapRequests.BootstrapSeedNodes(baseUri);
+            _cancellationTokenSource = new CancellationTokenSource();
             
             ResetProbingKeepFailingWithinDeadline();
 
@@ -99,10 +102,10 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 _log.Debug("Probing [{0}] for seed nodes...", _probeRequest);
                 var self = Self;
 
-                var getTask = _http.GetAsync(_probeRequest);
+                var getTask = _http.GetAsync(_probeRequest, _cancellationTokenSource.Token);
                 getTask.ContinueWith(task =>
                 {
-                    if (_stopped) return (Status) new Status.Success(null);
+                    if (_stopped) return (Status) new Status.Failure(new TaskCanceledException("Actor already stopped."));
 
                     if (task.IsCanceled)
                     {
@@ -135,6 +138,9 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
                         var nodes = JsonConvert.DeserializeObject<HttpBootstrapJsonProtocol.SeedNodes>(body);
+                        if(nodes.SelfNode == null)
+                            return new Status.Failure(new IllegalStateException(
+                                $"Failed to deserialize HTTP response, Self node address is empty. [{(int) response.StatusCode} {response.StatusCode}]. Body: '{body}'"));
                         return new Status.Success(nodes);
                     }
                     return new Status.Failure(new IllegalStateException(
@@ -187,6 +193,8 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         protected override void PostStop()
         {
             _stopped = true;
+            _cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Dispose();
             Timers.CancelAll();
             base.PostStop();
         }

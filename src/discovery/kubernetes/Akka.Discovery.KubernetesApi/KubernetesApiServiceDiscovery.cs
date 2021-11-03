@@ -132,6 +132,10 @@ namespace Akka.Discovery.KubernetesApi
             {
                 throw new KubernetesApiException($"Failed to retrieve pod list from {_host}", e);
             }
+            finally
+            {
+                cts.Dispose();
+            }
             
             var addresses = Targets(podList, lookup.PortName, PodNamespace, _settings.PodDomain, _settings.RawIp, _settings.ContainerName).ToList();
             if (addresses.Count == 0 && podList.Items.Count > 0 && _log.IsInfoEnabled)
