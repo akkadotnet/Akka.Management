@@ -10,7 +10,7 @@
     <ItemGroup>
       <PackageReference Include="Akka.Discovery" Version="$(AkkaDiscoveryVersion)" />
       <PackageReference Include="AWSSDK.EC2" Version="3.7.40" />
-      <PackageReference Include="AWSSDK.ECS" Version="3.7.2.58" />
+      <PackageReference Include="AWSSDK.ECS" Version="3.7.3.6" />
     </ItemGroup>
 
 </Project>
