@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="app.conf">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Akka.Cluster.Tools" Version="$(AkkaVersion)" />
+        <PackageReference Include="Akka.DependencyInjection" Version="$(AkkaVersion)" />
+        <PackageReference Include="Petabridge.Cmd.Cluster" Version="$(PbmVersion)" />
+        <PackageReference Include="Petabridge.Cmd.Remote" Version="$(PbmVersion)" />
+        <PackageReference Include="Akka.Bootstrap.Docker" Version="0.5.3" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.17" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.17" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="3.1.17" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.17" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\..\..\..\discovery\kubernetes\Akka.Discovery.KubernetesApi\Akka.Discovery.KubernetesApi.csproj" />
+      <ProjectReference Include="..\..\..\..\..\Akka.Management.Cluster.Bootstrap\Akka.Management.Cluster.Bootstrap.csproj" />
+    </ItemGroup>
+
+</Project>

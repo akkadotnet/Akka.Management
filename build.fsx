@@ -266,6 +266,94 @@ Target "PublishNuget" (fun _ ->
 )
 
 //--------------------------------------------------------------------------------
+// Docker images
+//--------------------------------------------------------------------------------  
+
+let GetDockerProjects =
+    let dockerFiles = !! "src/**/Dockerfile" // folders with Dockerfiles in it
+       
+    let projects = dockerFiles 
+                    |> Seq.map (fun dFile -> Path.GetDirectoryName(dFile)) 
+                    |> Seq.map (fun folder -> !! (folder + "/*.csproj"))
+                    |> Seq.concat
+
+    projects
+
+Target "PublishCode" (fun _ ->    
+    ActivateFinalTarget "KillCreatedProcesses"
+   
+    let projects = GetDockerProjects
+        
+    let runSingleProject project =
+        DotNetCli.Publish
+            (fun p -> 
+                { p with
+                    Project = project
+                    Configuration = configuration
+                    })
+
+    projects|> Seq.iter (runSingleProject)
+)
+
+let mapDockerImageName (projectName:string) =
+    match projectName with
+    | str -> Some(str.ToLowerInvariant())
+
+Target "BuildDockerImages" (fun _ ->
+    let projects = GetDockerProjects
+
+    let remoteRegistryUrl = getBuildParamOrDefault "remoteRegistry" ""
+
+    let composedGetFileNameWithoutExtension (p:string) =
+        System.IO.Path.GetFileNameWithoutExtension p
+
+    let buildDockerImage imageName projectPath =
+        
+        let args = 
+            if(hasBuildParam "remoteRegistry") then
+                StringBuilder()
+                    |> append "build"
+                    |> append "-t"
+                    |> append (imageName + ":" + releaseNotes.AssemblyVersion) 
+                    |> append "-t"
+                    |> append (imageName + ":latest") 
+                    |> append "-t"
+                    |> append (remoteRegistryUrl + "/" + imageName + ":" + releaseNotes.AssemblyVersion) 
+                    |> append "-t"
+                    |> append (remoteRegistryUrl + "/" + imageName + ":latest") 
+                    |> append "."
+                    |> toText
+            else
+                StringBuilder()
+                    |> append "build"
+                    |> append "-t"
+                    |> append (imageName + ":" + releaseNotes.AssemblyVersion) 
+                    |> append "-t"
+                    |> append (imageName + ":latest") 
+                    |> append "."
+                    |> toText
+
+        let composedGetDirName (p:string) =
+            System.IO.Path.GetDirectoryName p
+
+
+        ExecProcess(fun info -> 
+                info.FileName <- "docker"
+                info.WorkingDirectory <- composedGetDirName projectPath
+                info.Arguments <- args) (System.TimeSpan.FromMinutes 5.0) (* Reasonably long-running task. *)
+
+    let runSingleProject project =
+        let projectName = composedGetFileNameWithoutExtension project
+        let imageName = mapDockerImageName projectName
+        let result = match imageName with
+                        | None -> 0
+                        | Some(name) -> buildDockerImage name project
+        if result <> 0 then failwithf "docker build failed. %s" project
+
+    projects |> Seq.iter (runSingleProject)
+)
+
+//--------------------------------------------------------------------------------
 // Documentation 
 //--------------------------------------------------------------------------------  
 Target "DocFx" (fun _ ->
@@ -321,6 +409,7 @@ Target "Help" <| fun _ ->
 
 Target "BuildRelease" DoNothing
 Target "All" DoNothing
+Target "Docker" DoNothing
 Target "Nuget" DoNothing
 
 // build dependencies
@@ -337,6 +426,9 @@ Target "Nuget" DoNothing
 
 // docs
 "Clean" ==> "BuildRelease" ==> "Docfx"
+
+// Docker
+"BuildRelease" ==> "PublishCode" ==> "BuildDockerImages" ==> "Docker"
 
 // all
 "BuildRelease" ==> "All"

@@ -26,10 +26,10 @@ If management or bootstrap configuration is incorrect, the autostart will log an
 ### Setting Up Cluster.Bootstrap Programmatically
 ```
 // Akka Management hosts the HTTP routes used by bootstrap
-await AkkaManagement.Get(system).Start()
+await AkkaManagement.Get(system).Start();
 
 // Starting the bootstrap process needs to be done explicitly
-await ClusterBootstrap.Get(system).start()
+await ClusterBootstrap.Get(system).Start();
 ```
 
 Ensure that `seed-nodes` is not present in configuration and that either autoloading through config or start() is called on every node.
@@ -40,6 +40,12 @@ The following configuration is required, more details for each and additional co
   cluster instance which is used to lookup peers in service discovery. If unset, it will be derived from the ActorSystem name.
 - `akka.management.cluster.bootstrap.contact-point-discovery.discovery-method`: the intended service discovery mechanism 
   (from what choices [Akka Discovery](https://getakka.net/articles/discovery/index.html) provides). If unset, falls back to the system-wide default from akka.discovery.method.
+
+### Exposed Akka.Management REST API Endpoint
+`Akka.Management.Cluster.Bootstrap` will add a new REST HTTP API endpoint to the `Akka.Management` HTTP 
+server at the address `http://{host}:{port}/bootstrap/seed-nodes`. Calling a GET on this endpoint will 
+return a JSON document containing the Akka cluster address of the node and a list of up to 5 seed nodes 
+from the that Akka node.
 
 ## How It Works
 
@@ -60,12 +66,11 @@ Please see the [complete bootstrap process documentation](./docs/BOOTSTRAP_PROCE
 ## Joining Mechanism Precedence
 As Akka Cluster allows nodes to join to a cluster using multiple different methods, the precedence of each method is strictly defined and is as follows:
 
-
 - If akka.cluster.seed-nodes (in your HOCON configuration) are non-empty, those nodes will be joined, 
   and bootstrap will NOT execute even if start() is called or autostart through configuration is enabled, 
   however a warning will be logged.
 - If an explicit Cluster.Join or Cluster.JoinSeedNodes is invoked before the bootstrap completes, 
-  that joining would take precedence over the bootstrap (but it’s not recommended to do so, see below).
+  that joining would take precedence over the bootstrap (but itâ€™s not recommended to do so, see below).
 - The Cluster Bootstrap mechanism takes some time to complete, but eventually issues a joinSeednodes.
 
 > [!WARNING]

@@ -35,7 +35,7 @@
   - Other nodes in the neighborhood will see the cluster `seed-nodes` advertised by __Node A__ and joins the cluster.
   - The process completes after all nodes in the neighborhood joins the newly created cluster.
 
-![Bootstraping process](/img/Cluster_bootstrap_process.png)
+![Bootstraping process](img/Cluster_bootstrap_process.png)
 
 ## Cluster Formation In a Dynamic Environment
 It is important to realise no dynamic and automatic cluster joining solution provides 100% safety, 

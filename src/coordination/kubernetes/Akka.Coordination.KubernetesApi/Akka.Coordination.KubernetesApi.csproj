@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>$(LibraryFramework)</TargetFramework>
+        <Description>Akka.NET coordination module for Kubernetes</Description>
+        <PackageTags>$(AkkaPackageTags);Kubernetes;</PackageTags>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <LangVersion>8.0</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Akka.Coordination" Version="$(AkkaVersion)" />
+        <PackageReference Include="KubernetesClient" Version="$(KubernetesClientVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="reference.conf" />
+      <EmbeddedResource Include="reference.conf" />
+    </ItemGroup>
+
+</Project>

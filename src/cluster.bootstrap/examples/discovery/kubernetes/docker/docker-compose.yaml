@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  node1:
+    image: kubernetescluster:latest
+    networks:
+      cluster_net:
+        ipv4_address: 192.168.10.1
+    ports:
+      - "8558:8558"
+    environment:
+      ACTORSYSTEM: "ClusterSystem"
+      CLUSTER_PORT: 4053
+      CLUSTER_IP: "192.168.10.1"
+      AKKA__REMOTE__DOT_NETTY__TCP__HOSTNAME: "192.168.10.1"
+      AKKA__MANAGEMENT__HTTP__HOSTNAME: "192.168.10.1"
+
+  node2:
+    image: kubernetescluster:latest
+    networks:
+      cluster_net:
+        ipv4_address: 192.168.10.2
+    environment:
+      ACTORSYSTEM: "ClusterSystem"
+      CLUSTER_PORT: 4053
+      CLUSTER_IP: "192.168.10.2"
+      AKKA__REMOTE__DOT_NETTY__TCP__HOSTNAME: "192.168.10.2"
+      AKKA__MANAGEMENT__HTTP__HOSTNAME: "192.168.10.2"
+
+  node3:
+    image: kubernetescluster:latest
+    networks:
+      cluster_net:
+        ipv4_address: 192.168.10.3
+    environment:
+      ACTORSYSTEM: "ClusterSystem"
+      CLUSTER_PORT: 4053
+      CLUSTER_IP: "192.168.10.3"
+      AKKA__REMOTE__DOT_NETTY__TCP__HOSTNAME: "192.168.10.3"
+      AKKA__MANAGEMENT__HTTP__HOSTNAME: "192.168.10.3"
+
+networks:
+  cluster_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.10.0/24
+          gateway: 192.168.10.100

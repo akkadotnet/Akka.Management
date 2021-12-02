@@ -1,4 +1,11 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ClusterBootstrap.cs" company="Akka.NET Project">
+//     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
+//     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
+// </copyright>
+//-----------------------------------------------------------------------
+
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -52,6 +59,8 @@ namespace Akka.Management.Cluster.Bootstrap
             _selfContactPointTcs = new TaskCompletionSource<Uri>();
             
             _system = system;
+            _system.Settings.InjectTopLevelFallback(DefaultConfiguration());
+            
             _log = Logging.GetLogger(system, typeof(ClusterBootstrap));
             _bootstrapStep= new AtomicReference<Internal.IBootstrapStep>(Internal.NotRunning.Instance);
             Settings = new ClusterBootstrapSettings(system.Settings.Config, _log);

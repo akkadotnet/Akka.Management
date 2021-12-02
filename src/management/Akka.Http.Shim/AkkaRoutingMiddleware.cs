@@ -1,4 +1,11 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="AkkaRoutingMiddleware.cs" company="Akka.NET Project">
+//     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
+//     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
+// </copyright>
+//-----------------------------------------------------------------------
+
+using System;
 using System.Net;
 using System.Threading.Tasks;
 using Akka.Actor;
@@ -9,7 +16,6 @@ using Akka.Http.Dsl.Server;
 using Akka.Http.Dsl.Settings;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using HttpRequest = Microsoft.AspNetCore.Http.HttpRequest;
 
 namespace Akka.Http
 {

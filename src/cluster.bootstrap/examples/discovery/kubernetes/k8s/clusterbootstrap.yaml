@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: clusterbootstrap
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: clusterbootstrap
+  namespace: clusterbootstrap
+  labels:
+    app: clusterbootstrap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clusterbootstrap
+  namespace: clusterbootstrap
+  labels:
+    app: clusterbootstrap
+spec:
+  clusterIP: None
+  ports:
+  - port: 4053
+    name: akka-remote
+  - port: 8558 
+    name: management
+  selector:
+    app: clusterbootstrap
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: clusterbootstrap
+  name: clusterbootstrap
+  labels:
+    app: clusterbootstrap
+spec:
+  serviceName: clusterbootstrap
+  replicas: 10
+  selector:
+    matchLabels:
+      app: clusterbootstrap
+  template:
+    metadata:
+      labels:
+        app: clusterbootstrap
+    spec:
+      terminationGracePeriodSeconds: 35
+      dnsConfig:
+        options:
+        - name: use-vc
+      containers:
+      - name: clusterbootstrap
+        image: kubernetescluster:0.2.3
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "pbm 127.0.0.1:9110 cluster leave"]
+        env:
+        - name: ACTORSYSTEM
+          value: ClusterSys
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: CLUSTER_IP
+          value: "$(POD_NAME).clusterbootstrap"
+        livenessProbe:
+          tcpSocket:
+            port: 4053
+        ports:
+        - containerPort: 8558 
+        - containerPort: 4053
+          protocol: TCP

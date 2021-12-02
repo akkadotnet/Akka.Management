@@ -48,6 +48,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.KubernetesAp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.KubernetesApi.Tests", "src\discovery\kubernetes\Akka.Discovery.KubernetesApi.Tests\Akka.Discovery.KubernetesApi.Tests.csproj", "{FEE5FBF2-F53D-4939-A9A3-D8BF82BE97B4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lease", "Lease", "{FE96A0E5-1216-40CE-9CC8-5C491A5E6267}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Kubernetes", "Kubernetes", "{6F76292F-324B-4636-BA8A-D4C39E62FCDC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Coordination.KubernetesApi", "src\coordination\kubernetes\Akka.Coordination.KubernetesApi\Akka.Coordination.KubernetesApi.csproj", "{AC4B13D0-2CE7-4E91-9EE2-640F33AAD068}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Coordination.KubernetesApi.Tests", "src\coordination\kubernetes\Akka.Coordination.KubernetesApi.Tests\Akka.Coordination.KubernetesApi.Tests.csproj", "{BB9C1954-1CA5-430C-9942-601C0E625A81}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KubernetesCluster", "src\cluster.bootstrap\examples\discovery\kubernetes\src\KubernetesCluster\KubernetesCluster.csproj", "{27535BEC-07B4-47F0-80BA-B6AFC467F9E9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -102,6 +112,18 @@ Global
 		{FEE5FBF2-F53D-4939-A9A3-D8BF82BE97B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FEE5FBF2-F53D-4939-A9A3-D8BF82BE97B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FEE5FBF2-F53D-4939-A9A3-D8BF82BE97B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC4B13D0-2CE7-4E91-9EE2-640F33AAD068}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC4B13D0-2CE7-4E91-9EE2-640F33AAD068}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC4B13D0-2CE7-4E91-9EE2-640F33AAD068}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC4B13D0-2CE7-4E91-9EE2-640F33AAD068}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB9C1954-1CA5-430C-9942-601C0E625A81}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB9C1954-1CA5-430C-9942-601C0E625A81}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB9C1954-1CA5-430C-9942-601C0E625A81}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB9C1954-1CA5-430C-9942-601C0E625A81}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27535BEC-07B4-47F0-80BA-B6AFC467F9E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27535BEC-07B4-47F0-80BA-B6AFC467F9E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27535BEC-07B4-47F0-80BA-B6AFC467F9E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27535BEC-07B4-47F0-80BA-B6AFC467F9E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -122,6 +144,10 @@ Global
 		{57F7B842-005E-4DC1-9B06-7B4F99986A7B} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
 		{1E87E00E-637D-4AA8-8B02-1AE1885FC53F} = {57F7B842-005E-4DC1-9B06-7B4F99986A7B}
 		{FEE5FBF2-F53D-4939-A9A3-D8BF82BE97B4} = {57F7B842-005E-4DC1-9B06-7B4F99986A7B}
+		{6F76292F-324B-4636-BA8A-D4C39E62FCDC} = {FE96A0E5-1216-40CE-9CC8-5C491A5E6267}
+		{AC4B13D0-2CE7-4E91-9EE2-640F33AAD068} = {6F76292F-324B-4636-BA8A-D4C39E62FCDC}
+		{BB9C1954-1CA5-430C-9942-601C0E625A81} = {6F76292F-324B-4636-BA8A-D4C39E62FCDC}
+		{27535BEC-07B4-47F0-80BA-B6AFC467F9E9} = {24FEBA95-1FC2-4AC2-8386-6AB13AE87056}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}

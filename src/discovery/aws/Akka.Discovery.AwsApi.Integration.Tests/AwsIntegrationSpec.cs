@@ -1,3 +1,10 @@
+//-----------------------------------------------------------------------
+// <copyright file="AwsIntegrationSpec.cs" company="Akka.NET Project">
+//     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
+//     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
+// </copyright>
+//-----------------------------------------------------------------------
+
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,6 +23,7 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
         private static Configuration.Config Config(LocalStackFixture fixture) => ConfigurationFactory.ParseString($@"
 akka {{
   actor.provider = ""cluster""
+  remote.dot-netty.tcp.port = 0
   discovery {{
     method = ""aws-api-ec2-tag-based""
     aws-api-ec2-tag-based {{
