@@ -1,3 +1,11 @@
+#### 0.2.4-beta1 December 3 2021 ####
+* Fix [Kubernetes discovery label selector and add documentation](https://github.com/akkadotnet/Akka.Management/pull/168)
+* Add [Kubernetes lease feature](https://github.com/akkadotnet/Akka.Management/pull/213)
+* Fix [Kubernetes discovery throws NRE on containers with portless IP address](https://github.com/akkadotnet/Akka.Management/pull/230)
+* Fix [Cluster.Bootstrap default configuration not injected properly on startup](https://github.com/akkadotnet/Akka.Management/pull/221)
+* Update to [Akka.NET v1.4.28](https://github.com/akkadotnet/akka.net/releases/tag/1.4.28) 
+* Update all AWSSDK versions
+
 #### 0.2.3-beta2 October 5 2021 ####
 * Fix [several minor bugs](https://github.com/akkadotnet/Akka.Management/pull/168) 
 
