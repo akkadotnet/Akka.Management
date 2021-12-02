@@ -1,4 +1,11 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ClusterBootstrapAutostartIntegrationSpec.cs" company="Akka.NET Project">
+//     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
+//     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
+// </copyright>
+//-----------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -21,6 +28,8 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
 {
     public class ClusterBootstrapAutostartIntegrationSpec : TestKit.Xunit2.TestKit
     {
+        private static readonly Config BaseConfig = 
+            ConfigurationFactory.ParseString("akka.remote.dot-netty.tcp.port = 0");
         private const int ClusterSize = 3;
         private const int ScaledSize = 3;
         
@@ -36,6 +45,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         private readonly int _terminatedSystemCount;
         
         public ClusterBootstrapAutostartIntegrationSpec(ITestOutputHelper output)
+            : base(BaseConfig, nameof(ClusterBootstrapAutostartIntegrationSpec), output)
         {
             _output = output;
             
@@ -111,14 +121,13 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                         }}
                     }}
                 }}")
-                .WithFallback(ClusterBootstrap.DefaultConfiguration())
-                .WithFallback(AkkaManagementProvider.DefaultConfiguration())
                 .WithFallback(TestKitBase.DefaultConfig);
         }
 
         [Fact(DisplayName = "Cluster Bootstrap auto start integration test")]
         public void StartSpec()
         {
+            HoconShouldBeInjected();
             _output.WriteLine("=== Starting JoinDiscoveredDns()");
             JoinDiscoveredDns();
             _output.WriteLine("=== JoinDiscoveredDns() Success");
@@ -133,6 +142,16 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             _output.WriteLine("=== Terminate() Success");
         }
         
+        // Default hocon settings should be injected automatically when the module is started
+        private void HoconShouldBeInjected()
+        {
+            var exception = Record.Exception(() =>
+            {
+                var settings = new ClusterBootstrapSettings(_systems[0].Settings.Config, NoLogger.Instance);
+            });
+            exception.Should().BeNull();
+        }
+
         // join three DNS discovered nodes by forming new cluster (happy path)
         private void JoinDiscoveredDns()
         {

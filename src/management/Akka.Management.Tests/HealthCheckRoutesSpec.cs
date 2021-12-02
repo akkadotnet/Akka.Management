@@ -1,3 +1,10 @@
+//-----------------------------------------------------------------------
+// <copyright file="HealthCheckRoutesSpec.cs" company="Akka.NET Project">
+//     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
+//     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
+// </copyright>
+//-----------------------------------------------------------------------
+
 using System;
 using System.IO;
 using System.Net;
@@ -16,12 +23,11 @@ using Xunit;
 using Xunit.Abstractions;
 using HttpRequest = Akka.Http.Dsl.Model.HttpRequest;
 
-
 namespace Akka.Management.Tests
 {
     public class HealthCheckRoutesSpec : TestKit.Xunit2.TestKit
     {
-        private static Config Config = Config.Empty
+        private static Config Config = ConfigurationFactory.ParseString("akka.remote.dot-netty.tcp.port = 0")
             .WithFallback(Akka.Http.Dsl.Http.DefaultConfig())
             .WithFallback(AkkaManagementProvider.DefaultConfiguration());
         

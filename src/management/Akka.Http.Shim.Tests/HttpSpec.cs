@@ -1,3 +1,10 @@
+//-----------------------------------------------------------------------
+// <copyright file="HttpSpec.cs" company="Akka.NET Project">
+//     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
+//     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
+// </copyright>
+//-----------------------------------------------------------------------
+
 using System;
 using System.Net;
 using System.Net.Http;
@@ -5,7 +12,6 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Http.Dsl;
-using Akka.Http.Dsl.Server;
 using Akka.Http.Dsl.Settings;
 using Akka.Http.Extensions;
 using FluentAssertions;
@@ -19,7 +25,10 @@ namespace Akka.Http.Shim.Tests
 {
     public class HttpSpec : TestKit.Xunit2.TestKit
     {
-        public HttpSpec(ITestOutputHelper output) : base(Config.Empty, nameof(HttpSpec), output)
+        private static readonly Config BaseConfig = 
+            ConfigurationFactory.ParseString("akka.remote.dot-netty.tcp.port = 0");
+        
+        public HttpSpec(ITestOutputHelper output) : base(BaseConfig, nameof(HttpSpec), output)
         { }
         
         [Fact]

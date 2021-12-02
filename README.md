@@ -8,9 +8,10 @@ These tools aims to help with cluster management in various dynamic environments
   You can read more in the documentation [here](/src/management/Akka.Management/README.md).
 * [`Akka.Management.Cluster.Bootstrap`](/src/cluster.bootstrap/Akka.Management.Cluster.Bootstrap) - Automated Akka.Cluster bootstrapping
   in a dynamic environment. You can read more in the documentation [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/cluster.bootstrap/Akka.Management.Cluster.Bootstrap/README.md).
-* [`Akka.Discovery.AwsApi`](/src/discovery/Akka.Discovery.AwsApi) - Akka.Cluster bootstrapping discovery service using EC2 and the AWS API.
-  You can read more in the documentation [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/Akka.Discovery.AwsApi/README.md).
-
+* [`Akka.Discovery.AwsApi`](/src/discovery/aws/Akka.Discovery.AwsApi) - Akka.Cluster bootstrapping discovery service using EC2 and the AWS API.
+  You can read more in the documentation [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/aws/Akka.Discovery.AwsApi/README.md).
+* [`Akka.Discovery.KubernetesApi`](/src/discovery/kubernetes/Akka.Discovery.KubernetesApi) - Akka.Cluster bootstrapping discovery service using Kubernetes API
+  You can read more in the documentation [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/kubernetes/Akka.Discovery.KubernetesApi/README.md)
 ## Build Instructions
 
 ### Supported Commands

@@ -1,4 +1,11 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ClusterBootstrapSettingsSpec.cs" company="Akka.NET Project">
+//     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
+//     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
+// </copyright>
+//-----------------------------------------------------------------------
+
+using System;
 using Akka.Configuration;
 using Akka.Event;
 using FluentAssertions;
@@ -6,16 +13,15 @@ using Xunit;
 
 namespace Akka.Management.Cluster.Bootstrap.Tests
 {
-    public class ClusterBootstrapSettingsSpec : TestKit.Xunit2.TestKit
+    public class ClusterBootstrapSettingsSpec
     {
-        private readonly Config _config = Config.Empty
-            .WithFallback(ClusterBootstrap.DefaultConfiguration())
-            .WithFallback(AkkaManagementProvider.DefaultConfiguration());
-        
         [Fact(DisplayName = "ClusterBootstrapSettings should have expected defaults")]
         public void HaveExpectedDefaults()
         {
-            var settings = new ClusterBootstrapSettings(_config, NoLogger.Instance);
+            var config = ClusterBootstrap.DefaultConfiguration()
+                .WithFallback(AkkaManagementProvider.DefaultConfiguration());
+            
+            var settings = new ClusterBootstrapSettings(config, NoLogger.Instance);
             settings.NewClusterEnabled.Should().BeTrue();
             
             settings.ContactPointDiscovery.ServiceName.Should().BeNull();
