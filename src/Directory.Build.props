@@ -34,7 +34,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
     <TestsNet>net5.0</TestsNet>
     <XunitVersion>2.4.1</XunitVersion>
     <XUnitRunnerVersion>2.4.3</XUnitRunnerVersion>
-    <CoverletVersion>3.1.0</CoverletVersion>
+    <CoverletVersion>3.1.2</CoverletVersion>
     <FluentAssertionVersion>6.5.1</FluentAssertionVersion>
     <TestSdkVersion>17.1.0</TestSdkVersion>
     <AkkaVersion>1.4.33</AkkaVersion>
