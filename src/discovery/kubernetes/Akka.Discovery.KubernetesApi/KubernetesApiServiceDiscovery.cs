@@ -19,6 +19,7 @@ using k8s;
 using k8s.Authentication;
 using k8s.Models;
 using Microsoft.Rest;
+using Newtonsoft.Json;
 
 #nullable enable
 namespace Akka.Discovery.KubernetesApi
@@ -136,19 +137,29 @@ namespace Akka.Discovery.KubernetesApi
             {
                 cts.Dispose();
             }
+
+            if (podList.Items.Count == 0)
+            {
+                if(_log.IsWarningEnabled)
+                    _log.Warning(
+                        "No pods found in namespace [{0}] using the pod label selector [{1}]. " +
+                        "Make sure that the namespace is correct and the label are applied to the StatefulSet or Deployment.",
+                    PodNamespace, labelSelector);
+                return new Resolved(lookup.ServiceName, new List<ResolvedTarget>());
+            }
             
             var addresses = Targets(podList, lookup.PortName, PodNamespace, _settings.PodDomain, _settings.RawIp, _settings.ContainerName).ToList();
-            if (addresses.Count == 0 && podList.Items.Count > 0 && _log.IsInfoEnabled)
+            if (addresses.Count == 0 && podList.Items.Count > 0 && _log.IsWarningEnabled)
             {
-                var containerPortNames = podList.Items
+                var containerPorts = podList.Items
                     .Select(p => p.Spec)
                     .SelectMany(s => s.Containers)
-                    .SelectMany(c => c.Ports)
-                    .Select(p => p.Name);
-                _log.Info(
-                    "No targets found from pod list. Is the correct port name configured? Current configuration: [{0}]. Ports on pods: [{1}]",
+                    .Select(c => new ContainerDebugView{Name = c.Name, Ports = c.Ports})
+                    .Select(JsonConvert.SerializeObject);
+                _log.Warning(
+                    "No targets found from pod list. Is the correct port name configured? Current configuration: [{0}]. Ports on pods:\n\t{1}",
                     lookup.PortName,
-                    string.Join(", ", containerPortNames));
+                    string.Join(",\n\t", containerPorts));
             }
 
             return new Resolved(serviceName: lookup.ServiceName, addresses: addresses);
@@ -227,5 +238,13 @@ namespace Akka.Discovery.KubernetesApi
                     address: IPAddress.Parse(ip));
             }
         }
+    }
+
+    internal class ContainerDebugView
+    {
+        [JsonProperty(PropertyName = "podName")]
+        public string Name { get; set; }
+        [JsonProperty(PropertyName = "ports")]
+        public IList<V1ContainerPort> Ports { get; set; }
     }
 }
