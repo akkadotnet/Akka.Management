@@ -9,7 +9,7 @@
 
     <ItemGroup>
       <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
-      <PackageReference Include="Akka.Discovery" Version="1.4.35" />
+      <PackageReference Include="Akka.Discovery" Version="1.4.36" />
     </ItemGroup>
 
     <ItemGroup>
