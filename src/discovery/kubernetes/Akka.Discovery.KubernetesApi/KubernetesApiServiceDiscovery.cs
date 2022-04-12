@@ -154,7 +154,7 @@ namespace Akka.Discovery.KubernetesApi
                 var containerPorts = podList.Items
                     .Select(p => p.Spec)
                     .SelectMany(s => s.Containers)
-                    .Select(c => new ContainerDebugView{Name = c.Name, Ports = c.Ports})
+                    .Select(c => new ContainerDebugView(c.Name, c.Ports))
                     .Select(JsonConvert.SerializeObject);
                 _log.Warning(
                     "No targets found from pod list. Is the correct port name configured? Current configuration: [{0}]. Ports on pods:\n\t{1}",
@@ -242,6 +242,12 @@ namespace Akka.Discovery.KubernetesApi
 
     internal class ContainerDebugView
     {
+        public ContainerDebugView(string name, IList<V1ContainerPort> ports)
+        {
+            Name = name;
+            Ports = ports;
+        }
+
         [JsonProperty(PropertyName = "podName")]
         public string Name { get; set; }
         [JsonProperty(PropertyName = "ports")]

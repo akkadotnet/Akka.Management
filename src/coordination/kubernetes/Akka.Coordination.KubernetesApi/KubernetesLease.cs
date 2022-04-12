@@ -27,7 +27,7 @@ namespace Akka.Coordination.KubernetesApi
         public const string ConfigPath = "akka.coordination.lease.kubernetes";
         private static readonly AtomicCounter LeaseCounter = new AtomicCounter(1);
 
-        private static string TruncateTo63Characters(string name) => name.Substring(0, 63);
+        private static string TruncateTo63Characters(string name) => name.Length > 63 ? name.Substring(0, 63) : name;
 
         private static readonly Regex Rx1 = new Regex("[_.]");
         private static readonly Regex Rx2 = new Regex("[^-a-z0-9]");
@@ -45,7 +45,7 @@ namespace Akka.Coordination.KubernetesApi
         private readonly string _leaseName;
         private readonly IActorRef _leaseActor;
 
-        public KubernetesLease(ExtendedActorSystem system, LeaseSettings settings) :
+        public KubernetesLease(LeaseSettings settings, ExtendedActorSystem system) :
             this(system, new AtomicBoolean(), settings)
         { }
 

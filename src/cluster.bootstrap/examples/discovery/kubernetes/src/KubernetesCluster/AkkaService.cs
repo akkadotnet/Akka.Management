@@ -6,6 +6,7 @@ using Akka.Actor;
 using Akka.Bootstrap.Docker;
 using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.Configuration;
+using Akka.Coordination.KubernetesApi;
 using Akka.DependencyInjection;
 using Akka.Event;
 using Akka.Management;
@@ -23,21 +24,23 @@ namespace KubernetesCluster
     {
         public ChaosActor()
         {
-            Receive<int>(i =>
+            var log = Context.GetLogger();
+            
+            ReceiveAsync<int>(async i =>
             {
+                log.Info($"Received {i}");
                 switch (i)
                 {
                     case 1: // graceful shutdown
-                        Context.System.Terminate();
+                        log.Error("======== Shutting down gracefully ========");
+                        await Task.Delay(100);
+                        await Context.System.Terminate();
                         return;
                     case 2: // crash
+                        log.Error("======== Crashing system ========");
+                        await Task.Delay(100);
                         Context.System.AsInstanceOf<ExtendedActorSystem>().Abort();
                         return;
-                    default:
-                    {
-                        // do nothing
-                        break;
-                    }
                 }
             });
         }
@@ -45,7 +48,7 @@ namespace KubernetesCluster
     
     public class Subscriber : ReceiveActor
     {
-        private readonly ILoggingAdapter log = Context.GetLogger();
+        private readonly ILoggingAdapter _log = Context.GetLogger();
 
         public Subscriber()
         {
@@ -56,7 +59,7 @@ namespace KubernetesCluster
 
             Receive<int>(s =>
             {
-                log.Info($"Got {s}");
+                _log.Info($"Got {s}");
                 if (s % 2 == 0)
                 {
                     mediator.Tell(new Publish("content", ThreadLocalRandom.Current.Next(0,10)));
@@ -69,7 +72,7 @@ namespace KubernetesCluster
                     && subscribeAck.Subscribe.Ref.Equals(Self)
                     && subscribeAck.Subscribe.Group == null)
                 {
-                    log.Info("subscribing");
+                    _log.Info("subscribing");
                 }
             });
         }
@@ -95,7 +98,8 @@ namespace KubernetesCluster
         public Task StartAsync(CancellationToken cancellationToken)
         {
             var config = ConfigurationFactory.ParseString(File.ReadAllText("app.conf"))
-                .BootstrapFromDocker();
+                .BootstrapFromDocker()
+                .WithFallback(KubernetesLease.DefaultConfiguration);
                 
             var bootstrap = BootstrapSetup.Create()
                 .WithConfig(config) // load HOCON
@@ -132,7 +136,7 @@ namespace KubernetesCluster
             _system.Scheduler.Advanced.ScheduleRepeatedly(TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1), () =>
             {
                // mediator.Tell(new Publish("content", ThreadLocalRandom.Current.Next(0,10)));
-                chaos.Tell(ThreadLocalRandom.Current.Next(0,100));
+                chaos.Tell(ThreadLocalRandom.Current.Next(0,200));
             });
 
             return Task.CompletedTask;
