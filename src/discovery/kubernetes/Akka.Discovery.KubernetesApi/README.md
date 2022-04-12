@@ -153,6 +153,8 @@ spec:
         ports:
         - containerPort: 8558
           protocol: TCP
+          # When akka.management.cluster.bootstrap.contact-point-discovery.port-name
+          # is defined, it must correspond to this name:
           name: management
         - containerPort: 4053
           protocol: TCP
