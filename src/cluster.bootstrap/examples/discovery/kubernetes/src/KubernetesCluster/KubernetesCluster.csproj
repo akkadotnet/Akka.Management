@@ -25,6 +25,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\..\..\..\coordination\kubernetes\Akka.Coordination.KubernetesApi\Akka.Coordination.KubernetesApi.csproj" />
       <ProjectReference Include="..\..\..\..\..\..\discovery\kubernetes\Akka.Discovery.KubernetesApi\Akka.Discovery.KubernetesApi.csproj" />
       <ProjectReference Include="..\..\..\..\..\Akka.Management.Cluster.Bootstrap\Akka.Management.Cluster.Bootstrap.csproj" />
     </ItemGroup>
