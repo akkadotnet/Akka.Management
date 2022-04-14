@@ -1,0 +1,1 @@
+kubectl get event -n stress-test
