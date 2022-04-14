@@ -35,8 +35,7 @@ namespace Akka.Coordination.KubernetesApi.Internal
 
         private string Namespace =>
             _settings.Namespace
-                .DefaultIfNullOrWhitespace(ReadConfigVarFromFileSystem(_settings.NamespacePath, "namespace"))
-                .DefaultIfNullOrWhitespace("default") ?? "default";
+                .DefaultIfNullOrWhitespace(ReadConfigVarFromFileSystem(_settings.NamespacePath, "namespace")) ?? "default";
         
         public KubernetesApiImpl(ActorSystem system, KubernetesSettings settings)
         {

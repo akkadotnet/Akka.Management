@@ -58,6 +58,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Coordination.Kubernete
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KubernetesCluster", "src\cluster.bootstrap\examples\discovery\kubernetes\src\KubernetesCluster\KubernetesCluster.csproj", "{27535BEC-07B4-47F0-80BA-B6AFC467F9E9}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{C4C8BE03-A7C0-4F2E-8922-92854FE7A5BF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kubernetes.StressTest", "src\coordination\examples\kubernetes\Kubernetes.StressTest\Kubernetes.StressTest.csproj", "{37966C33-2B2F-4D80-83AC-140E0D7AFABA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -124,6 +128,10 @@ Global
 		{27535BEC-07B4-47F0-80BA-B6AFC467F9E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{27535BEC-07B4-47F0-80BA-B6AFC467F9E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{27535BEC-07B4-47F0-80BA-B6AFC467F9E9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37966C33-2B2F-4D80-83AC-140E0D7AFABA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37966C33-2B2F-4D80-83AC-140E0D7AFABA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37966C33-2B2F-4D80-83AC-140E0D7AFABA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37966C33-2B2F-4D80-83AC-140E0D7AFABA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -148,6 +156,8 @@ Global
 		{AC4B13D0-2CE7-4E91-9EE2-640F33AAD068} = {6F76292F-324B-4636-BA8A-D4C39E62FCDC}
 		{BB9C1954-1CA5-430C-9942-601C0E625A81} = {6F76292F-324B-4636-BA8A-D4C39E62FCDC}
 		{27535BEC-07B4-47F0-80BA-B6AFC467F9E9} = {24FEBA95-1FC2-4AC2-8386-6AB13AE87056}
+		{C4C8BE03-A7C0-4F2E-8922-92854FE7A5BF} = {FE96A0E5-1216-40CE-9CC8-5C491A5E6267}
+		{37966C33-2B2F-4D80-83AC-140E0D7AFABA} = {C4C8BE03-A7C0-4F2E-8922-92854FE7A5BF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}

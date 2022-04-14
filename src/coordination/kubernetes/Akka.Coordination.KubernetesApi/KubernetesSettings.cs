@@ -19,7 +19,7 @@ namespace Akka.Coordination.KubernetesApi
             string apiTokenPath,
             string apiServiceHostEnvName,
             string apiServicePortEnvName,
-            string ns,
+            string? ns,
             string namespacePath,
             TimeSpan apiServiceRequestTimeout,
             bool? secure,
@@ -58,7 +58,7 @@ namespace Akka.Coordination.KubernetesApi
                 config.GetString("api-token-path"),
                 config.GetString("api-service-host-env-name"),
                 config.GetString("api-service-port-env-name"),
-                config.GetString("namespace"),
+                config.GetStringIfDefined("namespace"),
                 config.GetString("namespace-path"),
                 apiServerRequestTimeout,
                 secure,
@@ -70,7 +70,7 @@ namespace Akka.Coordination.KubernetesApi
         public string ApiTokenPath { get; }
         public string ApiServiceHostEnvName { get; }
         public string ApiServicePortEnvName { get; }
-        public string Namespace { get; }
+        public string? Namespace { get; }
         public string NamespacePath { get; }
         public TimeSpan ApiServiceRequestTimeout { get; }
         public bool Secure { get; }
