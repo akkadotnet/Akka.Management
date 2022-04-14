@@ -1,6 +1,10 @@
-- name: Home
-  href: index.md
 - name: Documentation
   href: articles/
 - name: API Reference
   href: api/
+- name: Project Chat
+  href: https://gitter.im/akkadotnet/akka.net
+- name: Discussion Forum
+  href: https://github.com/akkadotnet/akka.net/discussions
+- name: Source Code
+  href: https://github.com/akkadotnet/akka.management

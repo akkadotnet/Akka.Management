@@ -1,3 +1,10 @@
+#### 0.2.4-beta2 April 14 2022 ####
+
+* Update to [Akka.NET v1.4.37](https://github.com/akkadotnet/akka.net/releases/tag/1.4.37)
+* [Make Kubernetes discovery error message more verbose](https://github.com/akkadotnet/Akka.Management/pull/518)
+* [Add working Kubernetes lease stress test project](https://github.com/akkadotnet/Akka.Management/pull/530)
+* Update all AWSSDK versions
+
 #### 0.2.4-beta1 December 3 2021 ####
 * Fix [Kubernetes discovery label selector and add documentation](https://github.com/akkadotnet/Akka.Management/pull/168)
 * Add [Kubernetes lease feature](https://github.com/akkadotnet/Akka.Management/pull/213)

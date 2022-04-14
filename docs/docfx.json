@@ -36,13 +36,13 @@
           "obj/**",
           "_site/**"
         ]
-      },
+      }
     ],
     "resource": [
       {
         "files": [
           "images/**",
-          "web.config",
+          "web.config"
         ],
         "exclude": [
           "obj/**",
@@ -50,14 +50,13 @@
         ]
       }
     ],
-     "sitemap": {
-       "baseUrl": "https://yoursite.github.io/"
-     },
     "dest": "_site",
     "globalMetadata": {
-      "_appTitle": "Akka.Management",
+      "_appTitle": "Akka.Management Documentation",
       "_disableContribution": "true",
-      "_appLogoPath": "/images/icon.png",
+      "_appLogoPath": "/images/akkalogo.png",
+      "_appFaviconPath": "/images/favicon.ico",
+      "_enableSearch": "true"
     },
     "globalMetadataFiles": [],
     "fileMetadataFiles": [],

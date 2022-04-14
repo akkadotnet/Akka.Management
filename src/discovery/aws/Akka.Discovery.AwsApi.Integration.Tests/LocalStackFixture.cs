@@ -340,7 +340,6 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
             {
                 ImageId = "ami-fake",
                 InstanceType = InstanceType.T2Micro,
-                SubnetId = publicSubnetId,
                 MinCount = 2,
                 MaxCount = 2,
                 SecurityGroupIds = new List<string> {securityGroupId},
@@ -366,7 +365,6 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
             {
                 ImageId = "ami-fake",
                 InstanceType = InstanceType.T2Micro, 
-                SubnetId = privateSubnetId,
                 MinCount = 2,
                 MaxCount = 2,
                 SecurityGroupIds = new List<string> {securityGroupId},

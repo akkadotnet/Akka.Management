@@ -27,7 +27,7 @@ namespace Akka.Coordination.KubernetesApi
         public const string ConfigPath = "akka.coordination.lease.kubernetes";
         private static readonly AtomicCounter LeaseCounter = new AtomicCounter(1);
 
-        private static string TruncateTo63Characters(string name) => name.Substring(0, 63);
+        private static string TruncateTo63Characters(string name) => name.Length > 63 ? name.Substring(0, 63) : name;
 
         private static readonly Regex Rx1 = new Regex("[_.]");
         private static readonly Regex Rx2 = new Regex("[^-a-z0-9]");
@@ -39,13 +39,14 @@ namespace Akka.Coordination.KubernetesApi
             return TruncateTo63Characters(normalized).Trim('_');
         }
 
+        private readonly ILoggingAdapter _log;
         private readonly AtomicBoolean _leaseTaken;
         private readonly LeaseSettings _settings;
         private readonly TimeSpan _timeout;
         private readonly string _leaseName;
         private readonly IActorRef _leaseActor;
 
-        public KubernetesLease(ExtendedActorSystem system, LeaseSettings settings) :
+        public KubernetesLease(LeaseSettings settings, ExtendedActorSystem system) :
             this(system, new AtomicBoolean(), settings)
         { }
 
@@ -55,7 +56,7 @@ namespace Akka.Coordination.KubernetesApi
             _leaseTaken = leaseTaken;
             _settings = settings;
             
-            ILoggingAdapter logger = Logging.GetLogger(system, GetType());
+            _log = Logging.GetLogger(system, GetType());
             var kubernetesSettings = KubernetesSettings.Create(system, settings.TimeoutSettings);
             var client = new KubernetesApiImpl(system, kubernetesSettings);
             _timeout = _settings.TimeoutSettings.OperationTimeout;
@@ -65,9 +66,9 @@ namespace Akka.Coordination.KubernetesApi
                 $"KubernetesLease{LeaseCounter.GetAndIncrement()}");
             
             if(!_leaseName.Equals(settings.LeaseName))
-                logger.Info("Original lease name [{0}] sanitized for kubernetes: [{1}]", settings.LeaseName, _leaseName);
+                _log.Info("Original lease name [{0}] sanitized for kubernetes: [{1}]", settings.LeaseName, _leaseName);
 
-            logger.Debug(
+            _log.Debug(
                 "Starting kubernetes lease actor [{0}] for lease [{1}], owner [{2}]",
                 _leaseActor,
                 _leaseName,
@@ -82,6 +83,8 @@ namespace Akka.Coordination.KubernetesApi
             // replace with transform once 2.11 dropped
             try
             {
+                if(_log.IsDebugEnabled)
+                    _log.Debug("Releasing lease");
                 return _leaseActor.Ask(LeaseActor.Release.Instance, _timeout)
                     .ContinueWith(t =>
                     {
@@ -108,6 +111,8 @@ namespace Akka.Coordination.KubernetesApi
             // replace with transform once 2.11 dropped
             try
             {
+                if(_log.IsDebugEnabled)
+                    _log.Debug("Acquiring lease");
                 return _leaseActor.Ask(new LeaseActor.Acquire(leaseLostCallback), _timeout)
                     .ContinueWith(t =>
                     {

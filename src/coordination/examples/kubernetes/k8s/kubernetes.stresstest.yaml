@@ -1,0 +1,164 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: stress-test
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: stress-test
+  namespace: stress-test
+  labels:
+    app: stress-test
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pod-reader
+  namespace: stress-test
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: lease-access
+  namespace: stress-test
+rules:
+  - apiGroups: ["akka.io"]
+    resources: ["leases"]
+    verbs: ["get", "create", "update", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: read-pods
+  namespace: stress-test
+subjects:
+  - kind: ServiceAccount
+    name: default
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: lease-access
+  namespace: stress-test
+subjects:
+  - kind: ServiceAccount
+    name: default
+roleRef:
+  kind: Role
+  name: lease-access
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  # name must match the spec fields below, and be in the form: <plural>.<group>
+  name: leases.akka.io
+  namespace: stress-test
+spec:
+  group: akka.io
+  versions:
+    - name: v1
+      storage: true
+      served: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                owner:
+                  type: string
+                version:
+                  type: string
+                time:
+                  type: integer
+  scope: Namespaced
+  names:
+    # kind is normally the CamelCased singular type. Your resource manifests use this.
+    kind: Lease
+    listKind: LeaseList
+    # singular name to be used as an alias on the CLI and for display
+    singular: lease
+    # plural name to be used in the URL: /apis/<group>/<version>/<plural>
+    plural: leases
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stress-test
+  namespace: stress-test
+  labels:
+    app: stress-test
+spec:
+  clusterIP: None
+  ports:
+  - port: 4053
+    name: akka-remote
+  - port: 8558 
+    name: management
+  selector:
+    app: stress-test
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: stress-test
+  name: stress-test
+  labels:
+    app: stress-test
+spec:
+  serviceName: stress-test
+  replicas: 10
+  selector:
+    matchLabels:
+      app: stress-test
+  template:
+    metadata:
+      labels:
+        app: stress-test
+    spec:
+      terminationGracePeriodSeconds: 35
+      dnsConfig:
+        options:
+        - name: use-vc
+      containers:
+      - name: stress-test
+        image: kubernetes.stresstest:0.2.4
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "pbm 127.0.0.1:9110 cluster leave"]
+        env:
+        - name: ACTORSYSTEM
+          value: ClusterSys
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: CLUSTER_IP
+          value: "$(POD_NAME).stress-test"
+        livenessProbe:
+          httpGet:
+            path: /alive
+            port: management
+        startupProbe:
+          httpGet:
+            path: /ready
+            port: management
+        ports:
+        - containerPort: 8558 
+          protocol: TCP
+          name: management
+        - containerPort: 4053
+          protocol: TCP
+          name: akka-remote
