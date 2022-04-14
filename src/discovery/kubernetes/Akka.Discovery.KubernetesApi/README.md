@@ -89,6 +89,42 @@ cluster.RegisterOnMemberUp(() => {
 });
 ```
 
+## Role-Based Access Control
+
+If your Kubernetes cluster has [Role-Based Access Control (RBAC)](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) enabled, you’ll also have to grant the Service Account that your pods run under access to list pods. The following configuration can be used as a starting point. It creates a Role, pod-reader, which grants access to query pod information. It then binds the default Service Account to the Role by creating a RoleBinding. Adjust as necessary.
+
+```yaml
+#
+# Create a role, `pod-reader`, that can list pods and
+# bind the default service account in the namespace
+# that the binding is deployed to to that role.
+#
+
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pod-reader
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: read-pods
+subjects:
+  # Uses the default service account.
+  # Consider creating a dedicated service account to run your
+  # Akka Cluster services and binding the role to that one.
+- kind: ServiceAccount
+  name: default
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+```
+
 ## Configuration
 ### Kubernetes YAML Configuration
 Below is an example of a YAML example taken from our [integration sample](https://github.com/akkadotnet/akka.net-integration-tests/tree/master/src/ClusterBootstrap).
