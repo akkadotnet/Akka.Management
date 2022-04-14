@@ -225,17 +225,25 @@ namespace Akka.Coordination.KubernetesApi
             When(Idle.Instance, evt =>
             {
                 if (!(evt.FsmEvent is Acquire acquire))
+                {
+                    if(_log.IsDebugEnabled)
+                        _log.Debug($"[Idle] Received event is not Acquire. Received: [{evt.FsmEvent.GetType()}]");
                     return null;
+                }
                 
                 switch (evt.StateData)
                 {
                     case ReadRequired _:
+                        if(_log.IsDebugEnabled)
+                            _log.Debug("[Idle] Received Acquire, ReadRequired.");
                         _client.ReadOrCreateLeaseResource(leaseName)
                             .ContinueWith(task => new ReadResponse(task.Result))
                             .PipeTo(Self, failure: FlattenAggregateException);
                         return GoTo(PendingRead.Instance)
                             .Using(new PendingReadData(Sender, acquire.LeaseLostCallback));
                     case LeaseCleared cleared:
+                        if(_log.IsDebugEnabled)
+                            _log.Debug("[Idle] Received Acquire, LeaseCleared.");
                         _client.UpdateLeaseResource(leaseName, _ownerName, cleared.Version)
                             .ContinueWith(task => new WriteResponse(task.Result))
                             .PipeTo(Self, failure: FlattenAggregateException);
@@ -249,7 +257,11 @@ namespace Akka.Coordination.KubernetesApi
             When(PendingRead.Instance, @event =>
             {
                 if(!(@event.FsmEvent is ReadResponse evt))
+                {
+                    if(_log.IsDebugEnabled)
+                        _log.Debug($"[PendingRead] Received event is not ReadResponse. Received: [{@event.FsmEvent.GetType()}]");
                     return null;
+                }
                 
                 var resource = evt.Response;
                 var data = (PendingReadData) @event.StateData;
@@ -260,6 +272,8 @@ namespace Akka.Coordination.KubernetesApi
                 // Lock not taken
                 if (resource.Owner == null)
                 {
+                    if(_log.IsDebugEnabled)
+                        _log.Debug("[PendingRead] Lease has not been taken, trying to get lease.");
                     return TryGetLease(version, who, leaseLost);
                 }
 
@@ -305,7 +319,11 @@ namespace Akka.Coordination.KubernetesApi
             When(Granting.Instance, @event =>
             {
                 if (!(@event.FsmEvent is WriteResponse writeResponse))
+                {
+                    if(_log.IsDebugEnabled)
+                        _log.Debug($"[Granting] Received event is not WriteResponse. Received: [{@event.FsmEvent.GetType()}]");
                     return null;
+                }
                 
                 var evt = writeResponse.Response;
                 var data = (OperationInProgress) @event.StateData;
@@ -492,6 +510,13 @@ namespace Akka.Coordination.KubernetesApi
             });
             
             Initialize();
+        }
+
+        protected override void PreStart()
+        {
+            if(_log.IsDebugEnabled)
+                _log.Debug("LeaseActor started");
+            base.PreStart();
         }
 
         private Status.Failure FlattenAggregateException(Exception e)
