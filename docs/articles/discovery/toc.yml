@@ -1,0 +1,4 @@
+- name: Akka.Discovery.AwsApi
+  href: aws.md
+- name: Akka.Discovery.KubernetesApi
+  href: kubernetes.md
