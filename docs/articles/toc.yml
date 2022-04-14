@@ -1,2 +1,10 @@
-- name: Introduction
+- name: Overview
   href: index.md
+- name: Akka Management
+  href: management.md
+- name: Akka Cluster Bootstrap
+  href: clusterBootstrap.md
+- name: Akka Coordination
+  href: coordination/
+- name: Akka Discovery
+  href: discovery/
