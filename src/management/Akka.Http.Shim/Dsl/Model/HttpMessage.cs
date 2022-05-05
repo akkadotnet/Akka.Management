@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Net;
+using System.Threading.Tasks;
 using Akka.Annotations;
 using Akka.IO;
 using Microsoft.AspNetCore.Http;
@@ -66,22 +67,22 @@ namespace Akka.Http.Dsl.Model
 
         private readonly Microsoft.AspNetCore.Http.HttpRequest _request;
 
-        public static HttpRequest Create(Microsoft.AspNetCore.Http.HttpRequest request) =>
-            new HttpRequest(request);
+        public static async Task<HttpRequest> CreateAsync(Microsoft.AspNetCore.Http.HttpRequest request)
+        {
+            var input = new byte[Convert.ToInt32(request.ContentLength)];
+            await request.Body.ReadAsync(input, 0, input.Length).ConfigureAwait(false);
+            var bytes = ByteString.FromBytes(input);
+            return new HttpRequest(request, bytes);
+        }
 
-        private HttpRequest(Microsoft.AspNetCore.Http.HttpRequest request)
+
+        private HttpRequest(Microsoft.AspNetCore.Http.HttpRequest request, ByteString input)
         {
             _request = request;
-            var input = new byte[Convert.ToInt32(request.ContentLength)];
-#if NET5_0
-            request.Body.ReadAsync(input, 0, input.Length).Wait();
-#else
-            request.Body.Read(input, 0, input.Length);
-#endif
 
-            Entity = new RequestEntity(request.ContentType, ByteString.FromBytes(input));
+            Entity = new RequestEntity(request.ContentType, input);
         }
-        
+
         /*
         /// <inheritdoc />
         public override HttpRequest WithEntity(RequestEntity entity) => Copy(entity: entity);
@@ -126,7 +127,8 @@ namespace Akka.Http.Dsl.Model
         /// <summary>
         /// Returns a default response to be changed using the `WithX` methods.
         /// </summary>
-        public static HttpResponse Create(int status = 200, ImmutableList<HttpHeader> headers = null, ResponseEntity entity = null, string protocol = "HTTP/1.1") =>
+        public static HttpResponse Create(int status = 200, ImmutableList<HttpHeader> headers = null,
+            ResponseEntity entity = null, string protocol = "HTTP/1.1") =>
             new HttpResponse(status, headers, entity ?? ResponseEntity.Empty, protocol);
 
         private HttpResponse(int status, ImmutableList<HttpHeader> headers, ResponseEntity entity, string protocol)
@@ -155,11 +157,11 @@ namespace Akka.Http.Dsl.Model
         */
 
         private bool Equals(HttpResponse other) => Status == other.Status &&
-           Equals(Headers, other.Headers) &&
-           Equals(Entity, other.Entity) &&
-           Protocol == other.Protocol;
+                                                   Equals(Headers, other.Headers) &&
+                                                   Equals(Entity, other.Entity) &&
+                                                   Protocol == other.Protocol;
 
-        public override bool Equals(object obj) => 
+        public override bool Equals(object obj) =>
             ReferenceEquals(this, obj) || obj is HttpResponse other && Equals(other);
 
         public override int GetHashCode()
