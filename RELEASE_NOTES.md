@@ -1,3 +1,7 @@
+#### 0.2.4-beta3 May 5 2022 ####
+
+* [Fix async routing in netcoreapp3.1](https://github.com/akkadotnet/Akka.Management/pull/563)
+
 #### 0.2.4-beta2 April 14 2022 ####
 
 * Update to [Akka.NET v1.4.37](https://github.com/akkadotnet/akka.net/releases/tag/1.4.37)

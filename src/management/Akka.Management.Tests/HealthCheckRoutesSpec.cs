@@ -38,7 +38,7 @@ namespace Akka.Management.Tests
         public async Task HealthCheckReadyReturn200ForRight()
         {
             var result = (RouteResult.Complete)
-                await TestRoutes().Concat()(Get("/ready"));
+                await TestRoutes().Concat()(await Get("/ready"));
             result.Response.Status.Should().Be((int) HttpStatusCode.OK);
         }
         
@@ -47,7 +47,7 @@ namespace Akka.Management.Tests
         {
             var result = (RouteResult.Complete)
                 await TestRoutes(
-                    readyResultValue: Task.FromResult((Either<string, Done>)new Left<string, Done>("com.someclass.MyCheck"))).Concat()(Get("/ready"));
+                    readyResultValue: Task.FromResult((Either<string, Done>)new Left<string, Done>("com.someclass.MyCheck"))).Concat()(await Get("/ready"));
             result.Response.Status.Should().Be((int) HttpStatusCode.InternalServerError);
             result.Response.Entity.DataBytes.ToString().Should().Be("Not Healthy: com.someclass.MyCheck");
         }
@@ -57,7 +57,7 @@ namespace Akka.Management.Tests
         {
             var result = (RouteResult.Complete)
                 await TestRoutes(
-                    readyResultValue: Task.FromException<Either<string, Done>>(new Exception("darn it"))).Concat()(Get("/ready"));
+                    readyResultValue: Task.FromException<Either<string, Done>>(new Exception("darn it"))).Concat()(await Get("/ready"));
             result.Response.Status.Should().Be((int) HttpStatusCode.InternalServerError);
             result.Response.Entity.DataBytes.ToString().Should().Be("Health Check Failed: darn it");
         }
@@ -66,7 +66,7 @@ namespace Akka.Management.Tests
         public async Task HealthCheckAliveReturn200ForRight()
         {
             var result = (RouteResult.Complete)
-                await TestRoutes().Concat()(Get("/alive"));
+                await TestRoutes().Concat()(await Get("/alive"));
             result.Response.Status.Should().Be((int) HttpStatusCode.OK);
         }
         
@@ -76,7 +76,7 @@ namespace Akka.Management.Tests
             var result = (RouteResult.Complete)
                 await TestRoutes(
                     aliveResultValue: Task.FromResult(
-                        (Either<string, Done>) new Left<string, Done>("com.someclass.MyCheck"))).Concat()(Get("/alive"));
+                        (Either<string, Done>) new Left<string, Done>("com.someclass.MyCheck"))).Concat()(await Get("/alive"));
             result.Response.Status.Should().Be((int) HttpStatusCode.InternalServerError);
             result.Response.Entity.DataBytes.ToString().Should().Be("Not Healthy: com.someclass.MyCheck");
         }
@@ -86,12 +86,12 @@ namespace Akka.Management.Tests
         {
             var result = (RouteResult.Complete)
                 await TestRoutes(aliveResultValue: Task.FromException<Either<string, Done>>(new Exception("darn it"))).Concat()
-                    (Get("/alive"));
+                    (await Get("/alive"));
             result.Response.Status.Should().Be((int) HttpStatusCode.InternalServerError);
             result.Response.Entity.DataBytes.ToString().Should().Be("Health Check Failed: darn it");
         }
 
-        private RequestContext Get(string route)
+        private async Task<RequestContext> Get(string route)
         {
             var context = new DefaultHttpContext();
             context.Request.Method = HttpMethods.Get;
@@ -99,7 +99,7 @@ namespace Akka.Management.Tests
             context.Request.Body = new MemoryStream();
             context.Request.Protocol = "HTTP/1.1";
 
-            var request = HttpRequest.Create(context.Request);
+            var request = await HttpRequest.CreateAsync(context.Request);
             
             return new RequestContext(request, Sys);
         }
