@@ -49,7 +49,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             context.Request.Method = HttpMethods.Get;
             context.Request.Path = ClusterBootstrapRequests.BootstrapSeedNodes("").ToString();
             
-            var requestContext = new RequestContext(HttpRequest.Create(context.Request), Sys);
+            var requestContext = new RequestContext(await HttpRequest.CreateAsync(context.Request), Sys);
             var response = (RouteResult.Complete) await _httpBootstrap.Routes.Concat()(requestContext);
             response.Response.Entity.DataBytes.ToString().Should().Contain("\"Nodes\":[]");
         }
@@ -75,7 +75,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             context.Request.Method = HttpMethods.Get;
             context.Request.Path = ClusterBootstrapRequests.BootstrapSeedNodes("");
             
-            var requestContext = new RequestContext(HttpRequest.Create(context.Request), Sys);
+            var requestContext = new RequestContext(await HttpRequest.CreateAsync(context.Request), Sys);
             var response = (RouteResult.Complete) await _httpBootstrap.Routes.Concat()(requestContext);
 
             var responseString = response.Response.Entity.DataBytes.ToString();

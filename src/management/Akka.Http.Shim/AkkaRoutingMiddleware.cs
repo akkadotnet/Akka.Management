@@ -47,7 +47,7 @@ namespace Akka.Http
                 throw new ArgumentNullException(nameof(context));
             }
             
-            var requestContext = new RequestContext(Dsl.Model.HttpRequest.Create(context.Request), _system);
+            var requestContext = new RequestContext(await Dsl.Model.HttpRequest.CreateAsync(context.Request), _system);
                         
             var response = await _routes(requestContext);
             switch (response)
