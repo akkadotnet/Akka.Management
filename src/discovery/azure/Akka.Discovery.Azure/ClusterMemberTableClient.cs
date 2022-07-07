@@ -51,6 +51,7 @@ namespace Akka.Discovery.Azure
                 if(_log.IsDebugEnabled)
                     _log.Debug($"[{_serviceName}@{_entity.Address}:{_entity.Port}] Found existing entry row. " +
                                $"Created: [{_entity.Created}], last update: [{_entity.LastUpdate}]");
+                await UpdateAsync(token);
                 return _entity;
             }
 
