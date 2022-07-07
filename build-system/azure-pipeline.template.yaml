@@ -26,6 +26,12 @@ jobs:
         inputs:
           version: 3.1.x
       # Linux or macOS
+      - bash: |
+          sudo npm install -g azurite@3.17.1
+          sudo mkdir azurite
+          sudo azurite --silent --location azurite --debug azirute/debug.log &
+        displayName: 'Install and Run Azurite (Linux)'
+        condition: in( variables['Agent.OS'], 'Linux', 'Darwin' )
       - task: Bash@3 
         displayName: Linux / OSX Build
         inputs:
@@ -34,6 +40,12 @@ jobs:
         continueOnError: true
         condition: in( variables['Agent.OS'], 'Linux', 'Darwin' )
       # Windows
+      - powershell: |
+          npm install -g azurite@3.17.1
+          mkdir azurite
+          Start-Process azurite.cmd -PassThru
+        displayName: 'Install and Run Azurite (Windows)'
+        condition: eq( variables['Agent.OS'], 'Windows_NT' )
       - task: BatchScript@1
         displayName: Windows Build
         inputs:
