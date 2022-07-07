@@ -71,15 +71,16 @@ namespace Akka.Discovery.Azure.Tests
             entity.Should().Be(tableEntity);
         }
 
-        [Fact(DisplayName = "GetOrCreateAsync should fetch existing entry WITHOUT updating LastUpdate")]
+        [Fact(DisplayName = "GetOrCreateAsync should fetch existing entry and updates LastUpdate")]
         public async Task GetOrCreateFetch()
         {
             await PopulateTable();
             
-            // The "proper" entry is populated as if it was updated 4 hours ago
+            // The entry is populated as if it was updated 4 hours ago
+            // GetOrCreateAsync SHOULD update this value during fetch.
             var entity = await _client.GetOrCreateAsync(_address, FirstPort);
             var now = DateTime.UtcNow;
-            entity.LastUpdate.Should().BeApproximately(now - 4.Hours(), 1.Seconds());
+            entity.LastUpdate.Should().BeApproximately(now, 1.Seconds());
         }
 
         
@@ -88,14 +89,14 @@ namespace Akka.Discovery.Azure.Tests
         {
             await PopulateTable();
             
-            // initialize internal cache
+            // initialize internal cache, this also updates the entry
             await _client.GetOrCreateAsync(_address, FirstPort);
             
             var lastUpdate = DateTime.UtcNow - 20.Seconds();
             // Grab all entries from the correct service
             var entries = await _client.GetAllAsync(lastUpdate.Ticks);
             
-            entries.Count.Should().Be(3);
+            entries.Count.Should().Be(4);
             foreach (var entry in entries)
             {
                 entry.ServiceName.Should().Be(ServiceName);
@@ -124,7 +125,7 @@ namespace Akka.Discovery.Azure.Tests
         {
             await PopulateTable();
             
-            // populate the internal cache
+            // populate the internal cache, this also updates the entry
             await _client.GetOrCreateAsync(_address, FirstPort);
 
             var lastUpdate = DateTime.UtcNow - 10.Minutes();
@@ -137,9 +138,9 @@ namespace Akka.Discovery.Azure.Tests
                 entries.Add(entry);
             }
             
-            // entries should contain 9 items, 3 valid entries and 6 entries from other service
-            entries.Count.Should().Be(9);
-            entries.Count(e => e.PartitionKey == ServiceName).Should().Be(3);
+            // entries should contain 10 items, 4 valid entries and 6 entries from other service
+            entries.Count.Should().Be(10);
+            entries.Count(e => e.PartitionKey == ServiceName).Should().Be(4);
             entries.Count(e => e.PartitionKey != ServiceName).Should().Be(6);
             
             // entries with correct service name should have its LastUpdate correctly pruned
