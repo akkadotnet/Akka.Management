@@ -10,6 +10,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Akka.Discovery" Version="$(AkkaVersion)" />
       <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
       <PackageReference Include="Azure.Data.Tables" Version="12.6.0" />
       <PackageReference Include="Google.Protobuf" Version="3.21.2" />

@@ -10,7 +10,6 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Akka.Annotations;
 using Akka.Discovery.Azure.Model;
 using Akka.Event;
 using Azure;
@@ -18,8 +17,7 @@ using Azure.Data.Tables;
 
 namespace Akka.Discovery.Azure
 {
-    [InternalApi]
-    public class ClusterMemberTableClient
+    internal class ClusterMemberTableClient
     {
         private readonly ILoggingAdapter _log;
         private readonly TableClient _client;
@@ -34,7 +32,7 @@ namespace Akka.Discovery.Azure
             _client = new TableClient(connectionString, tableName);
         }
 
-        internal async ValueTask<ClusterMember> GetOrCreateAsync(
+        public async ValueTask<ClusterMember> GetOrCreateAsync(
             IPAddress address,
             int port,
             CancellationToken token = default)
@@ -72,7 +70,7 @@ namespace Akka.Discovery.Azure
             return _entity;
         }
 
-        internal async Task<ImmutableList<ClusterMember>> GetAllAsync(long lastUpdate, CancellationToken token = default)
+        public async Task<ImmutableList<ClusterMember>> GetAllAsync(long lastUpdate, CancellationToken token = default)
         {
             if (!await EnsureInitializedAsync(token))
                 return null;
@@ -92,7 +90,7 @@ namespace Akka.Discovery.Azure
             return list.ToImmutableList();
         }
 
-        internal async Task<bool> UpdateAsync(CancellationToken token = default)
+        public async Task<bool> UpdateAsync(CancellationToken token = default)
         {
             if (!await EnsureInitializedAsync(token))
                 return false;
@@ -113,7 +111,7 @@ namespace Akka.Discovery.Azure
             return true;
         }
 
-        internal async Task<bool> PruneAsync(long lastUpdate, CancellationToken token = default)
+        public async Task<bool> PruneAsync(long lastUpdate, CancellationToken token = default)
         {
             if (!await EnsureInitializedAsync(token))
                 return false;
@@ -186,7 +184,7 @@ namespace Akka.Discovery.Azure
             }
         }
 
-        internal async Task<ClusterMember> GetEntityAsync(string rowKey, CancellationToken token)
+        public async Task<ClusterMember> GetEntityAsync(string rowKey, CancellationToken token)
         {
             var query = _client
                 .QueryAsync<TableEntity>($"PartitionKey eq '{_serviceName}' and RowKey eq '{rowKey}'")
