@@ -28,4 +28,9 @@
       <Protobuf Include="protobuf\ClusterMemberProto.proto" Access="Internal" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="reference.conf" />
+      <EmbeddedResource Include="reference.conf" />
+    </ItemGroup>
+
 </Project>
