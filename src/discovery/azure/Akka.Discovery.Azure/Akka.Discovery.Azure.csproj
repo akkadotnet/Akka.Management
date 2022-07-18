@@ -21,10 +21,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\management\Akka.Management\Akka.Management.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Protobuf Include="protobuf\ClusterMemberProto.proto" Access="Internal" />
     </ItemGroup>
 

@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using Akka.Actor;
+using Akka.Cluster;
 using Akka.Configuration;
 using Akka.Discovery.Azure.Actors;
 using Akka.Discovery.Azure.Model;
@@ -90,6 +92,9 @@ akka.remote.dot-netty.tcp.port = 0
         [Fact(DisplayName = "PruneActor should prune ClusterMember entries")]
         public async Task PruneActorShouldPrune()
         {
+            var cluster = Cluster.Cluster.Get(Sys);
+            var selfAddress = cluster.SelfAddress;
+            
             var settings = AzureDiscoverySettings.Empty
                 .WithConnectionString(ConnectionString)
                 .WithServiceName(ServiceName)
@@ -104,6 +109,9 @@ akka.remote.dot-netty.tcp.port = 0
             await _client.GetOrCreateAsync(Host, _address, FirstPort);
             var actor = Sys.ActorOf(PruneActor.Props(settings, _client));
 
+            // Simulate leadership acquisition 
+            actor.Tell(new ClusterEvent.LeaderChanged(selfAddress), Nobody.Instance);
+            
             await WithinAsync(3.Seconds(), async () =>
             {
                 await EventFilter.Debug(contains: "row entries pruned:")

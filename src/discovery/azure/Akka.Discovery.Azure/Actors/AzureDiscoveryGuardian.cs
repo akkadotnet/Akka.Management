@@ -5,12 +5,15 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Event;
-using Akka.Management;
+using Akka.Util.Internal;
+using DotNetty.Common.Utilities;
 
 namespace Akka.Discovery.Azure.Actors
 {
@@ -19,17 +22,29 @@ namespace Akka.Discovery.Azure.Actors
         public static Props Props(AzureDiscoverySettings settings)
             => Actor.Props.Create(() => new AzureDiscoveryGuardian(settings)).WithDeploy(Deploy.Local);
 
+        private static readonly Status.Failure DefaultFailure = new Status.Failure(null);
+        
         private readonly ILoggingAdapter _log;
         private readonly AzureDiscoverySettings _settings;
         private readonly ClusterMemberTableClient _client;
+        private readonly TimeSpan _timeout;
         private readonly string _host;
         private readonly IPAddress _address;
         private readonly int _port;
         private readonly CancellationTokenSource _shutdownCts;
+        
+        private readonly TimeSpan _backoff;
+        private readonly TimeSpan _maxBackoff;
+        private int _retryCount;
+        private bool _lookingUp;
+        private IActorRef _requester;
 
         public AzureDiscoveryGuardian(AzureDiscoverySettings settings)
         {
             _settings = settings;
+            _timeout = settings.OperationTimeout;
+            _backoff = settings.RetryBackoff;
+            _maxBackoff = settings.MaximumRetryBackoff;
             _log = Logging.GetLogger(Context.System, nameof(AzureDiscoveryGuardian));
             _client = new ClusterMemberTableClient(
                 serviceName: _settings.ServiceName,
@@ -37,10 +52,8 @@ namespace Akka.Discovery.Azure.Actors
                 tableName: _settings.TableName,
                 log: _log);
 
-            var management = AkkaManagement.Get(Context.System);
-            
             // Can management host be parsed as an IP?
-            if (IPAddress.TryParse(management.Settings.Http.Hostname, out var ip))
+            if (IPAddress.TryParse(settings.HostName, out var ip))
             {
                 _address = ip;
                 _host = Dns.GetHostName();
@@ -48,7 +61,7 @@ namespace Akka.Discovery.Azure.Actors
             else
             {
                 // If its not an IP address, then its most probably a host name
-                _host = management.Settings.Http.Hostname;
+                _host = settings.HostName;
                 var addresses = Dns.GetHostAddresses(_host);
                 _address = addresses
                     .First(i => 
@@ -58,7 +71,7 @@ namespace Akka.Discovery.Azure.Actors
                         !Equals(i, IPAddress.IPv6Loopback));
             }
             
-            _port = management.Settings.Http.Port;
+            _port = settings.Port;
             _shutdownCts = new CancellationTokenSource();
             
             Become(Initializing);
@@ -70,8 +83,11 @@ namespace Akka.Discovery.Azure.Actors
                 _log.Debug("Actor started");
             
             base.PreStart();
-            _client.GetOrCreateAsync(_host, _address, _port, _shutdownCts.Token)
-                .AsTask().PipeTo(Self, success: _ => Done.Instance);
+
+            _retryCount = 0;
+            ExecuteOperationWithRetry(async token => 
+                await _client.GetOrCreateAsync(_host, _address, _port, token))
+                .PipeTo(Self);
         }
 
         protected override void PostStop()
@@ -86,20 +102,31 @@ namespace Akka.Discovery.Azure.Actors
 
         private bool Initializing(object message)
         {
-            if (message is Done)
+            switch (message)
             {
-                Context.System.ActorOf(HeartbeatActor.Props(_settings, _client));
-                Context.System.ActorOf(PruneActor.Props(_settings, _client));
+                case Status.Success _:
+                    Context.System.ActorOf(HeartbeatActor.Props(_settings, _client));
+                    Context.System.ActorOf(PruneActor.Props(_settings, _client));
                 
-                Become(Running);
-                Stash.UnstashAll();
+                    Become(Running);
+                    Stash.UnstashAll();
                 
-                if(_log.IsDebugEnabled)
-                    _log.Debug("Actor initialized");
-            }
-            else
-            {
-                Stash.Stash();
+                    if(_log.IsDebugEnabled)
+                        _log.Debug("Actor initialized");
+                    break;
+                
+                case Status.Failure f:
+                    if(_log.IsDebugEnabled)
+                        _log.Debug(f.Cause, "Failed to create/retrieve self discovery entry, retrying.");
+                    
+                    ExecuteOperationWithRetry(async token => 
+                        await _client.GetOrCreateAsync(_host, _address, _port, token))
+                        .PipeTo(Self);
+                    break;
+                
+                default:
+                    Stash.Stash();
+                    break;
             }
 
             return true;
@@ -110,16 +137,46 @@ namespace Akka.Discovery.Azure.Actors
             switch (message)
             {
                 case Lookup lookup:
-                    if (lookup.ServiceName != _settings.ServiceName)
-                        throw new Exception(
-                            $"Lookup ServiceName mismatch. Expected: {_settings.ServiceName}, received: {lookup.ServiceName}");
+                    if (_lookingUp)
+                    {
+                        if(_log.IsDebugEnabled)
+                            _log.Debug("Another lookup operation is still underway, ignoring request.");
+                        return true;
+                    }
                     
+                    if (lookup.ServiceName != _settings.ServiceName)
+                    {
+                        _log.Error(
+                            $"Lookup ServiceName mismatch. Expected: {_settings.ServiceName}, received: {lookup.ServiceName}");
+                        return true;
+                    }
+                    
+                    _lookingUp = true;
+                    _retryCount = 0;
+                    _requester = Sender;
                     if(_log.IsDebugEnabled)
                         _log.Debug("Lookup started for service {0}", lookup.ServiceName);
+
+                    ExecuteOperationWithRetry(async token =>
+                        await _client.GetAllAsync(
+                            lastUpdate: (DateTime.UtcNow - _settings.StaleTtlThreshold).Ticks, 
+                            token: _shutdownCts.Token))
+                        .PipeTo(Self);
+                    return true;
+                
+                case Status.Success result:
+                    _requester.Tell(result.Status);
+                    _lookingUp = false;
+                    return true;
+                
+                case Status.Failure fail:
+                    _log.Warning(fail.Cause, "Failed to execute discovery lookup, retrying.");
                     
-                    _client.GetAllAsync((DateTime.UtcNow - _settings.StaleTtlThreshold).Ticks, _shutdownCts.Token)
-                        .PipeTo(Sender);
-                    
+                    ExecuteOperationWithRetry(async token =>
+                            await _client.GetAllAsync(
+                                lastUpdate: (DateTime.UtcNow - _settings.StaleTtlThreshold).Ticks, 
+                                token: _shutdownCts.Token))
+                        .PipeTo(Self);
                     return true;
                 
                 default:
@@ -129,9 +186,33 @@ namespace Akka.Discovery.Azure.Actors
         
         protected override void OnReceive(object message)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("Should never reach this code");
         }
 
+        // Always call this method using PipeTo, we'll be waiting for Status.Success or Status.Failure asynchronously
+        private async Task<Status> ExecuteOperationWithRetry<T>(Func<CancellationToken, Task<T>> operation)
+        {
+            // Calculate backoff
+            var backoff = new TimeSpan(_backoff.Ticks * _retryCount++);
+            // Clamp to maximum backoff time
+            backoff = backoff.Min(_maxBackoff);
+            
+            // Perform backoff delay
+            if (backoff > TimeSpan.Zero)
+                await Task.Delay(backoff, _shutdownCts.Token);
+
+            if (_shutdownCts.IsCancellationRequested)
+                return DefaultFailure;
+
+            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCts.Token))
+            {
+                cts.CancelAfter(_timeout);
+                // Any exception thrown from the async method will be converted to Status.Failure by PipeTo
+                var result = await operation(cts.Token);
+                return new Status.Success(result);
+            }
+        }
+        
         public IStash Stash { get; set; }
     }
 }
