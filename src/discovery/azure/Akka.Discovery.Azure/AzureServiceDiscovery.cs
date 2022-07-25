@@ -13,6 +13,7 @@ using Akka.Configuration;
 using Akka.Discovery.Azure.Actors;
 using Akka.Discovery.Azure.Model;
 using Akka.Event;
+using Akka.Util;
 
 namespace Akka.Discovery.Azure
 {
@@ -34,6 +35,10 @@ namespace Akka.Discovery.Azure
             
             _system.Settings.InjectTopLevelFallback(DefaultConfig);
             _settings = AzureDiscoverySettings.Create(system);
+            
+            var setup = _system.Settings.Setup.Get<AzureDiscoverySetup>();
+            if (setup.HasValue)
+                _settings = setup.Value.Apply(_settings);
 
             _guardianActor = system.SystemActorOf(AzureDiscoveryGuardian.Props(_settings), "azure-discovery-guardian");
 
