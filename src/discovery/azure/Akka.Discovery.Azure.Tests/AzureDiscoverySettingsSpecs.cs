@@ -106,6 +106,7 @@ namespace Akka.Discovery.Azure.Tests
             settings.StaleTtlThreshold.Should().Be(2.Seconds());
             settings.PruneInterval.Should().Be(3.Seconds());
             settings.OperationTimeout.Should().Be(4.Seconds());
+            settings.EffectiveStaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
         }
 
         [Fact(DisplayName = "Settings constructor should throw on invalid values")]
