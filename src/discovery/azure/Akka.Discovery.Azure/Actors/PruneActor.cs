@@ -52,9 +52,7 @@ namespace Akka.Discovery.Azure.Actors
             _log = Context.GetLogger();
             _shutdownCts = new CancellationTokenSource();
 
-            _staleTtlThreshold = settings.StaleTtlThreshold;
-            if (_staleTtlThreshold == TimeSpan.Zero)
-                _staleTtlThreshold = new TimeSpan(settings.TtlHeartbeatInterval.Ticks * 5);
+            _staleTtlThreshold = settings.EffectiveStaleTtlThreshold;
             
             Become(WaitingForLeadership);
         }

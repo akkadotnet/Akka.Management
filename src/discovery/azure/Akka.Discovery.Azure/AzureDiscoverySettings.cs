@@ -120,6 +120,9 @@ namespace Akka.Discovery.Azure
         public TimeSpan OperationTimeout { get; }
         public TimeSpan RetryBackoff { get; }
         public TimeSpan MaximumRetryBackoff { get; }
+
+        public TimeSpan EffectiveStaleTtlThreshold
+            => StaleTtlThreshold == TimeSpan.Zero ? new TimeSpan(TtlHeartbeatInterval.Ticks * 5)  : StaleTtlThreshold;
         
         public AzureDiscoverySettings WithServiceName(string serviceName)
             => Copy(serviceName: serviceName);

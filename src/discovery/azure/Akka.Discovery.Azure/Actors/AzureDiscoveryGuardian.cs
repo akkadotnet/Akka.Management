@@ -27,6 +27,7 @@ namespace Akka.Discovery.Azure.Actors
         private readonly ILoggingAdapter _log;
         private readonly AzureDiscoverySettings _settings;
         private readonly ClusterMemberTableClient _client;
+        private readonly TimeSpan _staleTtlThreshold;
         private readonly TimeSpan _timeout;
         private readonly string _host;
         private readonly IPAddress _address;
@@ -52,6 +53,8 @@ namespace Akka.Discovery.Azure.Actors
                 tableName: _settings.TableName,
                 log: _log);
 
+            _staleTtlThreshold = settings.EffectiveStaleTtlThreshold;
+            
             // Can management host be parsed as an IP?
             if (IPAddress.TryParse(settings.HostName, out var ip))
             {
@@ -155,11 +158,11 @@ namespace Akka.Discovery.Azure.Actors
                     _retryCount = 0;
                     _requester = Sender;
                     if(_log.IsDebugEnabled)
-                        _log.Debug("Lookup started for service {0}", lookup.ServiceName);
+                        _log.Debug("Lookup started for service {0}, stale TTL threshold: {1}", lookup.ServiceName, _staleTtlThreshold);
 
                     ExecuteOperationWithRetry(async token =>
                         await _client.GetAllAsync(
-                            lastUpdate: (DateTime.UtcNow - _settings.StaleTtlThreshold).Ticks, 
+                            lastUpdate: (DateTime.UtcNow - _staleTtlThreshold).Ticks, 
                             token: _shutdownCts.Token))
                         .PipeTo(Self);
                     return true;
@@ -174,7 +177,7 @@ namespace Akka.Discovery.Azure.Actors
                     
                     ExecuteOperationWithRetry(async token =>
                             await _client.GetAllAsync(
-                                lastUpdate: (DateTime.UtcNow - _settings.StaleTtlThreshold).Ticks, 
+                                lastUpdate: (DateTime.UtcNow - _staleTtlThreshold).Ticks, 
                                 token: _shutdownCts.Token))
                         .PipeTo(Self);
                     return true;

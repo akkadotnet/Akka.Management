@@ -34,6 +34,7 @@ namespace Akka.Discovery.Azure.Tests
             settings.StaleTtlThreshold.Should().Be(TimeSpan.Zero);
             settings.PruneInterval.Should().Be(1.Hours());
             settings.OperationTimeout.Should().Be(10.Seconds());
+            settings.EffectiveStaleTtlThreshold.Should().Be(new TimeSpan(settings.TtlHeartbeatInterval.Ticks * 5));
         }
 
         [Fact(DisplayName = "Empty settings variable and default settings should match")]
@@ -51,6 +52,7 @@ namespace Akka.Discovery.Azure.Tests
             empty.StaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
             empty.PruneInterval.Should().Be(settings.PruneInterval);
             empty.OperationTimeout.Should().Be(settings.OperationTimeout);
+            empty.EffectiveStaleTtlThreshold.Should().Be(settings.EffectiveStaleTtlThreshold);
         }
 
         [Fact(DisplayName = "Settings override should work properly")]
@@ -76,6 +78,7 @@ namespace Akka.Discovery.Azure.Tests
             settings.StaleTtlThreshold.Should().Be(2.Seconds());
             settings.PruneInterval.Should().Be(3.Seconds());
             settings.OperationTimeout.Should().Be(4.Seconds());
+            settings.EffectiveStaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
         }
 
         [Fact(DisplayName = "Settings constructor should throw on invalid values")]

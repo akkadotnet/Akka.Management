@@ -67,7 +67,7 @@ namespace Akka.Discovery.Azure
 
             _entity = ClusterMember.FromEntity(entity);
             if(_log.IsDebugEnabled)
-                _log.Debug($"[{_serviceName}@{_entity.Address}{_entity.Port}] New entry row created.");
+                _log.Debug($"[{_serviceName}@{_entity.Address}:{_entity.Port}] New entry row created.");
             return _entity;
         }
 
