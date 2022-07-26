@@ -5,8 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Net;
-using Akka.Actor;
+using System.Collections.Generic;
 using Akka.Actor.Setup;
 
 namespace Akka.Discovery.Azure
@@ -84,6 +83,35 @@ namespace Akka.Discovery.Azure
             RetryBackoff = retryBackoff;
             MaximumRetryBackoff = maximumRetryBackoff;
             return this;
+        }
+        
+        public override string ToString()
+        {
+            var props = new List<string>();
+            if(ServiceName != null)
+                props.Add($"{nameof(ServiceName)}:{ServiceName}");
+            if(HostName != null)
+                props.Add($"{nameof(HostName)}:{HostName}");
+            if(Port != null)
+                props.Add($"{nameof(Port)}:{Port}");
+            if(ConnectionString != null)
+                props.Add($"{nameof(ConnectionString)}:{ConnectionString}");
+            if(TableName != null)
+                props.Add($"{nameof(TableName)}:{TableName}");
+            if(TtlHeartbeatInterval != null)
+                props.Add($"{nameof(TtlHeartbeatInterval)}:{TtlHeartbeatInterval}");
+            if(StaleTtlThreshold != null)
+                props.Add($"{nameof(StaleTtlThreshold)}:{StaleTtlThreshold}");
+            if(PruneInterval != null)
+                props.Add($"{nameof(PruneInterval)}:{PruneInterval}");
+            if(OperationTimeout != null)
+                props.Add($"{nameof(OperationTimeout)}:{OperationTimeout}");
+            if(RetryBackoff != null)
+                props.Add($"{nameof(RetryBackoff)}:{RetryBackoff}");
+            if(MaximumRetryBackoff != null)
+                props.Add($"{nameof(MaximumRetryBackoff)}:{MaximumRetryBackoff}");
+            
+            return $"[AzureDiscoverySetup]({string.Join(", ", props)})";
         }
         
         public AzureDiscoverySettings Apply(AzureDiscoverySettings setting)
