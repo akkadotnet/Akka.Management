@@ -121,6 +121,20 @@ namespace Akka.Discovery.Azure
         public TimeSpan RetryBackoff { get; }
         public TimeSpan MaximumRetryBackoff { get; }
 
+        public override string ToString()
+            => "[AzureDiscoverySettings](" +
+               $"{nameof(ServiceName)}:{ServiceName}, " +
+               $"{nameof(HostName)}:{HostName}, " +
+               $"{nameof(Port)}:{Port}, " +
+               $"{nameof(ConnectionString)}:{ConnectionString}, " +
+               $"{nameof(TableName)}:{TableName}, " +
+               $"{nameof(TtlHeartbeatInterval)}:{TtlHeartbeatInterval}, " +
+               $"{nameof(StaleTtlThreshold)}:{StaleTtlThreshold}, " +
+               $"{nameof(PruneInterval)}:{PruneInterval}, " +
+               $"{nameof(OperationTimeout)}:{OperationTimeout}, " +
+               $"{nameof(RetryBackoff)}:{RetryBackoff}, " +
+               $"{nameof(MaximumRetryBackoff)}:{MaximumRetryBackoff})";
+        
         public TimeSpan EffectiveStaleTtlThreshold
             => StaleTtlThreshold == TimeSpan.Zero ? new TimeSpan(TtlHeartbeatInterval.Ticks * 5)  : StaleTtlThreshold;
         
