@@ -5,19 +5,19 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Discovery.Azure.Model;
 using Akka.Event;
 using Akka.Util.Internal;
-using DotNetty.Common.Utilities;
 
 namespace Akka.Discovery.Azure.Actors
 {
-    internal sealed class AzureDiscoveryGuardian: UntypedActor, IWithUnboundedStash
+    internal sealed class AzureDiscoveryGuardian: UntypedActor
     {
         public static Props Props(AzureDiscoverySettings settings)
             => Actor.Props.Create(() => new AzureDiscoveryGuardian(settings)).WithDeploy(Deploy.Local);
@@ -112,11 +112,10 @@ namespace Akka.Discovery.Azure.Actors
                     Context.System.ActorOf(PruneActor.Props(_settings, _client));
                 
                     Become(Running);
-                    Stash.UnstashAll();
                 
                     if(_log.IsDebugEnabled)
                         _log.Debug("Actor initialized");
-                    break;
+                    return true;
                 
                 case Status.Failure f:
                     if(_log.IsDebugEnabled)
@@ -125,14 +124,15 @@ namespace Akka.Discovery.Azure.Actors
                     ExecuteOperationWithRetry(async token => 
                         await _client.GetOrCreateAsync(_host, _address, _port, token))
                         .PipeTo(Self);
-                    break;
+                    return true;
+                
+                case Lookup _:
+                    Sender.Tell(ImmutableList<ClusterMember>.Empty);
+                    return true;
                 
                 default:
-                    Stash.Stash();
-                    break;
+                    return false;
             }
-
-            return true;
         }
 
         private bool Running(object message)
@@ -215,7 +215,5 @@ namespace Akka.Discovery.Azure.Actors
                 return new Status.Success(result);
             }
         }
-        
-        public IStash Stash { get; set; }
     }
 }
