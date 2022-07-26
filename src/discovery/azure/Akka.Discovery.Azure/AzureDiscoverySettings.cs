@@ -17,7 +17,7 @@ namespace Akka.Discovery.Azure
             hostName: Dns.GetHostName(),
             port: 8558,
             connectionString: "<connection-string>",
-            tableName: "akka-discovery-cluster-member",
+            tableName: "akkaclustermembers",
             ttlHeartbeatInterval: TimeSpan.FromMinutes(1),
             staleTtlThreshold: TimeSpan.Zero,
             pruneInterval: TimeSpan.FromHours(1),

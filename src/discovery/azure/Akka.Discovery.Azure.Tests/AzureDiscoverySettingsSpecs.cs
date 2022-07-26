@@ -29,7 +29,7 @@ namespace Akka.Discovery.Azure.Tests
             settings.HostName.Should().Be(Dns.GetHostName());
             settings.Port.Should().Be(8558);
             settings.ConnectionString.Should().Be("<connection-string>");
-            settings.TableName.Should().Be("akka-discovery-cluster-member");
+            settings.TableName.Should().Be("akkaclustermembers");
             settings.TtlHeartbeatInterval.Should().Be(1.Minutes());
             settings.StaleTtlThreshold.Should().Be(TimeSpan.Zero);
             settings.PruneInterval.Should().Be(1.Hours());
