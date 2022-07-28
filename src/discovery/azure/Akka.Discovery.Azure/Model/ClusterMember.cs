@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Azure;
 using Azure.Data.Tables;
@@ -60,13 +59,14 @@ namespace Akka.Discovery.Azure.Model
         
         public static TableEntity CreateEntity(
             string serviceName,
+            string host,
             IPAddress address,
             int port)
         {
             var now = DateTime.UtcNow;
             var proto = new ClusterMemberProto
             {
-                Host = Dns.GetHostName(),
+                Host = host,
                 Address = address.MapToIPv4().ToString(),
                 Port = port,
                 Created = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(now),
@@ -75,7 +75,7 @@ namespace Akka.Discovery.Azure.Model
             return new TableEntity
             {
                 PartitionKey = serviceName,
-                RowKey = CreateRowKey(address, port),
+                RowKey = CreateRowKey(host, address, port),
                 // Timestamp and ETag isn't written because it is handled by the system
                 [PayloadName] = proto.ToByteArray(),
                 [LastUpdateName] = now.Ticks
@@ -85,15 +85,15 @@ namespace Akka.Discovery.Azure.Model
         public static ClusterMember FromEntity(TableEntity entity)
             => entity != null ? new ClusterMember(entity) : null;
         
-        internal static string CreateRowKey(IPAddress address, int port)
-            => $"{address.MapToIPv4()}-{port}";
+        internal static string CreateRowKey(string host, IPAddress address, int port)
+            => $"{host}-{address.MapToIPv4()}-{port}";
 
-        internal static (IPAddress, int) ParseRowKey(string rowKey)
+        internal static (string, IPAddress, int) ParseRowKey(string rowKey)
         {
             var parts = rowKey.Split('-');
-            if (parts.Length != 2)
-                throw new InvalidOperationException($"RowKey needs to be in [{{Address}}-{{Port}}] format. was: [{rowKey}]");
-            return (IPAddress.Parse(parts[0]), int.Parse(parts[1]));
+            if (parts.Length != 3)
+                throw new InvalidOperationException($"RowKey needs to be in [{{Host}}-{{Address}}-{{Port}}] format. was: [{rowKey}]");
+            return (parts[0], IPAddress.Parse(parts[1]), int.Parse(parts[2]));
         }
 
         public bool Equals(ClusterMember other)

@@ -33,6 +33,7 @@ namespace Akka.Discovery.Azure
         }
 
         public async ValueTask<ClusterMember> GetOrCreateAsync(
+            string host,
             IPAddress address,
             int port,
             CancellationToken token = default)
@@ -43,7 +44,7 @@ namespace Akka.Discovery.Azure
             if (!await EnsureInitializedAsync(token))
                 return null;
 
-            var rowKey = ClusterMember.CreateRowKey(address, port);
+            var rowKey = ClusterMember.CreateRowKey(host, address, port);
             var entry = await GetEntityAsync(rowKey, token);
             if (entry != null)
             {
@@ -55,7 +56,7 @@ namespace Akka.Discovery.Azure
                 return _entity;
             }
 
-            var entity = ClusterMember.CreateEntity(_serviceName, address, port);
+            var entity = ClusterMember.CreateEntity(_serviceName, host, address, port);
             var response = await _client.AddEntityAsync(entity, token);
             if (response.IsError)
             {
@@ -66,7 +67,7 @@ namespace Akka.Discovery.Azure
 
             _entity = ClusterMember.FromEntity(entity);
             if(_log.IsDebugEnabled)
-                _log.Debug($"[{_serviceName}@{_entity.Address}{_entity.Port}] New entry row created.");
+                _log.Debug($"[{_serviceName}@{_entity.Address}:{_entity.Port}] New entry row created.");
             return _entity;
         }
 

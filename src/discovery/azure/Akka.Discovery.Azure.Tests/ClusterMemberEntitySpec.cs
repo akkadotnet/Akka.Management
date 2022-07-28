@@ -20,13 +20,14 @@ namespace Akka.Discovery.Azure.Tests
     public class ClusterMemberEntitySpec
     {
         private const string ServiceName = "FakeService";
+        private const string Host = "fake.com";
         private readonly IPAddress _address = IPAddress.Loopback;
         private const int Port = 12345;
 
         [Fact(DisplayName = "Should be able to create TableEntity")]
         public void ClusterMemberEntityTableEntityCreation()
         {
-            var entity = ClusterMember.CreateEntity(ServiceName, _address, Port);
+            var entity = ClusterMember.CreateEntity(ServiceName, Host, _address, Port);
 
             var proto = ClusterMemberProto.Parser.ParseFrom(entity.GetBinary(ClusterMember.PayloadName));
             
@@ -36,26 +37,26 @@ namespace Akka.Discovery.Azure.Tests
             
             IPAddress.Parse(proto.Address).Should().Be(_address);
             proto.Port.Should().Be(Port);
-            proto.Host.Should().Be(Dns.GetHostName());
+            proto.Host.Should().Be(Host);
             
             
             entity.PartitionKey.Should().Be(ServiceName);
             entity.RowKey.Should().NotBeNullOrWhiteSpace();
-            entity.RowKey.Should().Be(ClusterMember.CreateRowKey(_address, Port));
+            entity.RowKey.Should().Be(ClusterMember.CreateRowKey(Host, _address, Port));
         }
 
         [Fact(DisplayName = "Should be able to create ClusterMemberEntity from TableEntity")]
         public void ClusterMemberEntityCreation()
         {
-            var entity = ClusterMember.FromEntity(ClusterMember.CreateEntity(ServiceName, _address, Port));
+            var entity = ClusterMember.FromEntity(ClusterMember.CreateEntity(ServiceName, Host, _address, Port));
             
             entity.Created.Should().BeApproximately(DateTime.UtcNow, 200.Milliseconds());
             entity.Created.Should().Be(entity.LastUpdate);
             
             entity.PartitionKey.Should().Be(ServiceName);
             entity.RowKey.Should().NotBeNullOrWhiteSpace();
-            entity.RowKey.Should().Be(ClusterMember.CreateRowKey(_address, Port));
-            entity.Host.Should().Be(Dns.GetHostName());
+            entity.RowKey.Should().Be(ClusterMember.CreateRowKey(Host, _address, Port));
+            entity.Host.Should().Be(Host);
             entity.Address.Should().Be(_address);
             entity.Port.Should().Be(Port);
         }
@@ -63,9 +64,10 @@ namespace Akka.Discovery.Azure.Tests
         [Fact(DisplayName = "Should create and parse RowKey properly")]
         public void ClusterMemberEntityRowKeyTest()
         {
-            var rowKey = ClusterMember.CreateRowKey(_address, Port);
-            var (address, port) = ClusterMember.ParseRowKey(rowKey);
+            var rowKey = ClusterMember.CreateRowKey(Host, _address, Port);
+            var (host, address, port) = ClusterMember.ParseRowKey(rowKey);
 
+            host.Should().Be(Host);
             address.Should().Be(_address);
             port.Should().Be(Port);
         }

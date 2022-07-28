@@ -26,6 +26,7 @@ namespace Akka.Discovery.Azure.Tests
         private const string ServiceName = nameof(ServiceName);
         private const string WrongService = nameof(WrongService);
         private const string TableName = "AkkaDiscoveryClusterMembers";
+        private const string Host = "fake.com";
         private readonly IPAddress _address = IPAddress.Loopback;
         private const int FirstPort = 12345;
 
@@ -57,7 +58,7 @@ namespace Akka.Discovery.Azure.Tests
         public async Task GetOrCreateInsert()
         {
             // Test will fail here if the client did not create the appropriate table
-            var entity = await _client.GetOrCreateAsync(_address, FirstPort);
+            var entity = await _client.GetOrCreateAsync(Host, _address, FirstPort);
             
             // There should be 1 entry inside the table
             var entries = new List<TableEntity>();
@@ -78,7 +79,7 @@ namespace Akka.Discovery.Azure.Tests
             
             // The entry is populated as if it was updated 4 hours ago
             // GetOrCreateAsync SHOULD update this value during fetch.
-            var entity = await _client.GetOrCreateAsync(_address, FirstPort);
+            var entity = await _client.GetOrCreateAsync(Host, _address, FirstPort);
             var now = DateTime.UtcNow;
             entity.LastUpdate.Should().BeApproximately(now, 1.Seconds());
         }
@@ -90,7 +91,7 @@ namespace Akka.Discovery.Azure.Tests
             await PopulateTable();
             
             // initialize internal cache, this also updates the entry
-            await _client.GetOrCreateAsync(_address, FirstPort);
+            await _client.GetOrCreateAsync(Host, _address, FirstPort);
             
             var lastUpdate = DateTime.UtcNow - 20.Seconds();
             // Grab all entries from the correct service
@@ -110,13 +111,13 @@ namespace Akka.Discovery.Azure.Tests
             await PopulateTable();
             
             // populate the internal cache
-            await _client.GetOrCreateAsync(_address, FirstPort);
+            await _client.GetOrCreateAsync(Host, _address, FirstPort);
 
             // update should also update the table entry
             (await _client.UpdateAsync()).Should().BeTrue();
 
             // Retrieve the entry directly from the table and check LastUpdate value
-            var entry = await _client.GetEntityAsync(ClusterMember.CreateRowKey(_address, FirstPort), default);
+            var entry = await _client.GetEntityAsync(ClusterMember.CreateRowKey(Host, _address, FirstPort), default);
             entry.LastUpdate.Should().BeApproximately(DateTime.UtcNow, 500.Milliseconds());
         }
 
@@ -126,7 +127,7 @@ namespace Akka.Discovery.Azure.Tests
             await PopulateTable();
             
             // populate the internal cache, this also updates the entry
-            await _client.GetOrCreateAsync(_address, FirstPort);
+            await _client.GetOrCreateAsync(Host, _address, FirstPort);
 
             var lastUpdate = DateTime.UtcNow - 10.Minutes();
             (await _client.PruneAsync(lastUpdate.Ticks)).Should().BeTrue();
@@ -154,28 +155,28 @@ namespace Akka.Discovery.Azure.Tests
         private async Task PopulateTable()
         {
             var batch = new List<TableTransactionAction>();
-
             var now = DateTime.UtcNow;
+            var add = TableTransactionActionType.Add;
             
             // add 3 entries in the past
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(ServiceName, now - 4.Hours())));
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(ServiceName, now - 3.Hours())));
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(ServiceName, now - 2.Hours())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 4.Hours()))); // This is the test actual entry
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 3.Hours())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 2.Hours())));
             
             // add 3 valid entries 
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(ServiceName, now - 5.Seconds())));
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(ServiceName, now - 3.Seconds())));
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(ServiceName, now)));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 5.Seconds())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 3.Seconds())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now)));
             
             // add 3 entries from different service name in the past
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(WrongService, now - 4.Hours())));
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(WrongService, now - 3.Hours())));
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(WrongService, now - 2.Hours())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - 4.Hours())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - 3.Hours())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - 2.Hours())));
             
             // add 3 valid entries from different service name
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(WrongService, now - 5.Seconds())));
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(WrongService, now - 3.Seconds())));
-            batch.Add(new TableTransactionAction(TableTransactionActionType.Add, CreateEntity(WrongService, now)));
+            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - 5.Seconds())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - 3.Seconds())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now)));
 
             await _rawClient.CreateIfNotExistsAsync();
             await _rawClient.SubmitTransactionAsync(batch);
@@ -183,7 +184,7 @@ namespace Akka.Discovery.Azure.Tests
 
         private TableEntity CreateEntity(string serviceName, DateTime lastUpdate)
         {
-            var entry = ClusterMember.CreateEntity(serviceName, _address, _lastPort++);
+            var entry = ClusterMember.CreateEntity(serviceName, Host, _address, _lastPort++);
             entry[ClusterMember.LastUpdateName] = lastUpdate.Ticks;
             return entry;
         }

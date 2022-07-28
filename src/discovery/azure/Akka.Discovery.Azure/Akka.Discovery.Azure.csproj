@@ -21,11 +21,12 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\management\Akka.Management\Akka.Management.csproj" />
+      <Protobuf Include="protobuf\ClusterMemberProto.proto" Access="Internal" />
     </ItemGroup>
 
     <ItemGroup>
-      <Protobuf Include="protobuf\ClusterMemberProto.proto" Access="Internal" />
+      <None Remove="reference.conf" />
+      <EmbeddedResource Include="reference.conf" />
     </ItemGroup>
 
 </Project>
