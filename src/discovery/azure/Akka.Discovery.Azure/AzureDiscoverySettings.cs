@@ -165,11 +165,8 @@ namespace Akka.Discovery.Azure
         public AzureDiscoverySettings WithOperationTimeout(TimeSpan operationTimeout)
             => Copy(operationTimeout: operationTimeout);
         
-        public AzureDiscoverySettings WithRetryBackoff(TimeSpan retryBackoff)
-            => Copy(retryBackoff: retryBackoff);
-        
-        public AzureDiscoverySettings WithMaximumRetryBackoff(TimeSpan maximumRetryBackoff)
-            => Copy(maximumRetryBackoff: maximumRetryBackoff);
+        public AzureDiscoverySettings WithRetryBackoff(TimeSpan retryBackoff, TimeSpan maximumRetryBackoff)
+            => Copy(retryBackoff: retryBackoff, maximumRetryBackoff: maximumRetryBackoff);
         
         private AzureDiscoverySettings Copy(
             string serviceName = null,

@@ -81,6 +81,34 @@ namespace Akka.Discovery.Azure.Tests
             settings.EffectiveStaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
         }
 
+        [Fact(DisplayName = "Setup override should work properly")]
+        public void SettingsWithSetupOverrideTest()
+        {
+            var setup = new AzureDiscoverySetup()
+                .WithServiceName("a")
+                .WithPublicHostName("host")
+                .WithPublicPort(1234)
+                .WithConnectionString("b")
+                .WithTableName("c")
+                .WithTtlHeartbeatInterval(1.Seconds())
+                .WithStaleTtlThreshold(2.Seconds())
+                .WithPruneInterval(3.Seconds())
+                .WithOperationTimeout(4.Seconds());
+            
+            var settings = setup.Apply(AzureDiscoverySettings.Empty);
+            
+            settings.ServiceName.Should().Be("a");
+            settings.HostName.Should().Be("host");
+            settings.Port.Should().Be(1234);
+            settings.ConnectionString.Should().Be("b");
+            settings.TableName.Should().Be("c");
+            settings.TtlHeartbeatInterval.Should().Be(1.Seconds());
+            settings.StaleTtlThreshold.Should().Be(2.Seconds());
+            settings.PruneInterval.Should().Be(3.Seconds());
+            settings.OperationTimeout.Should().Be(4.Seconds());
+            settings.EffectiveStaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
+        }
+
         [Fact(DisplayName = "Settings constructor should throw on invalid values")]
         public void SettingsInvalidValuesTest()
         {
@@ -104,10 +132,10 @@ namespace Akka.Discovery.Azure.Tests
             Invoking(() => settings.WithPublicPort(65536))
                 .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than zero and less than or equal to 65535*");
             
-            Invoking(() => settings.WithRetryBackoff(TimeSpan.Zero))
+            Invoking(() => settings.WithRetryBackoff(TimeSpan.Zero, TimeSpan.FromSeconds(1)))
                 .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than zero*");
             
-            Invoking(() => settings.WithMaximumRetryBackoff(TimeSpan.Zero))
+            Invoking(() => settings.WithRetryBackoff(TimeSpan.FromSeconds(1), TimeSpan.Zero))
                 .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than retryBackoff*");
         }
     }
