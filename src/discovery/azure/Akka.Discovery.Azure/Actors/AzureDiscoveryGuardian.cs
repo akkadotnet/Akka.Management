@@ -19,18 +19,26 @@ namespace Akka.Discovery.Azure.Actors
 {
     internal sealed class AzureDiscoveryGuardian: UntypedActor
     {
+        private sealed class Start
+        {
+            public static readonly Start Instance = new Start();
+            private Start()
+            { }
+        }
+        
         public static Props Props(AzureDiscoverySettings settings)
             => Actor.Props.Create(() => new AzureDiscoveryGuardian(settings)).WithDeploy(Deploy.Local);
 
+        private static int _startRetryCount;
         private static readonly Status.Failure DefaultFailure = new Status.Failure(null);
         
         private readonly ILoggingAdapter _log;
         private readonly AzureDiscoverySettings _settings;
-        private readonly ClusterMemberTableClient _client;
+        private ClusterMemberTableClient _clientDoNotUseDirectly;
         private readonly TimeSpan _staleTtlThreshold;
         private readonly TimeSpan _timeout;
-        private readonly string _host;
-        private readonly IPAddress _address;
+        private string _host;
+        private IPAddress _address;
         private readonly int _port;
         private readonly CancellationTokenSource _shutdownCts;
         
@@ -40,6 +48,23 @@ namespace Akka.Discovery.Azure.Actors
         private bool _lookingUp;
         private IActorRef _requester;
 
+        private ClusterMemberTableClient Client
+        {
+            get
+            {
+                if(_clientDoNotUseDirectly != null)
+                    return _clientDoNotUseDirectly;
+                
+                _clientDoNotUseDirectly = new ClusterMemberTableClient(
+                    serviceName: _settings.ServiceName,
+                    connectionString: _settings.ConnectionString,
+                    tableName: _settings.TableName,
+                    log: _log);
+                
+                return _clientDoNotUseDirectly;
+            }
+        }
+
         public AzureDiscoveryGuardian(AzureDiscoverySettings settings)
         {
             _settings = settings;
@@ -47,37 +72,10 @@ namespace Akka.Discovery.Azure.Actors
             _backoff = settings.RetryBackoff;
             _maxBackoff = settings.MaximumRetryBackoff;
             _log = Logging.GetLogger(Context.System, nameof(AzureDiscoveryGuardian));
-            _client = new ClusterMemberTableClient(
-                serviceName: _settings.ServiceName,
-                connectionString: _settings.ConnectionString,
-                tableName: _settings.TableName,
-                log: _log);
-
             _staleTtlThreshold = settings.EffectiveStaleTtlThreshold;
-            
-            // Can management host be parsed as an IP?
-            if (IPAddress.TryParse(settings.HostName, out var ip))
-            {
-                _address = ip;
-                _host = Dns.GetHostName();
-            }
-            else
-            {
-                // If its not an IP address, then its most probably a host name
-                _host = settings.HostName;
-                var addresses = Dns.GetHostAddresses(_host);
-                _address = addresses
-                    .First(i => 
-                        !Equals(i, IPAddress.Any) && 
-                        !Equals(i, IPAddress.Loopback) && 
-                        !Equals(i, IPAddress.IPv6Any) &&
-                        !Equals(i, IPAddress.IPv6Loopback));
-            }
             
             _port = settings.Port;
             _shutdownCts = new CancellationTokenSource();
-            
-            Become(Initializing);
         }
 
         protected override void PreStart()
@@ -86,11 +84,19 @@ namespace Akka.Discovery.Azure.Actors
                 _log.Debug("Actor started");
             
             base.PreStart();
+            Become(Initializing);
 
-            _retryCount = 0;
-            ExecuteOperationWithRetry(async token => 
-                await _client.GetOrCreateAsync(_host, _address, _port, token))
-                .PipeTo(Self);
+            // Do an actor start backoff retry
+            // Calculate backoff
+            var backoff = new TimeSpan(_backoff.Ticks * _startRetryCount++);
+            // Clamp to maximum backoff time
+            backoff = backoff.Min(_maxBackoff);
+            
+            // Perform backoff delay
+            if (backoff > TimeSpan.Zero)
+                Task.Delay(backoff, _shutdownCts.Token).PipeTo(Self, success: () => Start.Instance);
+            else
+                Self.Tell(Start.Instance);
         }
 
         protected override void PostStop()
@@ -107,9 +113,33 @@ namespace Akka.Discovery.Azure.Actors
         {
             switch (message)
             {
+                case Start _:
+                    try
+                    {
+                        var entry = Dns.GetHostEntry(_settings.HostName);
+                        _host = entry.HostName;
+                        _address = entry.AddressList
+                            .First(i =>
+                                !Equals(i, IPAddress.Any) &&
+                                !Equals(i, IPAddress.Loopback) &&
+                                !Equals(i, IPAddress.IPv6Any) &&
+                                !Equals(i, IPAddress.IPv6Loopback));
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException($"Failed to invoke Dns.GetHostEntry() for host [{_host}]", ex);
+                    }
+                    
+                    _retryCount = 0;
+                    ExecuteOperationWithRetry(async token => 
+                            await Client.GetOrCreateAsync(_host, _address, _port, token))
+                        .PipeTo(Self);
+                    return true;
+                
                 case Status.Success _:
-                    Context.System.ActorOf(HeartbeatActor.Props(_settings, _client));
-                    Context.System.ActorOf(PruneActor.Props(_settings, _client));
+                    _startRetryCount = 0;
+                    Context.System.ActorOf(HeartbeatActor.Props(_settings, Client));
+                    Context.System.ActorOf(PruneActor.Props(_settings, Client));
                 
                     Become(Running);
                 
@@ -122,7 +152,7 @@ namespace Akka.Discovery.Azure.Actors
                         _log.Debug(f.Cause, "Failed to create/retrieve self discovery entry, retrying.");
                     
                     ExecuteOperationWithRetry(async token => 
-                        await _client.GetOrCreateAsync(_host, _address, _port, token))
+                            await Client.GetOrCreateAsync(_host, _address, _port, token))
                         .PipeTo(Self);
                     return true;
                 
@@ -161,7 +191,7 @@ namespace Akka.Discovery.Azure.Actors
                         _log.Debug("Lookup started for service {0}, stale TTL threshold: {1}", lookup.ServiceName, _staleTtlThreshold);
 
                     ExecuteOperationWithRetry(async token =>
-                        await _client.GetAllAsync(
+                        await Client.GetAllAsync(
                             lastUpdate: (DateTime.UtcNow - _staleTtlThreshold).Ticks, 
                             token: _shutdownCts.Token))
                         .PipeTo(Self);
@@ -176,7 +206,7 @@ namespace Akka.Discovery.Azure.Actors
                     _log.Warning(fail.Cause, "Failed to execute discovery lookup, retrying.");
                     
                     ExecuteOperationWithRetry(async token =>
-                            await _client.GetAllAsync(
+                            await Client.GetAllAsync(
                                 lastUpdate: (DateTime.UtcNow - _staleTtlThreshold).Ticks, 
                                 token: _shutdownCts.Token))
                         .PipeTo(Self);
