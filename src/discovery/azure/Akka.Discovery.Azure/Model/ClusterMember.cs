@@ -12,12 +12,19 @@ using Google.Protobuf;
 
 namespace Akka.Discovery.Azure.Model
 {
-    // If anything throws InvalidOperationException, then the data is corrupted
+    /// <summary>
+    /// Data model for Azure table. We're deliberately not using Azure driver automatic de/serialization by
+    /// not inheriting from TableEntity.
+    /// Note that only properties that are needed for a TTL implementation is implemented as properties,
+    /// any informational data are packed as byte array using protobuf serialization instead. This is intentionally
+    /// done so that all data model extensions can only be done using an extend only design through protobuf versioning.
+    /// </summary>
     public class ClusterMember: IEquatable<ClusterMember>
     {
         internal const string PayloadName = "payload";
         internal const string LastUpdateName = "lastUpdate";
         
+        // If anything throws InvalidOperationException, then the data is corrupted
         public ClusterMember(TableEntity entity)
         {
             PartitionKey = entity.PartitionKey;

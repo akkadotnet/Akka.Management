@@ -13,6 +13,11 @@ using Akka.Util.Internal;
 
 namespace Akka.Discovery.Azure.Actors
 {
+    /// <summary>
+    /// Manages the TTL heartbeat that updates the Azure discovery table row entry for this cluster node.
+    /// Instantiated as a child of the AzureDiscoveryGuardian actor, only after it initialized properly.
+    /// Heartbeat is based on the akka.discovery.azure.ttl-heartbeat-interval setting, which defaults to 1 minute.
+    /// </summary>
     internal sealed class HeartbeatActor: UntypedActor, IWithTimers
     {
         public static Props Props(AzureDiscoverySettings settings, ClusterMemberTableClient client)

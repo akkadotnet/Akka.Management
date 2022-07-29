@@ -16,6 +16,12 @@ using DotNetty.Common.Utilities;
 
 namespace Akka.Discovery.Azure.Actors
 {
+    /// <summary>
+    /// Manages Azure discovery table stale entries pruning.
+    /// Instantiated as a child of the AzureDiscoveryGuardian actor, only after it initialized properly.
+    /// Pruning timer is activated when the node became the cluster leader.
+    /// Prune interval is based on the akka.discovery.azure.prune-interval setting, which defaults to 1 hour.
+    /// </summary>
     internal class PruneActor: UntypedActor, IWithTimers
     {
         public static Props Props(AzureDiscoverySettings settings, ClusterMemberTableClient client)
