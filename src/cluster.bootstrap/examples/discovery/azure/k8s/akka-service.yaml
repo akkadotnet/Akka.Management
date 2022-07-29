@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: clusterbootstrap
+  namespace: clusterbootstrap
+  labels:
+    app: clusterbootstrap
+spec:
+  clusterIP: None
+  ports:
+  - port: 4053
+    name: akka-remote
+  - port: 8558 
+    name: management
+  selector:
+    app: clusterbootstrap
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  namespace: clusterbootstrap
+  name: clusterbootstrap
+  labels:
+    app: clusterbootstrap
+spec:
+  serviceName: clusterbootstrap
+  replicas: 10
+  selector:
+    matchLabels:
+      app: clusterbootstrap
+  template:
+    metadata:
+      labels:
+        app: clusterbootstrap
+    spec:
+      terminationGracePeriodSeconds: 35
+      containers:
+      - name: node
+        image: azurecluster:0.2.4
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "pbm 127.0.0.1:9110 cluster leave"]
+        env:
+        - name: ACTORSYSTEM
+          value: ClusterSys
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: CLUSTER_IP
+          value: "$(POD_NAME).clusterbootstrap.clusterbootstrap.svc.cluster.local"
+        - name: AZURITE_HOST
+          value: "host.docker.internal"
+        - name: USE_CHAOS
+          value: "false"
+        - name: USE_PUBSUB
+          value: "false"
+        livenessProbe:
+          httpGet:
+            path: /alive
+            port: management
+        startupProbe:
+          httpGet:
+            path: /ready
+            port: management
+        ports:
+        - containerPort: 8558 
+          protocol: TCP
+          name: management
+        - containerPort: 4053
+          protocol: TCP
+          name: akka-remote

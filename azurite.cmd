@@ -1,1 +1,1 @@
-start /B azurite --silent --location azurite --debug azirute/debug.log
+start /B azurite --silent --location azurite --debug azurite/debug.log
