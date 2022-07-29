@@ -68,6 +68,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.Azure", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.Azure.Tests", "src\discovery\azure\Akka.Discovery.Azure.Tests\Akka.Discovery.Azure.Tests.csproj", "{77156751-DFBA-460F-80F3-87C571285658}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureCluster", "src\cluster.bootstrap\examples\discovery\azure\AzureCluster\AzureCluster.csproj", "{54513160-DB85-4654-8161-F7B1177674B0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -146,6 +148,10 @@ Global
 		{77156751-DFBA-460F-80F3-87C571285658}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77156751-DFBA-460F-80F3-87C571285658}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77156751-DFBA-460F-80F3-87C571285658}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54513160-DB85-4654-8161-F7B1177674B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54513160-DB85-4654-8161-F7B1177674B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54513160-DB85-4654-8161-F7B1177674B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54513160-DB85-4654-8161-F7B1177674B0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -175,6 +181,7 @@ Global
 		{CF383FD6-BD45-4A1C-9D3E-42A6EAB8F083} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
 		{227C1CA7-0FCD-4D98-AB53-C18E9CBE752D} = {CF383FD6-BD45-4A1C-9D3E-42A6EAB8F083}
 		{77156751-DFBA-460F-80F3-87C571285658} = {CF383FD6-BD45-4A1C-9D3E-42A6EAB8F083}
+		{54513160-DB85-4654-8161-F7B1177674B0} = {24FEBA95-1FC2-4AC2-8386-6AB13AE87056}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
