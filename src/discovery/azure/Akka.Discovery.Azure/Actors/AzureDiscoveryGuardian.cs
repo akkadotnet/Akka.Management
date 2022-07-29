@@ -17,6 +17,13 @@ using Akka.Util.Internal;
 
 namespace Akka.Discovery.Azure.Actors
 {
+    /// <summary>
+    /// The guardian actor that manages the Azure client instance and the table entries management actors.
+    /// Instantiated by AzureServiceDiscovery as a system actor and should restart itself on failures.
+    /// The actor will only honor a single lookup request at a time, any requests done while it is still processing
+    /// a lookup is ignored.
+    /// The actor will reply with an empty result if it is still initializing.
+    /// </summary>
     internal sealed class AzureDiscoveryGuardian: UntypedActor
     {
         private sealed class Start

@@ -32,6 +32,16 @@ namespace Akka.Discovery.Azure
             _client = new TableClient(connectionString, tableName);
         }
 
+        /// <summary>
+        /// Try and retrieve the entity entry for the node:
+        ///   - If one is found, it will refresh the LastUpdate value and update the table row
+        ///   - if none are found, it will insert a new one into the table.
+        /// </summary>
+        /// <param name="host">The public Akka.Management host name of this node</param>
+        /// <param name="address">The public Akka.Management IP address of this node</param>
+        /// <param name="port">the public Akka.Management port of this node</param>
+        /// <param name="token">CancellationToken to cancel this operation</param>
+        /// <returns>The immutable Azure cluster member entity entry of this node</returns>
         public async ValueTask<ClusterMember> GetOrCreateAsync(
             string host,
             IPAddress address,
@@ -71,6 +81,15 @@ namespace Akka.Discovery.Azure
             return _entity;
         }
 
+        /// <summary>
+        /// Query the Azure table for all entries that has its LastUpdate value greater than or equal to the
+        /// <paramref name="lastUpdate"/> parameter.
+        /// </summary>
+        /// <param name="lastUpdate">The last update tick value to be considered</param>
+        /// <param name="token">CancellationToken to cancel this operation</param>
+        /// <returns>
+        /// All cluster member entries that has their LastUpdate value greater than <paramref name="lastUpdate"/>
+        /// </returns>
         public async Task<ImmutableList<ClusterMember>> GetAllAsync(long lastUpdate, CancellationToken token = default)
         {
             if (!await EnsureInitializedAsync(token))
@@ -91,6 +110,11 @@ namespace Akka.Discovery.Azure
             return list.ToImmutableList();
         }
 
+        /// <summary>
+        /// Refresh the LastUpdate value to DateTime.UtcNow and updates the table entity row
+        /// </summary>
+        /// <param name="token">CancellationToken to cancel this operation</param>
+        /// <returns><c>true</c> if the operation succeeded</returns>
         public async Task<bool> UpdateAsync(CancellationToken token = default)
         {
             if (!await EnsureInitializedAsync(token))
@@ -112,6 +136,12 @@ namespace Akka.Discovery.Azure
             return true;
         }
 
+        /// <summary>
+        /// Removes all entity rows that has their LastUpdate value less than the <paramref name="lastUpdate"/> parameter.
+        /// </summary>
+        /// <param name="lastUpdate">The last update tick value to be considered</param>
+        /// <param name="token">CancellationToken to cancel this operation</param>
+        /// <returns><c>true</c> if the operation succeeded</returns>
         public async Task<bool> PruneAsync(long lastUpdate, CancellationToken token = default)
         {
             if (!await EnsureInitializedAsync(token))
@@ -161,6 +191,11 @@ namespace Akka.Discovery.Azure
 
         #region Helper methods
 
+        /// <summary>
+        /// Ensure that the required Azure table exists in the database
+        /// </summary>
+        /// <param name="token">CancellationToken to cancel this operation</param>
+        /// <returns><c>true</c> if the operation succeeded</returns>
         private async Task<bool> EnsureInitializedAsync(CancellationToken token)
         {
             if (_initialized)
@@ -185,12 +220,20 @@ namespace Akka.Discovery.Azure
             }
         }
 
+        /// <summary>
+        /// Retrieve a single entity row with RowKey matching <paramref name="rowKey"/>
+        /// </summary>
+        /// <param name="rowKey">The row RowKey</param>
+        /// <param name="token"></param>
+        /// <returns><c>true</c> if the operation succeeded</returns>
         public async Task<ClusterMember> GetEntityAsync(string rowKey, CancellationToken token)
         {
             var query = _client
                 .QueryAsync<TableEntity>($"PartitionKey eq '{_serviceName}' and RowKey eq '{rowKey}'")
                 .WithCancellation(token);
 
+            // this is similar to ".FirstOrDefault()" Linq function. We're deliberately NOT using Linq because the
+            // bcl NuGet package has a very severe backward target framework compatibility problem.
             await foreach (var entry in query)
             {
                 return ClusterMember.FromEntity(entry);
