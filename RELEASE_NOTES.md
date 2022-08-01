@@ -1,3 +1,18 @@
+#### 0.2.5-beta1 August 1 2022 ####
+
+* Update to [Akka.NET v1.4.40](https://github.com/akkadotnet/akka.net/releases/tag/1.4.40)
+* Update AWS SDK versions to latest:
+  * [AWSSDK.S3 to 3.7.9.33](https://github.com/akkadotnet/Akka.Management/pull/709)
+  * [AWSSDK.EC2 to 3.7.79.2](https://github.com/akkadotnet/Akka.Management/pull/708)
+  * [AWSSDK.CloudFormation to 3.7.11.9](https://github.com/akkadotnet/Akka.Management/pull/710)
+  * [AWSSDK.ECS to 3.7.5.57](https://github.com/akkadotnet/Akka.Management/pull/711)
+* [Update PBM version to 1.1.0](https://github.com/akkadotnet/Akka.Management/pull/631)
+* [Add Akka.Discovery.Azure discovery feature](https://github.com/akkadotnet/Akka.Management/pull/716)
+
+__Akka.Discovery.Azure__
+
+This new discovery module leverages Azure Table Storage as a source for Akka.NET cluster discovery and bootstraping. A more complete documentation can be read [here](https://github.com/akkadotnet/Akka.Management/tree/dev/src/discovery/azure/Akka.Discovery.Azure)
+
 #### 0.2.4-beta3 May 5 2022 ####
 
 * [Fix async routing in netcoreapp3.1](https://github.com/akkadotnet/Akka.Management/pull/563)
