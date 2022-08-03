@@ -11,7 +11,6 @@ using Akka.Http.Dsl.Model;
 using Akka.IO;
 using Akka.TestKit.Xunit2.Internals;
 using FluentAssertions;
-using Microsoft.AspNetCore.Http;
 using Xunit;
 using Xunit.Abstractions;
 using HttpResponse = Akka.Http.Dsl.Model.HttpResponse;
@@ -25,7 +24,7 @@ namespace Akka.Management.Tests
         {
             return new Route[]{ctx =>
             {
-                if (ctx.Request.Method != HttpMethods.Get || ctx.Request.Path != "/dotnet")
+                if (ctx.Request.Method != "GET" || ctx.Request.Path != "/dotnet")
                     return Task.FromResult<IRouteResult>(null);
                 return Task.FromResult<IRouteResult>(new Complete(
                     HttpResponse.Create(entity: new ResponseEntity(ContentTypes.TextPlainUtf8,
@@ -40,7 +39,7 @@ namespace Akka.Management.Tests
         {
             return new Route[]{ctx =>
             {
-                if (ctx.Request.Method != HttpMethods.Get || ctx.Request.Path != "/netfx")
+                if (ctx.Request.Method != "GET" || ctx.Request.Path != "/netfx")
                     return Task.FromResult<IRouteResult>(null);
                 return Task.FromResult<IRouteResult>(new Complete(
                     HttpResponse.Create(entity: new ResponseEntity(ContentTypes.TextPlainUtf8,

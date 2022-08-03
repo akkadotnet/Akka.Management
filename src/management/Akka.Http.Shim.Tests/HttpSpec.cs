@@ -15,7 +15,6 @@ using Akka.Http.Dsl;
 using Akka.Http.Dsl.Settings;
 using Akka.Http.Extensions;
 using FluentAssertions;
-using Microsoft.AspNetCore.Http;
 using Xunit;
 using Xunit.Abstractions;
 using HttpResponse = Akka.Http.Dsl.Model.HttpResponse;
@@ -40,9 +39,7 @@ namespace Akka.Http.Shim.Tests
 
             var serverBinding = await baseBuilder.Bind(new []{RouteOne(), RouteTwo()}.Concat()).ConfigureAwait(false);
 
-            var boundHost = ((DnsEndPoint) serverBinding.LocalAddress).Host;
-            var boundPort = ((DnsEndPoint)serverBinding.LocalAddress).Port;
-            Log.Info($"Bound Akka Management (HTTP) endpoint to: {boundHost}:{boundPort}");
+            Log.Info($"Bound Akka Management (HTTP) endpoint to: {serverBinding.LocalAddress}");
 
             await AssertServerIsRunning();
             
@@ -76,7 +73,7 @@ namespace Akka.Http.Shim.Tests
             return context =>
             {
                 var request = context.Request;
-                if (request.Method != HttpMethods.Get || request.Path != "/test/one")
+                if (request.Method != "GET" || request.Path != "/test/one")
                     return Task.FromResult<IRouteResult>(null);
 
                 return Task.FromResult<IRouteResult>(new Complete(HttpResponse.Create()));
@@ -88,7 +85,7 @@ namespace Akka.Http.Shim.Tests
             return context =>
             {
                 var request = context.Request;
-                if (request.Method != HttpMethods.Get || request.Path != "/test/two")
+                if (request.Method != "GET" || request.Path != "/test/two")
                     return Task.FromResult<IRouteResult>(null);
 
                 return Task.FromResult<IRouteResult>(new Complete(HttpResponse.Create())); 
