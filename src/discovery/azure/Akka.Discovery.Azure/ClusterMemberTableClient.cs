@@ -96,7 +96,7 @@ namespace Akka.Discovery.Azure
                 return null;
 
             var query = _client
-                .QueryAsync<TableEntity>($"PartitionKey eq '{_serviceName}' and {ClusterMember.LastUpdateName} ge {lastUpdate}")
+                .QueryAsync<TableEntity>($"PartitionKey eq '{_serviceName}' and {ClusterMember.LastUpdateName} ge {lastUpdate}L")
                 .WithCancellation(token);
 
             var list = ImmutableList.CreateBuilder<ClusterMember>();
@@ -148,7 +148,7 @@ namespace Akka.Discovery.Azure
                 return false;
 
             var query = _client
-                .QueryAsync<TableEntity>($"PartitionKey eq '{_serviceName}' and {ClusterMember.LastUpdateName} lt {lastUpdate}")
+                .QueryAsync<TableEntity>($"PartitionKey eq '{_serviceName}' and {ClusterMember.LastUpdateName} lt {lastUpdate}L")
                 .WithCancellation(token);
 
             var batch = new List<TableTransactionAction>();

@@ -59,12 +59,20 @@ namespace Akka.Discovery.Azure
         {
             if(_log.IsDebugEnabled)
                 _log.Debug("Starting lookup for service {0}", lookup.ServiceName);
-            
-            var members = await _guardianActor.Ask<ImmutableList<ClusterMember>>(lookup, resolveTimeout);
 
-            return new Resolved(
-                lookup.ServiceName,
-                members.Select(m => new ResolvedTarget(m.Host, m.Port, m.Address)).ToImmutableList());
+            try
+            {
+                var members = await _guardianActor.Ask<ImmutableList<ClusterMember>>(lookup, resolveTimeout);
+
+                return new Resolved(
+                    lookup.ServiceName,
+                    members.Select(m => new ResolvedTarget(m.Host, m.Port, m.Address)).ToImmutableList());
+            }
+            catch (Exception e)
+            {
+                _log.Warning(e, "Failed to perform contact point lookup");
+                return new Resolved(lookup.ServiceName);
+            }
         }
     }
 }
