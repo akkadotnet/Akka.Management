@@ -28,7 +28,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup>
     <AkkaPackageTags>akka;actors;actor model;Akka;concurrency;service discovery;cluster;clustering;</AkkaPackageTags>
-    <LibraryFramework>netstandard2.1</LibraryFramework>
+    <LibraryFramework>netstandard2.0</LibraryFramework>
     <NetFramework>net5.0</NetFramework>
     <TestsNetCoreFramework>netcoreapp3.1</TestsNetCoreFramework>
     <TestsNet>net5.0</TestsNet>

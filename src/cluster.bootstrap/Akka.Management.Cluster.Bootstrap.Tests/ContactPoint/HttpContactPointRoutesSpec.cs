@@ -179,6 +179,12 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             throw new NotImplementedException();
         }
 
+        public IResponseCookie AddCookie(string name, string value, string path = null, string domain = null, DateTime? expires = null,
+            long maxage = -1, bool secure = false, bool httponly = false)
+        {
+            throw new NotImplementedException();
+        }
+
         public void AddHeader(string key, string value)
         {
             throw new NotImplementedException();

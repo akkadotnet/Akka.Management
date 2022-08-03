@@ -84,7 +84,7 @@ namespace Akka.Http.Dsl
                 config,
                 _shutdownCts.Token);
 
-            if (_serverTask.IsCompleted && !_serverTask.IsCompletedSuccessfully)
+            if (_serverTask.IsFaulted)
             {
                 _serverTask.GetAwaiter().GetResult();
             }
