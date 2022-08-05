@@ -128,7 +128,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
 
         protected override Task Start()
         {
-            _settings = new ClusterBootstrapSettings(System.Settings.Config, Log);
+            _settings = ClusterBootstrapSettings.Create(System.Settings.Config, Log);
             return Task.CompletedTask;
         }
 
@@ -423,7 +423,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
 
         protected override Task Start()
         {
-            _settings = new ClusterBootstrapSettings(System.Settings.Config, Log);
+            _settings = ClusterBootstrapSettings.Create(System.Settings.Config, Log);
             return Task.CompletedTask;
         }
     }
@@ -501,7 +501,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
 
         protected override Task Start()
         {
-            _settings = new ClusterBootstrapSettings(System.Settings.Config, Log);
+            _settings = ClusterBootstrapSettings.Create(System.Settings.Config, Log);
             return Task.CompletedTask;
         }
     }

@@ -63,7 +63,23 @@ namespace Akka.Management.Cluster.Bootstrap
             
             _log = Logging.GetLogger(system, typeof(ClusterBootstrap));
             _bootstrapStep= new AtomicReference<Internal.IBootstrapStep>(Internal.NotRunning.Instance);
-            Settings = new ClusterBootstrapSettings(system.Settings.Config, _log);
+            Settings = ClusterBootstrapSettings.Create(system.Settings.Config, _log);
+            
+            var setup = _system.Settings.Setup.Get<ClusterBootstrapSetup>().Value ?? new ClusterBootstrapSetup();
+
+            var contactPointDiscovery = _system.Settings.Setup.Get<ContactPointDiscoverySetup>().Value;
+            if (contactPointDiscovery != null)
+                setup.ContactPointDiscovery = contactPointDiscovery;
+
+            var contactPoint = _system.Settings.Setup.Get<ContactPointSetup>().Value;
+            if (contactPoint != null)
+                setup.ContactPoint = contactPoint;
+
+            var joinDecider = _system.Settings.Setup.Get<JoinDeciderSetup>().Value;
+            if (joinDecider != null)
+                setup.JoinDecider = joinDecider;
+
+            Settings = setup.Apply(Settings); 
 
             Discovery = new Lazy<ServiceDiscovery>(() =>
             {
