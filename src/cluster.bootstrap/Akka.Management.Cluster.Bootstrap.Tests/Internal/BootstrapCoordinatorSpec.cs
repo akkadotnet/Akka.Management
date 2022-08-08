@@ -45,7 +45,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.Internal
             base(Config, nameof(BootstrapCoordinatorSpec), helper)
         {
             _selfUri = new Uri("http://localhost:8558/");
-            _settings = new ClusterBootstrapSettings(Sys.Settings.Config, Log);
+            _settings = ClusterBootstrapSettings.Create(Sys.Settings.Config, Log);
             _joinDecider = new LowestAddressJoinDecider(Sys, _settings);
             _discovery = new MockDiscovery(Sys);
         }

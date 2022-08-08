@@ -147,7 +147,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         {
             var exception = Record.Exception(() =>
             {
-                var settings = new ClusterBootstrapSettings(_systems[0].Settings.Config, NoLogger.Instance);
+                var settings = ClusterBootstrapSettings.Create(_systems[0].Settings.Config, NoLogger.Instance);
             });
             exception.Should().BeNull();
         }
