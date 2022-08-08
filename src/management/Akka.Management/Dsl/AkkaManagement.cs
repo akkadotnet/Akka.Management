@@ -101,11 +101,13 @@ namespace Akka.Management
                 
                 serverBindingPromise.SetResult(serverBinding);
 
-                var boundPort = ((DnsEndPoint)serverBinding.LocalAddress).Port;
-                _log.Info(
-                    "Bound Akka Management (HTTP) endpoint to: {0}:{1}", 
-                    ((DnsEndPoint)serverBinding.LocalAddress).Host, 
-                    boundPort);
+                var (boundAddress, boundPort) = serverBinding.LocalAddress switch
+                {
+                    DnsEndPoint ep => (ep.Host, ep.Port),
+                    IPEndPoint ep => (ep.Address.ToString(), ep.Port),
+                    _ => throw new Exception($"Unknown endpoint type: {serverBinding.LocalAddress.GetType()}")
+                };
+                _log.Info("Bound Akka Management (HTTP) endpoint to: {0}:{1}", boundAddress, boundPort);
 
                 return effectiveProviderSettings.SelfBaseUri.WithPort(boundPort);
             }

@@ -11,7 +11,8 @@ using System.Net;
 using System.Threading.Tasks;
 using Akka.Annotations;
 using Akka.IO;
-using Microsoft.AspNetCore.Http;
+using Ceen;
+using HttpStatusCode = Ceen.HttpStatusCode;
 
 namespace Akka.Http.Dsl.Model
 {
@@ -56,27 +57,35 @@ namespace Akka.Http.Dsl.Model
         /// <summary>
         /// Returns the Uri of this request.
         /// </summary>
-        public PathString Path => _request.Path;
+        public string Path => _request.Path;
 
-        public IPAddress Peer => _request.HttpContext.Connection.RemoteIpAddress;
+        public IPAddress Peer => ((IPEndPoint)_request.RemoteEndPoint).Address;//_request.HttpContext.Connection.RemoteIpAddress;
 
         /// <summary>
         /// Returns the entity of this request.
         /// </summary>
         public override ResponseEntity Entity { get; }
 
-        private readonly Microsoft.AspNetCore.Http.HttpRequest _request;
+        private readonly IHttpRequest _request;
 
-        public static async Task<HttpRequest> CreateAsync(Microsoft.AspNetCore.Http.HttpRequest request)
+        public static async Task<HttpRequest> CreateAsync(IHttpRequest request)
         {
-            var input = new byte[Convert.ToInt32(request.ContentLength)];
-            await request.Body.ReadAsync(input, 0, input.Length).ConfigureAwait(false);
-            var bytes = ByteString.FromBytes(input);
+            ByteString bytes;
+            if (request.ContentLength > 0)
+            {
+                var input = new byte[request.ContentLength];
+                var readCount = await request.Body.ReadAsync(input, 0, input.Length).ConfigureAwait(false);
+                bytes = ByteString.FromBytes(input, 0, readCount);
+            }
+            else
+            {
+                bytes = ByteString.Empty;
+            }
             return new HttpRequest(request, bytes);
         }
 
 
-        private HttpRequest(Microsoft.AspNetCore.Http.HttpRequest request, ByteString input)
+        private HttpRequest(IHttpRequest request, ByteString input)
         {
             _request = request;
 
@@ -110,7 +119,7 @@ namespace Akka.Http.Dsl.Model
         /// <summary>
         /// Returns the status-code of this response.
         /// </summary>
-        public int Status { get; }
+        public HttpStatusCode Status { get; }
 
         /// <summary>
         /// An enumerable containing the headers of this message.
@@ -127,11 +136,11 @@ namespace Akka.Http.Dsl.Model
         /// <summary>
         /// Returns a default response to be changed using the `WithX` methods.
         /// </summary>
-        public static HttpResponse Create(int status = 200, ImmutableList<HttpHeader> headers = null,
+        public static HttpResponse Create(HttpStatusCode status = HttpStatusCode.OK, ImmutableList<HttpHeader> headers = null,
             ResponseEntity entity = null, string protocol = "HTTP/1.1") =>
             new HttpResponse(status, headers, entity ?? ResponseEntity.Empty, protocol);
 
-        private HttpResponse(int status, ImmutableList<HttpHeader> headers, ResponseEntity entity, string protocol)
+        private HttpResponse(HttpStatusCode status, ImmutableList<HttpHeader> headers, ResponseEntity entity, string protocol)
         {
             Status = status;
             Headers = headers;
@@ -168,7 +177,7 @@ namespace Akka.Http.Dsl.Model
         {
             unchecked
             {
-                var hashCode = Status;
+                var hashCode = (int) Status;
                 hashCode = (hashCode * 397) ^ (Headers != null ? Headers.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (Entity != null ? Entity.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (Protocol != null ? Protocol.GetHashCode() : 0);
