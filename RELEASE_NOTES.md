@@ -1,3 +1,15 @@
+#### 0.2.5-beta2 August 9 2022 ####
+* [[ClusterBootstrap] Add programmatic setup to ClusterBootstrap](https://github.com/akkadotnet/Akka.Management/pull/730)
+* [[Discovery.Azure] Fix OData query bug and AskTimeoutException bug](https://github.com/akkadotnet/Akka.Management/pull/723)
+* [[Discovery.Azure] Fix inconsistent IP address resolution in guardian actor](https://github.com/akkadotnet/Akka.Management/pull/728)
+* [[Http.Shim] Replace internal HTTP server from Kestrel to Ceen.Httpd](https://github.com/akkadotnet/Akka.Management/pull/729)
+* [[Management] Add programmatic setup to Akka.Management](https://github.com/akkadotnet/Akka.Management/pull/731)
+* NuGet package version updates:
+  * [Update AWSSDK.EC2 from 3.7.79.2 to 3.7.80.2](https://github.com/akkadotnet/Akka.Management/pull/733)
+  * [Update AWSSDK.ECS from 3.7.5.57 to 3.7.5.60](https://github.com/akkadotnet/Akka.Management/pull/732)
+  * [Update Azure.Data.Tables from 12.6.0 to 12.6.1](https://github.com/akkadotnet/Akka.Management/pull/718)
+  * [Update Google.Protobuf from 3.21.2 to 3.21.4](https://github.com/akkadotnet/Akka.Management/pull/724)
+
 #### 0.2.5-beta1 August 1 2022 ####
 
 * Update to [Akka.NET v1.4.40](https://github.com/akkadotnet/akka.net/releases/tag/1.4.40)
