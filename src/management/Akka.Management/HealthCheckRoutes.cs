@@ -6,7 +6,6 @@
 //-----------------------------------------------------------------------
 
 using System;
-using System.Net;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Http.Dsl;
@@ -16,7 +15,7 @@ using Akka.IO;
 using Akka.Management.Dsl;
 using Akka.Management.Internal;
 using Akka.Util;
-using Microsoft.AspNetCore.Http;
+using Ceen;
 using HttpResponse = Akka.Http.Dsl.Model.HttpResponse;
 
 namespace Akka.Management
@@ -41,7 +40,7 @@ namespace Akka.Management
                 var result = await check();
                 if (result is Left<string, Done> left)
                     return HttpResponse.Create(
-                        status: (int) HttpStatusCode.InternalServerError,
+                        status: HttpStatusCode.InternalServerError,
                         entity: new RequestEntity(
                             contentType: ContentTypes.TextPlainUtf8,
                             ByteString.FromString($"Not Healthy: {left.Value}")));
@@ -50,7 +49,7 @@ namespace Akka.Management
             catch (Exception e)
             {
                 return HttpResponse.Create(
-                    status: (int)HttpStatusCode.InternalServerError, 
+                    status: HttpStatusCode.InternalServerError, 
                     entity: new RequestEntity(
                         contentType: ContentTypes.TextPlainUtf8,
                         ByteString.FromString($"Health Check Failed: {e.Message}")));
@@ -63,13 +62,13 @@ namespace Akka.Management
             {
                 async context =>
                 {
-                    if (context.Request.Method != HttpMethods.Get || context.Request.Path != _settings.ReadinessPath)
+                    if (context.Request.Method != "GET" || context.Request.Path != _settings.ReadinessPath)
                         return null;
                     return new RouteResult.Complete(await HealthCheckResponse(HealthChecks.ReadyResult));
                 },
                 async context =>
                 {
-                    if (context.Request.Method != HttpMethods.Get || context.Request.Path != _settings.LivenessPath)
+                    if (context.Request.Method != "GET" || context.Request.Path != _settings.LivenessPath)
                         return null;
                     return new RouteResult.Complete(await HealthCheckResponse(HealthChecks.AliveResult));
                 },

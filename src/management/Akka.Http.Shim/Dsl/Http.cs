@@ -6,7 +6,10 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Linq;
 using System.Net;
+using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Annotations;
@@ -15,16 +18,7 @@ using Akka.Event;
 using Akka.Http.Dsl.Model;
 using Akka.Http.Dsl.Server;
 using Akka.Http.Dsl.Settings;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Logging;
-using LogLevel = Microsoft.Extensions.Logging.LogLevel;
-#if NET5_0
-using Microsoft.Extensions.Hosting;
-#else
-using Microsoft.AspNetCore;
-using Microsoft.Extensions.DependencyInjection;
-#endif
+using Ceen.Httpd;
 
 namespace Akka.Http.Dsl
 {
@@ -37,6 +31,8 @@ namespace Akka.Http.Dsl
         private readonly ExtendedActorSystem _system;
         private readonly ServerSettings _settings;
         private readonly ILoggingAdapter _log;
+        private readonly CancellationTokenSource _shutdownCts;
+        private Task _serverTask;
 
         public HttpExt(ExtendedActorSystem system)
         {
@@ -44,6 +40,7 @@ namespace Akka.Http.Dsl
             _system.Settings.InjectTopLevelFallback(Http.DefaultConfig());
             _settings = ServerSettings.Create(_system);
             _log = Logging.GetLogger(system, this);
+            _shutdownCts = new CancellationTokenSource();
         }
 
         /// <summary>
@@ -68,60 +65,42 @@ namespace Akka.Http.Dsl
             var effectiveHostname = hostname ?? "localhost";
             var effectivePort = port ?? effectiveSetting.DefaultHttpPort;
 
-#if NET5_0
-            var host = Host.CreateDefaultBuilder()
-                .ConfigureLogging((context, builder) =>
-                {
-                    builder.AddFilter("Microsoft", LogLevel.Error);
-                })
-                .ConfigureWebHostDefaults(builder =>
-                {
-                    builder
-                        .UseKestrel()
-                        .SuppressStatusMessages(true)
-                        .Configure(app =>
-                        {
-                            // Uncomment for server debugging
-                            app.UseDeveloperExceptionPage();
-
-                            // Actual middleware that handles Akka.Http routing and adapts HttpRequest and HttpResponse
-                            // between Akka.Http and ASP.NET
-                            app.UseAkkaRouting(_system, route, effectiveSetting);
-                        })
-                        .UseUrls($"http://{effectiveHostname}:{effectivePort}");
-                })
-                .Build();
-#else
-            var host = WebHost.CreateDefaultBuilder()
-                .SuppressStatusMessages(true)
-                .ConfigureServices(services =>
-                {
-                    services.AddLogging(builder => builder.AddFilter("Microsoft", LogLevel.Error));
-                })
-                .Configure(app =>
-                {
-                    // Uncomment for server debugging
-                    app.UseDeveloperExceptionPage();
-
-                    // Actual middleware that handles Akka.Http routing and adapts HttpRequest and HttpResponse
-                    // between Akka.Http and ASP.NET
-                    app.UseAkkaRouting(_system, route, effectiveSetting);
-                })
-                .UseUrls($"http://{effectiveHostname}:{effectivePort}")
-                .Build();
-#endif
+            var config = new ServerConfig
+            {
+                Router = new AkkaRouter(_system, route)
+            };
 
             // Start listening...
-            await host.StartAsync();
+            if (!IPAddress.TryParse(effectiveHostname, out var ip))
+            {
+                var addresses = Dns.GetHostAddresses(effectiveHostname);
+                ip = addresses.First(i => i.AddressFamily == AddressFamily.InterNetwork && !Equals(i, IPAddress.Any));
+            }
+            var endpoint = new IPEndPoint(ip, effectivePort);
+            
+            _serverTask = HttpServer.ListenAsync(
+                endpoint,
+                false,
+                config,
+                _shutdownCts.Token);
+
+            if (_serverTask.IsFaulted)
+            {
+                _serverTask.GetAwaiter().GetResult();
+            }
+            
             _log.Info("HTTP Extension started");
 
             var binding = new ServerBinding(
-                new DnsEndPoint(effectiveHostname, effectivePort),
+                endpoint,
                 async timeout =>
                 {
+                    _shutdownCts.Cancel();
+                    using (var cts = new CancellationTokenSource(timeout))
+                    {
+                        await Task.WhenAny(Task.Delay(Timeout.Infinite, cts.Token), _serverTask);
+                    }
                     _log.Info("HTTP Extension stopped");
-                    
-                    await host.StopAsync(timeout);
                     return HttpServerTerminated.Instance;
                 });
             binding.AddToCoordinatedShutdown(TimeSpan.FromSeconds(5), _system);

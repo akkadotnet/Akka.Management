@@ -14,7 +14,6 @@ using Akka.Http.Dsl;
 using Akka.Http.Dsl.Model;
 using Akka.Http.Dsl.Server;
 using Akka.IO;
-using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using static Akka.Management.Cluster.Bootstrap.ContactPoint.HttpBootstrapJsonProtocol;
 using HttpResponse = Akka.Http.Dsl.Model.HttpResponse;
@@ -36,7 +35,7 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
             {
                 return new Route[]{async context =>
                 {
-                    if (context.Request.Method == HttpMethods.Get && context.Request.Path == "/bootstrap/seed-nodes")
+                    if (context.Request.Method == "GET" && context.Request.Path == "/bootstrap/seed-nodes")
                     {
                         return await GetSeedNodes()(context);
                     }
