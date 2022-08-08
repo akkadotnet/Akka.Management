@@ -38,7 +38,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         public HttpContactPointRoutesSpec(ITestOutputHelper helper) 
             : base(Config, nameof(HttpContactPointRoutesSpec), helper)
         {
-            _settings = new ClusterBootstrapSettings(Sys.Settings.Config, Sys.Log);
+            _settings = ClusterBootstrapSettings.Create(Sys.Settings.Config, Sys.Log);
             _httpBootstrap = new HttpClusterBootstrapRoutes(_settings);
         }
 
