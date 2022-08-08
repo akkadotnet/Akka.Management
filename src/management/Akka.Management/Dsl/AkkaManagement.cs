@@ -39,7 +39,11 @@ namespace Akka.Management
             _log = Logging.GetLogger(system, GetType());
 
             system.Settings.InjectTopLevelFallback(AkkaManagementProvider.DefaultConfiguration());
-            Settings = new AkkaManagementSettings(system.Settings.Config);
+            Settings = AkkaManagementSettings.Create(system.Settings.Config);
+
+            var setup = _system.Settings.Setup.Get<AkkaManagementSetup>();
+            if (setup.HasValue)
+                Settings = setup.Value.Apply(Settings);
 
             _routeProviders = LoadRouteProviders().ToImmutableList();
 
