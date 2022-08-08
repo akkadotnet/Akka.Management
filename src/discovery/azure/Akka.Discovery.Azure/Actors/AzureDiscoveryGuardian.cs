@@ -11,6 +11,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Configuration;
 using Akka.Discovery.Azure.Model;
 using Akka.Event;
 using Akka.Util.Internal;
@@ -123,14 +124,19 @@ namespace Akka.Discovery.Azure.Actors
                 case Start _:
                     try
                     {
-                        var entry = Dns.GetHostEntry(_settings.HostName);
-                        _host = entry.HostName;
-                        _address = entry.AddressList
-                            .First(i =>
-                                !Equals(i, IPAddress.Any) &&
-                                !Equals(i, IPAddress.Loopback) &&
-                                !Equals(i, IPAddress.IPv6Any) &&
-                                !Equals(i, IPAddress.IPv6Loopback));
+                        if (IPAddress.TryParse(_settings.HostName, out _address))
+                        {
+                            if (_address.Equals(IPAddress.Any) || _address.Equals(IPAddress.IPv6Any))
+                                throw new ConfigurationException($"IPAddress.Any or IPAddress.IPv6Any cannot be used as host address. Was: {_settings.HostName}");
+
+                            _host = Dns.GetHostName();
+                        }
+                        else
+                        {
+                            _host = _settings.HostName;
+                            _address = Dns.GetHostAddresses(_host)
+                                .First(i => !Equals(i, IPAddress.Any) && !Equals(i, IPAddress.IPv6Any));
+                        }
                     }
                     catch (Exception ex)
                     {
