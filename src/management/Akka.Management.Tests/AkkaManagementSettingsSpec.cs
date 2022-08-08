@@ -47,8 +47,8 @@ namespace Akka.Management.Tests
                 {
                     Hostname = "a",
                     Port = 1234,
-                    EffectiveBindHostname = "b",
-                    EffectiveBindPort = 1235,
+                    BindHostname = "b",
+                    BindPort = 1235,
                     BasePath = "c",
                     RouteProvidersReadOnly = false,
                     RouteProviders = new Dictionary<string, Type>

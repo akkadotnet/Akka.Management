@@ -44,7 +44,7 @@ namespace Akka.Management
         /// than the HTTP Server for Http Cluster Management.
         /// Use "0.0.0.0" to bind to all interfaces.
         /// </summary>
-        public string EffectiveBindHostname { get; set; }
+        public string BindHostname { get; set; }
         
         /// <summary>
         /// Use this setting to bind a network interface to a different port
@@ -52,7 +52,7 @@ namespace Akka.Management
         /// when running akka nodes in a separated networks (under NATs or docker containers).
         /// Use 0 if you want a random available port.
         /// </summary>
-        public int? EffectiveBindPort { get; set; }
+        public int? BindPort { get; set; }
         
         /// <summary>
         /// Path prefix for all management routes, usually best to keep the default value here. If
@@ -90,8 +90,8 @@ namespace Akka.Management
             return settings.Copy(
                 hostname: Hostname,
                 port: Port,
-                effectiveBindHostname: EffectiveBindHostname,
-                effectiveBindPort: EffectiveBindPort,
+                effectiveBindHostname: BindHostname,
+                effectiveBindPort: BindPort,
                 basePath: BasePath,
                 routeProviders: routeProviders,
                 routeProvidersReadOnly: RouteProvidersReadOnly);
