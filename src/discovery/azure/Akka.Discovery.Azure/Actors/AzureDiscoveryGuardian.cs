@@ -18,6 +18,23 @@ using Akka.Util.Internal;
 
 namespace Akka.Discovery.Azure.Actors
 {
+    internal sealed class StopDiscovery
+    {
+        public static readonly StopDiscovery Instance = new StopDiscovery();
+        private StopDiscovery()
+        { }
+    }
+    
+    internal sealed class DiscoveryStopped
+    {
+        public DiscoveryStopped(IActorRef replyTo)
+        {
+            ReplyTo = replyTo;
+        }
+
+        public IActorRef ReplyTo { get; }
+    }
+    
     /// <summary>
     /// The guardian actor that manages the Azure client instance and the table entries management actors.
     /// Instantiated by AzureServiceDiscovery as a system actor and should restart itself on failures.
@@ -223,6 +240,17 @@ namespace Akka.Discovery.Azure.Actors
                                 lastUpdate: (DateTime.UtcNow - _staleTtlThreshold).Ticks, 
                                 token: _shutdownCts.Token))
                         .PipeTo(Self);
+                    return true;
+                
+                case StopDiscovery _:
+                    var sender = Sender;
+                    Client.RemoveSelf(_shutdownCts.Token)
+                        .PipeTo(Self, success: () => new DiscoveryStopped(sender));
+                    return true;
+                
+                case DiscoveryStopped msg:
+                    msg.ReplyTo.Tell(Done.Instance);
+                    Context.System.Stop(Self);
                     return true;
                 
                 default:
