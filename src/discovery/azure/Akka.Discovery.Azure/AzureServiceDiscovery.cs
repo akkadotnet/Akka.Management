@@ -43,12 +43,23 @@ namespace Akka.Discovery.Azure
             _guardianActor = system.SystemActorOf(AzureDiscoveryGuardian.Props(_settings), "azure-discovery-guardian");
 
             var shutdown = CoordinatedShutdown.Get(system);
-            shutdown.AddTask(CoordinatedShutdown.PhaseClusterExiting, "stop-azure-discovery", () =>
+            shutdown.AddTask(CoordinatedShutdown.PhaseClusterExiting, "stop-azure-discovery", async () =>
             {
+                try
+                {
+                    await _guardianActor.Ask<Done>(StopDiscovery.Instance);
+                }
+                catch
+                {
+                    _guardianActor.Tell(PoisonPill.Instance);
+                    // Just ignore any timeout exceptions, if we failed to remove ourself from the member entry list,
+                    // the entry will be removed in future entry pruning.
+                }
+                
                 if(_log.IsDebugEnabled)
                     _log.Debug("Service stopped");
-                _guardianActor.Tell(PoisonPill.Instance);
-                return Task.FromResult(Done.Instance);
+                
+                return Done.Instance;
             });
             
             if(_log.IsDebugEnabled)

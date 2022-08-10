@@ -189,6 +189,11 @@ namespace Akka.Discovery.Azure
             return !errored;
         }
 
+        public async Task RemoveSelf(CancellationToken token = default)
+        {
+            await _client.DeleteEntityAsync(_entity.PartitionKey, _entity.RowKey, ETag.All, token);
+        }
+
         #region Helper methods
 
         /// <summary>
