@@ -9,9 +9,9 @@ using System.Net;
 using Akka.Actor;
 using Akka.Hosting;
 
-namespace Akka.Management.Hosting
+namespace Akka.Management
 {
-    public static class AkkaManagementExtensions
+    public static class AkkaHostingExtensions
     {
         /// <summary>
         ///     Adds Akka.Management support to the <see cref="ActorSystem"/>

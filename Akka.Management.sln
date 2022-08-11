@@ -70,10 +70,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.Azure.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureCluster", "src\cluster.bootstrap\examples\discovery\azure\AzureCluster\AzureCluster.csproj", "{54513160-DB85-4654-8161-F7B1177674B0}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hosting", "Hosting", "{91E5D816-93A0-442E-AD83-C869A8CDAF45}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Management.Hosting", "src\hosting\Akka.Management.Hosting\Akka.Management.Hosting.csproj", "{2C4AAB69-6B6A-489A-ADAA-BC7F449334FD}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -156,10 +152,6 @@ Global
 		{54513160-DB85-4654-8161-F7B1177674B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54513160-DB85-4654-8161-F7B1177674B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54513160-DB85-4654-8161-F7B1177674B0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2C4AAB69-6B6A-489A-ADAA-BC7F449334FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2C4AAB69-6B6A-489A-ADAA-BC7F449334FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2C4AAB69-6B6A-489A-ADAA-BC7F449334FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2C4AAB69-6B6A-489A-ADAA-BC7F449334FD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -190,7 +182,6 @@ Global
 		{227C1CA7-0FCD-4D98-AB53-C18E9CBE752D} = {CF383FD6-BD45-4A1C-9D3E-42A6EAB8F083}
 		{77156751-DFBA-460F-80F3-87C571285658} = {CF383FD6-BD45-4A1C-9D3E-42A6EAB8F083}
 		{54513160-DB85-4654-8161-F7B1177674B0} = {24FEBA95-1FC2-4AC2-8386-6AB13AE87056}
-		{2C4AAB69-6B6A-489A-ADAA-BC7F449334FD} = {91E5D816-93A0-442E-AD83-C869A8CDAF45}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}

@@ -9,11 +9,10 @@ using System.Linq;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Hosting;
-using Akka.Management.Cluster.Bootstrap;
 
-namespace Akka.Management.Hosting
+namespace Akka.Management.Cluster.Bootstrap
 {
-    public static class ClusterBootstrapExtensions
+    public static class AkkaHostingExtensions
     {
         /// <summary>
         ///     Adds Akka.Management.Cluster.Bootstrap support to the <see cref="ActorSystem"/>.

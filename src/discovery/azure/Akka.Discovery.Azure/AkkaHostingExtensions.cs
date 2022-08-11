@@ -7,13 +7,11 @@
 using System;
 using System.Net;
 using Akka.Actor;
-using Akka.Configuration;
-using Akka.Discovery.Azure;
 using Akka.Hosting;
 
-namespace Akka.Management.Hosting
+namespace Akka.Discovery.Azure
 {
-    public static class AzureDiscoveryExtensions
+    public static class AkkaHostingExtensions
     {
         /// <summary>
         ///     Adds Akka.Discovery.Azure support to the <see cref="ActorSystem"/>.
@@ -100,7 +98,7 @@ namespace Akka.Management.Hosting
             AzureDiscoverySetup setup)
         {
             builder.AddHocon(
-                ((Config)"akka.discovery.method = azure").WithFallback(AzureServiceDiscovery.DefaultConfig), 
+                ((Configuration.Config)"akka.discovery.method = azure").WithFallback(AzureServiceDiscovery.DefaultConfig), 
                 HoconAddMode.Prepend);
 
             builder.AddSetup(setup);
