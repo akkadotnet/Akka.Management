@@ -80,7 +80,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
                 tcs.SetResult(Done.Instance);
             });
 
-            tcs.Task.Wait(10.Seconds()).Should().BeTrue();
+            tcs.Task.Wait(30.Seconds()).Should().BeTrue();
         }
 
         public static IEnumerable<object[]> StartupFactory()
