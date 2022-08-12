@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="Akka" Version="$(AkkaVersion)" />
+    <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
   </ItemGroup>
 
   <ItemGroup>
