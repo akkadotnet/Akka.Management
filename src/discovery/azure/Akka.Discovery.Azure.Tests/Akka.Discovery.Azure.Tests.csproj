@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Akka.Cluster.Hosting" Version="$(AkkaHostingVersion)" />
         <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
         <PackageReference Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
@@ -21,6 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\cluster.bootstrap\Akka.Management.Cluster.Bootstrap\Akka.Management.Cluster.Bootstrap.csproj" />
       <ProjectReference Include="..\Akka.Discovery.Azure\Akka.Discovery.Azure.csproj" />
     </ItemGroup>
 
