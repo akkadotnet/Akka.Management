@@ -116,7 +116,7 @@ namespace Akka.Management
             builder.AddSetup(setup);
             if (autoStart)
             {
-                builder.StartActors(async (system, _) =>
+                builder.AddStartup(async (system, _) =>
                 {
                     await AkkaManagement.Get(system).Start();
                 });

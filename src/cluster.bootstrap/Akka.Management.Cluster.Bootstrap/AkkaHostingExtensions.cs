@@ -89,7 +89,12 @@ namespace Akka.Management.Cluster.Bootstrap
             Action<ClusterBootstrapSetup> configure,
             bool autoStart = true)
         {
-            var setup = new ClusterBootstrapSetup();
+            var setup = new ClusterBootstrapSetup
+            {
+                ContactPoint = new ContactPointSetup(),
+                ContactPointDiscovery = new ContactPointDiscoverySetup(),
+                JoinDecider = new JoinDeciderSetup()
+            };
             configure(setup);
             return builder.WithClusterBootstrap(setup, autoStart);
         }
@@ -133,6 +138,12 @@ namespace Akka.Management.Cluster.Bootstrap
                         builder.AddHocon(config, HoconAddMode.Prepend);
                     }
                 }
+            }
+            else
+            {
+                builder.AddHocon(
+                    "akka.management.http.routes.cluster-bootstrap = \"Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management.Cluster.Bootstrap\"", 
+                    HoconAddMode.Prepend);
             }
         
             builder.AddSetup(setup);

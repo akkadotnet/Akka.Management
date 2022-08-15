@@ -8,6 +8,7 @@ using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
@@ -151,8 +152,8 @@ namespace Akka.Discovery.Azure.Actors
                         else
                         {
                             _host = _settings.HostName;
-                            _address = Dns.GetHostAddresses(_host)
-                                .First(i => !Equals(i, IPAddress.Any) && !Equals(i, IPAddress.IPv6Any));
+                            var addresses = Dns.GetHostAddresses(_host);
+                            _address = addresses.First(i => i.AddressFamily == AddressFamily.InterNetwork && !Equals(i, IPAddress.Any));
                         }
                     }
                     catch (Exception ex)
