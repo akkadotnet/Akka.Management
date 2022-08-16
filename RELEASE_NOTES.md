@@ -1,3 +1,15 @@
+#### 0.2.5-beta3 August 16 2022 ####
+* [[Discovery.Azure] Add shutdown cleanup implementation](https://github.com/akkadotnet/Akka.Management/pull/742)
+* [[Management] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/747)
+* [[ClusterBootstrap] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/747)
+* [[Discovery.Azure] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/747)
+* Update dependency NuGet package versions
+  * [Bump Google.Protobuf from 3.21.4 to 3.21.5](https://github.com/akkadotnet/Akka.Management/pull/748)
+  * [Bump AWSSDK.S3 from 3.7.9.36 to 3.7.9.39](https://github.com/akkadotnet/Akka.Management/pull/758)
+  * [Bump AWSSDK.EC2 from 3.7.80.2 to 3.7.81.2](https://github.com/akkadotnet/Akka.Management/pull/758)
+  * [Bump AWSSDK.ECS from 3.7.5.60 to 3.7.5.63](https://github.com/akkadotnet/Akka.Management/pull/760)
+  * [Bump AWSSDK.CloudFormation from 3.7.11.12 to 3.7.11.15](https://github.com/akkadotnet/Akka.Management/pull/759)
+
 #### 0.2.5-beta2 August 9 2022 ####
 * [[ClusterBootstrap] Add programmatic setup to ClusterBootstrap](https://github.com/akkadotnet/Akka.Management/pull/730)
 * [[Discovery.Azure] Fix OData query bug and AskTimeoutException bug](https://github.com/akkadotnet/Akka.Management/pull/723)
