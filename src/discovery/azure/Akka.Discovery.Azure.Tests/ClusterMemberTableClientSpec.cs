@@ -39,7 +39,11 @@ namespace Akka.Discovery.Azure.Tests
             : base("akka.loglevel = DEBUG", nameof(ClusterMemberTableClientSpec), helper)
         {
             var logger = Logging.GetLogger(Sys, nameof(ClusterMemberTableClient));
-            _client = new ClusterMemberTableClient(ServiceName, ConnectionString, TableName, logger);
+            var settings = AzureDiscoverySettings.Empty
+                .WithServiceName(ServiceName)
+                .WithConnectionString(ConnectionString)
+                .WithTableName(TableName);
+            _client = new ClusterMemberTableClient(settings, logger);
             _rawClient = new TableClient(ConnectionString, TableName);
         }
         

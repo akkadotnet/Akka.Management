@@ -81,11 +81,7 @@ namespace Akka.Discovery.Azure.Actors
                 if(_clientDoNotUseDirectly != null)
                     return _clientDoNotUseDirectly;
                 
-                _clientDoNotUseDirectly = new ClusterMemberTableClient(
-                    serviceName: _settings.ServiceName,
-                    connectionString: _settings.ConnectionString,
-                    tableName: _settings.TableName,
-                    log: _log);
+                _clientDoNotUseDirectly = new ClusterMemberTableClient(_settings, _log);
                 
                 return _clientDoNotUseDirectly;
             }

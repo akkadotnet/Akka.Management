@@ -4,6 +4,7 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Net;
@@ -14,6 +15,7 @@ using Akka.Discovery.Azure.Model;
 using Akka.Event;
 using Azure;
 using Azure.Data.Tables;
+using Azure.Identity;
 
 namespace Akka.Discovery.Azure
 {
@@ -25,11 +27,15 @@ namespace Akka.Discovery.Azure
         private bool _initialized;
         private ClusterMember _entity;
 
-        public ClusterMemberTableClient(string serviceName, string connectionString, string tableName, ILoggingAdapter log)
+        public ClusterMemberTableClient(
+            AzureDiscoverySettings settings,
+            ILoggingAdapter log)
         {
             _log = log;
-            _serviceName = serviceName;
-            _client = new TableClient(connectionString, tableName);
+            _serviceName = settings.ServiceName;
+            _client = (settings.AzureAzureCredential != null && settings.AzureTableEndpoint != null)
+                ? new TableClient(settings.AzureTableEndpoint, settings.TableName, settings.AzureAzureCredential)
+                : new TableClient(settings.ConnectionString, settings.TableName);
         }
 
         /// <summary>
