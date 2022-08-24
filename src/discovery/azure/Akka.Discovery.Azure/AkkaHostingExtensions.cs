@@ -8,6 +8,7 @@ using System;
 using System.Net;
 using Akka.Actor;
 using Akka.Hosting;
+using Azure.Identity;
 
 namespace Akka.Discovery.Azure
 {
@@ -48,6 +49,25 @@ namespace Akka.Discovery.Azure
             var setup = new AzureDiscoverySetup
             {
                 ConnectionString = connectionString,
+                ServiceName = serviceName,
+                HostName = publicHostname,
+                Port = publicPort
+            };
+            return builder.WithAzureDiscovery(setup);
+        }
+
+        public static AkkaConfigurationBuilder WithAzureDiscovery(
+            this AkkaConfigurationBuilder builder,
+            Uri azureTableEndpoint,
+            DefaultAzureCredential azureCredential,
+            string serviceName = null,
+            string publicHostname = null,
+            int? publicPort = null)
+        {
+            var setup = new AzureDiscoverySetup
+            {
+                AzureTableEndpoint = azureTableEndpoint,
+                AzureCredential = azureCredential,
                 ServiceName = serviceName,
                 HostName = publicHostname,
                 Port = publicPort

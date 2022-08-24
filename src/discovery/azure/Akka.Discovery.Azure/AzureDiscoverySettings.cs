@@ -7,6 +7,7 @@
 using System;
 using System.Net;
 using Akka.Actor;
+using Azure.Identity;
 
 namespace Akka.Discovery.Azure
 {
@@ -23,7 +24,9 @@ namespace Akka.Discovery.Azure
             pruneInterval: TimeSpan.FromHours(1),
             operationTimeout: TimeSpan.FromSeconds(10),
             retryBackoff: TimeSpan.FromMilliseconds(500),
-            maximumRetryBackoff: TimeSpan.FromSeconds(5));
+            maximumRetryBackoff: TimeSpan.FromSeconds(5),
+            azureTableEndpoint: null,
+            azureCredential: null);
         
         public static AzureDiscoverySettings Create(ActorSystem system)
             => Create(system.Settings.Config);
@@ -50,7 +53,9 @@ namespace Akka.Discovery.Azure
                 pruneInterval: cfg.GetTimeSpan("prune-interval"),
                 operationTimeout: cfg.GetTimeSpan("operation-timeout"),
                 retryBackoff: cfg.GetTimeSpan("retry-backoff"),
-                maximumRetryBackoff: cfg.GetTimeSpan("max-retry-backoff"));
+                maximumRetryBackoff: cfg.GetTimeSpan("max-retry-backoff"),
+                azureTableEndpoint: null,
+                azureCredential: null);
         }
         
         private AzureDiscoverySettings(
@@ -64,7 +69,9 @@ namespace Akka.Discovery.Azure
             TimeSpan pruneInterval,
             TimeSpan operationTimeout,
             TimeSpan retryBackoff,
-            TimeSpan maximumRetryBackoff)
+            TimeSpan maximumRetryBackoff,
+            Uri azureTableEndpoint,
+            DefaultAzureCredential azureCredential)
         {
             if (ttlHeartbeatInterval <= TimeSpan.Zero)
                 throw new ArgumentException("Must be greater than zero", nameof(ttlHeartbeatInterval));
@@ -107,6 +114,8 @@ namespace Akka.Discovery.Azure
             OperationTimeout = operationTimeout;
             RetryBackoff = retryBackoff;
             MaximumRetryBackoff = maximumRetryBackoff;
+            AzureTableEndpoint = azureTableEndpoint;
+            AzureAzureCredential = azureCredential;
         }
 
         public string ServiceName { get; }
@@ -120,6 +129,8 @@ namespace Akka.Discovery.Azure
         public TimeSpan OperationTimeout { get; }
         public TimeSpan RetryBackoff { get; }
         public TimeSpan MaximumRetryBackoff { get; }
+        public Uri AzureTableEndpoint { get; }
+        public DefaultAzureCredential AzureAzureCredential { get; }
 
         public override string ToString()
             => "[AzureDiscoverySettings](" +
@@ -167,6 +178,9 @@ namespace Akka.Discovery.Azure
         
         public AzureDiscoverySettings WithRetryBackoff(TimeSpan retryBackoff, TimeSpan maximumRetryBackoff)
             => Copy(retryBackoff: retryBackoff, maximumRetryBackoff: maximumRetryBackoff);
+
+        public AzureDiscoverySettings WithAzureCredential(Uri azureTableEndpoint, DefaultAzureCredential credential)
+            => Copy(azureTableEndpoint: azureTableEndpoint, credential: credential);
         
         private AzureDiscoverySettings Copy(
             string serviceName = null,
@@ -179,7 +193,9 @@ namespace Akka.Discovery.Azure
             TimeSpan? ttlHeartbeatInterval = null,
             TimeSpan? operationTimeout = null,
             TimeSpan? retryBackoff = null,
-            TimeSpan? maximumRetryBackoff = null)
+            TimeSpan? maximumRetryBackoff = null,
+            Uri azureTableEndpoint = null,
+            DefaultAzureCredential credential = null)
             => new AzureDiscoverySettings(
                 serviceName: serviceName ?? ServiceName,
                 hostName: host ?? HostName,
@@ -191,6 +207,8 @@ namespace Akka.Discovery.Azure
                 pruneInterval: pruneInterval ?? PruneInterval,
                 operationTimeout: operationTimeout ?? OperationTimeout,
                 retryBackoff: retryBackoff ?? RetryBackoff,
-                maximumRetryBackoff: maximumRetryBackoff ?? MaximumRetryBackoff);
+                maximumRetryBackoff: maximumRetryBackoff ?? MaximumRetryBackoff,
+                azureTableEndpoint: azureTableEndpoint ?? AzureTableEndpoint,
+                azureCredential: credential ?? AzureAzureCredential);
     }
 }
