@@ -58,6 +58,11 @@ namespace Akka.Coordination.KubernetesApi
             
             _log = Logging.GetLogger(system, GetType());
             var kubernetesSettings = KubernetesSettings.Create(system, settings.TimeoutSettings);
+
+            var setup = system.Settings.Setup.Get<KubernetesLeaseSetup>();
+            if (setup.HasValue)
+                kubernetesSettings = setup.Value.Apply(kubernetesSettings);
+            
             var client = new KubernetesApiImpl(system, kubernetesSettings);
             _timeout = _settings.TimeoutSettings.OperationTimeout;
             _leaseName = MakeDns1039Compatible(settings.LeaseName);
