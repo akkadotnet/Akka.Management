@@ -119,6 +119,8 @@ namespace Akka.Discovery.Azure.Tests
                     };
                     builder.WithAzureDiscovery(setup);
                 }
+                // Could not test DefaultAzureCredential because that requires HTTPS and bearer token,
+                // and azurite does not support that
             };
             
             foreach (var startup in startups)

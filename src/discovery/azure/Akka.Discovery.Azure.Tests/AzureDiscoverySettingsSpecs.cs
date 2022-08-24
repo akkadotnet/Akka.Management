@@ -7,6 +7,7 @@
 
 using System;
 using System.Net;
+using Azure.Identity;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
@@ -35,6 +36,8 @@ namespace Akka.Discovery.Azure.Tests
             settings.PruneInterval.Should().Be(1.Hours());
             settings.OperationTimeout.Should().Be(10.Seconds());
             settings.EffectiveStaleTtlThreshold.Should().Be(new TimeSpan(settings.TtlHeartbeatInterval.Ticks * 5));
+            settings.AzureTableEndpoint.Should().BeNull();
+            settings.AzureAzureCredential.Should().BeNull();
         }
 
         [Fact(DisplayName = "Empty settings variable and default settings should match")]
@@ -53,11 +56,15 @@ namespace Akka.Discovery.Azure.Tests
             empty.PruneInterval.Should().Be(settings.PruneInterval);
             empty.OperationTimeout.Should().Be(settings.OperationTimeout);
             empty.EffectiveStaleTtlThreshold.Should().Be(settings.EffectiveStaleTtlThreshold);
+            settings.AzureTableEndpoint.Should().Be(settings.AzureTableEndpoint);
+            settings.AzureAzureCredential.Should().Be(settings.AzureAzureCredential);
         }
 
         [Fact(DisplayName = "Settings override should work properly")]
         public void SettingsWithOverrideTest()
         {
+            var uri = new Uri("https://whatever.com");
+            var credential = new DefaultAzureCredential();
             var settings = AzureDiscoverySettings.Empty
                 .WithServiceName("a")
                 .WithPublicHostName("host")
@@ -67,7 +74,8 @@ namespace Akka.Discovery.Azure.Tests
                 .WithTtlHeartbeatInterval(1.Seconds())
                 .WithStaleTtlThreshold(2.Seconds())
                 .WithPruneInterval(3.Seconds())
-                .WithOperationTimeout(4.Seconds());
+                .WithOperationTimeout(4.Seconds())
+                .WithAzureCredential(uri, credential);
             
             settings.ServiceName.Should().Be("a");
             settings.HostName.Should().Be("host");
@@ -79,11 +87,15 @@ namespace Akka.Discovery.Azure.Tests
             settings.PruneInterval.Should().Be(3.Seconds());
             settings.OperationTimeout.Should().Be(4.Seconds());
             settings.EffectiveStaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
+            settings.AzureTableEndpoint.Should().Be(uri);
+            settings.AzureAzureCredential.Should().Be(credential);
         }
 
         [Fact(DisplayName = "Setup override should work properly")]
         public void SettingsWithSetupOverrideTest()
         {
+            var uri = new Uri("https://whatever.com");
+            var credential = new DefaultAzureCredential();
             var setup = new AzureDiscoverySetup()
                 .WithServiceName("a")
                 .WithPublicHostName("host")
@@ -93,7 +105,8 @@ namespace Akka.Discovery.Azure.Tests
                 .WithTtlHeartbeatInterval(1.Seconds())
                 .WithStaleTtlThreshold(2.Seconds())
                 .WithPruneInterval(3.Seconds())
-                .WithOperationTimeout(4.Seconds());
+                .WithOperationTimeout(4.Seconds())
+                .WithAzureCredential(uri, credential);
             
             var settings = setup.Apply(AzureDiscoverySettings.Empty);
             
@@ -107,6 +120,8 @@ namespace Akka.Discovery.Azure.Tests
             settings.PruneInterval.Should().Be(3.Seconds());
             settings.OperationTimeout.Should().Be(4.Seconds());
             settings.EffectiveStaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
+            settings.AzureTableEndpoint.Should().Be(uri);
+            settings.AzureAzureCredential.Should().Be(credential);
         }
 
         [Fact(DisplayName = "Settings constructor should throw on invalid values")]

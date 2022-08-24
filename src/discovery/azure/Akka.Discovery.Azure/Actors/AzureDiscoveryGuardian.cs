@@ -81,11 +81,7 @@ namespace Akka.Discovery.Azure.Actors
                 if(_clientDoNotUseDirectly != null)
                     return _clientDoNotUseDirectly;
                 
-                _clientDoNotUseDirectly = new ClusterMemberTableClient(
-                    serviceName: _settings.ServiceName,
-                    connectionString: _settings.ConnectionString,
-                    tableName: _settings.TableName,
-                    log: _log);
+                _clientDoNotUseDirectly = new ClusterMemberTableClient(_settings, _log);
                 
                 return _clientDoNotUseDirectly;
             }
@@ -244,11 +240,34 @@ namespace Akka.Discovery.Azure.Actors
                     return true;
                 
                 case StopDiscovery _:
+                    foreach (var child in Context.GetChildren())
+                        Context.Stop(child);
+                    
                     var sender = Sender;
                     Client.RemoveSelf(_shutdownCts.Token)
                         .PipeTo(Self, success: () => new DiscoveryStopped(sender));
+                    Become(Stopping);
                     return true;
                 
+                default:
+                    return false;
+            }
+        }
+
+        private bool Stopping(object message)
+        {
+            switch (message)
+            {
+                case Lookup _:
+                    // Ignore lookup messages, we're shutting down
+                    Sender.Tell(ImmutableList<ClusterMember>.Empty);
+                    return true;
+                
+                case StopDiscovery _:
+                    // Ignore multiple stop messages
+                    Sender.Tell(Done.Instance);
+                    return true;
+
                 case DiscoveryStopped msg:
                     msg.ReplyTo.Tell(Done.Instance);
                     Context.System.Stop(Self);

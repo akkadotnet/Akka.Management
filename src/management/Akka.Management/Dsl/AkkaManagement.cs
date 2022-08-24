@@ -117,7 +117,7 @@ namespace Akka.Management
             }
             catch (Exception ex)
             {
-                _log.Warning(ex.Message);
+                _log.Warning(ex, ex.Message);
                 throw new InvalidOperationException("Failed to start Akka Management HTTP endpoint.", ex);
             }
         }
