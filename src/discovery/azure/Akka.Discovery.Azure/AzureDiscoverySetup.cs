@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using Akka.Actor.Setup;
+using Azure.Data.Tables;
 using Azure.Identity;
 
 namespace Akka.Discovery.Azure
@@ -26,7 +27,7 @@ namespace Akka.Discovery.Azure
         public TimeSpan? MaximumRetryBackoff { get; set; }
         public Uri AzureTableEndpoint { get; set; }
         public DefaultAzureCredential AzureCredential { get; set; }
-
+        public TableClientOptions TableClientOptions { get; set; }
         public AzureDiscoverySetup WithServiceName(string serviceName)
         {
             ServiceName = serviceName;
@@ -88,10 +89,14 @@ namespace Akka.Discovery.Azure
             return this;
         }
 
-        public AzureDiscoverySetup WithAzureCredential(Uri azureTableEndpoint, DefaultAzureCredential credential)
+        public AzureDiscoverySetup WithAzureCredential(
+            Uri azureTableEndpoint,
+            DefaultAzureCredential credential,
+            TableClientOptions tableClientOptions = null)
         {
             AzureTableEndpoint = azureTableEndpoint;
             AzureCredential = credential;
+            TableClientOptions = tableClientOptions;
             return this;
         }
         
@@ -124,6 +129,8 @@ namespace Akka.Discovery.Azure
                 props.Add($"{nameof(AzureTableEndpoint)}:{AzureTableEndpoint}");
             if(AzureCredential != null)
                 props.Add($"{nameof(AzureCredential)}:{AzureCredential}");
+            if(TableClientOptions != null)
+                props.Add($"{nameof(TableClientOptions)}:{TableClientOptions}");
             
             return $"[AzureDiscoverySetup]({string.Join(", ", props)})";
         }
@@ -151,7 +158,7 @@ namespace Akka.Discovery.Azure
             if (RetryBackoff != null && MaximumRetryBackoff != null)
                 setting = setting.WithRetryBackoff(RetryBackoff.Value, MaximumRetryBackoff.Value);
             if (AzureTableEndpoint != null && AzureCredential != null)
-                setting = setting.WithAzureCredential(AzureTableEndpoint, AzureCredential);
+                setting = setting.WithAzureCredential(AzureTableEndpoint, AzureCredential, TableClientOptions);
 
             return setting;
         }
