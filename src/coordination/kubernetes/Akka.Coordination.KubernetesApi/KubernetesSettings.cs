@@ -14,6 +14,17 @@ namespace Akka.Coordination.KubernetesApi
 {
     public class KubernetesSettings
     {
+        public static readonly KubernetesSettings Empty = new KubernetesSettings(
+            apiCaPath: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+            apiTokenPath: "/var/run/secrets/kubernetes.io/serviceaccount/token",
+            apiServiceHostEnvName: "KUBERNETES_SERVICE_HOST",
+            apiServicePortEnvName: "KUBERNETES_SERVICE_PORT",
+            ns: null,
+            namespacePath: "/var/run/secrets/kubernetes.io/serviceaccount/namespace",
+            apiServiceRequestTimeout: TimeSpan.FromSeconds(2),
+            secure: true,
+            bodyReadTimeout: TimeSpan.FromSeconds(1)); 
+        
         public KubernetesSettings(
             string apiCaPath,
             string apiTokenPath,
@@ -76,5 +87,44 @@ namespace Akka.Coordination.KubernetesApi
         public bool Secure { get; }
         public TimeSpan BodyReadTimeout { get; }
  
+        public KubernetesSettings WithApiCaPath(string apiCaPath)
+            => Copy(apiCaPath: apiCaPath);
+        public KubernetesSettings WithApiTokenPath(string apiTokenPath)
+            => Copy(apiTokenPath: apiTokenPath);
+        public KubernetesSettings WithApiServiceHostEnvName(string apiServiceHostEnvName)
+            => Copy(apiServiceHostEnvName: apiServiceHostEnvName);
+        public KubernetesSettings WithApiServicePortEnvName(string apiServicePortEnvName)
+            => Copy(apiServicePortEnvName: apiServicePortEnvName);
+        public KubernetesSettings WithNamespace(string ns)
+            => Copy(ns: ns);
+        public KubernetesSettings WithNamespacePath(string namespacePath)
+            => Copy(namespacePath: namespacePath);
+        public KubernetesSettings WithApiServiceRequestTimeout(TimeSpan apiServiceRequestTimeout)
+            => Copy(apiServiceRequestTimeout: apiServiceRequestTimeout);
+        public KubernetesSettings WithSecure(bool secure)
+            => Copy(secure: secure);
+        public KubernetesSettings WithBodyReadTimeout(TimeSpan bodyReadTimeout)
+            => Copy(bodyReadTimeout: bodyReadTimeout);
+        
+        private KubernetesSettings Copy(
+            string? apiCaPath = null,
+            string? apiTokenPath = null,
+            string? apiServiceHostEnvName = null,
+            string? apiServicePortEnvName = null,
+            string? ns = null,
+            string? namespacePath = null,
+            TimeSpan? apiServiceRequestTimeout = null,
+            bool? secure = null,
+            TimeSpan? bodyReadTimeout = null)
+            => new KubernetesSettings(
+                apiCaPath: apiCaPath ?? ApiCaPath,
+                apiTokenPath: apiTokenPath ?? ApiTokenPath,
+                apiServiceHostEnvName: apiServiceHostEnvName ?? ApiServiceHostEnvName,
+                apiServicePortEnvName: apiServicePortEnvName ?? ApiServicePortEnvName,
+                ns: ns ?? Namespace,
+                namespacePath: namespacePath ?? NamespacePath,
+                apiServiceRequestTimeout: apiServiceRequestTimeout ?? ApiServiceRequestTimeout,
+                secure: secure ?? Secure,
+                bodyReadTimeout: bodyReadTimeout ?? BodyReadTimeout);
     }
 }
