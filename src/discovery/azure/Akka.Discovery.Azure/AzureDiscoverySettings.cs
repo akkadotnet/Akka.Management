@@ -7,6 +7,7 @@
 using System;
 using System.Net;
 using Akka.Actor;
+using Azure.Data.Tables;
 using Azure.Identity;
 
 namespace Akka.Discovery.Azure
@@ -26,7 +27,8 @@ namespace Akka.Discovery.Azure
             retryBackoff: TimeSpan.FromMilliseconds(500),
             maximumRetryBackoff: TimeSpan.FromSeconds(5),
             azureTableEndpoint: null,
-            azureCredential: null);
+            azureCredential: null,
+            tableClientOptions: null);
         
         public static AzureDiscoverySettings Create(ActorSystem system)
             => Create(system.Settings.Config);
@@ -55,7 +57,8 @@ namespace Akka.Discovery.Azure
                 retryBackoff: cfg.GetTimeSpan("retry-backoff"),
                 maximumRetryBackoff: cfg.GetTimeSpan("max-retry-backoff"),
                 azureTableEndpoint: null,
-                azureCredential: null);
+                azureCredential: null,
+                tableClientOptions: null);
         }
         
         private AzureDiscoverySettings(
@@ -71,7 +74,8 @@ namespace Akka.Discovery.Azure
             TimeSpan retryBackoff,
             TimeSpan maximumRetryBackoff,
             Uri azureTableEndpoint,
-            DefaultAzureCredential azureCredential)
+            DefaultAzureCredential azureCredential,
+            TableClientOptions tableClientOptions)
         {
             if (ttlHeartbeatInterval <= TimeSpan.Zero)
                 throw new ArgumentException("Must be greater than zero", nameof(ttlHeartbeatInterval));
@@ -116,6 +120,7 @@ namespace Akka.Discovery.Azure
             MaximumRetryBackoff = maximumRetryBackoff;
             AzureTableEndpoint = azureTableEndpoint;
             AzureAzureCredential = azureCredential;
+            TableClientOptions = tableClientOptions;
         }
 
         public string ServiceName { get; }
@@ -131,6 +136,7 @@ namespace Akka.Discovery.Azure
         public TimeSpan MaximumRetryBackoff { get; }
         public Uri AzureTableEndpoint { get; }
         public DefaultAzureCredential AzureAzureCredential { get; }
+        public TableClientOptions TableClientOptions { get; }
 
         public override string ToString()
             => "[AzureDiscoverySettings](" +
@@ -179,8 +185,14 @@ namespace Akka.Discovery.Azure
         public AzureDiscoverySettings WithRetryBackoff(TimeSpan retryBackoff, TimeSpan maximumRetryBackoff)
             => Copy(retryBackoff: retryBackoff, maximumRetryBackoff: maximumRetryBackoff);
 
-        public AzureDiscoverySettings WithAzureCredential(Uri azureTableEndpoint, DefaultAzureCredential credential)
-            => Copy(azureTableEndpoint: azureTableEndpoint, credential: credential);
+        public AzureDiscoverySettings WithAzureCredential(
+            Uri azureTableEndpoint,
+            DefaultAzureCredential credential,
+            TableClientOptions tableClientOptions = null)
+            => Copy(
+                azureTableEndpoint: azureTableEndpoint,
+                credential: credential,
+                tableClientOptions: tableClientOptions);
         
         private AzureDiscoverySettings Copy(
             string serviceName = null,
@@ -195,7 +207,8 @@ namespace Akka.Discovery.Azure
             TimeSpan? retryBackoff = null,
             TimeSpan? maximumRetryBackoff = null,
             Uri azureTableEndpoint = null,
-            DefaultAzureCredential credential = null)
+            DefaultAzureCredential credential = null,
+            TableClientOptions tableClientOptions = null)
             => new AzureDiscoverySettings(
                 serviceName: serviceName ?? ServiceName,
                 hostName: host ?? HostName,
@@ -209,6 +222,7 @@ namespace Akka.Discovery.Azure
                 retryBackoff: retryBackoff ?? RetryBackoff,
                 maximumRetryBackoff: maximumRetryBackoff ?? MaximumRetryBackoff,
                 azureTableEndpoint: azureTableEndpoint ?? AzureTableEndpoint,
-                azureCredential: credential ?? AzureAzureCredential);
+                azureCredential: credential ?? AzureAzureCredential,
+                tableClientOptions: tableClientOptions ?? TableClientOptions);
     }
 }
