@@ -116,10 +116,7 @@ namespace Akka.Management
             builder.AddSetup(setup);
             if (autoStart)
             {
-                builder.AddStartup(async (system, _) =>
-                {
-                    await AkkaManagement.Get(system).Start();
-                });
+                builder.WithExtensions(typeof(AkkaManagementProvider));
             }
 
             return builder;

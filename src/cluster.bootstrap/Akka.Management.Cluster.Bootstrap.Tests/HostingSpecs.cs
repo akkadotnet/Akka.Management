@@ -89,17 +89,11 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
             {
                 builder =>
                 {
-                    // need to cheat a little because the default is 2, which would never work
-                    builder.AddHocon(
-                        "akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr = 1");
-                    builder.WithClusterBootstrap("testService", autoStart: true);
+                    builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: true);
                 },
                 builder =>
                 {
-                    // need to cheat a little because the default is 2, which would never work
-                    builder.AddHocon(
-                        "akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr = 1");
-                    builder.WithClusterBootstrap("testService", autoStart: false);
+                    builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: false);
                     builder.AddStartup(async (system, registry) =>
                     {
                         await AkkaManagement.Get(system).Start();
@@ -127,6 +121,32 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
                         await AkkaManagement.Get(system).Start();
                         await ClusterBootstrap.Get(system).Start();
                     });
+                },
+                
+                // Should start normally when both Akka.Management and ClusterBootstrap is auto-started
+                builder =>
+                {
+                    builder.WithExtensions(typeof(AkkaManagementProvider));
+                    builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: true);
+                },
+                builder =>
+                {
+                    builder.WithExtensions(
+                        typeof(AkkaManagementProvider),
+                        typeof(ClusterBootstrapProvider));
+                    builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: false);
+                },
+                builder =>
+                {
+                    builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: true);
+                    builder.WithExtensions(typeof(AkkaManagementProvider));
+                },
+                builder =>
+                {
+                    builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: false);
+                    builder.WithExtensions(
+                        typeof(AkkaManagementProvider),
+                        typeof(ClusterBootstrapProvider));
                 },
             };
             
