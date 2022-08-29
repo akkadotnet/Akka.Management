@@ -40,6 +40,18 @@ namespace Akka.Discovery.Azure
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        /// <example>
+        ///   <code>
+        ///     services.AddAkka("mySystem", builder => {
+        ///         builder.WithClusterBootstrap(setup =>
+        ///         {
+        ///             setup.ContactPointDiscovery.ServiceName = "testService";
+        ///             setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///         }, autoStart: true)
+        ///         builder.WithAzureDiscovery("UseDevelopmentStorage=true");
+        ///     }
+        ///   </code>
+        /// </example>
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
             string connectionString,
@@ -88,6 +100,21 @@ namespace Akka.Discovery.Azure
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        /// <example>
+        ///   <code>
+        ///     services.AddAkka("mySystem", builder => {
+        ///         builder.WithClusterBootstrap(setup =>
+        ///         {
+        ///             setup.ContactPointDiscovery.ServiceName = "testService";
+        ///             setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///         }, autoStart: true)
+        ///         builder.WithAzureDiscovery(
+        ///             azureTableEndpoint: new Uri("https://{yourAccountName}.table.core.windows.net/"),
+        ///             azureCredential: new DefaultAzureCredential()
+        ///         );
+        ///     }
+        ///   </code>
+        /// </example>
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
             Uri azureTableEndpoint,
@@ -125,6 +152,20 @@ namespace Akka.Discovery.Azure
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        /// <example>
+        ///   <code>
+        ///     services.AddAkka("mySystem", builder => {
+        ///         builder.WithClusterBootstrap(setup =>
+        ///         {
+        ///             setup.ContactPointDiscovery.ServiceName = "testService";
+        ///             setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///         }, autoStart: true)
+        ///         builder.WithAzureDiscovery( setup => {
+        ///             setup.ConnectionString = "UseDevelopmentStorage=true"
+        ///         });
+        ///     }
+        ///   </code>
+        /// </example>
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
             Action<AzureDiscoverySetup> configure)
@@ -148,6 +189,20 @@ namespace Akka.Discovery.Azure
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        /// <example>
+        ///   <code>
+        ///     services.AddAkka("mySystem", builder => {
+        ///         builder.WithClusterBootstrap(setup =>
+        ///         {
+        ///             setup.ContactPointDiscovery.ServiceName = "testService";
+        ///             setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///         }, autoStart: true)
+        ///         builder.WithAzureDiscovery( new AzureDiscoverySetup {
+        ///             ConnectionString = "UseDevelopmentStorage=true"
+        ///         });
+        ///     }
+        ///   </code>
+        /// </example>
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
             AzureDiscoverySetup setup)

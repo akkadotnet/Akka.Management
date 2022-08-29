@@ -35,12 +35,21 @@ namespace Akka.Management.Cluster.Bootstrap
         /// <param name="portName">
         ///     The portName passed to discovery. This should be set to the name of the port for Akka Management
         /// </param>
+        /// <param name="requiredContactPoints">
+        ///     The smallest number of contact points that need to be discovered before the bootstrap process can start.
+        ///     For optimal safety during cluster formation, you may want to set these value to the number of initial
+        ///     nodes that you know will participate in the cluster (e.g. the value of `spec.replicas` as set in your kubernetes config.
+        /// </param>
         /// <param name="newClusterEnabled">
+        /// <para>
         ///     Cluster Bootstrap will always attempt to join an existing cluster if possible. However
         ///     if no contact point advertises any seed-nodes a new cluster will be formed by the
         ///     node with the lowest address as decided by the <see cref="LowestAddressJoinDecider"/>.
+        /// </para>
+        /// <para>
         ///     Setting NewClusterEnabled to false after an initial cluster has formed is recommended to prevent new
         ///     clusters forming during a network partition when nodes are redeployed or restarted.
+        /// </para>
         /// </param>
         /// <param name="autoStart">
         ///     When set to true, cluster bootstrap will be started automatically on <see cref="ActorSystem"/> startup.
@@ -49,6 +58,17 @@ namespace Akka.Management.Cluster.Bootstrap
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        /// <example >
+        ///     Starting Cluster.Bootstrap manually:
+        ///     <code>
+        ///         builder.WithClusterBootstrap(autoStart: false);
+        ///         builder.AddStartup(async (system, registry) =>
+        ///         {
+        ///             await AkkaManagement.Get(system).Start();
+        ///             await ClusterBootstrap.Get(system).Start();
+        ///         });
+        ///     </code>
+        /// </example>
         public static AkkaConfigurationBuilder WithClusterBootstrap(
             this AkkaConfigurationBuilder builder,
             string serviceName = null,
@@ -84,6 +104,19 @@ namespace Akka.Management.Cluster.Bootstrap
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        /// <example >
+        ///     Starting Cluster.Bootstrap manually:
+        ///     <code>
+        ///         builder.WithClusterBootstrap(setup => {
+        ///             setup.ContactPointDiscovery.ServiceName = "myService"
+        ///         }, autoStart: false);
+        ///         builder.AddStartup(async (system, registry) =>
+        ///         {
+        ///             await AkkaManagement.Get(system).Start();
+        ///             await ClusterBootstrap.Get(system).Start();
+        ///         });
+        ///     </code>
+        /// </example>
         public static AkkaConfigurationBuilder WithClusterBootstrap(
             this AkkaConfigurationBuilder builder,
             Action<ClusterBootstrapSetup> configure,
@@ -115,6 +148,21 @@ namespace Akka.Management.Cluster.Bootstrap
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
+        /// <example >
+        ///     Starting Cluster.Bootstrap manually:
+        ///     <code>
+        ///         builder.WithClusterBootstrap( new ClusterBootstrapSetup {
+        ///             ContactPointDiscovery = new ContactPointDiscoverySetup {
+        ///                 ServiceName = "myService"
+        ///             }
+        ///         }, autoStart: false);
+        ///         builder.AddStartup(async (system, registry) =>
+        ///         {
+        ///             await AkkaManagement.Get(system).Start();
+        ///             await ClusterBootstrap.Get(system).Start();
+        ///         });
+        ///     </code>
+        /// </example>
         public static AkkaConfigurationBuilder WithClusterBootstrap(
             this AkkaConfigurationBuilder builder,
             ClusterBootstrapSetup setup,
