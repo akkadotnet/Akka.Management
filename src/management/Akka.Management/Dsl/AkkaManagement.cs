@@ -53,6 +53,27 @@ namespace Akka.Management
                 {
                     return Stop().ContinueWith(t => Done.Instance);
                 });
+            
+            var autoStart = system.Settings.Config.GetStringList("akka.extensions")
+                .Any(s => s.Contains(typeof(AkkaManagementProvider).Name));
+            if (autoStart)
+            {
+                _log.Info("Akka.Management loaded through 'akka.extensions' auto starting bootstrap.");
+                // Akka Management hosts the HTTP routes used by bootstrap
+                // we can't let it block extension init, so run it in a different thread and let constructor complete
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        await Get(system).Start();
+                    }
+                    catch (Exception e)
+                    {
+                        _log.Error(e, "Failed to autostart cluster bootstrap, terminating system");
+                        await system.Terminate();
+                    }
+                });
+            }
         }
 
         public static AkkaManagement Get(ActorSystem system) => system.WithExtension<AkkaManagement, AkkaManagementProvider>();
@@ -74,13 +95,22 @@ namespace Akka.Management
         /// <summary>
         /// Start an Akka HTTP server to serve the HTTP management endpoint.
         /// </summary>
-        public Task Start() => Start(Identity);
+        public Task<Uri> Start() => Start(Identity);
+
+        private Task<Uri> _startPromise;
+        public Task<Uri> Start(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings)
+        {
+            if (_startPromise != null)
+                return _startPromise;
+            _startPromise = InternalStart(transformSettings);
+            return _startPromise;
+        }
 
         /// <summary>
         /// <para>Amend the <see cref="ManagementRouteProviderSettings"/> and start an Akka HTTP server to serve the HTTP management endpoint.</para>
         /// <para>Use this when adding authentication and HTTPS.</para>
         /// </summary>
-        public async Task<Uri> Start(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings)
+        private async Task<Uri> InternalStart(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings)
         {
             var serverBindingPromise = new TaskCompletionSource<ServerBinding>();
 

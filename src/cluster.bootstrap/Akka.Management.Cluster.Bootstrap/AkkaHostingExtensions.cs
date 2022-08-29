@@ -5,9 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Linq;
 using Akka.Actor;
-using Akka.Configuration;
 using Akka.Hosting;
 
 namespace Akka.Management.Cluster.Bootstrap
@@ -74,6 +72,7 @@ namespace Akka.Management.Cluster.Bootstrap
             string serviceName = null,
             string serviceNamespace = null,
             string portName = null,
+            int? requiredContactPoints = null,
             bool? newClusterEnabled = null,
             bool autoStart = true)
             => builder.WithClusterBootstrap(new ClusterBootstrapSetup
@@ -83,7 +82,8 @@ namespace Akka.Management.Cluster.Bootstrap
                 {
                     ServiceName = serviceName,
                     ServiceNamespace = serviceNamespace,
-                    PortName = portName
+                    PortName = portName,
+                    RequiredContactPointsNr = requiredContactPoints
                 }
             }, autoStart);
         
@@ -171,29 +171,14 @@ namespace Akka.Management.Cluster.Bootstrap
             if (autoStart)
             {
                 // Inject ClusterBootstrapProvider into akka.extensions
-                if (builder.Configuration.IsEmpty)
-                {
-                    var config = (Config)$"akka.extensions=[\"{typeof(ClusterBootstrapProvider).AssemblyQualifiedName}\"]";
-                    builder.AddHocon(config, HoconAddMode.Prepend);
-                }
-                else
-                {
-                    var extensions = builder.Configuration.Value.GetStringList("akka.extensions").ToList();
-                    if (extensions.All(s => !s.Contains(nameof(ClusterBootstrapProvider))))
-                    {
-                        extensions.Add(typeof(ClusterBootstrapProvider).AssemblyQualifiedName);
-                        var config = (Config)$"akka.extensions=[{string.Join(",", extensions.Select(s => $"\"{s}\""))}]";
-                        builder.AddHocon(config, HoconAddMode.Prepend);
-                    }
-                }
-            }
-            else
-            {
-                builder.AddHocon(
-                    "akka.management.http.routes.cluster-bootstrap = \"Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management.Cluster.Bootstrap\"", 
-                    HoconAddMode.Prepend);
+                builder.WithExtensions(typeof(ClusterBootstrapProvider));
             }
         
+            // Cluster bootstrap routes needs to be added for it to work with Akka.Management
+            builder.AddHocon(
+                $"akka.management.http.routes.cluster-bootstrap = \"{typeof(ClusterBootstrapProvider).AssemblyQualifiedName}\"", 
+                HoconAddMode.Prepend);
+            
             builder.AddSetup(setup);
             return builder;
         }

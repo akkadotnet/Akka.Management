@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -68,10 +69,7 @@ namespace Akka.Management.Tests
         {
             var httpPort = SocketUtil.TemporaryTcpAddress("127.0.0.1").Port;
             var configClusterHttpManager = ConfigurationFactory.ParseString($@"
-                //#management-host-port
                 akka.management.http.hostname = ""127.0.0.1""
-                akka.management.http.port = 8558
-                //#management-host-port
                 akka.management.http.port = {httpPort}
                 akka.management.http.routes {{
                     test1 = ""Akka.Management.Tests.HttpManagementEndpointSpecRoutesDotNetDsl, Akka.Management.Tests""
@@ -89,9 +87,26 @@ namespace Akka.Management.Tests
             management.Settings.Http.RouteProviders.Should().Contain(new NamedRouteProvider("test2",
                 "Akka.Management.Tests.HttpManagementEndpointSpecRoutesNetFxDsl, Akka.Management.Tests"));
 
+            // Start() should be idempotent, it should return the same Task on multiple invocation
+            var tasks = new List<Task<Uri>>();
             using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
             {
-                await management.Start().WithCancellation(cts.Token);
+                tasks.Add(management.Start());
+                tasks.Add(management.Start());
+                tasks.Add(management.Start());
+
+                tasks[1].Should().Be(tasks[0]);
+                tasks[2].Should().Be(tasks[0]);
+                
+                await Task.WhenAll(tasks).WithCancellation(cts.Token);
+                
+                tasks[1].Result.Should().Be(tasks[0].Result);
+                tasks[2].Result.Should().Be(tasks[0].Result);
+
+                var task = management.Start();
+                task.Should().Be(tasks[0]);
+                await task.WithCancellation(cts.Token);
+                task.Result.Should().Be(tasks[0].Result);
             }
 
             var client = new HttpClient
@@ -123,12 +138,11 @@ namespace Akka.Management.Tests
                 await system.Terminate();
             }
         }
-
     }
 
     internal static class TaskExtensions
     {
-        public static async Task WithCancellation(this Task task, CancellationToken token)
+        public static async Task<T> WithCancellation<T>(this Task<T> task, CancellationToken token)
         {
             var tcs = new TaskCompletionSource<bool>();
             using (token.Register(() => tcs.TrySetResult(true)))
@@ -139,7 +153,7 @@ namespace Akka.Management.Tests
                 }
             }
 
-            await task;
+            return await task;
         }
     }
 }
