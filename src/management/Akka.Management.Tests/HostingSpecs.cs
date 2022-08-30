@@ -9,8 +9,10 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Akka.Actor;
 using Akka.Hosting;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -39,7 +41,8 @@ namespace Akka.Management.Tests
                         {
                             logger.LogLevel = Event.LogLevel.DebugLevel;
                             logger.AddLoggerFactory();
-                        });
+                        })
+                            .AddHocon(TestKit.Xunit2.TestKit.DefaultConfig);
                         testSetup(builder);
                     });
                 }).Build();
@@ -61,12 +64,17 @@ namespace Akka.Management.Tests
             Action<AkkaConfigurationBuilder> startupAction)
         {
             using var host = await StartHost(startupAction);
+            var sys = host.Services.GetService<ActorSystem>();
+            var testKit = new TestKit.Xunit2.TestKit(sys);
 
             var client = new HttpClient();
-            var response = await client.GetAsync("http://localhost:18558/alive");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            response = await client.GetAsync("http://localhost:18558/ready");
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            await testKit.AwaitAssertAsync(async () =>
+            {
+                var response = await client.GetAsync("http://localhost:18558/alive");
+                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                response = await client.GetAsync("http://localhost:18558/ready");
+                response.StatusCode.Should().Be(HttpStatusCode.OK);
+            });
         }
 
         public static IEnumerable<object[]> StartupFactory()
