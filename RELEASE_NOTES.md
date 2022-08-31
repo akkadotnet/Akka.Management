@@ -1,4 +1,25 @@
+#### 0.2.5-beta4 August 16 2022 ####
+
+Version 0.2.5-beta4 adds `Akka.Hosting` support to `Akka.Coordination.KubernetesApi`, allowing you to set a Kubernetes based lease lock through `Akka.Hosting`.
+
+* [[Management] Include `Exception` cause inside start-up failure warning](https://github.com/akkadotnet/Akka.Management/pull/779)
+* [[Discovery.Azure] Clean-up discovery entry during shutdown](https://github.com/akkadotnet/Akka.Management/pull/780)
+* [[Discovery.Azure] Add `DefaultAzureCredential` support](https://github.com/akkadotnet/Akka.Management/pull/778)
+* [[Discovery.Azure] Add `TableClientOption` support](https://github.com/akkadotnet/Akka.Management/pull/783)
+* [[Coordination.KubernetesApi] Add `ActorSystemSetup` support](https://github.com/akkadotnet/Akka.Management/pull/781)
+* [[Coordination.KubernetesApi] Add `Akka.Hosting` support](https://github.com/akkadotnet/Akka.Management/pull/784)
+* [[Management] Harden `Akka.Management` and `Cluster.Bootstrap` startup interaction](https://github.com/akkadotnet/Akka.Management/pull/789)
+* Update dependency NuGet package versions
+  * [Bump Grpc.Tools from 2.47.0 to 2.48.0 (#762)](https://github.com/akkadotnet/Akka.Management/pull/762)
+  * [Bump AWSSDK.CloudFormation from 3.7.11.15 to 3.7.11.20](https://github.com/akkadotnet/Akka.Management/pull/793)
+  * [Bump AWSSDK.EC2 from 3.7.81.2 to 3.7.83.3](https://github.com/akkadotnet/Akka.Management/pull/799)
+  * [Bump AWSSDK.ECS from 3.7.5.63 to 3.7.5.69](https://github.com/akkadotnet/Akka.Management/pull/798)
+  * [Bump AWSSDK.S3 from 3.7.9.39 to 3.7.9.45](https://github.com/akkadotnet/Akka.Management/pull/797)
+
 #### 0.2.5-beta3 August 16 2022 ####
+
+Version 0.2.5-beta3 adds `Akka.Hosting` support to `Akka.Management`, `Akka.Management.Cluster.Bootstrap`, and `Akka.Discovery.Azure`, allowing users to configure these modules through `Akka.Hosting`.
+
 * [[Discovery.Azure] Add shutdown cleanup implementation](https://github.com/akkadotnet/Akka.Management/pull/742)
 * [[Management] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/747)
 * [[ClusterBootstrap] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/747)

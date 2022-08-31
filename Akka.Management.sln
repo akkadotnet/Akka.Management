@@ -70,6 +70,19 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.Azure.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureCluster", "src\cluster.bootstrap\examples\discovery\azure\AzureCluster\AzureCluster.csproj", "{54513160-DB85-4654-8161-F7B1177674B0}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{CDD7D09A-CA06-4FD2-A3A9-C4A9D32BA9BB}"
+	ProjectSection(SolutionItems) = preProject
+		azurite.cmd = azurite.cmd
+		build.cmd = build.cmd
+		build.fsx = build.fsx
+		build.ps1 = build.ps1
+		build.sh = build.sh
+		LICENSE = LICENSE
+		README.md = README.md
+		RELEASE_NOTES.md = RELEASE_NOTES.md
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
