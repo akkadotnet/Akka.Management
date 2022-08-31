@@ -39,7 +39,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
     <TestSdkVersion>17.3.0</TestSdkVersion>
     <AkkaVersion>1.4.40</AkkaVersion>
     <AkkaHostingVersion>0.4.2</AkkaHostingVersion>
-    <KubernetesClientVersion>4.0.26</KubernetesClientVersion>
+    <KubernetesClientVersion>8.0.68</KubernetesClientVersion>
     <PbmVersion>1.1.0</PbmVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
