@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -22,7 +23,7 @@ namespace Akka.Discovery.AwsApi.Ec2
 {
     public sealed class Ec2TagBasedServiceDiscovery : ServiceDiscovery
     {
-        internal static List<Filter> ParseFiltersString(string filtersString)
+        internal static ImmutableList<Filter> ParseFiltersString(string filtersString)
         {
             var filters = new List<Filter>();
             
@@ -38,17 +39,14 @@ namespace Akka.Discovery.AwsApi.Ec2
                 filters.Add(new Filter(pair[0], pair[1].Split(',').Where(s => !string.IsNullOrWhiteSpace(s)).ToList()));
             }
 
-            return filters;
+            return filters.ToImmutableList();
         }
         
         private readonly ILoggingAdapter _log;
         private readonly ExtendedActorSystem _system;
-        private readonly Configuration.Config _config;
-        private readonly string _clientConfigFqcn;
-        private readonly string _credentialProviderFqcn;
-        private readonly string _tagKey;
-        private readonly List<Filter> _otherFilters;
-        private readonly List<int> _preDefinedPorts;
+
+        private readonly Ec2ServiceDiscoverySettings _settings;
+        
         private readonly Filter _runningInstancesFilter;
         
         // JVM has its own retry mechanism in cluster bootstrap, but we don't have any, so keep the default.
@@ -63,7 +61,7 @@ namespace Akka.Discovery.AwsApi.Ec2
                     return _ec2ClientDoNotUseDirectly;
 
                 AmazonEC2Config clientConfig;
-                if (string.IsNullOrWhiteSpace(_clientConfigFqcn))
+                if (_settings.ClientConfig == null)
                 {
                     clientConfig = DefaultClientConfiguration;
                 }
@@ -71,34 +69,28 @@ namespace Akka.Discovery.AwsApi.Ec2
                 {
                     try
                     {
-                        clientConfig = CreateInstance<AmazonEC2Config>(_clientConfigFqcn);
+                        clientConfig = CreateInstance<AmazonEC2Config>(_settings.ClientConfig);
                     }
                     catch (Exception e)
                     {
-                        throw new ConfigurationException($"Could not create instance of [{_clientConfigFqcn}]", e);
+                        throw new ConfigurationException($"Could not create instance of [{_settings.ClientConfig}]", e);
                     }
                 }
 
-                if (_config.HasPath("endpoint"))
-                {
-                    var endpoint = _config.GetString("endpoint");
-                    clientConfig.ServiceURL = endpoint;
-                }
+                if (!string.IsNullOrWhiteSpace(_settings.Endpoint))
+                    clientConfig.ServiceURL = _settings.Endpoint;
 
-                if (_config.HasPath("region"))
-                {
-                    var region = _config.GetString("region");
-                    clientConfig.RegionEndpoint = RegionEndpoint.GetBySystemName(region);
-                }
+                if (!string.IsNullOrWhiteSpace(_settings.Region))
+                    clientConfig.RegionEndpoint = RegionEndpoint.GetBySystemName(_settings.Region);
 
                 Ec2CredentialProvider credentialProvider;
                 try
                 {
-                    credentialProvider = CreateInstance<Ec2CredentialProvider>(_credentialProviderFqcn);
+                    credentialProvider = CreateInstance<Ec2CredentialProvider>(_settings.CredentialsProvider);
                 }
                 catch (Exception e)
                 {
-                    throw new ConfigurationException($"Could not create instance of [{_credentialProviderFqcn}]", e);
+                    throw new ConfigurationException($"Could not create instance of [{_settings.CredentialsProvider}]", e);
                 }
                 
                 _ec2ClientDoNotUseDirectly = new AmazonEC2Client(credentialProvider.ClientCredentials, clientConfig);
@@ -110,18 +102,13 @@ namespace Akka.Discovery.AwsApi.Ec2
         {
             _system = system;
             _log = Logging.GetLogger(system, typeof(Ec2TagBasedServiceDiscovery));
-            _config = _system.Settings.Config.GetConfig("akka.discovery.aws-api-ec2-tag-based");
-            _clientConfigFqcn = _config.GetString("client-config");
-            _tagKey = _config.GetString("tag-key");
+            _settings = Ec2ServiceDiscoverySettings.Create(system);
             
-            var otherFiltersString = _config.GetString("filters");
-            _otherFilters = ParseFiltersString(otherFiltersString);
+            var setup = system.Settings.Setup.Get<Ec2ServiceDiscoverySetup>();
+            if (setup.HasValue)
+                _settings = setup.Value.Apply(_settings);
             
-            _preDefinedPorts = _config.GetIntList("ports").ToList();
             _runningInstancesFilter = new Filter("instance-state-name", new List<string> {"running"});
-
-            var credProviderPath = _config.GetString("credentials-provider");
-            _credentialProviderFqcn = _config.GetString($"{credProviderPath}.class");
         }
         
         public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
@@ -141,15 +128,15 @@ namespace Akka.Discovery.AwsApi.Ec2
 
         private async Task<Resolved> Lookup(Lookup query, CancellationToken token)
         {
-            var tagFilter = new Filter($"tag:{_tagKey}", new List<string> {query.ServiceName});
+            var tagFilter = new Filter($"tag:{_settings.TagKey}", new List<string> {query.ServiceName});
             var allFilter = new List<Filter> { _runningInstancesFilter, tagFilter };
-            allFilter.AddRange(_otherFilters);
+            allFilter.AddRange(_settings.Filters);
 
             var ips = await GetInstances(Ec2Client, allFilter, token);
             var resolvedTargets = new List<ResolvedTarget>();
             foreach (var ip in ips)
             {
-                if (_preDefinedPorts.Count == 0)
+                if (_settings.Ports.Count == 0)
                 {
                     resolvedTargets.Add(new ResolvedTarget(
                         host: ip, 
@@ -158,7 +145,7 @@ namespace Akka.Discovery.AwsApi.Ec2
                 }
                 else
                 {
-                    foreach (var port in _preDefinedPorts)
+                    foreach (var port in _settings.Ports)
                     {
                         resolvedTargets.Add(new ResolvedTarget(
                             host: ip, 
@@ -197,11 +184,13 @@ namespace Akka.Discovery.AwsApi.Ec2
             return accumulator;
         }
         
-        private T CreateInstance<T>(string fqcn)
+        private T CreateInstance<T>(Type type)
         {
-            var type = Type.GetType(fqcn);
             if (type == null)
-                throw new ConfigurationException($"Could not reflect class with fully qualified class name [{fqcn}]");
+                throw new ArgumentNullException(nameof(type));
+            
+            if(!typeof(T).IsAssignableFrom(type))
+                throw new ConfigurationException($"Could not cast type {type} to {typeof(T)}");
             
             try
             {
@@ -212,6 +201,5 @@ namespace Akka.Discovery.AwsApi.Ec2
                 return (T) Activator.CreateInstance(type);
             }
         }
-
     }
 }

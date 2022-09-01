@@ -13,4 +13,9 @@
       <PackageReference Include="AWSSDK.ECS" Version="3.7.5.69" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="reference.conf" />
+      <EmbeddedResource Include="reference.conf" />
+    </ItemGroup>
+
 </Project>

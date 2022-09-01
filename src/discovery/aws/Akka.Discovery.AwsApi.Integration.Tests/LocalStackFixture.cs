@@ -51,10 +51,10 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
                 config = new DockerClientConfiguration(new Uri("unix://var/run/docker.sock"));
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                // config = new DockerClientConfiguration(new Uri("npipe://./pipe/docker_engine"));
+                config = new DockerClientConfiguration(new Uri("npipe://./pipe/docker_engine"));
                 // LocalStack is linux only, we're skipping all tests if we're running in windows.
-                IsWindows = true;
-                return;
+                //IsWindows = true;
+                //return;
             }
             else
                 throw new NotSupportedException($"Unsupported OS [{RuntimeInformation.OSDescription}]");
