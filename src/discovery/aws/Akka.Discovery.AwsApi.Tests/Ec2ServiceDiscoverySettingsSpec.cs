@@ -9,7 +9,9 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Akka.Discovery.AwsApi.Ec2;
+using Amazon.EC2;
 using Amazon.EC2.Model;
+using Amazon.Runtime;
 using FluentAssertions;
 using Xunit;
 
@@ -20,10 +22,11 @@ namespace Akka.Discovery.AwsApi.Tests
         [Fact(DisplayName = "Default settings should contain default values")]
         public void DefaultSettingsTest()
         {
-            var settings = Ec2ServiceDiscoverySettings.Create(AwsEc2Discovery.DefaultConfiguration());
+            var settings = Ec2ServiceDiscoverySettings.Create(
+                AwsEc2Discovery.DefaultConfiguration().GetConfig("akka.discovery.aws-api-ec2-tag-based"));
 
             settings.ClientConfig.Should().BeNull();
-            settings.CredentialsProvider.Should().Be(typeof(Ec2InstanceMetadataCredentialProvider));
+            settings.CredentialsProvider.Should().Be("instance-metadata-credential-provider");
             settings.TagKey.Should().Be("service");
             settings.Filters.Should().BeEmpty();
             settings.Ports.Should().BeEmpty();
@@ -35,7 +38,8 @@ namespace Akka.Discovery.AwsApi.Tests
         public void EmptySettingsTest()
         {
             var empty = Ec2ServiceDiscoverySettings.Empty;
-            var settings = Ec2ServiceDiscoverySettings.Create(AwsEc2Discovery.DefaultConfiguration());
+            var settings = Ec2ServiceDiscoverySettings.Create(AwsEc2Discovery.DefaultConfiguration()
+                .GetConfig("akka.discovery.aws-api-ec2-tag-based"));
 
             empty.ClientConfig.Should().Be(settings.ClientConfig);
             empty.CredentialsProvider.Should().Be(settings.CredentialsProvider);
@@ -49,24 +53,24 @@ namespace Akka.Discovery.AwsApi.Tests
         [Fact(DisplayName = "Ec2ServiceDiscoverySettings With override should work")]
         public void SettingsWithOverrideTest()
         {
-            var filters = new[] { new Filter("b", new List<string> { "c" }) }.ToImmutableList();
+            var filters = new[] { new Filter("c", new List<string> { "d" }) }.ToImmutableList();
             var ports = new[] { 1 }.ToImmutableList();
             var settings = Ec2ServiceDiscoverySettings.Empty
-                .WithClientConfig(typeof(int))
-                .WithCredentialsProvider(typeof(string))
-                .WithTagKey("a")
+                .WithClientConfig<FakeClientConfig>()
+                .WithCredentialsProvider("a")
+                .WithTagKey("b")
                 .WithFilters(filters)
                 .WithPorts(ports)
-                .WithEndpoint("d")
-                .WithRegion("e");
+                .WithEndpoint("e")
+                .WithRegion("f");
             
-            settings.ClientConfig.Should().Be(typeof(int));
-            settings.CredentialsProvider.Should().Be(typeof(string));
-            settings.TagKey.Should().Be("a");
+            settings.ClientConfig.Should().Be(typeof(FakeClientConfig));
+            settings.CredentialsProvider.Should().Be("a");
+            settings.TagKey.Should().Be("b");
             settings.Filters.Should().BeEquivalentTo(filters);
             settings.Ports.Should().BeEquivalentTo(ports);
-            settings.Endpoint.Should().Be("d");
-            settings.Region.Should().Be("e");
+            settings.Endpoint.Should().Be("e");
+            settings.Region.Should().Be("f");
         }
 
         [Fact(DisplayName = "Ec2ServiceDiscoverySetup override should work")]
@@ -76,23 +80,27 @@ namespace Akka.Discovery.AwsApi.Tests
             var ports = new[] { 1 }.ToList();
             var setup = new Ec2ServiceDiscoverySetup
             {
-                ClientConfig = typeof(int),
-                CredentialsProvider = typeof(string),
-                TagKey = "a",
+                CredentialsProvider = "a",
+                TagKey = "b",
                 Filters = filters,
                 Ports = ports,
-                Endpoint = "d",
-                Region = "e"
+                Endpoint = "e",
+                Region = "f"
             };
+            setup.WithClientConfig<FakeClientConfig>();
             
             var settings = setup.Apply(Ec2ServiceDiscoverySettings.Empty);
-            settings.ClientConfig.Should().Be(typeof(int));
-            settings.CredentialsProvider.Should().Be(typeof(string));
-            settings.TagKey.Should().Be("a");
+            settings.ClientConfig.Should().Be(typeof(FakeClientConfig));
+            settings.CredentialsProvider.Should().Be("a");
+            settings.TagKey.Should().Be("b");
             settings.Filters.Should().BeEquivalentTo(filters);
             settings.Ports.Should().BeEquivalentTo(ports);
-            settings.Endpoint.Should().Be("d");
-            settings.Region.Should().Be("e");
+            settings.Endpoint.Should().Be("e");
+            settings.Region.Should().Be("f");
+        }
+        
+        private class FakeClientConfig: AmazonEC2Config
+        {
         }
     }
 }

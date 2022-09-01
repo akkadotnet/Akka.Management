@@ -18,7 +18,7 @@ namespace Akka.Discovery.AwsApi.Ec2
     {
         public static readonly Ec2ServiceDiscoverySettings Empty = new Ec2ServiceDiscoverySettings(
             null,
-            typeof(Ec2InstanceMetadataCredentialProvider),
+            "instance-metadata-credential-provider",
             "service",
             ImmutableList<Filter>.Empty,
             ImmutableList<int>.Empty, 
@@ -26,14 +26,12 @@ namespace Akka.Discovery.AwsApi.Ec2
             null);
         
         public static Ec2ServiceDiscoverySettings Create(ActorSystem system)
-            => Create(system.Settings.Config);
+            => Create(system.Settings.Config.GetConfig("akka.discovery.aws-api-ec2-tag-based"));
         
         public static Ec2ServiceDiscoverySettings Create(Configuration.Config config)
         {
-            var ecsConfig = config.GetConfig("akka.discovery.aws-api-ec2-tag-based");
-
             Type clientConfigType = null;
-            var clientConfigTypeName = ecsConfig.GetString("client-config");
+            var clientConfigTypeName = config.GetString("client-config");
             if (!string.IsNullOrWhiteSpace(clientConfigTypeName))
             {
                 clientConfigType = Type.GetType(clientConfigTypeName);
@@ -44,32 +42,20 @@ namespace Akka.Discovery.AwsApi.Ec2
                 }
             }
 
-            Type credProviderType = null;
-            var credProviderTypeName = ecsConfig.GetString("credentials-provider");
-            if (!string.IsNullOrWhiteSpace(credProviderTypeName))
-            {
-                credProviderType = Type.GetType(credProviderTypeName);
-                if (credProviderType == null || !typeof(Ec2CredentialProvider).IsAssignableFrom(credProviderType))
-                {
-                    throw new ConfigurationException(
-                        "credentials-provider must be a fully qualified class name of a class type that extends Akka.Discovery.AwsApi.Ec2.Ec2CredentialProvider");
-                }
-            }
-            
             return new Ec2ServiceDiscoverySettings(
                 clientConfigType,
-                credProviderType,
-                ecsConfig.GetString("tag-key"),
-                Ec2TagBasedServiceDiscovery.ParseFiltersString(ecsConfig.GetString("filters")),
-                ecsConfig.GetIntList("ports").ToImmutableList(),
-                ecsConfig.GetString("endpoint"),
-                ecsConfig.GetString("region")
+                config.GetString("credentials-provider"),
+                config.GetString("tag-key"),
+                Ec2TagBasedServiceDiscovery.ParseFiltersString(config.GetString("filters")),
+                config.GetIntList("ports").ToImmutableList(),
+                config.GetString("endpoint"),
+                config.GetString("region")
             );
         }
         
         public Ec2ServiceDiscoverySettings(
             Type clientConfig,
-            Type credentialsProvider,
+            string credentialsProvider,
             string tagKey, 
             ImmutableList<Filter> filters,
             ImmutableList<int> ports,
@@ -86,18 +72,20 @@ namespace Akka.Discovery.AwsApi.Ec2
         }
 
         public Type ClientConfig { get; }
-        public Type CredentialsProvider { get; }
+        public string CredentialsProvider { get; }
         public string TagKey { get; }
         public ImmutableList<Filter> Filters { get; }
         public ImmutableList<int> Ports { get; }
         public string Endpoint { get; }
         public string Region { get; }
 
-        public Ec2ServiceDiscoverySettings WithClientConfig(Type clientConfig)
+        internal Ec2ServiceDiscoverySettings WithClientConfig(Type clientConfig)
             => Copy(clientConfig: clientConfig);
+        public Ec2ServiceDiscoverySettings WithClientConfig<T>() where T: AmazonEC2Config
+            => Copy(clientConfig: typeof(T));
         
-        public Ec2ServiceDiscoverySettings WithCredentialsProvider(Type credentialsProvider)
-            => Copy(credentialsProvider: credentialsProvider);
+        public Ec2ServiceDiscoverySettings WithCredentialsProvider(string providerPath)
+            => Copy(credentialsProvider: providerPath);
         
         public Ec2ServiceDiscoverySettings WithTagKey(string tagKey)
             => Copy(tagKey: tagKey);
@@ -116,7 +104,7 @@ namespace Akka.Discovery.AwsApi.Ec2
         
         private Ec2ServiceDiscoverySettings Copy(
             Type clientConfig = null,
-            Type credentialsProvider = null,
+            string credentialsProvider = null,
             string tagKey = null,
             ImmutableList<Filter> filters = null,
             ImmutableList<int> ports = null,

@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
@@ -17,6 +18,7 @@ using Amazon;
 using Amazon.ECS;
 using Amazon.ECS.Model;
 using EcsTask = Amazon.ECS.Model.Task;
+using NetworkInterface = System.Net.NetworkInformation.NetworkInterface;
 
 namespace Akka.Discovery.AwsApi.Ecs
 {
@@ -26,14 +28,14 @@ namespace Akka.Discovery.AwsApi.Ecs
         {
             get
             {
-                var hostName = Dns.GetHostName();
-                var ipHostEntries = Dns.GetHostEntry(hostName);
-                var ipEntries = ipHostEntries.AddressList
+                var addresses = NetworkInterface.GetAllNetworkInterfaces()
+                    .SelectMany(@interface => @interface.GetIPProperties().UnicastAddresses)
+                    .Select(info => info.Address)
                     .Where(ip => ip.IsSiteLocalAddress() && !ip.IsLoopbackAddress()).ToList();
-                if (ipEntries.Count == 0)
-                    return new Right<string, IPAddress>(ipEntries[0]);
+                if (addresses.Count == 1)
+                    return new Right<string, IPAddress>(addresses[0]);
                 return new Left<string, IPAddress>(
-                    $"Exactly one private address must be configured (found: [{string.Join(",", ipEntries)}])");
+                    $"Exactly one private address must be configured (found: [{string.Join(",", addresses)}])");
             }
         }
 

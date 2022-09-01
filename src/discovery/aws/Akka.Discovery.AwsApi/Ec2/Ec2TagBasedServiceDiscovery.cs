@@ -44,6 +44,7 @@ namespace Akka.Discovery.AwsApi.Ec2
         
         private readonly ILoggingAdapter _log;
         private readonly ExtendedActorSystem _system;
+        private readonly Configuration.Config _config;
 
         private readonly Ec2ServiceDiscoverySettings _settings;
         
@@ -83,14 +84,26 @@ namespace Akka.Discovery.AwsApi.Ec2
                 if (!string.IsNullOrWhiteSpace(_settings.Region))
                     clientConfig.RegionEndpoint = RegionEndpoint.GetBySystemName(_settings.Region);
 
+                var providerConfig = _config.GetConfig(_settings.CredentialsProvider);
+                if (providerConfig == null)
+                    throw new ConfigurationException($"Could not find any HOCON configuration at path 'akka.discovery.aws-api-ec2-tag-based.{_settings.CredentialsProvider}'");
+
+                var typeFqcn = providerConfig.GetString("class");
+                if (string.IsNullOrWhiteSpace(typeFqcn))
+                    throw new ConfigurationException($"The path 'akka.discovery.aws-api-ec2-tag-based.{_settings.CredentialsProvider}.class' is not a literal");
+
+                var type = Type.GetType(typeFqcn);
+                if(type is null)
+                    throw new ConfigurationException($"The path 'akka.discovery.aws-api-ec2-tag-based.{_settings.CredentialsProvider}.class' is not a valid fully qualified class name");
+                    
                 Ec2CredentialProvider credentialProvider;
                 try
                 {
-                    credentialProvider = CreateInstance<Ec2CredentialProvider>(_settings.CredentialsProvider);
+                    credentialProvider = CreateInstance<Ec2CredentialProvider>(type);
                 }
                 catch (Exception e)
                 {
-                    throw new ConfigurationException($"Could not create instance of [{_settings.CredentialsProvider}]", e);
+                    throw new ConfigurationException($"Could not create instance of [{type}]", e);
                 }
                 
                 _ec2ClientDoNotUseDirectly = new AmazonEC2Client(credentialProvider.ClientCredentials, clientConfig);
@@ -101,6 +114,7 @@ namespace Akka.Discovery.AwsApi.Ec2
         public Ec2TagBasedServiceDiscovery(ExtendedActorSystem system)
         {
             _system = system;
+            _config = _system.Settings.Config.GetConfig("akka.discovery.aws-api-ec2-tag-based");
             _log = Logging.GetLogger(system, typeof(Ec2TagBasedServiceDiscovery));
             _settings = Ec2ServiceDiscoverySettings.Create(system);
             

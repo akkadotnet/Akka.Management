@@ -28,7 +28,7 @@ akka {{
     method = ""aws-api-ec2-tag-based""
     aws-api-ec2-tag-based {{
       client-config = """"
-      credentials-provider = ""{typeof(AnonymousEc2CredentialProvider).AssemblyQualifiedName}""
+      credentials-provider = anonymous-credential-provider
       class = ""{typeof(Ec2TagBasedServiceDiscovery).AssemblyQualifiedName}""
       tag-key = ""service""
       filters = """"
