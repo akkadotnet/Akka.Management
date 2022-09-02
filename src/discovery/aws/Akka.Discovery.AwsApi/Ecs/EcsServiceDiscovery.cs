@@ -33,7 +33,7 @@ namespace Akka.Discovery.AwsApi.Ecs
                 if (ipEntries.Count == 0)
                     return new Right<string, IPAddress>(ipEntries[0]);
                 return new Left<string, IPAddress>(
-                    $"Exactly one private address must be configured (found: [{string.Join(",", ipEntries)}])");            
+                    $"Exactly one private address must be configured (found: [{string.Join(",", ipEntries)}])");
             }
         }
 
