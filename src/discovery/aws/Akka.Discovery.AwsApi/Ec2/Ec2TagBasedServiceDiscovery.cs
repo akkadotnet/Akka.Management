@@ -105,11 +105,8 @@ namespace Akka.Discovery.AwsApi.Ec2
             _system = system;
             _config = _system.Settings.Config.GetConfig("akka.discovery.aws-api-ec2-tag-based");
             _log = Logging.GetLogger(system, typeof(Ec2TagBasedServiceDiscovery));
-            _settings = Ec2ServiceDiscoverySettings.Create(system);
             
-            var setup = system.Settings.Setup.Get<Ec2ServiceDiscoverySetup>();
-            if (setup.HasValue)
-                _settings = setup.Value.Apply(_settings);
+            _settings = AwsEc2Discovery.Get(system).Settings;
             
             _runningInstancesFilter = new Filter("instance-state-name", new List<string> {"running"});
         }

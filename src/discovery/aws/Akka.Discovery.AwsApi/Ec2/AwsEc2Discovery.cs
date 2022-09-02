@@ -24,6 +24,10 @@ namespace Akka.Discovery.AwsApi.Ec2
         {
             system.Settings.InjectTopLevelFallback(DefaultConfiguration());
             Settings = Ec2ServiceDiscoverySettings.Create(system);
+
+            var setup = system.Settings.Setup.Get<Ec2ServiceDiscoverySetup>();
+            if (setup.HasValue)
+                Settings = setup.Value.Apply(Settings);
         }
         
     }
