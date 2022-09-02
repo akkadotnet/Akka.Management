@@ -14,21 +14,29 @@ using Amazon.EC2.Model;
 
 namespace Akka.Discovery.AwsApi.Ec2
 {
-    public class Ec2ServiceDiscoverySetup : Setup
+    public sealed class Ec2ServiceDiscoverySetup : Setup
     {
         private Type _clientConfig;
         public Type ClientConfig => _clientConfig;
 
-        public string CredentialsProvider { get; set; }
+        private Type _credProvider;
+        public Type CredentialsProvider => _credProvider;
         public string TagKey { get; set; }
         public List<Filter> Filters { get; set; }
         public List<int> Ports { get; set; }
         public string Endpoint { get; set; }
         public string Region { get; set; }
 
-        public void WithClientConfig<T>() where T: AmazonEC2Config
+        public Ec2ServiceDiscoverySetup WithClientConfig<T>() where T: AmazonEC2Config
         {
             _clientConfig = typeof(T);
+            return this;
+        }
+
+        public Ec2ServiceDiscoverySetup WithCredentialProvider<T>() where T : Ec2CredentialProvider
+        {
+            _credProvider = typeof(T);
+            return this;
         }
         
         internal Ec2ServiceDiscoverySettings Apply(Ec2ServiceDiscoverySettings settings)

@@ -26,7 +26,7 @@ namespace Akka.Discovery.AwsApi.Tests
                 AwsEc2Discovery.DefaultConfiguration().GetConfig("akka.discovery.aws-api-ec2-tag-based"));
 
             settings.ClientConfig.Should().BeNull();
-            settings.CredentialsProvider.Should().Be("instance-metadata-credential-provider");
+            settings.CredentialsProvider.Should().Be(typeof(Ec2InstanceMetadataCredentialProvider));
             settings.TagKey.Should().Be("service");
             settings.Filters.Should().BeEmpty();
             settings.Ports.Should().BeEmpty();
@@ -57,7 +57,7 @@ namespace Akka.Discovery.AwsApi.Tests
             var ports = new[] { 1 }.ToImmutableList();
             var settings = Ec2ServiceDiscoverySettings.Empty
                 .WithClientConfig<FakeClientConfig>()
-                .WithCredentialsProvider("a")
+                .WithCredentialsProvider<FakeCredProvider>()
                 .WithTagKey("b")
                 .WithFilters(filters)
                 .WithPorts(ports)
@@ -65,7 +65,7 @@ namespace Akka.Discovery.AwsApi.Tests
                 .WithRegion("f");
             
             settings.ClientConfig.Should().Be(typeof(FakeClientConfig));
-            settings.CredentialsProvider.Should().Be("a");
+            settings.CredentialsProvider.Should().Be(typeof(FakeCredProvider));
             settings.TagKey.Should().Be("b");
             settings.Filters.Should().BeEquivalentTo(filters);
             settings.Ports.Should().BeEquivalentTo(ports);
@@ -80,18 +80,18 @@ namespace Akka.Discovery.AwsApi.Tests
             var ports = new[] { 1 }.ToList();
             var setup = new Ec2ServiceDiscoverySetup
             {
-                CredentialsProvider = "a",
                 TagKey = "b",
                 Filters = filters,
                 Ports = ports,
                 Endpoint = "e",
                 Region = "f"
-            };
-            setup.WithClientConfig<FakeClientConfig>();
+            }
+                .WithClientConfig<FakeClientConfig>()
+                .WithCredentialProvider<FakeCredProvider>();
             
             var settings = setup.Apply(Ec2ServiceDiscoverySettings.Empty);
             settings.ClientConfig.Should().Be(typeof(FakeClientConfig));
-            settings.CredentialsProvider.Should().Be("a");
+            settings.CredentialsProvider.Should().Be(typeof(FakeCredProvider));
             settings.TagKey.Should().Be("b");
             settings.Filters.Should().BeEquivalentTo(filters);
             settings.Ports.Should().BeEquivalentTo(ports);
@@ -101,6 +101,11 @@ namespace Akka.Discovery.AwsApi.Tests
         
         private class FakeClientConfig: AmazonEC2Config
         {
+        }
+        
+        private class FakeCredProvider: Ec2CredentialProvider
+        {
+            public override AWSCredentials ClientCredentials => null;
         }
     }
 }
