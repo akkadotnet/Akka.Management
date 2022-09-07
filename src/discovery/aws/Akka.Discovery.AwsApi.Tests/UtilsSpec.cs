@@ -6,7 +6,10 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using Akka.Discovery.AwsApi.Ecs;
+using Amazon.ECS.Model;
 using FluentAssertions;
 using Xunit;
 
@@ -14,6 +17,136 @@ namespace Akka.Discovery.AwsApi.Tests
 {
     public class UtilsSpec
     {
+        [Fact(DisplayName = "ChunkBy with items less than chunk count should work")]
+        public void ChunkBy10()
+        {
+            var list = Enumerable.Range(0, 10).Select(i => i.ToString());
+            var chunked = list.ChunkBy(20).ToList();
+            chunked.Count.Should().Be(1);
+            chunked[0].Should().BeEquivalentTo(Enumerable.Range(0, 10).Select(i => i.ToString()));
+        }
+        
+        [Fact(DisplayName = "ChunkBy with items more than chunk count should work")]
+        public void ChunkBy50()
+        {
+            var list = Enumerable.Range(0, 50).Select(i => i.ToString());
+            var chunked = list.ChunkBy(20).ToList();
+            chunked.Count.Should().Be(3);
+            chunked[0].Should().BeEquivalentTo(Enumerable.Range(0, 20).Select(i => i.ToString()));
+            chunked[1].Should().BeEquivalentTo(Enumerable.Range(20, 20).Select(i => i.ToString()));
+            chunked[2].Should().BeEquivalentTo(Enumerable.Range(40, 10).Select(i => i.ToString()));
+        }
+        
+        [Theory(DisplayName = "Diff should return appropriate HashSet")]
+        [MemberData(nameof(TagDataSource))]
+        public void DiffTest(List<Tag> listA, List<Tag> listB, List<Tag> listDiff)
+        {
+            var result = listA.Diff(listB, EcsServiceDiscovery.TagComparer);
+            result.Count.Should().Be(listDiff.Count);
+            foreach (var tag in listDiff)
+            {
+                result.Should().Contain(tag);
+            }
+        }
+        
+        [Theory(DisplayName = "IsSame should return appropriate result")]
+        [MemberData(nameof(TagDataSource))]
+        public void IsSameTest(List<Tag> listA, List<Tag> listB, List<Tag> listDiff)
+        {
+            listA.IsSame(listB, EcsServiceDiscovery.TagComparer).Should().Be(listDiff.Count == 0);
+        }
+        
+        public static IEnumerable<object[]> TagDataSource()
+        {
+            var data = new object[][]
+            {
+                new object[]
+                {
+                    new List<Tag>
+                    {
+                        new Tag{Key = "a", Value = "b"},
+                        new Tag{Key = "b", Value = "c"},
+                        new Tag{Key = "c", Value = "d"},
+                    }, 
+                    new List<Tag>
+                    {
+                        new Tag{Key = "a", Value = "b"},
+                        new Tag{Key = "b", Value = "c"},
+                        new Tag{Key = "c", Value = "d"},
+                    },
+                    new List<Tag>()
+                },
+                new object[]
+                {
+                    new List<Tag>(), 
+                    new List<Tag>(),
+                    new List<Tag>()
+                },
+                new object[]
+                {
+                    new List<Tag>
+                    {
+                        new Tag{Key = "a", Value = "b"},
+                        new Tag{Key = "b", Value = "c"},
+                        new Tag{Key = "c", Value = "d"},
+                    }, 
+                    new List<Tag>
+                    {
+                        new Tag{Key = "a", Value = "b"},
+                        new Tag{Key = "b", Value = "c"},
+                        new Tag{Key = "d", Value = "e"},
+                    },
+                    new List<Tag>
+                    {
+                        new Tag{Key = "c", Value = "d"},
+                        new Tag{Key = "d", Value = "e"},
+                    }
+                },
+                new object[]
+                {
+                    new List<Tag>
+                    {
+                        new Tag{Key = "a", Value = "b"},
+                        new Tag{Key = "b", Value = "c"},
+                    }, 
+                    new List<Tag>
+                    {
+                        new Tag{Key = "a", Value = "b"},
+                        new Tag{Key = "b", Value = "c"},
+                        new Tag{Key = "d", Value = "e"},
+                    },
+                    new List<Tag>
+                    {
+                        new Tag{Key = "d", Value = "e"},
+                    }
+                },
+                new object[]
+                {
+                    new List<Tag>
+                    {
+                        new Tag{Key = "a", Value = "b"},
+                        new Tag{Key = "b", Value = "c"},
+                        new Tag{Key = "c", Value = "d"},
+                    }, 
+                    new List<Tag>
+                    {
+                        new Tag{Key = "a", Value = "b"},
+                        new Tag{Key = "b", Value = "c"},
+                    },
+                    new List<Tag>
+                    {
+                        new Tag{Key = "c", Value = "d"},
+                    }
+                },
+            };
+
+            foreach (var ip in data)
+            {
+                yield return ip;
+            }
+        }
+        
+        
         [Theory(DisplayName = "IPAddress.IsLocalhostAddress() extension method should work properly")]
         [MemberData(nameof(LocalhostIpAddressDataSource))]
         public void IsLocalhostAddress(IPAddress address, bool isLocal)
@@ -79,6 +212,5 @@ namespace Akka.Discovery.AwsApi.Tests
                 yield return ip;
             }
         }
-        
     }
 }
