@@ -28,18 +28,13 @@ akka {{
     method = ""aws-api-ec2-tag-based""
     aws-api-ec2-tag-based {{
       client-config = """"
-      credentials-provider = anonymous-credential-provider
-      class = ""Akka.Discovery.AwsApi.Ec2.Ec2TagBasedServiceDiscovery, Akka.Discovery.AwsApi""
+      credentials-provider = ""{typeof(AnonymousEc2CredentialProvider).AssemblyQualifiedName}""
+      class = ""{typeof(Ec2TagBasedServiceDiscovery).AssemblyQualifiedName}""
       tag-key = ""service""
       filters = """"
       ports = []
       endpoint = ""{fixture.Endpoint}""
       # region = """"
-      anonymous-credential-provider {{
-        # Fully qualified class name of a class that extends Akka.Discovery.AwsApi.Ec2.Ec2ConfigurationProvider with either 
-        # a no arguments constructor or a single argument constructor that takes an ExtendedActorSystem
-        class = ""Akka.Discovery.AwsApi.Ec2.AnonymousEc2CredentialProvider, Akka.Discovery.AwsApi""    
-      }}
     }}
   }} 
 }}"); 
