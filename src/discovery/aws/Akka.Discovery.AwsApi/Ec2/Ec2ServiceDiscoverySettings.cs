@@ -46,6 +46,17 @@ namespace Akka.Discovery.AwsApi.Ec2
             if (string.IsNullOrWhiteSpace(credProviderTypeName))
                 throw new ConfigurationException(
                     "credentials-provider must be provided");
+            
+            // Old pre v0.2.5-beta4 setting warning, remove this in the future, maybe.
+            if(credProviderTypeName == "anonymous-credential-provider")
+                throw new ConfigurationException(
+                    "credentials-provider has been changed from a HOCON path to a fully qualified class name, please change your setting to \"Akka.Discovery.AwsApi.Ec2.AnonymousEc2CredentialProvider, Akka.Discovery.AwsApi\"");
+
+            // Old pre v0.2.5-beta4 setting warning, remove this in the future, maybe.
+            if(credProviderTypeName == "instance-metadata-credential-provider")
+                throw new ConfigurationException(
+                    "credentials-provider has been changed from a HOCON path to a fully qualified class name, please change your setting to \"Akka.Discovery.AwsApi.Ec2.Ec2InstanceMetadataCredentialProvider, Akka.Discovery.AwsApi\"");
+            
             var credProviderType = Type.GetType(credProviderTypeName);
             if (credProviderType == null || !typeof(Ec2CredentialProvider).IsAssignableFrom(credProviderType))
                 throw new ConfigurationException(
