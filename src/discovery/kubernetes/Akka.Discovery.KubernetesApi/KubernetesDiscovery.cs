@@ -23,7 +23,11 @@ namespace Akka.Discovery.KubernetesApi
         public KubernetesDiscovery(ExtendedActorSystem system)
         {
             system.Settings.InjectTopLevelFallback(DefaultConfiguration());
-            Settings = new KubernetesDiscoverySettings(system);
+            Settings = KubernetesDiscoverySettings.Create(system);
+
+            var setup = system.Settings.Setup.Get<KubernetesDiscoverySetup>();
+            if (setup.HasValue)
+                Settings = setup.Value.Apply(Settings);
         }
     }
 
