@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/sdk:3.1 AS base
+﻿FROM mcr.microsoft.com/dotnet/sdk:6.0 AS base
 WORKDIR /app
 
 # should be a comma-delimited list
@@ -17,9 +17,9 @@ RUN dotnet tool install --global pbm
 
 # RUN pbm help
 
-COPY ./bin/Release/netcoreapp3.1/publish/ /app
+COPY ./bin/Release/net6.0/publish/ /app
 
-FROM mcr.microsoft.com/dotnet/runtime:3.1 AS app
+FROM mcr.microsoft.com/dotnet/runtime:6.0 AS app
 WORKDIR /app
 
 COPY --from=base /app /app
@@ -30,7 +30,8 @@ COPY --from=base /root/.dotnet /root/.dotnet/
 # Needed because https://stackoverflow.com/questions/51977474/install-dotnet-core-tool-dockerfile
 ENV PATH="${PATH}:/root/.dotnet/tools"
 
-# Add DNS utils
-RUN apt update && apt install dnsutils -y
+# Needed because https://github.com/aws/amazon-ecs-agent/issues/3299
+# Fix was https://github.com/dotnet/coreclr/pull/16141
+ENV COMPlus_EnableDiagnostics=0
 
 ENTRYPOINT ["dotnet", "Aws.Ecs.dll"]
