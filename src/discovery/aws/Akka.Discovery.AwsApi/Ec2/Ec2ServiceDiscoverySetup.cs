@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using Akka.Actor.Setup;
+using Akka.Configuration;
 using Amazon.EC2;
 using Amazon.EC2.Model;
 
@@ -17,10 +18,30 @@ namespace Akka.Discovery.AwsApi.Ec2
     public sealed class Ec2ServiceDiscoverySetup : Setup
     {
         private Type _clientConfig;
-        public Type ClientConfig => _clientConfig;
+
+        public Type ClientConfig
+        {
+            get => _clientConfig;
+            set
+            {
+                if (value != null && !typeof(AmazonEC2Config).IsAssignableFrom(value))
+                    throw new ConfigurationException($"{nameof(ClientConfig)} Type value need to extend {nameof(AmazonEC2Config)}. Was: {value.Name}");
+                _clientConfig = value;
+            }
+        } 
 
         private Type _credProvider;
-        public Type CredentialsProvider => _credProvider;
+        public Type CredentialsProvider
+        {
+            get => _credProvider;
+            set
+            {
+                if (value != null && !typeof(Ec2CredentialProvider).IsAssignableFrom(value))
+                    throw new ConfigurationException($"{nameof(CredentialsProvider)} Type value need to extend {nameof(Ec2CredentialProvider)}. Was: {value.Name}");
+                _credProvider = value;
+            }
+        } 
+
         public string TagKey { get; set; }
         public List<Filter> Filters { get; set; }
         public List<int> Ports { get; set; }
@@ -29,13 +50,13 @@ namespace Akka.Discovery.AwsApi.Ec2
 
         public Ec2ServiceDiscoverySetup WithClientConfig<T>() where T: AmazonEC2Config
         {
-            _clientConfig = typeof(T);
+            ClientConfig = typeof(T);
             return this;
         }
 
         public Ec2ServiceDiscoverySetup WithCredentialProvider<T>() where T : Ec2CredentialProvider
         {
-            _credProvider = typeof(T);
+            CredentialsProvider = typeof(T);
             return this;
         }
         
