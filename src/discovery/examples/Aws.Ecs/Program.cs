@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Net;
-using System.Threading.Tasks;
-using Akka.Actor;
-using Akka.Bootstrap.Docker;
 using Akka.Cluster.Hosting;
-using Akka.Configuration;
 using Akka.Discovery.AwsApi.Ecs;
 using Akka.Hosting;
 using Akka.Management;
@@ -21,25 +17,31 @@ namespace Aws.Ecs
         {
             var privateAddress = GetPrivateAddressOrExit();
 
+            var clusterName = Environment.GetEnvironmentVariable("AKKA__DISCOVERY__AWS_API_ECS__CLUSTER");
+            clusterName ??= "ecs-integration-test-app";
+            
+            var serviceName = Environment.GetEnvironmentVariable("AKKA__MANAGEMENT__CLUSTER__BOOTSTRAP__CONTACT_POINT_DISCOVERY__SERVICE_NAME");
+            serviceName ??= "ecs-integration-test-app";
+            
             var host = new HostBuilder()
                 .ConfigureServices((context, services) =>
                 {
                     services.AddAkka("ecsBootstrapDemo", (builder, provider) =>
                     {
                         builder
-                            .AddHocon("akka.discovery.method = aws-api-ecs")
-                            .AddHocon(EcsDiscovery.DefaultConfiguration())
+                            .WithRemoting(privateAddress.ToString(), 4053)
+                            .WithClustering()
                             .WithAkkaManagement(setup =>
                             {
                                 setup.Http.Port = 8558;
                                 setup.Http.Hostname = privateAddress.ToString();
                             })
-                            .WithRemoting(privateAddress.ToString(), 4053)
-                            .WithClustering()
                             .WithClusterBootstrap(setup =>
                             {
                                 setup.ContactPoint.FallbackPort = 8558;
-                            });
+                                setup.ContactPointDiscovery.ServiceName = serviceName;
+                            })
+                            .WithAwsEcsDiscovery(clusterName: clusterName);
                     });
                 }).Build();
             
@@ -48,7 +50,7 @@ namespace Aws.Ecs
 
         private static IPAddress GetPrivateAddressOrExit()
         {
-            switch (EcsDiscovery.GetContainerAddress())
+            switch (AwsEcsDiscovery.GetContainerAddress())
             {
                 case Left<string, IPAddress> left:
                     Console.Error.WriteLine($"{left.Value} Halting.");

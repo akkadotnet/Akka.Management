@@ -14,7 +14,7 @@ using Akka.Util;
 
 namespace Akka.Discovery.AwsApi.Ecs
 {
-    public class EcsDiscovery: IExtension
+    public class AwsEcsDiscovery: IExtension
     {
         public static Either<string, IPAddress> GetContainerAddress()
         {
@@ -29,14 +29,14 @@ namespace Akka.Discovery.AwsApi.Ecs
         }
         
         public static Configuration.Config DefaultConfiguration()
-            => ConfigurationFactory.FromResource<EcsDiscovery>("Akka.Discovery.AwsApi.reference.conf");
+            => ConfigurationFactory.FromResource<AwsEcsDiscovery>("Akka.Discovery.AwsApi.reference.conf");
         
-        public static EcsDiscovery Get(ActorSystem system)
-            => system.WithExtension<EcsDiscovery, EcsDiscoveryProvider>();
+        public static AwsEcsDiscovery Get(ActorSystem system)
+            => system.WithExtension<AwsEcsDiscovery, EcsDiscoveryProvider>();
 
         public readonly EcsServiceDiscoverySettings Settings;
 
-        public EcsDiscovery(ExtendedActorSystem system)
+        public AwsEcsDiscovery(ExtendedActorSystem system)
         {
             system.Settings.InjectTopLevelFallback(DefaultConfiguration());
             Settings = EcsServiceDiscoverySettings.Create(system);
@@ -48,10 +48,10 @@ namespace Akka.Discovery.AwsApi.Ecs
 
     }
     
-    public class EcsDiscoveryProvider : ExtensionIdProvider<EcsDiscovery>
+    public class EcsDiscoveryProvider : ExtensionIdProvider<AwsEcsDiscovery>
     {
-        public override EcsDiscovery CreateExtension(ExtendedActorSystem system)
-            => new EcsDiscovery(system);
+        public override AwsEcsDiscovery CreateExtension(ExtendedActorSystem system)
+            => new AwsEcsDiscovery(system);
     }
     
 }

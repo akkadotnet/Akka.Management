@@ -43,7 +43,7 @@ namespace Akka.Discovery.AwsApi.Ecs
         
         public EcsServiceDiscovery(ActorSystem system)
         {
-            _settings = EcsDiscovery.Get(system).Settings;
+            _settings = AwsEcsDiscovery.Get(system).Settings;
         }
         
         public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
