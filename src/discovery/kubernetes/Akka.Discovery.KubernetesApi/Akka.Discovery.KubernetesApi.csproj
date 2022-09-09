@@ -10,6 +10,7 @@
 
     <ItemGroup>
         <PackageReference Include="Akka.Discovery" Version="$(AkkaVersion)" />
+        <PackageReference Include="Akka.Hosting" Version="0.4.2" />
         <PackageReference Include="KubernetesClient" Version="$(KubernetesClientVersion)" />
     </ItemGroup>
 
