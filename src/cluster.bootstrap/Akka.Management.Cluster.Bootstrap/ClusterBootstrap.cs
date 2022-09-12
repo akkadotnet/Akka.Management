@@ -103,7 +103,7 @@ namespace Akka.Management.Cluster.Bootstrap
             _joinDecider = (IJoinDecider)Activator.CreateInstance(joinDeciderType, system, Settings);
             
             var autoStart = system.Settings.Config.GetStringList("akka.extensions")
-                .Any(s => s.Contains(typeof(ClusterBootstrapProvider).Name));
+                .Any(s => s.Contains(nameof(ClusterBootstrapProvider)));
             if (autoStart)
             {
                 _log.Info("ClusterBootstrap loaded through 'akka.extensions' auto starting bootstrap.");

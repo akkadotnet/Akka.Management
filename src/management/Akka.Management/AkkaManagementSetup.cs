@@ -105,7 +105,14 @@ namespace Akka.Management
             if (illegals.Count > 0)
                 throw new ConfigurationException($"Invalid route provider types in {nameof(RouteProviders)}: [{string.Join(", ", illegals.Select(pair => $"{pair.Key}:{pair.Value}"))}]");
             
-            var routeProviders = RouteProviders.Select(kvp => new NamedRouteProvider(kvp.Key, kvp.Value?.AssemblyQualifiedName ?? ""));
+            // Merge route providers
+            var setupProviders = RouteProviders.Select(kvp => (kvp.Key, kvp.Value?.AssemblyQualifiedName));
+            var providers = settings.RouteProviders.ToDictionary(p => p.Name, p => p.FullyQualifiedClassName);
+            foreach (var provider in setupProviders)
+            {
+                providers[provider.Key] = provider.AssemblyQualifiedName;
+            }
+            var routeProviders = providers.Select(kvp => new NamedRouteProvider(kvp.Key, kvp.Value));
             
             return settings.Copy(
                 hostname: Hostname,
