@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using Akka.Actor.Setup;
+using Akka.Configuration;
 
 namespace Akka.Management
 {
@@ -73,7 +74,20 @@ namespace Akka.Management
         ///
         /// RouteProviders["health-check"] = null; 
         /// </summary>
-        public Dictionary<string, Type> RouteProviders { get; set; } = new Dictionary<string, Type>();
+        public Dictionary<string, Type> RouteProviders { get; } = new Dictionary<string, Type>
+        {
+            ["health-checks"] = typeof(HealthCheckRoutes)
+        };
+
+        public HttpSetup WithRouteProvider<T>(string name) where T : IManagementRouteProvider
+        {
+            var type = typeof(T);
+            if (RouteProviders.Values.Contains(type))
+                throw new ConfigurationException($"The route provider of type {type.Name} already added");
+            
+            RouteProviders[name] = type;
+            return this;
+        }
         
         /// <summary>
         /// Should Management route providers only expose read only endpoints? It is up to each route provider
@@ -83,9 +97,15 @@ namespace Akka.Management
 
         internal Http Apply(Http settings)
         {
-            var routeProviders = RouteProviders != null && RouteProviders.Count > 0
-                ? RouteProviders?.Select(kvp => new NamedRouteProvider(kvp.Key, kvp.Value?.AssemblyQualifiedName ?? ""))
-                : null;
+            var providerType = typeof(IManagementRouteProvider);
+            var illegals = RouteProviders
+                .Where(kvp => kvp.Value != null && !providerType.IsAssignableFrom(kvp.Value))
+                .Select(kvp => (kvp.Key, kvp.Value)).ToList();
+
+            if (illegals.Count > 0)
+                throw new ConfigurationException($"Invalid route provider types in {nameof(RouteProviders)}: [{string.Join(", ", illegals.Select(pair => $"{pair.Key}:{pair.Value}"))}]");
+            
+            var routeProviders = RouteProviders.Select(kvp => new NamedRouteProvider(kvp.Key, kvp.Value?.AssemblyQualifiedName ?? ""));
             
             return settings.Copy(
                 hostname: Hostname,
