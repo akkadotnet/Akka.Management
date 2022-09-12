@@ -72,15 +72,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
 
         private KubernetesLeaseSetup ExtractSetup(AkkaConfigurationBuilder builder)
         {
-            var type = builder.GetType();
-            var fieldInfo = type.GetField("Setups", BindingFlags.NonPublic | BindingFlags.Instance);
-            var setups = (HashSet<Setup>) fieldInfo?.GetValue(builder);
-            
-            if (setups == null)
-                throw new XunitException("Could not found 'Setups' field, AkkaConfigurationBuilder internal API changed");
-            
-            setups.Should().NotBeNull();
-            return (KubernetesLeaseSetup) setups.FirstOrDefault(s => s is KubernetesLeaseSetup);
+            return (KubernetesLeaseSetup) builder.Setups.FirstOrDefault(s => s is KubernetesLeaseSetup);
         }
     }
 }
