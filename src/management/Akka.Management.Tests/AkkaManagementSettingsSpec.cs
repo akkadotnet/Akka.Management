@@ -9,8 +9,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Akka.Configuration;
+using Akka.Http.Dsl;
 using FluentAssertions;
 using Xunit;
+using static FluentAssertions.FluentActions;
 
 namespace Akka.Management.Tests
 {
@@ -51,13 +54,9 @@ namespace Akka.Management.Tests
                     BindPort = 1235,
                     BasePath = "c",
                     RouteProvidersReadOnly = false,
-                    RouteProviders = new Dictionary<string, Type>
-                    {
-                        ["test"] = typeof(AkkaManagement),
-                        ["test2"] = typeof(HealthCheckRoutes)
-                    }
                 }
             };
+            setup.Http.WithRouteProvider<FakeRouteProvider>("test");
             var settings = setup.Apply(AkkaManagementSettings.Create(AkkaManagementProvider.DefaultConfiguration()));
             var http = settings.Http;
             
@@ -68,12 +67,45 @@ namespace Akka.Management.Tests
             http.BasePath.Should().Be("c");
             http.RouteProviders.Count.Should().Be(2);
             http.RouteProviders[0].Should()
-                .BeEquivalentTo(new NamedRouteProvider("test", typeof(AkkaManagement).AssemblyQualifiedName));
+                .BeEquivalentTo(new NamedRouteProvider("health-checks", typeof(HealthCheckRoutes).AssemblyQualifiedName));
             http.RouteProviders[1].Should()
-                .BeEquivalentTo(new NamedRouteProvider("test2", typeof(HealthCheckRoutes).AssemblyQualifiedName));
+                .BeEquivalentTo(new NamedRouteProvider("test", typeof(FakeRouteProvider).AssemblyQualifiedName));
             http.RouteProvidersReadOnly.Should().BeFalse();
         }
 
+        [Fact(DisplayName = "AkkaManagementSetup.Apply should throw on invalid route provider type")]
+        public void InvalidRouteProviderType()
+        {
+            var setup = new AkkaManagementSetup
+            {
+                Http = new HttpSetup
+                {
+                    RouteProviders =
+                    {
+                        ["invalid-route"] = typeof(InvalidRouteProvider)
+                    }
+                }
+            };
 
+            Invoking(() => setup.Apply(AkkaManagementSettings.Create(AkkaManagementProvider.DefaultConfiguration())))
+                .Should().ThrowExactly<ConfigurationException>()
+                .WithMessage("*invalid-route*").WithMessage("*InvalidRouteProvider*");
+
+            Invoking(() => setup.Http.WithRouteProvider<HealthCheckRoutes>("test2"))
+                .Should().ThrowExactly<ConfigurationException>()
+                .WithMessage("*already added");
+        }
+
+        private class InvalidRouteProvider
+        {
+        }
+        
+        private class FakeRouteProvider: IManagementRouteProvider
+        {
+            public Route[] Routes(ManagementRouteProviderSettings settings)
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 }
