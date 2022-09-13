@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.Event;
 using Akka.Http.Dsl;
@@ -21,6 +22,14 @@ namespace Akka.Management.Tests
 {
     internal class HttpManagementEndpointSpecRoutesDotNetDsl : IManagementRouteProvider
     {
+        public static bool Started { get; set; }
+
+        public HttpManagementEndpointSpecRoutesDotNetDsl(ActorSystem system)
+        {
+            Logging.GetLogger(system, this).Info($"{nameof(HttpManagementEndpointSpecRoutesDotNetDsl)} route started");
+            Started = true;
+        }
+        
         public Route[] Routes(ManagementRouteProviderSettings settings)
         {
             return new Route[]{ctx =>
@@ -36,6 +45,14 @@ namespace Akka.Management.Tests
     
     internal class HttpManagementEndpointSpecRoutesNetFxDsl : IManagementRouteProvider
     {
+        public static bool Started { get; set; }
+
+        public HttpManagementEndpointSpecRoutesNetFxDsl(ActorSystem system)
+        {
+            Logging.GetLogger(system, this).Info($"{nameof(HttpManagementEndpointSpecRoutesNetFxDsl)} route started");
+            Started = true;
+        }
+        
         public Route[] Routes(ManagementRouteProviderSettings settings)
         {
             return new Route[]{ctx =>
@@ -64,6 +81,46 @@ namespace Akka.Management.Tests
             _output = output;
         }
 
+        [Fact(DisplayName = "Management should skip route providers that are set to null")]
+        public async Task NulledRouteProviderTest()
+        {
+            var httpPort = SocketUtil.TemporaryTcpAddress("127.0.0.1").Port;
+            var config = ConfigurationFactory.ParseString($@"
+                akka.management.http.hostname = ""127.0.0.1""
+                akka.management.http.port = {httpPort}
+                akka.management.http.routes {{
+                    test1 = ""Akka.Management.Tests.HttpManagementEndpointSpecRoutesDotNetDsl, Akka.Management.Tests""
+                    test2 = ""Akka.Management.Tests.HttpManagementEndpointSpecRoutesNetFxDsl, Akka.Management.Tests""
+                }}");
+
+            var setup = BootstrapSetup.Create()
+                .WithConfig(Config.WithFallback(config))
+                .And(new AkkaManagementSetup
+                {
+                    Http = new HttpSetup
+                    {
+                        RouteProviders = { ["test1"] = null }
+                    }
+                });
+
+            HttpManagementEndpointSpecRoutesDotNetDsl.Started = false;
+            HttpManagementEndpointSpecRoutesNetFxDsl.Started = false;
+            
+            var system = ActorSystem.Create("test", setup);
+            var extSystem = (ExtendedActorSystem)system;
+            var logger = extSystem.SystemActorOf(Props.Create(() => new TestOutputLogger(_output)), "log-test");
+            logger.Tell(new InitializeLogger(system.EventStream));
+            
+            var management = AkkaManagement.Get(system);
+            management.Settings.Http.RouteProviders.Should().Contain(new NamedRouteProvider("test1", null));
+            management.Settings.Http.RouteProviders.Should().Contain(new NamedRouteProvider("test2",
+                "Akka.Management.Tests.HttpManagementEndpointSpecRoutesNetFxDsl, Akka.Management.Tests"));
+            
+            await management.Start();
+            HttpManagementEndpointSpecRoutesDotNetDsl.Started.Should().BeFalse();
+            HttpManagementEndpointSpecRoutesNetFxDsl.Started.Should().BeTrue();
+        }
+        
         [Fact]
         public async Task ClusterManagementShouldStartAndStopWhenNotSettingAnySecurity()
         {

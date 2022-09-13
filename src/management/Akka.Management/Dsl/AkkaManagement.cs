@@ -55,7 +55,7 @@ namespace Akka.Management
                 });
             
             var autoStart = system.Settings.Config.GetStringList("akka.extensions")
-                .Any(s => s.Contains(typeof(AkkaManagementProvider).Name));
+                .Any(s => s.Contains(nameof(AkkaManagementProvider)));
             if (autoStart)
             {
                 _log.Info("Akka.Management loaded through 'akka.extensions' auto starting bootstrap.");
@@ -208,6 +208,10 @@ namespace Akka.Management
         {
             foreach (var (name, fqcn) in Settings.Http.RouteProviders)
             {
+                // Skip null or empty fqcn
+                if(string.IsNullOrWhiteSpace(fqcn))
+                    continue;
+                
                 var type = Type.GetType(fqcn);
                 if (type == null)
                     throw new ConfigurationException($"Could not load Type from FQCN [{fqcn}]");

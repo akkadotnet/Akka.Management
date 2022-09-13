@@ -1,25 +1,125 @@
 # Akka Management
+
 Akka Management is the core module of the management utilities which provides a central HTTP endpoint for Akka management extensions.
 
 ## Basic Usage
+
 With a few exceptions, Akka Management does not start automatically and the routes will only be exposed once you trigger:
-```
+
+```csharp
 AkkaManagement.Get(system).Start();
 ```
 
 This allows users to prepare anything further before exposing routes for the bootstrap joining process and other purposes.
-Please note that once it is started, you can not add or expose more routes on the HTTP endpoint.
+
+> __NOTE__
+> 
+> Once Akka.Management started, you can not add or expose more routes on the HTTP endpoint.
 
 ## Basic Configuration
+
+### Configure Using Akka.Hosting
+
+Setting up Akka.Management through Akka.Hosting is quite simple.
+
+```csharp
+var hostBuilder = new HostBuilder()
+    .ConfigureServices((context, services) =>
+    {
+        services.AddAkka("managementDemo", (builder, provider) =>
+        {
+            builder.WithAkkaManagement();
+        });
+    });
+
+using(var host = hostBuilder.Build())
+{
+    await host.RunAsync();
+}
+```
+
 You can configure hostname and port to use for the HTTP Cluster management by overriding the following:
+
+```csharp
+builder.WithAkkaManagement(
+    hostName: "127.0.0.1",
+    port: 8558);
+```
+
+or
+
+```csharp
+builder.WithAkkaManagement(setup =>
+    {
+        setup.Http.Hostname = "127.0.0.1";
+        setup.Http.Port = 8558;
+    });
+```
+
+or
+
+```csharp
+builder.WithAkkaManagement(new AkkaManagementSetup {
+        Http = new HttpSetup {
+            Hostname = "127.0.0.1",
+            Port = 8558
+        }
+    });
+```
+
+Note that the default value for hostname is `localhost`
+
+When running Akka nodes behind NATs or inside docker containers in bridge mode, it is necessary to set different hostname and port number to bind for the HTTP Server for Http Cluster Management:
+
+```csharp
+builder.WithAkkaManagement(
+    hostName: "my-public-host-name",
+    port: 8558,
+    // Bind to 0.0.0.0:8558 'internally':
+    bindHostname: "0.0.0.0", 
+    bindPort: 8558);
+```
+
+or
+
+```csharp
+builder.WithAkkaManagement(setup =>
+    {
+        setup.Http.Hostname = "my-public-host-name";
+        setup.Http.Port = 8558;
+        // Bind to 0.0.0.0:8558 'internally':
+        setup.Http.BindHostname = "0.0.0.0";
+        setup.Http.BindPort = 8558;
+    });
+```
+
+or
+
+```csharp
+builder.WithAkkaManagement(new AkkaManagementSetup {
+        Http = new HttpSetup {
+            Hostname = "my-public-host-name",
+            Port = 8558,
+            // Bind to 0.0.0.0:8558 'internally':
+            BindHostname = "0.0.0.0",
+            BindPort = 8558
+        }
+    });
+```
+
+### Configure Using HOCON Configuration
+
+You can configure hostname and port to use for the HTTP Cluster management by overriding the following:
+
 ```
 akka.management.http.hostname = "127.0.0.1"
 akka.management.http.port = 8558
 ```
+
 Note that the default value for hostname is `localhost`
 
-When running Akka nodes behind NATs or inside docker containers in bridge mode, it is necessary to set different hostname and port 
-number to bind for the HTTP Server for Http Cluster Management:
+When running Akka nodes behind NATs or inside docker containers in bridge mode, it is necessary to set different hostname and port number to bind for the HTTP Server for Http Cluster Management:
+
 ```
   akka.management.http.hostname = "my-public-host-name"
   akka.management.http.port = 8558
@@ -29,20 +129,17 @@ number to bind for the HTTP Server for Http Cluster Management:
 ```
 
 ## Exposed REST API Endpoints
-Two Akka.Management REST API endpoints are exposed by default, the health check endpoint at 
-`http://{host}:{port}/health` and readiness check endpoint at `http://{host}:{port}/alive`; endpoint
-paths are configurable inside the HOCON configuration. Both endpoints will return a 200-OK if all of 
-its callbacks returns a `Done` instance. If any of the callbacks returns a string, the endpoint will 
-return a 500-Internal Server Error code and includes the string reason message inside the HTTP body.
+
+Two Akka.Management REST API endpoints are exposed by default, the health check endpoint at `http://{host}:{port}/health` and readiness check endpoint at `http://{host}:{port}/alive`; endpoint paths are configurable inside the HOCON configuration. 
+
+Both endpoints will return a 200-OK if all of its callbacks returns a `Done` instance. If any of the callbacks returns a string, the endpoint will return a 500-Internal Server Error code and includes the string reason message inside the HTTP body.
 
 ## Security
 
-Note that http protocol is used by default and, as of now, there is no way to set up security on any HTTP endpoints. Management endpoints
-are not designed to be and should never be opened to the public.
+Note that http protocol is used by default and, as of now, there is no way to set up security on any HTTP endpoints. Management endpoints are not designed to be and should never be opened to the public.
 
 ## Stopping Akka Management
-In a dynamic environment you might stop instances of Akka Management, for example if you want to free up resources taken by 
-the HTTP server serving the Management routes.
+In a dynamic environment you might stop instances of Akka Management, for example if you want to free up resources taken by the HTTP server serving the Management routes.
 
 You can do so by calling Stop() on AkkaManagement. This method return a Task to inform when the server has been stopped.
 
