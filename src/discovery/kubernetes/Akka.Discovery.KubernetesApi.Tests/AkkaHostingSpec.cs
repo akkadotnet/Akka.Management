@@ -58,16 +58,7 @@ namespace Akka.Discovery.KubernetesApi.Tests
         }
         
         private static T ExtractSetup<T>(AkkaConfigurationBuilder builder) where T : Setup
-        {
-            var type = builder.GetType();
-            var fieldInfo = type.GetField("Setups", BindingFlags.NonPublic | BindingFlags.Instance);
-            if (fieldInfo == null)
-                throw new XunitException("Could not found 'AkkaConfigurationBuilder.Setups' field, AkkaConfigurationBuilder internal API has changed");
-            
-            var setups = (HashSet<Setup>) fieldInfo.GetValue(builder);
-            setups.Should().NotBeNull("'AkkaConfigurationBuilder.Setups' should exist and contains a value");
-            return (T) setups!.FirstOrDefault(s => s is KubernetesDiscoverySetup);
-        }
+            => (T) builder.Setups.FirstOrDefault(s => s is T);
         
     }
 }
