@@ -10,7 +10,7 @@
     <ItemGroup>
       <PackageReference Include="Akka.Discovery" Version="$(AkkaVersion)" />
       <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
-      <PackageReference Include="AWSSDK.EC2" Version="3.7.83.5" />
+      <PackageReference Include="AWSSDK.EC2" Version="3.7.85.2" />
       <PackageReference Include="AWSSDK.ECS" Version="3.7.5.71" />
     </ItemGroup>
 
