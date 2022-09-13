@@ -53,27 +53,6 @@ namespace Akka.Discovery.KubernetesApi.Tests
             empty.ContainerName.Should().Be(settings.ContainerName);
         }
 
-        [Fact(DisplayName = "Illegal pod-label-selector must throw")]
-        public void IllegalPodLabelSelectorTest()
-        {
-            var settings = KubernetesDiscoverySettings.Empty;
-
-            Invoking(() => settings.WithPodLabelSelector("={0}"))
-                .Should().ThrowExactly<ConfigurationException>();
-            
-            Invoking(() => settings.WithPodLabelSelector("a="))
-                .Should().ThrowExactly<ConfigurationException>();
-            
-            Invoking(() => settings.WithPodLabelSelector("a=={0}"))
-                .Should().ThrowExactly<ConfigurationException>();
-            
-            Invoking(() => settings.WithPodLabelSelector("a{1}={0}"))
-                .Should().ThrowExactly<ConfigurationException>();
-            
-            Invoking(() => settings.WithPodLabelSelector("a={0}b"))
-                .Should().ThrowExactly<ConfigurationException>();
-        }
-
         [Fact(DisplayName = "Settings With override must work")]
         public void WithOverrideTest()
         {

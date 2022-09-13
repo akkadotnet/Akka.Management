@@ -5,9 +5,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using System.Linq;
 using Akka.Actor;
-using Akka.Configuration;
 
 #nullable enable
 namespace Akka.Discovery.KubernetesApi
@@ -55,14 +53,6 @@ namespace Akka.Discovery.KubernetesApi
             PodNamespacePath = podNamespacePath;
             PodNamespace = podNamespace;
             PodDomain = podDomain;
-            if (!podLabelSelector.EndsWith("={0}") ||
-                podLabelSelector.StartsWith("=") ||
-                podLabelSelector.Count(c => c == '{') != 1 ||
-                podLabelSelector.Count(c => c == '}') != 1 ||
-                podLabelSelector.Count(c => c == '=') != 1)
-            {
-                throw new ConfigurationException("pod-label-selector value must be in the form of \"podLabel={0}\"");
-            }
             _podLabelSelector = podLabelSelector;
             RawIp = rawIp;
             ContainerName = string.IsNullOrWhiteSpace(containerName) ? null : containerName;
