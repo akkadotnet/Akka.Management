@@ -68,6 +68,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Theory(DisplayName = "WithClusterBootstrap should work")]
         [MemberData(nameof(StartupFactory))]
         public async Task WithClusterBootstrapTest(
+            string testName,
             Action<AkkaConfigurationBuilder> startupAction)
         {
             var tcs = new TaskCompletionSource<Done>();
@@ -85,13 +86,13 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
 
         public static IEnumerable<object[]> StartupFactory()
         {
-            var startups = new Action<AkkaConfigurationBuilder>[]
+            var startups = new (string, Action<AkkaConfigurationBuilder>)[]
             {
-                builder =>
+                ("1. Parameterized method, auto-starting", builder =>
                 {
                     builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: true);
-                },
-                builder =>
+                }),
+                ("2. Parameterized method, manual start", builder =>
                 {
                     builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: false);
                     builder.AddStartup(async (system, registry) =>
@@ -99,17 +100,17 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
                         await AkkaManagement.Get(system).Start();
                         await ClusterBootstrap.Get(system).Start();
                     });
-                },
+                }),
                 
-                builder =>
+                ("3. Setup delegate method, auto-starting", builder =>
                 {
                     builder.WithClusterBootstrap(setup =>
                     {
                         setup.ContactPointDiscovery.ServiceName = "testService";
                         setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
-                    }, true);
-                },
-                builder =>
+                    }, autoStart: true);
+                }),
+                ("4. Setup delegate method, manual start", builder =>
                 {
                     builder.WithClusterBootstrap(setup =>
                     {
@@ -121,40 +122,40 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
                         await AkkaManagement.Get(system).Start();
                         await ClusterBootstrap.Get(system).Start();
                     });
-                },
+                }),
                 
                 // Should start normally when both Akka.Management and ClusterBootstrap is auto-started
-                builder =>
+                ("5. AkkaManagement in extensions list and auto-start ClusterBootstrap", builder =>
                 {
                     builder.WithExtensions(typeof(AkkaManagementProvider));
                     builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: true);
-                },
-                builder =>
+                }),
+                ("6. AkkaManagement and ClusterBootstrap declared first in extensions list", builder =>
                 {
                     builder.WithExtensions(
                         typeof(AkkaManagementProvider),
                         typeof(ClusterBootstrapProvider));
                     builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: false);
-                },
-                builder =>
+                }),
+                ("7. AkkaManagement in extensions list, WithClusterBootstrap declared first", builder =>
                 {
                     builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: true);
                     builder.WithExtensions(typeof(AkkaManagementProvider));
-                },
-                builder =>
+                }),
+                ("8. AkkaManagement and ClusterBootstrap in extensions list, WithClusterBootstrap declared first", builder =>
                 {
                     builder.WithClusterBootstrap("testService", requiredContactPoints: 1, autoStart: false);
                     builder.WithExtensions(
                         typeof(AkkaManagementProvider),
                         typeof(ClusterBootstrapProvider));
-                },
+                }),
             };
             
             foreach (var startup in startups)
             {
                 yield return new object[]
                 {
-                    startup
+                    startup.Item1, startup.Item2
                 };
             }
         }

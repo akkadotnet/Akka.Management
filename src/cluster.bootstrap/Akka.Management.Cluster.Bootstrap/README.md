@@ -2,15 +2,55 @@
 Akka Cluster Bootstrap helps forming (or joining to) a cluster by using Akka Discovery to discover peer nodes. 
 It is an alternative to configuring static seed-nodes in dynamic deployment environments such as on Kubernetes or AWS.
 
-It builds on the flexibility of Akka Discovery, leveraging a range of discovery mechanisms depending on the environment you 
-want to run your cluster in.
+It builds on the flexibility of Akka Discovery, leveraging a range of discovery mechanisms depending on the environment you want to run your cluster in.
 
 Cluster bootstrap depends on:
 - Akka.Discovery to discover other members of the cluster
 - Akka.Management to host HTTP endpoints used during the bootstrap process
 
 ## Usage
-Akka management must be started as well as the bootstrap process, this can either be done through config or programmatically.
+Akka management must be started as well as the bootstrap process, this can either be done through [Akka.Hosting](https://github.com/akkadotnet/Akka.Hosting), HOCON config, or programmatically.
+
+### Setting up Cluster.Bootstrap using [Akka.Hosting](https://github.com/akkadotnet/Akka.Hosting)
+
+_ClusterBootstrap_ can be enabled using the _Akka.Hosting_ extension method:
+```csharp
+using var host = new HostBuilder()
+    .ConfigureServices((hostContext, services) =>
+    {
+        services.AddAkka(systemName, (builder, provider) =>
+        {
+            // Add Akka.Remote support.
+            builder.WithRemoting(port: 4053);
+            
+            // Add Akka.Cluster support
+            builder.WithClustering();
+            
+            // Add Akka.Management.Cluster.Bootstrap support
+            builder.WithClusterBootstrap(setup =>
+                {
+                    setup.ContactPointDiscovery.ServiceName = "clusterbootstrap";
+                }, autoStart: true);
+            
+            // Add Akka.Discovery.KubernetesApi support
+            builder.WithKubernetesDiscovery("app=clusterbootstrap");
+        });
+    })
+```
+
+Note that to start _ClusterBootstrap_, you will also need to provide an _Akka.Discovery_ method to use. In the example above, this is done using the `WithKubernetesDiscovery()` method call.
+
+If not set to start automatically, you will need to manually start __both__ _Akka.Management_ __and__ _ClusterBootstrap_:
+
+```csharp
+builder.AddStartup(async (system, registry) =>
+{
+    await AkkaManagement.Get(system).Start();
+    await ClusterBootstrap.Get(system).Start();
+});
+```
+
+If management or bootstrap configuration is incorrect, the autostart will log an error and terminate the actor system.
 
 ### Setting Up Cluster.Bootstrap from HOCON Configuration
 
@@ -42,6 +82,7 @@ The following configuration is required, more details for each and additional co
   (from what choices [Akka Discovery](https://getakka.net/articles/discovery/index.html) provides). If unset, falls back to the system-wide default from akka.discovery.method.
 
 ### Exposed Akka.Management REST API Endpoint
+
 `Akka.Management.Cluster.Bootstrap` will add a new REST HTTP API endpoint to the `Akka.Management` HTTP 
 server at the address `http://{host}:{port}/bootstrap/seed-nodes`. Calling a GET on this endpoint will 
 return a JSON document containing the Akka cluster address of the node and a list of up to 5 seed nodes 
@@ -74,35 +115,24 @@ As Akka Cluster allows nodes to join to a cluster using multiple different metho
 - The Cluster Bootstrap mechanism takes some time to complete, but eventually issues a joinSeednodes.
 
 > [!WARNING]
-> It is __NOT__ recommended to mix various joining mechanisms. Pick one mechanism and stick to it in order to avoid any surprises 
-> during cluster formation. E.g. do __NOT__ set akka.cluster.seed-nodes and do __NOT__ call Cluster.Join if you are going to be 
-> using the Bootstrap mechanism.
+> It is __NOT__ recommended to mix various joining mechanisms. Pick one mechanism and stick to it in order to avoid any surprises during cluster formation. E.g. do __NOT__ set akka.cluster.seed-nodes and do __NOT__ call Cluster.Join if you are going to be using the Bootstrap mechanism.
 
 ## Deployment Considerations
 ### Initial deployment
-Cluster Bootstrap will always attempt to join an existing cluster if possible. However if no other contact point advertises 
-any `seed-nodes`, a new cluster will be formed by the node decided by the `JoinDecider` where the default sorts the addresses 
-then picks the lowest.
+Cluster Bootstrap will always attempt to join an existing cluster if possible. However if no other contact point advertises any `seed-nodes`, a new cluster will be formed by the node decided by the `JoinDecider` where the default sorts the addresses then picks the lowest.
 
-The HOCON setting `akka.management.cluster.bootstrap.new-cluster-enabled` can be used to disable new cluster formation and 
-to only allow the node to join existing clusters. 
-
+The HOCON setting `akka.management.cluster.bootstrap.new-cluster-enabled` can be used to disable new cluster formation and to only allow the node to join existing clusters. 
 
 - On initial deployment use the default akka.management.cluster.bootstrap.new-cluster-enabled=on
 - Following the initial deployment it is recommended to set `akka.management.cluster.bootstrap.new-cluster-enabled=off` with an 
   immediate re-deployment once the initial cluster has formed
 
-This can be used to provide additional safety during restarts and redeploys while there is a network partition present. 
-Without new cluster formation disabled, an isolated set of nodes could form a new cluster, creating a split-brain.
+This can be used to provide additional safety during restarts and redeploys while there is a network partition present. Without new cluster formation disabled, an isolated set of nodes could form a new cluster, creating a split-brain.
 
 ### Recommended Configuration
-When using the bootstrap module, there are some underlying Akka Cluster settings that should be specified to ensure that 
-your deployment is robust.
+When using the bootstrap module, there are some underlying Akka Cluster settings that should be specified to ensure that your deployment is robust.
 
-Since the target environments for this module are dynamic, that is, instances can come and go, failure needs to be considered. 
-The following configuration will result in your application being shut down after 30 seconds if it is unable to join the 
-discovered seed nodes. In this case, the orchestrator (i.e. Kubernetes or Marathon) will restart your node and the operation will 
-(presumably) eventually succeed. You will want to specify the following in your HOCON configuration:
+Since the target environments for this module are dynamic, that is, instances can come and go, failure needs to be considered. The following configuration will result in your application being shut down after 30 seconds if it is unable to join the discovered seed nodes. In this case, the orchestrator (i.e. Kubernetes or Marathon) will restart your node and the operation will (presumably) eventually succeed. You will want to specify the following in your HOCON configuration:
 
 ```
 akka.cluster.shutdown-after-unsuccessful-join-seed-nodes = 30s
@@ -110,36 +140,23 @@ akka.cluster.shutdown-after-unsuccessful-join-seed-nodes = 30s
 
 ### Rolling Updates
 #### Graceful Shutdown
-Akka Cluster can handle hard failures using a downing provider such as the split brain resolver discussed below. 
-However this should not be relied upon for regular rolling redeploys. Features such as ClusterSingletons and ClusterSharding 
-can safely restart actors on new nodes far quicker when it is certain that a node has shutdown rather than crashed.
+Akka Cluster can handle hard failures using a downing provider such as the split brain resolver discussed below.  However this should not be relied upon for regular rolling redeploys. Features such as ClusterSingletons and ClusterSharding can safely restart actors on new nodes far quicker when it is certain that a node has shutdown rather than crashed.
 
-Graceful leaving will happen with the default settings as it is part of Coordinated Shutdown. 
-Just ensure that a node is sent a SIGTERM and not a SIGKILL. Environments such as Kubernetes will do this, 
-it is important to ensure that if the CLR is wrapped with a script that it forwards the signal.
+Graceful leaving will happen with the default settings as it is part of Coordinated Shutdown. Just ensure that a node is sent a SIGTERM and not a SIGKILL. Environments such as Kubernetes will do this, it is important to ensure that if the CLR is wrapped with a script that it forwards the signal.
 
 Upon receiving a SIGTERM Coordinated Shutdown will:
 
 - Perform a Cluster.Get(system).Leave() on itself
-- The status of the member will be changed to Exiting while allowing any shards to be shutdown gracefully 
-  and ClusterSingletons to be migrated if this was the oldest node. Finally the node is removed from the Akka Cluster membership.
+- The status of the member will be changed to Exiting while allowing any shards to be shutdown gracefully and ClusterSingletons to be migrated if this was the oldest node. Finally the node is removed from the Akka Cluster membership.
 
 #### Number of Nodes to Redeploy At Once
-Akka bootstrap requires a `stable-period` where service discovery returns a stable set of contact points. 
-When doing rolling updates, it is best to wait for a node (or group of nodes) to finish joining the cluster before adding
-and removing other nodes.
+Akka bootstrap requires a `stable-period` where service discovery returns a stable set of contact points. When doing rolling updates, it is best to wait for a node (or group of nodes) to finish joining the cluster before adding and removing other nodes.
 
 #### Cluster Singleton
-`ClusterSingleton`s run on the oldest node in the cluster. To avoid singletons moving during every node deployment, 
-it is advised to start a rolling redeploy starting at the newest node. Then ClusterSingletons only move once. 
-This is the default behaviour for Kubernetes deployments. Cluster Sharding uses a singleton internally so this is important, 
-even if not using singletons directly.
+`ClusterSingleton`s run on the oldest node in the cluster. To avoid singletons moving during every node deployment, it is advised to start a rolling redeploy starting at the newest node. Then ClusterSingletons only move once. This is the default behaviour for Kubernetes deployments. Cluster Sharding uses a singleton internally so this is important, even if not using singletons directly.
 
 ### Split Brains and Ungraceful Shutdown
-Nodes can crash causing cluster members to become unreachable. This is a tricky problem as it is not possible to distinguish 
-between a network partition and a node failure. To rectify this in an automated manner, make sure you enable the 
-Split Brain Resolver. This module has a number of strategies that can ensure that the cluster continues to function 
-during network partitions and node failures.
+Nodes can crash causing cluster members to become unreachable. This is a tricky problem as it is not possible to distinguish between a network partition and a node failure. To rectify this in an automated manner, make sure you enable the Split Brain Resolver. This module has a number of strategies that can ensure that the cluster continues to function during network partitions and node failures.
 
 ## Reference Configuration
 ```

@@ -171,7 +171,7 @@ namespace Akka.Management.Cluster.Bootstrap
             if (autoStart)
             {
                 // Inject ClusterBootstrapProvider into akka.extensions
-                builder.WithExtensions(typeof(ClusterBootstrapProvider));
+                builder.WithExtension<ClusterBootstrapProvider>();
             }
         
             // Cluster bootstrap routes needs to be added for it to work with Akka.Management
