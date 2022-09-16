@@ -23,7 +23,7 @@ namespace Aws.Ecs
             var serviceName = Environment.GetEnvironmentVariable("AKKA__MANAGEMENT__CLUSTER__BOOTSTRAP__CONTACT_POINT_DISCOVERY__SERVICE_NAME");
             serviceName ??= "ecs-integration-test-app";
             
-            var host = new HostBuilder()
+            using var host = new HostBuilder()
                 .ConfigureServices((context, services) =>
                 {
                     services.AddAkka("ecsBootstrapDemo", (builder, provider) =>
