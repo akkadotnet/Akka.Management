@@ -2,7 +2,7 @@
 using Akka.Cluster;
 using Akka.Event;
 
-namespace AzureCluster
+namespace KubernetesCluster.Actors
 {
     public class ClusterListener : ReceiveActor
     {
@@ -12,7 +12,7 @@ namespace AzureCluster
         {
              var log = Context.GetLogger();
 
-            var cluster = Akka.Cluster.Cluster.Get(Context.System);
+            var cluster = Cluster.Get(Context.System);
             cluster.Subscribe(
                 Self, 
                 ClusterEvent.SubscriptionInitialStateMode.InitialStateAsEvents, 
