@@ -1,18 +1,49 @@
 # Kubernetes Api Discovery
 
-The Kubernetes API can be used to discover peers and form an Akka Cluster. The `KubernetesApi` 
-mechanism queries the Kubernetes API server to find pods with a given label. A Kubernetes service 
-isn’t required for the cluster bootstrap but may be used for external access to the application.
+The Kubernetes API can be used to discover peers and form an Akka Cluster. The `KubernetesApi` mechanism queries the Kubernetes API server to find pods with a given label. A Kubernetes service isn’t required for the cluster bootstrap but may be used for external access to the application.
 
-To find other pods, this discovery method needs to know how they are labeled, what the name of 
-the target port is, and what namespace they reside in. Below, you’ll find the default configuration. 
-It can be customized by changing these values in your HOCON configuration.
+To find other pods, this discovery method needs to know how they are labeled, what the name of the target port is, and what namespace they reside in. 
+
+## Enabling Kubernetes Discovery Using Akka.Hosting
+
+To enable Kubernetes discovery using Akka.Hosting, you can use one of the following extension methods:
+
+- Simple extension with optional label selector
+
+  ```csharp
+   builder.WithKubernetesDiscovery("app=myKubernetesAppName");
+  ```
+
+- Delegate function to modify a `KubernetesDiscoverySetup` instance
+
+  ```csharp
+  builder.WithKubernetesDiscovery(setup =>
+  {
+    setup.PodLabelSelector = "app=myKubernetesAppName";
+  });
+  ```
+
+- Provide an instance of `KubernetesDiscoverySetup` directly:
+
+  ```csharp
+  var setup = new KubernetesDiscoverySetup {
+    PodLabelSelector = "app=myKubernetesAppName"
+  };
+  builder.WithKubernetesDiscovery(setup);
+  ```
+
+## Enabling Kubernetes Discovery Using HOCON configuration
+
+To enable Kubernetes discovery via HOCON, you will need to modify your HOCON configuration:
+
+```text
+akka.discovery.method = kubernetes-api
+```
+
+Below, you’ll find the default configuration. It can be customized by changing these values in your HOCON configuration.
 
 ```
-akka.discovery {
-  # Set the following in your application.conf if you want to use this discovery mechanism:
-  method = kubernetes-api
-  kubernetes-api {
+akka.discovery.kubernetes-api {
     class = "Akka.Discovery.KubernetesApi.KubernetesApiServiceDiscovery, Akka.Discovery.KubernetesApi"
 
     # API server, cert and token information. Currently these are present on K8s versions: 1.6, 1.7, 1.8, and perhaps more
@@ -43,13 +74,70 @@ akka.discovery {
 
     # When set, validate the container is not in 'waiting' state
     container-name = ""
-  }
 }
 ```
 
 ## Using Discovery Together with Akka.Management and Cluster.Bootstrap
-All discovery plugins are designed to work with Cluster.Bootstrap to provide an automated way to form a cluster that is not based
-on hard wired seeds configuration. Some HOCON configuration is needed to make discovery work with Cluster.Bootstrap:
+All discovery plugins are designed to work with Cluster.Bootstrap to provide an automated way to form a cluster that is not based on hard wired seeds configuration. 
+
+### Configuring with [Akka.Hosting](https://github.com/akkadotnet/Akka.Hosting)
+
+Auto-starting Akka Management, Cluster Bootstrap, and Kubernetes discovery
+
+```csharp
+using var host = new HostBuilder()
+    .ConfigureServices((context, services) =>
+    {
+        services.AddAkka("k8sBootstrapDemo", (builder, provider) =>
+        {
+            builder
+                .WithRemoting("", 4053)
+                .WithClustering()
+                .WithClusterBootstrap(serviceName: "testService")
+                .WithKubernetesDiscovery();
+        });
+    }).Build();
+
+await host.RunAsync();
+```
+
+Manually starting Akka Management, Cluster Bootstrap, and Kubernetes discovery
+
+```csharp
+using var host = new HostBuilder()
+    .ConfigureServices((context, services) =>
+    {
+        services.AddAkka("k8sBootstrapDemo", (builder, provider) =>
+        {
+            builder
+                .WithRemoting("", 4053)
+                .WithClustering()
+                .WithAkkaManagement()
+                .WithClusterBootstrap(
+                    serviceName: "testService",
+                    autoStart: false)
+                .WithKubernetesDiscovery();
+            
+            builder.AddStartup(async (system, registry) =>
+            {
+                await AkkaManagement.Get(system).Start();
+                await ClusterBootstrap.Get(system).Start();
+            });
+        });
+    }).Build();
+
+await host.RunAsync();
+```
+
+In both samples above, the effective Kubernetes label selector would be "app=testService" because the default label selector is a string interpolation of "app={0}" where "{0}" is the service name taken from Cluster Bootstrap.
+
+> __NOTE__
+>
+> In order for for Kubernetes Discovery to work, you also need open _Akka.Management_ port on your Kubernetes pods (8558 by default)
+
+### Configuring with HOCON Configuration
+
+Some HOCON configuration is needed to make discovery work with Cluster.Bootstrap:
 
 ```
 akka.discovery.method = kubernetes-api
@@ -69,9 +157,7 @@ A more complete example:
 var config = ConfigurationFactory
     .ParseString(File.ReadAllText("application.conf"))
     .WithFallback(ClusterBootstrap.DefaultConfiguration())
-    .WithFallback(AkkaManagementProvider.DefaultConfiguration())
-    .WithFallback(KubernetesDiscovery.DefaultConfiguration())
-    .WithFallback(DiscoveryProvider.DefaultConfiguration());
+    .WithFallback(AkkaManagementProvider.DefaultConfiguration());
 
 var system = ActorSystem.Create("my-system", config);
 var log = Logging.GetLogger(system, this);
@@ -88,6 +174,10 @@ cluster.RegisterOnMemberUp(() => {
   log.Info($"Current up members: [{string.Join(", ", upMembers)}]")
 });
 ```
+
+> __NOTE__
+>
+> In order for for Kubernetes Discovery to work, you also need open _Akka.Management_ port on your Kubernetes pods (8558 by default)
 
 ## Role-Based Access Control
 
@@ -126,8 +216,11 @@ roleRef:
 ```
 
 ## Configuration
+
 ### Kubernetes YAML Configuration
+
 Below is an example of a YAML example taken from our [integration sample](https://github.com/akkadotnet/akka.net-integration-tests/tree/master/src/ClusterBootstrap).
+
 ```yaml
 apiVersion: v1
 kind: Namespace
