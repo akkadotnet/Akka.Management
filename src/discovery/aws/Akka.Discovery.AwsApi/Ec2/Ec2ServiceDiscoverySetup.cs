@@ -8,6 +8,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Reflection;
+using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
 using Amazon.EC2;
@@ -31,8 +33,8 @@ namespace Akka.Discovery.AwsApi.Ec2
             get => _clientConfig;
             set
             {
-                if (value != null && !typeof(AmazonEC2Config).IsAssignableFrom(value))
-                    throw new ConfigurationException($"{nameof(ClientConfig)} Type value need to extend {nameof(AmazonEC2Config)}. Was: {value.Name}");
+                if (value != null)
+                    ValidateType<AmazonEC2Config>(value, nameof(ClientConfig));
                 _clientConfig = value;
             }
         } 
@@ -51,8 +53,8 @@ namespace Akka.Discovery.AwsApi.Ec2
             get => _credProvider;
             set
             {
-                if (value != null && !typeof(Ec2CredentialProvider).IsAssignableFrom(value))
-                    throw new ConfigurationException($"{nameof(CredentialsProvider)} Type value need to extend {nameof(Ec2CredentialProvider)}. Was: {value.Name}");
+                if (value != null)
+                    ValidateType<Ec2CredentialProvider>(value, nameof(CredentialsProvider));
                 _credProvider = value;
             }
         } 
@@ -101,7 +103,9 @@ namespace Akka.Discovery.AwsApi.Ec2
         /// </returns>
         public Ec2ServiceDiscoverySetup WithClientConfig<T>() where T: AmazonEC2Config
         {
-            ClientConfig = typeof(T);
+            var value = typeof(T);
+            ValidateType<AmazonEC2Config>(value, nameof(WithClientConfig));
+            ClientConfig = value;
             return this;
         }
 
@@ -116,8 +120,25 @@ namespace Akka.Discovery.AwsApi.Ec2
         /// </returns>
         public Ec2ServiceDiscoverySetup WithCredentialProvider<T>() where T : Ec2CredentialProvider
         {
-            CredentialsProvider = typeof(T);
+            var value = typeof(T);
+            ValidateType<Ec2CredentialProvider>(value, nameof(WithCredentialProvider));
+            CredentialsProvider = value;
             return this;
+        }
+
+        private static void ValidateType<T>(Type type, string paramName)
+        {
+            if (!typeof(T).IsAssignableFrom(type))
+                throw new ConfigurationException($"{paramName} Type value need to extend {typeof(T).Name}. Was: {type.Name}");
+
+            var ctorInfo = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, Type.EmptyTypes, null);
+            if (!(ctorInfo is null)) 
+                return;
+            
+            ctorInfo = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, new [] {typeof(ExtendedActorSystem)}, null);
+            if (ctorInfo is null)
+                throw new ConfigurationException(
+                    $"{paramName} Type value need to have a parameterless constructor or one with a single {nameof(ExtendedActorSystem)} parameter");
         }
         
         internal Ec2ServiceDiscoverySettings Apply(Ec2ServiceDiscoverySettings settings)

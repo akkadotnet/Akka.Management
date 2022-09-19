@@ -8,12 +8,15 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using Akka.Actor;
+using Akka.Configuration;
 using Akka.Discovery.AwsApi.Ec2;
 using Amazon.EC2;
 using Amazon.EC2.Model;
 using Amazon.Runtime;
 using FluentAssertions;
 using Xunit;
+using static FluentAssertions.FluentActions;
 
 namespace Akka.Discovery.AwsApi.Tests
 {
@@ -98,13 +101,75 @@ namespace Akka.Discovery.AwsApi.Tests
             settings.Endpoint.Should().Be("e");
             settings.Region.Should().Be("f");
         }
+
+        [Fact(DisplayName = "Ec2ServiceDiscoverySetup Type based properties should validate values")]
+        public void StrictTypePropertyTest()
+        {
+            var setup = new Ec2ServiceDiscoverySetup();
+
+            Invoking(() => setup.ClientConfig = typeof(FakeClientConfig))
+                .Should().NotThrow();
+            Invoking(() => setup.ClientConfig = typeof(FakeClientConfig2))
+                .Should().NotThrow();
+            Invoking(() => setup.ClientConfig = typeof(FakeCredProvider))
+                .Should().ThrowExactly<ConfigurationException>().WithMessage("*Type value need to extend*");
+            Invoking(() => setup.ClientConfig = typeof(IllegalClientConfig))
+                .Should().ThrowExactly<ConfigurationException>().WithMessage("*need to have a parameterless constructor*");
+            
+            Invoking(() => setup.WithClientConfig<FakeClientConfig>())
+                .Should().NotThrow();
+            Invoking(() => setup.WithClientConfig<FakeClientConfig2>())
+                .Should().NotThrow();
+            Invoking(() => setup.WithClientConfig<IllegalClientConfig>())
+                .Should().ThrowExactly<ConfigurationException>().WithMessage("*need to have a parameterless constructor*");
+            
+            Invoking(() => setup.CredentialsProvider = typeof(FakeCredProvider))
+                .Should().NotThrow();
+            Invoking(() => setup.CredentialsProvider = typeof(FakeCredProvider2))
+                .Should().NotThrow();
+            Invoking(() => setup.CredentialsProvider = typeof(FakeClientConfig))
+                .Should().ThrowExactly<ConfigurationException>().WithMessage("*Type value need to extend*");
+            Invoking(() => setup.CredentialsProvider = typeof(IllegalCredProvider))
+                .Should().ThrowExactly<ConfigurationException>().WithMessage("*need to have a parameterless constructor*");
+            
+            Invoking(() => setup.WithCredentialProvider<FakeCredProvider>())
+                .Should().NotThrow();
+            Invoking(() => setup.WithCredentialProvider<FakeCredProvider2>())
+                .Should().NotThrow();
+            Invoking(() => setup.WithCredentialProvider<IllegalCredProvider>())
+                .Should().ThrowExactly<ConfigurationException>().WithMessage("*need to have a parameterless constructor*");
+        }
         
         private class FakeClientConfig: AmazonEC2Config
         {
         }
+
+        private class FakeClientConfig2: AmazonEC2Config
+        {
+            public FakeClientConfig2(ExtendedActorSystem system) { }
+        }
+        
+        private class IllegalClientConfig: AmazonEC2Config
+        {
+            public IllegalClientConfig(string wrongParam) { }
+        }
         
         private class FakeCredProvider: Ec2CredentialProvider
         {
+            public override AWSCredentials ClientCredentials => null;
+        }
+        
+        private class FakeCredProvider2: Ec2CredentialProvider
+        {
+            public FakeCredProvider2(ExtendedActorSystem system) { }
+            
+            public override AWSCredentials ClientCredentials => null;
+        }
+        
+        private class IllegalCredProvider: Ec2CredentialProvider
+        {
+            public IllegalCredProvider(string wrongParam) { }
+            
             public override AWSCredentials ClientCredentials => null;
         }
     }
