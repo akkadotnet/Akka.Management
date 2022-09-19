@@ -106,9 +106,8 @@ namespace Akka.Discovery.AwsApi.Ec2
         ///                 setup.ContactPointDiscovery.ServiceName = "testService";
         ///                 setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
         ///             }, autoStart: true)
-        ///             .WithAwsEc2Discovery(setup => {
-        ///                 setup.WithCredentialProvider&lt;AnonymousEc2CredentialProvider&gt;();
-        ///                 setup.TagKey = "myTag";
+        ///             .WithAwsEc2Discovery(new Ec2ServiceDiscoverySetup {
+        ///                 TagKey = "myTag"
         ///             });
         ///     }
         ///   </code>
