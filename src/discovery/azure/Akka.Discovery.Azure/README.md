@@ -2,7 +2,23 @@
 
 This module can be used as a discovery method for any cluster that has access to an Azure Table Storage service.
 
-To use `Akka.Discovery.Azure` in your project, you must also include `Akka.Discovery` in your project nuget package dependency.
+## Configuring Using Akka.Hosting
+
+You can programmatically configure `Akka.Discovery.Azure` using `Akka.Hosting`.
+
+```csharp
+using var host = new HostBuilder()
+    .ConfigureServices((hostContext, services) =>
+    {
+        services.AddAkka("actorSystem", (builder, provider) =>
+        {
+            builder.WithAzureDiscovery("your-azure-conection-string");
+        });
+    })
+    .Build();
+
+await host.RunAsync();
+```
 
 ## Configuring Using HOCON
 
@@ -45,9 +61,38 @@ var system = ActorSystem.Create("my-system", actorSystemSetup);
 ```
 
 ## Using Discovery Together with Akka.Management and Cluster.Bootstrap
-All discovery plugins are designed to work with Cluster.Bootstrap to provide an automated way to form a cluster that is not based on hard wired seeds configuration. Some HOCON configuration is needed to make discovery work with Cluster.Bootstrap:
+All discovery plugins are designed to work with Cluster.Bootstrap to provide an automated way to form a cluster that is not based on hard wired seeds configuration. 
 
+### Configuring using Akka.Hosting
+
+With Akka.Hosting, you can wire them together like this:
+```csharp
+using var host = new HostBuilder()
+    .ConfigureServices((hostContext, services) =>
+    {
+        services.AddAkka("actorSystem", (builder, provider) =>
+        {
+            builder
+                // Add Akka.Remote support
+                .WithRemoting(hostname: "", port: 4053)
+                // Add Akka.Cluster support
+                .WithClustering()
+                // Add Akka.Management.Cluster.Bootstrap support
+                .WithClusterBootstrap()
+                // Add Akka.Discovery.Azure support
+                .WithAzureDiscovery("your-azure-conection-string");
+        });
+    })
+    .Build();
+
+await host.RunAsync();
 ```
+
+### Configuring using HOCON configuration
+
+Some HOCON configuration is needed to make discovery work with Cluster.Bootstrap:
+
+```text
 akka.discovery.method = azure
 akka.discovery.azure.connection-string = "UseDevelopmentStorage=true"
 akka.management.http.routes = {
