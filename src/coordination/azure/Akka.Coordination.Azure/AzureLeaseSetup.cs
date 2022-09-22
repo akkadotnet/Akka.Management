@@ -6,6 +6,7 @@
 
 using System;
 using Akka.Actor.Setup;
+using Azure.Core;
 using Azure.Identity;
 using Azure.Storage.Blobs;
 
@@ -19,7 +20,7 @@ namespace Akka.Coordination.Azure
         public TimeSpan? ApiServiceRequestTimeout { get; set; }
         public TimeSpan? BodyReadTimeout { get; set; }
         public Uri? ServiceEndpoint { get; set; }
-        public DefaultAzureCredential? AzureCredential { get; set; }
+        public TokenCredential? AzureCredential { get; set; }
         public BlobClientOptions? BlobClientOptions { get; set; }
 
         internal AzureLeaseSettings Apply(AzureLeaseSettings settings)

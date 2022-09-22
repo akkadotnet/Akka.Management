@@ -7,6 +7,7 @@
 using System;
 using Akka.Actor;
 using Akka.Configuration;
+using Azure.Core;
 using Azure.Identity;
 using Azure.Storage.Blobs;
 
@@ -30,7 +31,7 @@ namespace Akka.Coordination.Azure
             TimeSpan apiServiceRequestTimeout,
             TimeSpan? bodyReadTimeout,
             Uri? serviceEndpoint,
-            DefaultAzureCredential? azureCredential,
+            TokenCredential? azureCredential,
             BlobClientOptions? blobClientOptions)
         {
             ConnectionString = connectionString;
@@ -74,7 +75,7 @@ namespace Akka.Coordination.Azure
         public TimeSpan ApiServiceRequestTimeout { get; }
         public TimeSpan BodyReadTimeout { get; }
         public Uri? ServiceEndpoint { get; }
-        public DefaultAzureCredential? AzureCredential { get; }
+        public TokenCredential? AzureCredential { get; }
         public BlobClientOptions? BlobClientOptions { get; }
  
         public AzureLeaseSettings WithConnectionString(string connectionString)
@@ -87,7 +88,7 @@ namespace Akka.Coordination.Azure
             => Copy(bodyReadTimeout: bodyReadTimeout);
         public AzureLeaseSettings WithServiceEndpoint(Uri serviceEndpoint)
             => Copy(serviceEndpoint: serviceEndpoint);
-        public AzureLeaseSettings WithAzureCredential(DefaultAzureCredential azureCredential)
+        public AzureLeaseSettings WithAzureCredential(TokenCredential azureCredential)
             => Copy(azureCredential: azureCredential);
         public AzureLeaseSettings WithBlobClientOption(BlobClientOptions blobClientOptions)
             => Copy(blobClientOptions: blobClientOptions);
@@ -98,7 +99,7 @@ namespace Akka.Coordination.Azure
             TimeSpan? apiServiceRequestTimeout = null,
             TimeSpan? bodyReadTimeout = null,
             Uri? serviceEndpoint = null,
-            DefaultAzureCredential? azureCredential = null,
+            TokenCredential? azureCredential = null,
             BlobClientOptions? blobClientOptions = null)
             => new AzureLeaseSettings(
                 connectionString: connectionString ?? ConnectionString,
