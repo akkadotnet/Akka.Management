@@ -27,7 +27,7 @@ jobs:
           version: 3.1.x
       # Linux or macOS
       - bash: |
-          sudo npm install -g azurite@3.18.0
+          sudo npm install -g azurite@3.19.0
           sudo mkdir azurite
           sudo azurite --silent --location azurite --debug azirute/debug.log &
         displayName: 'Install and Run Azurite (Linux)'

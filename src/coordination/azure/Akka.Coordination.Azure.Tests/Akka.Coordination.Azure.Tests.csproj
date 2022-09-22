@@ -26,4 +26,10 @@
       <ProjectReference Include="..\Akka.Coordination.Azure\Akka.Coordination.Azure.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="xunit.runner.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
