@@ -41,7 +41,7 @@ jobs:
         condition: in( variables['Agent.OS'], 'Linux', 'Darwin' )
       # Windows
       - powershell: |
-          npm install -g azurite@3.17.1
+          npm install -g azurite@3.19.0
           mkdir azurite
           Start-Process azurite.cmd -PassThru
         displayName: 'Install and Run Azurite (Windows)'
