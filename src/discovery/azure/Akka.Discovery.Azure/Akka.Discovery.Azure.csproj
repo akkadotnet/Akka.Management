@@ -14,7 +14,7 @@
       <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
       <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
       <PackageReference Include="Azure.Data.Tables" Version="12.6.1" />
-      <PackageReference Include="Azure.Identity" Version="1.6.1" />
+      <PackageReference Include="Azure.Identity" Version="1.7.0" />
       <PackageReference Include="Google.Protobuf" Version="3.21.6" />
       <PackageReference Include="Grpc.Tools" Version="2.48.1">
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
