@@ -10,6 +10,7 @@ using Akka.Actor;
 using Akka.Hosting;
 using Azure.Data.Tables;
 using Azure.Identity;
+using Azure.Core;
 
 namespace Akka.Discovery.Azure
 {
@@ -81,7 +82,7 @@ namespace Akka.Discovery.Azure
         ///     The <see cref="Uri"/> to the azure table endpoint, this is usually in the form of "https://{yourAccountName}.table.core.windows.net/"
         /// </param>
         /// <param name="azureCredential">
-        ///     The <see cref="DefaultAzureCredential"/> instance that will be used to authorize the table client with Azure Table Storage service.
+        ///     The <see cref="TokenCredential"/> instance that will be used to authorize the table client with Azure Table Storage service.
         /// </param>
         /// <param name="tableClientOptions">
         ///     Optional <see cref="TableClientOptions"/> instance to configure requests to the Azure Table Storage service.
@@ -118,7 +119,7 @@ namespace Akka.Discovery.Azure
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
             Uri azureTableEndpoint,
-            DefaultAzureCredential azureCredential,
+            TokenCredential azureCredential,
             TableClientOptions tableClientOptions = null,
             string serviceName = null,
             string publicHostname = null,

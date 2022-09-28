@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using Akka.Actor.Setup;
+using Azure.Core;
 using Azure.Data.Tables;
 using Azure.Identity;
 
@@ -26,7 +27,7 @@ namespace Akka.Discovery.Azure
         public TimeSpan? RetryBackoff { get; set; }
         public TimeSpan? MaximumRetryBackoff { get; set; }
         public Uri AzureTableEndpoint { get; set; }
-        public DefaultAzureCredential AzureCredential { get; set; }
+        public TokenCredential AzureCredential { get; set; }
         public TableClientOptions TableClientOptions { get; set; }
         public AzureDiscoverySetup WithServiceName(string serviceName)
         {
@@ -91,7 +92,7 @@ namespace Akka.Discovery.Azure
 
         public AzureDiscoverySetup WithAzureCredential(
             Uri azureTableEndpoint,
-            DefaultAzureCredential credential,
+            TokenCredential credential,
             TableClientOptions tableClientOptions = null)
         {
             AzureTableEndpoint = azureTableEndpoint;
