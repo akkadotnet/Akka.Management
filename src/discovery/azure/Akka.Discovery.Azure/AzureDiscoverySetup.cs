@@ -92,7 +92,7 @@ namespace Akka.Discovery.Azure
 
         public AzureDiscoverySetup WithAzureCredential(
             Uri azureTableEndpoint,
-            DefaultAzureCredential credential,
+            TokenCredential credential,
             TableClientOptions tableClientOptions = null)
         {
             AzureTableEndpoint = azureTableEndpoint;
