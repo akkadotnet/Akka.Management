@@ -6,9 +6,7 @@
 
 #nullable enable
 using System;
-using System.Net;
 using System.Threading.Tasks;
-using Akka.Actor;
 using Akka.Configuration;
 using Akka.Coordination.Azure.Internal;
 using Akka.Util;
@@ -24,8 +22,6 @@ namespace Akka.Coordination.Azure.Tests
         private readonly AzureLeaseSettings _settings;
         private readonly AzureApiImpl _underTest;
         private const string LeaseName = "lease-1";
-        private const string ApiPath = "/apis/akka.io/v1/namespaces/lease/leases";
-        private const string LeaseApiPath = ApiPath + "/" + LeaseName;
         
         private static readonly Config BaseConfig = 
             ConfigurationFactory.ParseString(@"

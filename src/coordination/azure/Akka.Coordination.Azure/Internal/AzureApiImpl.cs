@@ -179,7 +179,7 @@ namespace Akka.Coordination.Azure.Internal
                         
                     case HttpStatusCode.Unauthorized:
                         throw new LeaseException(
-                            "Unauthorized to communicate with Kubernetes API server. " +
+                            "Unauthorized to communicate with Azure Blob API server. " +
                             $"Reason: [{e.ErrorCode}]", e);
 
                     case var unexpected:
@@ -214,7 +214,7 @@ namespace Akka.Coordination.Azure.Internal
                     HttpStatusCode.Forbidden => new LeaseException(
                         "Forbidden to communicate with Azure Blob server. " + $"Reason: [{e.ErrorCode}]", e),
                     HttpStatusCode.Unauthorized => new LeaseException(
-                        "Unauthorized to communicate with Kubernetes API server. " + $"Reason: [{e.ErrorCode}]", e),
+                        "Unauthorized to communicate with Azure Blob server. " + $"Reason: [{e.ErrorCode}]", e),
                     var unexpected => new LeaseException(
                         $"Unexpected response from API server when retrieving lease StatusCode: ${unexpected}. " +
                         $"Reason: [{e.ErrorCode}]", e)
@@ -259,7 +259,7 @@ namespace Akka.Coordination.Azure.Internal
                         
                     case HttpStatusCode.Unauthorized:
                         throw new LeaseException(
-                            "Unauthorized to communicate with Kubernetes API server. " +
+                            "Unauthorized to communicate with Azure Blob server. " +
                             $"Reason: [{e.ErrorCode}]", e);
 
                     case var unexpected:
@@ -305,7 +305,7 @@ namespace Akka.Coordination.Azure.Internal
                         
                     case HttpStatusCode.Unauthorized:
                         throw new LeaseException(
-                            "Unauthorized to communicate with Kubernetes API server. " +
+                            "Unauthorized to communicate with Azure Blob server. " +
                             $"Reason: [{e.ErrorCode}]", e);
 
                     case var unexpected:

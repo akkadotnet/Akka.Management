@@ -340,7 +340,7 @@ namespace Akka.Coordination.Azure
                 {
                     if (oldVersion == response.Value.Version)
                         throw new LeaseException(
-                            $"Requirement failed: Update response from Kubernetes API should not return the same version: Response: {response.Value}. Client: {data}");
+                            $"Requirement failed: Update response from Azure Blob should not return the same version: Response: {response.Value}. Client: {data}");
                     var operationDuration = DateTime.UtcNow - operationStartTime;
                     if (operationDuration > new TimeSpan(settings.TimeoutSettings.HeartbeatTimeout.Ticks / 2))
                     {
@@ -361,7 +361,7 @@ namespace Akka.Coordination.Azure
                 {
                     if (oldVersion == leftResponse.Version)
                         throw new LeaseException(
-                            $"Update response from Kubernetes API should not return the same version: Response: {leftResponse}. Client: {data}");
+                            $"Update response from Azure Blob should not return the same version: Response: {leftResponse}. Client: {data}");
                     // Try again as lock version has moved on but is not taken
                     who.Tell(LeaseAcquired.Instance);
                     _client.UpdateLeaseResource(leaseName, _ownerName, version)

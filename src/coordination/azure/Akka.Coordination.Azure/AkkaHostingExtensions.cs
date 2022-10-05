@@ -14,7 +14,7 @@ namespace Akka.Coordination.Azure
     public static class AkkaHostingExtensions
     {
         /// <summary>
-        ///     Adds Akka.Coordination.KubernetesApi <see cref="Lease"/> support to the <see cref="ActorSystem"/>.
+        ///     Adds Akka.Coordination.Azure <see cref="Lease"/> support to the <see cref="ActorSystem"/>.
         ///     Note that this only adds the lease plugin, you will still need to add the services that depends on
         ///     <see cref="Lease"/> to use this.
         /// </summary>
@@ -28,7 +28,7 @@ namespace Akka.Coordination.Azure
             => WithAzureLease(builder, (AzureLeaseSetup)null);
         
         /// <summary>
-        ///     Adds Akka.Coordination.KubernetesApi <see cref="Lease"/> support to the <see cref="ActorSystem"/>.
+        ///     Adds Akka.Coordination.Azure <see cref="Lease"/> support to the <see cref="ActorSystem"/>.
         ///     Note that this only adds the lease plugin, you will still need to add the services that depends on
         ///     <see cref="Lease"/> to use this.
         /// </summary>
@@ -37,7 +37,7 @@ namespace Akka.Coordination.Azure
         /// </param>
         /// <param name="configure">
         ///     An action that modifies an <see cref="AzureLeaseSetup"/> instance, used
-        ///     to configure Akka.Coordination.KubernetesApi.
+        ///     to configure Akka.Coordination.Azure.
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
@@ -55,7 +55,7 @@ namespace Akka.Coordination.Azure
         }
         
         /// <summary>
-        ///     Adds Akka.Coordination.KubernetesApi <see cref="Lease"/> support to the <see cref="ActorSystem"/>.
+        ///     Adds Akka.Coordination.Azure <see cref="Lease"/> support to the <see cref="ActorSystem"/>.
         ///     Note that this only adds the lease plugin, you will still need to add the services that depends on
         ///     <see cref="Lease"/> to use this.
         /// </summary>
