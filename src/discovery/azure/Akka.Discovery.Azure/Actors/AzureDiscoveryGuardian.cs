@@ -6,9 +6,7 @@
 
 using System;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
@@ -136,25 +134,17 @@ namespace Akka.Discovery.Azure.Actors
             switch (message)
             {
                 case Start _:
-                    try
+                    if (IPAddress.TryParse(_settings.HostName, out _address))
                     {
-                        if (IPAddress.TryParse(_settings.HostName, out _address))
-                        {
-                            if (_address.Equals(IPAddress.Any) || _address.Equals(IPAddress.IPv6Any))
-                                throw new ConfigurationException($"IPAddress.Any or IPAddress.IPv6Any cannot be used as host address. Was: {_settings.HostName}");
+                        if (_address.Equals(IPAddress.Any) || _address.Equals(IPAddress.IPv6Any))
+                            throw new ConfigurationException($"IPAddress.Any or IPAddress.IPv6Any cannot be used as host address. Was: {_settings.HostName}");
 
-                            _host = Dns.GetHostName();
-                        }
-                        else
-                        {
-                            _host = _settings.HostName;
-                            var addresses = Dns.GetHostAddresses(_host);
-                            _address = addresses.First(i => i.AddressFamily == AddressFamily.InterNetwork && !Equals(i, IPAddress.Any));
-                        }
+                        _host = null;
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        throw new InvalidOperationException($"Failed to invoke Dns.GetHostEntry() for host [{_host}]", ex);
+                        _host = _settings.HostName;
+                        _address = null;
                     }
                     
                     _retryCount = 0;

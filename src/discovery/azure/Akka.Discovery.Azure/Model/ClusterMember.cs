@@ -10,6 +10,7 @@ using Azure;
 using Azure.Data.Tables;
 using Google.Protobuf;
 
+#nullable enable
 namespace Akka.Discovery.Azure.Model
 {
     /// <summary>
@@ -48,8 +49,8 @@ namespace Akka.Discovery.Azure.Model
         internal ClusterMemberProto Proto { get; }
         
         public string ServiceName => PartitionKey;
-        public string Host => Proto.Host;
-        public IPAddress Address => IPAddress.Parse(Proto.Address);
+        public string? Host => !string.IsNullOrWhiteSpace(Proto.Host) ? Proto.Host : null;
+        public IPAddress? Address => !string.IsNullOrWhiteSpace(Proto.Address) ? IPAddress.Parse(Proto.Address) : null;
         public int Port => Proto.Port;
         public DateTime Created => Proto.Created.ToDateTime();
         public DateTime LastUpdate { get; }
@@ -66,15 +67,18 @@ namespace Akka.Discovery.Azure.Model
         
         public static TableEntity CreateEntity(
             string serviceName,
-            string host,
-            IPAddress address,
+            string? host,
+            IPAddress? address,
             int port)
         {
+            if (host is null && address is null)
+                throw new Exception($"{nameof(host)} and {nameof(address)} can not both be null");
+            
             var now = DateTime.UtcNow;
             var proto = new ClusterMemberProto
             {
-                Host = host,
-                Address = address.MapToIPv4().ToString(),
+                Host = host ?? "",
+                Address = address?.MapToIPv4().ToString() ?? "",
                 Port = port,
                 Created = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(now),
             };
@@ -90,10 +94,10 @@ namespace Akka.Discovery.Azure.Model
         }
 
         public static ClusterMember FromEntity(TableEntity entity)
-            => entity != null ? new ClusterMember(entity) : null;
+            => new ClusterMember(entity);
         
-        internal static string CreateRowKey(string host, IPAddress address, int port)
-            => $"{host}-{address.MapToIPv4()}-{port}";
+        internal static string CreateRowKey(string? host, IPAddress? address, int port)
+            => $"{host}-{address?.MapToIPv4()}-{port}";
 
         internal static (string, IPAddress, int) ParseRowKey(string rowKey)
         {
@@ -124,14 +128,15 @@ namespace Akka.Discovery.Azure.Model
         {
             unchecked
             {
-                var hashCode = (PartitionKey != null ? PartitionKey.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ (RowKey != null ? RowKey.GetHashCode() : 0);
+                var hashCode = PartitionKey.GetHashCode();
+                hashCode = (hashCode * 397) ^ RowKey.GetHashCode();
                 hashCode = (hashCode * 397) ^ LastUpdate.GetHashCode();
                 return hashCode;
             }
         }
 
         public override string ToString()
-            => $"[ClusterMember:{ServiceName}@{Address}:{Port}] Host: {Host}, Created: {Created}, Last update: {LastUpdate}";
+            => $"[ClusterMember] ServiceName: {ServiceName}, Address: {Address?.ToString() ?? "null"}, Port: {Port}] " +
+               $"Host: {Host ?? "null"}, Created: {Created}, Last update: {LastUpdate}";
     }
 }
