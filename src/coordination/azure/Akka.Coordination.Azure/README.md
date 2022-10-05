@@ -33,7 +33,7 @@ using var host = new HostBuilder()
                 .WithRemoting("<akka-node-host-name-or-ip>", 4053)
                 .WithClustering(sbrOption: new LeaseMajorityOption
                 {
-                    LeaseImplementation = "akka.coordination.lease.azure",
+                    LeaseImplementation = AzureLeaseOption.Instance,
                     LeaseName = "myActorSystem-akka-sbr"
                 })
                 .WithAzureLease("<your-Azure-Blob-Storage-connection-string>");
