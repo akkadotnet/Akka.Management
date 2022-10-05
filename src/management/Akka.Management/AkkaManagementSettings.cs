@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using Akka.Configuration;
 
 namespace Akka.Management
@@ -65,9 +66,8 @@ namespace Akka.Management
             if (string.IsNullOrWhiteSpace(Hostname) || Hostname.Equals("<hostname>"))
             {
                 var addresses = Dns.GetHostAddresses(Dns.GetHostName());
-                Hostname = addresses
-                    .First(ip => !Equals(ip, IPAddress.Any) && !Equals(ip, IPAddress.IPv6Any))
-                    .ToString();
+                var ip = addresses.First(ip => !Equals(ip, IPAddress.Any) && !Equals(ip, IPAddress.IPv6Any));
+                Hostname = ip.AddressFamily == AddressFamily.InterNetworkV6 ? $"[{ip}]" : ip.ToString();
             }
 
             Port = port;
