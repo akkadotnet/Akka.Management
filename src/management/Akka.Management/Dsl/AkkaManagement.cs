@@ -32,6 +32,17 @@ namespace Akka.Management
         private readonly AtomicReference<Task<ServerBinding>> _bindingFuture = new AtomicReference<Task<ServerBinding>>();
 
         public AkkaManagementSettings Settings { get; }
+        
+        public string HostName
+        {
+            get
+            {
+                var hostname = Settings.Http.Hostname;
+                return hostname.Count(c => c == ':') == 7 ? $"[{hostname}]" : hostname;                
+            }
+        }
+
+        public int Port => Settings.Http.Port;
 
         public AkkaManagement(ExtendedActorSystem system)
         {
@@ -179,7 +190,7 @@ namespace Akka.Management
             const string protocol = "http"; // changed to "https" if ManagementRouteProviderSettings.withHttpsConnectionContext is use
 
             var basePath = !string.IsNullOrWhiteSpace(Settings.Http.BasePath) ? Settings.Http.BasePath + "/" : string.Empty;
-            var selfBaseUri = new Uri($"{protocol}://{Settings.Http.Hostname}:{Settings.Http.Port}{basePath}");
+            var selfBaseUri = new Uri($"{protocol}://{HostName}:{Settings.Http.Port}{basePath}");
             return ManagementRouteProviderSettings.Create(selfBaseUri, Settings.Http.RouteProvidersReadOnly);
         }
 
