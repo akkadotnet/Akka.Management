@@ -47,7 +47,7 @@ namespace KubernetesCluster
                         // Add Akka.Cluster support
                         builder.WithClustering(
                                 options: new ClusterOptions { Roles = new[] { "cluster" } },
-                                sbrOptions: new LeaseMajorityOption { LeaseImplementation = "akka.coordination.lease.kubernetes" });
+                                sbrOptions: new LeaseMajorityOption { LeaseImplementation = KubernetesLeaseOption.Instance });
                         
                         // Add Akka.Management.Cluster.Bootstrap support
                         builder.WithClusterBootstrap(setup =>
