@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using Akka.Configuration;
 
 namespace Akka.Management
