@@ -66,8 +66,7 @@ namespace Akka.Management
             if (string.IsNullOrWhiteSpace(Hostname) || Hostname.Equals("<hostname>"))
             {
                 var addresses = Dns.GetHostAddresses(Dns.GetHostName());
-                var ip = addresses.First(ip => !Equals(ip, IPAddress.Any) && !Equals(ip, IPAddress.IPv6Any));
-                Hostname = ip.AddressFamily == AddressFamily.InterNetworkV6 ? $"[{ip}]" : ip.ToString();
+                Hostname = addresses.First(ip => !Equals(ip, IPAddress.Any) && !Equals(ip, IPAddress.IPv6Any)).ToString();
             }
 
             Port = port;
