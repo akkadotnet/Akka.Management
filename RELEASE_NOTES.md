@@ -1,3 +1,27 @@
+#### 0.3.0-beta1 October 5 2022 ####
+
+Version 0.3.0-beta1 adds `Akka.Coordination.Azure` support, allowing you to use Azure Blob Storage as an Akka Lease backend. It also has a few breaking change to the `Akka.Coordination.KubernetesApi` `Akka.Hosting` support and `Akka.Discovery.Azure` `Akka.Hosting` support.
+
+* Update to [Akka.NET v1.4.43](https://github.com/akkadotnet/akka.net/releases/tag/1.4.43)
+* [[Coordination.Azure] Add Akka.Coordination.Azure Akka Lease support](https://github.com/akkadotnet/Akka.Management/pull/865)
+* [[Discovery.Aws] Add programmatic Setup class](https://github.com/akkadotnet/Akka.Management/pull/802)
+* [[Discovery.Aws] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/818)
+* [[Discovery.Aws.Ec2] Add validator to Ec2ServiceDiscoverySetup](https://github.com/akkadotnet/Akka.Management/pull/846)
+* [[Discovery.Azure] Refactor `DefaultAzureCredential` to `TokenCredential`](https://github.com/akkadotnet/Akka.Management/pull/892)
+* [[Discovery.Kubernetes] Add programmatic Setup class](https://github.com/akkadotnet/Akka.Management/pull/819)
+* [[Discovery.Kubernetes] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/822)
+* Update dependency NuGet package versions
+  * [Bump Akka.Hosting to 0.5.0](https://github.com/akkadotnet/Akka.Management/pull/907)
+  * [Bump Azure.Identity to 1.7.0](https://github.com/akkadotnet/Akka.Management/pull/859)
+  * [Bump Google.Protobuf to 3.21.7](https://github.com/akkadotnet/Akka.Management/pull/897)
+  * [Bump AWSSDK.ECS to 3.7.5.89](https://github.com/akkadotnet/Akka.Management/pull/905)
+  * [Bump AWSSDK.EC2 to 3.7.94](https://github.com/akkadotnet/Akka.Management/pull/906)
+  * [Bump AWSSDK.S3 to 3.7.9.54](https://github.com/akkadotnet/Akka.Management/pull/855)
+
+To use `Akka.Coordination.KubernetesApi` or `Akka.Coordination.Azure` lease with Akka split-brain resolver, instead of passing in a HOCON path into `LeaseImplementation` property inside the `LeaseMajorityOption` class, you will need to pass in `KubernetesLeaseOption` or `AzureLeaseOption` instance instead.
+
+All `DefaultAzureCredential` parameters and properties has been refactored to its base class `TokenCredential` for better flexibility. 
+
 #### 0.2.5-beta4 August 16 2022 ####
 
 Version 0.2.5-beta4 adds `Akka.Hosting` support to `Akka.Coordination.KubernetesApi`, allowing you to set a Kubernetes based lease lock through `Akka.Hosting`.
