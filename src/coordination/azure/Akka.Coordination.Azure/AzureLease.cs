@@ -18,7 +18,7 @@ using Akka.Util.Internal;
 #nullable enable
 namespace Akka.Coordination.Azure
 {
-    public class AzureLease: Lease
+    public sealed class AzureLease: Lease
     {
         public static Config DefaultConfiguration
             => ConfigurationFactory.FromResource<AzureLease>("Akka.Coordination.Azure.reference.conf");

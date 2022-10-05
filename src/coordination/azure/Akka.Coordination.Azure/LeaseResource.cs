@@ -86,7 +86,8 @@ namespace Akka.Coordination.Azure
             unchecked
             {
                 var hashCode = Version.GetHashCode();
-                hashCode = (hashCode * 397) ^ Owner.GetHashCode();
+                if(Owner is { })
+                    hashCode = (hashCode * 397) ^ Owner.GetHashCode();
                 hashCode = (hashCode * 397) ^ Time.GetHashCode();
                 return hashCode;
             }

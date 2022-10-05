@@ -8,13 +8,12 @@ using System;
 using Akka.Actor;
 using Akka.Configuration;
 using Azure.Core;
-using Azure.Identity;
 using Azure.Storage.Blobs;
 
 #nullable enable
 namespace Akka.Coordination.Azure
 {
-    public class AzureLeaseSettings
+    public sealed class AzureLeaseSettings
     {
         public static readonly AzureLeaseSettings Empty = new AzureLeaseSettings(
             connectionString: "",
@@ -25,7 +24,7 @@ namespace Akka.Coordination.Azure
             azureCredential: null,
             blobClientOptions: null); 
         
-        public AzureLeaseSettings(
+        private AzureLeaseSettings(
             string connectionString,
             string containerName,
             TimeSpan apiServiceRequestTimeout,

@@ -19,7 +19,7 @@ namespace Akka.Coordination.Azure.Tests
         {
             var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
             
-            builder.WithAzureLease();
+            builder.WithAzureLease("");
             
             builder.Configuration.HasValue.Should().BeTrue();
             builder.Configuration.Value.GetConfig("akka.coordination.lease.azure")
@@ -62,7 +62,7 @@ namespace Akka.Coordination.Azure.Tests
             setup.ContainerName.Should().Be("underTest");
         }
 
-        private AzureLeaseSetup ExtractSetup(AkkaConfigurationBuilder builder)
+        private static AzureLeaseSetup ExtractSetup(AkkaConfigurationBuilder builder)
         {
             return (AzureLeaseSetup) builder.Setups.FirstOrDefault(s => s is AzureLeaseSetup);
         }

@@ -16,7 +16,7 @@ using Azure;
 namespace Akka.Coordination.Azure
 {
     [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-    internal class LeaseActor : FSM<LeaseActor.IState, LeaseActor.IData>, IWithTimers
+    internal sealed class LeaseActor : FSM<LeaseActor.IState, LeaseActor.IData>, IWithTimers
     {
         #region Statics
         public interface IState { }

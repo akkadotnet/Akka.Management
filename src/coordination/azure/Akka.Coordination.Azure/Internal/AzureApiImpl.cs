@@ -17,12 +17,11 @@ using Akka.Util;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using Azure.Storage.Blobs.Specialized;
 using Newtonsoft.Json;
 
 namespace Akka.Coordination.Azure.Internal
 {
-    internal class AzureApiImpl: IAzureApi
+    internal sealed class AzureApiImpl: IAzureApi
     {
         private readonly AzureLeaseSettings _settings;
         private readonly ILoggingAdapter _log;
@@ -222,11 +221,11 @@ namespace Akka.Coordination.Azure.Internal
             }
             catch (OperationCanceledException e)
             {
-                throw new LeaseTimeoutException($"Timed out reading lease {leaseName}. Is the API server up?", e);
+                throw new LeaseTimeoutException($"Timed out reading lease {leaseName}", e);
             }
             catch (TimeoutException e)
             {
-                throw new LeaseTimeoutException($"Timed out reading lease {leaseName}. Is the API server up?", e);
+                throw new LeaseTimeoutException($"Timed out reading lease {leaseName}", e);
             }
         }
         
@@ -270,11 +269,11 @@ namespace Akka.Coordination.Azure.Internal
             }
             catch (OperationCanceledException e)
             {
-                throw new LeaseTimeoutException($"Timed out reading lease {leaseName}. Is the API server up?", e);
+                throw new LeaseTimeoutException($"Timed out reading lease {leaseName}", e);
             }
             catch (TimeoutException e)
             {
-                throw new LeaseTimeoutException($"Timed out reading lease {leaseName}. Is the API server up?", e);
+                throw new LeaseTimeoutException($"Timed out reading lease {leaseName}", e);
             }
         }
 
@@ -316,11 +315,11 @@ namespace Akka.Coordination.Azure.Internal
             }
             catch (OperationCanceledException e)
             {
-                throw new LeaseTimeoutException($"Timed out removing lease {leaseName}. It is not known if the remove happened. Is the API server up?", e);
+                throw new LeaseTimeoutException($"Timed out removing lease {leaseName}. It is not known if the remove operation happened", e);
             }
             catch (TimeoutException e)
             {
-                throw new LeaseTimeoutException($"Timed out removing lease {leaseName}. It is not known if the remove happened. Is the API server up?", e);
+                throw new LeaseTimeoutException($"Timed out removing lease {leaseName}. It is not known if the remove operation happened", e);
             }
         }
         

@@ -515,14 +515,14 @@ namespace Akka.Coordination.Azure.Tests
         }
     }
     
-    internal class MockKubernetesApi : IAzureApi
+    internal class MockAzureApi : IAzureApi
     {
         private readonly IActorRef _currentLease;
         private readonly IActorRef _updateLease;
             
         private readonly TimeSpan _timeout = TimeSpan.FromSeconds(10);
 
-        public MockKubernetesApi(IActorRef currentLease, IActorRef updateLease)
+        public MockAzureApi(IActorRef currentLease, IActorRef updateLease)
         {
             _currentLease = currentLease;
             _updateLease = updateLease;
@@ -544,7 +544,7 @@ namespace Akka.Coordination.Azure.Tests
         protected const string LeaseName = "sbr";
         protected const string OwnerName = "owner1";
 
-        private MockKubernetesApi? _mockKubernetesApi;
+        private MockAzureApi? _mockAzureApi;
 
         protected int CurrentVersionCount { get; private set; } = 1;
 
@@ -618,12 +618,12 @@ namespace Akka.Coordination.Azure.Tests
         {
             _leaseProbe = CreateTestProbe();
             _updateProbe = CreateTestProbe();
-            _mockKubernetesApi = new MockKubernetesApi(LeaseProbe.Ref, UpdateProbe.Ref);
+            _mockAzureApi = new MockAzureApi(LeaseProbe.Ref, UpdateProbe.Ref);
             _granted = new AtomicBoolean();
             _senderProbe = CreateTestProbe();
 
             _underTest?.Tell(PoisonPill.Instance);
-            _underTest = Sys.ActorOf(LeaseActor.Props(_mockKubernetesApi, LeaseSettings, LeaseName, Granted));
+            _underTest = Sys.ActorOf(LeaseActor.Props(_mockAzureApi, LeaseSettings, LeaseName, Granted));
         }
 
         private void Reset()
@@ -637,7 +637,7 @@ namespace Akka.Coordination.Azure.Tests
             _updateProbe = null;
             _senderProbe = null;
             _underTest = null;
-            _mockKubernetesApi = null;
+            _mockAzureApi = null;
             _granted = null;
         }
 

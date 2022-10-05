@@ -7,13 +7,12 @@
 using System;
 using Akka.Actor.Setup;
 using Azure.Core;
-using Azure.Identity;
 using Azure.Storage.Blobs;
 
 #nullable enable
 namespace Akka.Coordination.Azure
 {
-    public class AzureLeaseSetup : Setup
+    public sealed class AzureLeaseSetup : Setup
     {
         public string? ConnectionString { get; set; }
         public string? ContainerName { get; set; }

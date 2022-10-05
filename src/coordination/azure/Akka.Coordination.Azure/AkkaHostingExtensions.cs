@@ -1,6 +1,5 @@
 ﻿// -----------------------------------------------------------------------
 //  <copyright file="AkkaHostingExtensions.cs" company="Akka.NET Project">
-//      Copyright (C) 2009-2022 Lightbend Inc. <http://www.lightbend.com>
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
@@ -21,11 +20,14 @@ namespace Akka.Coordination.Azure
         /// <param name="builder">
         ///     The builder instance being configured.
         /// </param>
+        /// <param name="connectionString">
+        ///     The Azure Blob Storage connection string
+        /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
-        public static AkkaConfigurationBuilder WithAzureLease(this AkkaConfigurationBuilder builder)
-            => WithAzureLease(builder, (AzureLeaseSetup)null);
+        public static AkkaConfigurationBuilder WithAzureLease(this AkkaConfigurationBuilder builder, string connectionString)
+            => WithAzureLease(builder, new AzureLeaseSetup{ ConnectionString = connectionString });
         
         /// <summary>
         ///     Adds Akka.Coordination.Azure <see cref="Lease"/> support to the <see cref="ActorSystem"/>.

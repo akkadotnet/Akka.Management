@@ -77,7 +77,7 @@ namespace Akka.Coordination.Azure.Tests
         }
 
         [Fact(DisplayName = "Empty AzureLeaseSettings should contain default values")]
-        public void EmptyKubernetesSettingsTest()
+        public void EmptyAzureSettingsTest()
         {
             var settings = Conf(null);
             var empty = AzureLeaseSettings.Empty;
@@ -91,7 +91,7 @@ namespace Akka.Coordination.Azure.Tests
         }
 
         [Fact(DisplayName = "AzureLeaseSettings overrides should work")]
-        public void KubernetesSettingsOverrideTest()
+        public void AzureSettingsOverrideTest()
         {
             var uri = new Uri("http://whatever:80");
             var cred = new DefaultAzureCredential();
