@@ -179,9 +179,13 @@ namespace Akka.Management
             const string protocol = "http"; // changed to "https" if ManagementRouteProviderSettings.withHttpsConnectionContext is use
 
             var basePath = !string.IsNullOrWhiteSpace(Settings.Http.BasePath) ? Settings.Http.BasePath + "/" : string.Empty;
-            var selfBaseUri = new Uri($"{protocol}://{Settings.Http.Hostname}:{Settings.Http.Port}{basePath}");
+            var hostName = IsIPv6(Settings.Http.Hostname) ? $"[{Settings.Http.Hostname}]" : Settings.Http.Hostname;
+            var selfBaseUri = new Uri($"{protocol}://{hostName}:{Settings.Http.Port}{basePath}");
             return ManagementRouteProviderSettings.Create(selfBaseUri, Settings.Http.RouteProvidersReadOnly);
         }
+
+        private static bool IsIPv6(string hostName)
+            => hostName.Count(c => c == ':') == 7;
 
         private Route[] PrepareCombinedRoutes(ManagementRouteProviderSettings providerSettings)
         {
