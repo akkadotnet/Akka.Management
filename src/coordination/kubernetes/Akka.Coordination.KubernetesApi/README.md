@@ -134,7 +134,7 @@ using var host = new HostBuilder()
                 .WithRemoting("", 4053)
                 .WithClustering(sbrOption: new LeaseMajorityOption
                 {
-                    LeaseImplementation = "akka.coordination.lease.kubernetes",
+                    LeaseImplementation = KubernetesLeaseOption.Instance,
                     LeaseName = "myActorSystem-akka-sbr"
                 });
         });

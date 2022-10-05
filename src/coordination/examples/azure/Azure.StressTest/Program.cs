@@ -35,16 +35,13 @@ coordinated-shutdown.run-by-actor-system-terminate = off")
                     // Add Akka.Cluster support
                     builder.WithClustering(
                         options: new ClusterOptions { Roles = new[] { "cluster" } },
-                        new LeaseMajorityOption { LeaseImplementation = "akka.coordination.lease.azure" });
+                        new LeaseMajorityOption { LeaseImplementation = AzureLeaseOption.Instance });
 
-                    if (ip is { })
+                    // Add Akka.Management support
+                    builder.WithAkkaManagement(setup =>
                     {
-                        // Add Akka.Management support
-                        builder.WithAkkaManagement(setup =>
-                        {
-                            setup.Http.Hostname = ip;
-                        });
-                    }
+                        setup.Http.Hostname = ip;
+                    });
                     
                     // Add Akka.Management.Cluster.Bootstrap support
                     builder.WithClusterBootstrap(setup =>
