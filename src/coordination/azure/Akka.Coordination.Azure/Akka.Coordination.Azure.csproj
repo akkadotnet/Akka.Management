@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>$(LibraryFramework)</TargetFramework>
+		<Description>Akka.NET coordination module for Microsoft Azure</Description>
+		<PackageTags>$(AkkaPackageTags);Azure;</PackageTags>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<LangVersion>8.0</LangVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Remove="protobuf\LeaseResource.proto" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Akka.Discovery" Version="$(AkkaVersion)" />
+		<PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
+		<PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
+		<PackageReference Include="Azure.Identity" Version="1.6.1" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.13.1" />
+		<PackageReference Include="Google.Protobuf" Version="3.21.6" />
+		<PackageReference Include="Grpc.Tools" Version="2.48.1">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="reference.conf" />
+	</ItemGroup>
+
+</Project>
