@@ -7,6 +7,7 @@
 using System;
 using System.Net;
 using Akka.Actor;
+using Azure.Core;
 using Azure.Data.Tables;
 using Azure.Identity;
 
@@ -74,7 +75,7 @@ namespace Akka.Discovery.Azure
             TimeSpan retryBackoff,
             TimeSpan maximumRetryBackoff,
             Uri azureTableEndpoint,
-            DefaultAzureCredential azureCredential,
+            TokenCredential azureCredential,
             TableClientOptions tableClientOptions)
         {
             if (ttlHeartbeatInterval <= TimeSpan.Zero)
@@ -135,7 +136,7 @@ namespace Akka.Discovery.Azure
         public TimeSpan RetryBackoff { get; }
         public TimeSpan MaximumRetryBackoff { get; }
         public Uri AzureTableEndpoint { get; }
-        public DefaultAzureCredential AzureAzureCredential { get; }
+        public TokenCredential AzureAzureCredential { get; }
         public TableClientOptions TableClientOptions { get; }
 
         public override string ToString()
@@ -187,7 +188,7 @@ namespace Akka.Discovery.Azure
 
         public AzureDiscoverySettings WithAzureCredential(
             Uri azureTableEndpoint,
-            DefaultAzureCredential credential,
+            TokenCredential credential,
             TableClientOptions tableClientOptions = null)
             => Copy(
                 azureTableEndpoint: azureTableEndpoint,
@@ -207,7 +208,7 @@ namespace Akka.Discovery.Azure
             TimeSpan? retryBackoff = null,
             TimeSpan? maximumRetryBackoff = null,
             Uri azureTableEndpoint = null,
-            DefaultAzureCredential credential = null,
+            TokenCredential credential = null,
             TableClientOptions tableClientOptions = null)
             => new AzureDiscoverySettings(
                 serviceName: serviceName ?? ServiceName,
