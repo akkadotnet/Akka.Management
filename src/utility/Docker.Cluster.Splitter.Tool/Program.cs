@@ -73,9 +73,9 @@ COMMAND is a string in the form of
 
 <int> [FROM <int> [<int>]...] [AND <int> [FROM] <int> [<int>]...]...
 
-Where <int> is the docker container name NUMBER in the ""{CLUSTER}-{NUMBER}"" pattern.
-If FROM is not omitted, then the listed node(s) will be split from the list of nodes in the FROM section.
-If FROM is omitted, then the listed node(s) will be split from the rest of the nodes in the cluster.
+- <int> is the docker container name NUMBER in the ""{CLUSTER}-{NUMBER}"" pattern.
+- If FROM is not omitted, then the listed node(s) will be split from the list of nodes in the FROM section.
+- If FROM is omitted, then the listed node(s) will be split from the rest of the nodes in the cluster.
 
 NOTE:
 The cluster service WILL NEED to have NET_ADMIN capability enabled inside the docker-compose.yaml file.
@@ -86,8 +86,6 @@ version: '3'
 services:
   cluster:
     image: azure.stresstest:0.2.4
-    depends_on: 
-      - azurite
     cap_add:
       - NET_ADMIN");
 }
