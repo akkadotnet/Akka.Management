@@ -5,10 +5,10 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
-namespace Docker.Cluster.Splitter;
+namespace Docker.Cluster.Splitter.Tool;
 
 public enum ParseState
 {
-    Num,
-    From,
+    NumTarget,
+    NumFrom,
 }

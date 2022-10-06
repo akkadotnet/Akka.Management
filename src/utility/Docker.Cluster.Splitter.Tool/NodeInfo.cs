@@ -4,11 +4,11 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
-namespace Docker.Cluster.Splitter;
+namespace Docker.Cluster.Splitter.Tool;
 
 public sealed class NodeInfo
 {
-    public NodeInfo(string id, string name, string address)
+    public NodeInfo(string id, string name, string? address)
     {
         Id = id;
         Name = name;
@@ -17,5 +17,8 @@ public sealed class NodeInfo
 
     public string Id { get; }
     public string Name { get; }
-    public string Address { get; }
+    public string? Address { get; }
+
+    public override string ToString()
+        => $"[{Id}] {Name}:{Address}";
 }

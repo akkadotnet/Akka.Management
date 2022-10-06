@@ -9,7 +9,7 @@ using System.Collections.Immutable;
 using Docker.DotNet;
 using Docker.DotNet.Models;
 
-namespace Docker.Cluster.Splitter;
+namespace Docker.Cluster.Splitter.Tool;
 
 public static class DockerExtensions
 {
@@ -19,12 +19,22 @@ public static class DockerExtensions
         string networkName)
     {
         var networkResponse = await client.Networks.InspectNetworkAsync(networkName);
-        var result = networkResponse.Containers.Select(kvp => 
-            new NodeInfo(
+        var result = networkResponse.Containers.Select(kvp =>
+        {
+            var rawIp = string.IsNullOrEmpty(kvp.Value.IPv4Address) ? kvp.Value.IPv6Address : kvp.Value.IPv4Address;
+            string? ip = null;
+            if(!string.IsNullOrEmpty(rawIp))
+            {
+                var parts = rawIp.Split("/");
+                ip = parts[0];
+            }
+            
+            return new NodeInfo(
                 id: kvp.Key,
                 name: kvp.Value.Name,
-                address: string.IsNullOrEmpty(kvp.Value.IPv4Address) ? kvp.Value.IPv6Address : kvp.Value.IPv4Address ));
-        return result.Where(node => node.Name.StartsWith($"docker-{clusterName}-")).ToImmutableHashSet();
+                address: ip);
+        });
+        return result.Where(node => !string.IsNullOrEmpty(node.Address) && node.Name.StartsWith($"{clusterName}-")).ToImmutableHashSet();
     }
 
     public static async Task<ImmutableList<string>> CreateExecsAsync(
@@ -72,13 +82,15 @@ public static class DockerExtensions
 
             foreach (var target in targets)
             {
+                var cmd = string.Join(" && ", froms.Select(n => $"ip route add prohibit {n.Address}"));
                 var response = await client.Exec.ExecCreateContainerAsync(target.Id, new ContainerExecCreateParameters
                 {
-                    Detach = true,
-                    Privileged = true,
-                    Cmd = new[] { "/bin/bash", "-c", string.Join(" && ", froms.Select(n => $"ip route add prohibit {n.Address}"))}
+                    AttachStderr = true,
+                    AttachStdout = true,
+                    AttachStdin = true,
+                    Cmd = new[] { "/bin/bash", "-c", cmd}
                 });
-
+                
                 execIds.Add(response.ID);
             }
         }
@@ -86,6 +98,18 @@ public static class DockerExtensions
         return execIds.ToImmutableList();
     }
 
-    public static async Task ExecuteAsync(this DockerClient client, ImmutableList<string> execs)
-        => await Task.WhenAll(execs.Select(execId => client.Exec.StartContainerExecAsync(execId)));
+    public static async Task ExecuteAsync(this DockerClient client, ImmutableList<string> execIds)
+    {
+        using var cts = new CancellationTokenSource(5000);
+        await using var outStream = Console.OpenStandardOutput();
+        await using var errStream = Console.OpenStandardError();
+        var tasks = new List<Task>();
+        foreach (var execId in execIds)
+        {
+            var stream = await client.Exec.StartAndAttachContainerExecAsync(execId, false, cts.Token);
+            tasks.Add(stream.CopyOutputToAsync(outStream, outStream, errStream, cts.Token));
+        }
+        
+        await Task.WhenAll(tasks);
+    }
 }

@@ -5,7 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System.Collections.Immutable;
-using Docker.Cluster.Splitter;
+using Docker.Cluster.Splitter.Tool;
 using Docker.DotNet;
 
 if (args.Length < 3 || args[0].ToLowerInvariant() == "-h" || args[0].ToLowerInvariant() == "--help")
@@ -16,17 +16,23 @@ if (args.Length < 3 || args[0].ToLowerInvariant() == "-h" || args[0].ToLowerInva
 
 var clusterName = args[0];
 var networkName = args[1];
-var client = new DockerClientConfiguration().CreateClient();
+using var client = new DockerClientConfiguration().CreateClient();
 
 var nodes = await client.GetNodeSetAsync(clusterName, networkName);
 if (nodes.Count == 0)
 {
-    Console.WriteLine($"Could not find any containers inside {networkName} network that matches the pattern 'docker-{clusterName}-");
+    Console.WriteLine($"Could not find any containers inside {networkName} network that matches the pattern '{clusterName}-<int>'");
     PrintHelp();
     return -1;
 }
 
-var parser = new Parser(args[2].Split(' '), nodes);
+Console.WriteLine($"{nodes.Count} nodes matching pattern '{clusterName}-<int>' found inside network {networkName}:");
+foreach (var node in nodes)
+{
+    Console.WriteLine(node);
+}
+
+var parser = new Parser(args[2].Split(' '), $"{clusterName}-", nodes);
 ImmutableHashSet<Command> commands;
 try
 {
@@ -34,9 +40,13 @@ try
 }
 catch (Exception e)
 {
-    Console.WriteLine(e);
-    PrintHelp();
+    Console.Error.WriteLine(e.Message);
     return -1;
+}
+
+foreach (var command in commands)
+{
+    Console.WriteLine(command);
 }
 
 var execIds = await client.CreateExecsAsync(commands, nodes);
@@ -49,21 +59,21 @@ return 0;
 void PrintHelp()
 {
     Console.WriteLine(@"
-Docker.Cluster.Splitter - Induce a split-brain condition in a cluster created using docker-compose 
+ClusterSplitter - Induce a split-brain condition in a cluster created using docker-compose 
 
 SYNOPSIS
-Docker.Cluster.Splitter CLUSTER NETWORK COMMAND
+ClusterSplitter CLUSTER NETWORK COMMAND
 
 DESCRIPTION
 Create a split-brain condition in the CLUSTER docker cluster inside the NETWORK docker network.
 
-This tool assumes that the docker container names would be in the form of ""docker-{CLUSTER}-{NUMBER}""
+This tool assumes that the docker container names would be in the form of ""{CLUSTER}-{NUMBER}""
 
 COMMAND is a string in the form of
 
 <int> [FROM <int> [<int>]...] [AND <int> [FROM] <int> [<int>]...]...
 
-Where <int> is the docker container name NUMBER in the ""docker-{CLUSTER}-{NUMBER}"" pattern.
+Where <int> is the docker container name NUMBER in the ""{CLUSTER}-{NUMBER}"" pattern.
 If FROM is not omitted, then the listed node(s) will be split from the list of nodes in the FROM section.
 If FROM is omitted, then the listed node(s) will be split from the rest of the nodes in the cluster.
 

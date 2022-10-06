@@ -95,7 +95,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Coordination.Azure.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.StressTest", "src\coordination\examples\azure\Azure.StressTest\Azure.StressTest.csproj", "{296A0309-2370-4153-B3B0-A4105622CC9A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Docker.Cluster.Splitter", "src\utility\Docker.Cluster.Splitter\Docker.Cluster.Splitter.csproj", "{33618ED5-6A3A-4E84-BEF6-4F688C349112}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Docker.Cluster.Splitter.Tool", "src\utility\Docker.Cluster.Splitter.Tool\Docker.Cluster.Splitter.Tool.csproj", "{33618ED5-6A3A-4E84-BEF6-4F688C349112}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "utilities", "utilities", "{1B9506BF-982B-4ED4-9FB4-E6862EDD3698}"
 EndProject

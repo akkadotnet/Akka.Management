@@ -6,6 +6,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <RootNamespace>Docker.Cluster.Splitter.Tool</RootNamespace>
+        <IsPackable>false</IsPackable>
+        <AssemblyName>ClusterSplitter</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
