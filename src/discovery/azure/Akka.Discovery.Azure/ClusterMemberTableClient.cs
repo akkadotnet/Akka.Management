@@ -15,8 +15,8 @@ using Akka.Discovery.Azure.Model;
 using Akka.Event;
 using Azure;
 using Azure.Data.Tables;
-using Azure.Identity;
 
+#nullable enable
 namespace Akka.Discovery.Azure
 {
     internal class ClusterMemberTableClient
@@ -25,7 +25,7 @@ namespace Akka.Discovery.Azure
         private readonly TableClient _client;
         private readonly string _serviceName;
         private bool _initialized;
-        private ClusterMember _entity;
+        private ClusterMember? _entity;
 
         public ClusterMemberTableClient(
             AzureDiscoverySettings settings,
@@ -48,7 +48,7 @@ namespace Akka.Discovery.Azure
         /// <param name="port">the public Akka.Management port of this node</param>
         /// <param name="token">CancellationToken to cancel this operation</param>
         /// <returns>The immutable Azure cluster member entity entry of this node</returns>
-        public async ValueTask<ClusterMember> GetOrCreateAsync(
+        public async ValueTask<ClusterMember?> GetOrCreateAsync(
             string host,
             IPAddress address,
             int port,
@@ -83,7 +83,7 @@ namespace Akka.Discovery.Azure
 
             _entity = ClusterMember.FromEntity(entity);
             if(_log.IsDebugEnabled)
-                _log.Debug($"[{_serviceName}@{_entity.Address}:{_entity.Port}] New entry row created.");
+                _log.Debug($"[{_serviceName}:{_entity}] New entry row created.");
             return _entity;
         }
 
@@ -96,7 +96,7 @@ namespace Akka.Discovery.Azure
         /// <returns>
         /// All cluster member entries that has their LastUpdate value greater than <paramref name="lastUpdate"/>
         /// </returns>
-        public async Task<ImmutableList<ClusterMember>> GetAllAsync(long lastUpdate, CancellationToken token = default)
+        public async Task<ImmutableList<ClusterMember>?> GetAllAsync(long lastUpdate, CancellationToken token = default)
         {
             if (!await EnsureInitializedAsync(token))
                 return null;
@@ -112,7 +112,7 @@ namespace Akka.Discovery.Azure
             }
             
             if(_log.IsDebugEnabled)
-                _log.Debug($"[{_serviceName}@{_entity.Address}:{_entity.Port}] Retrieved {list.Count} entry rows.");
+                _log.Debug($"[{_entity}] Retrieved {list.Count} entry rows.");
             return list.ToImmutableList();
         }
 
@@ -123,6 +123,9 @@ namespace Akka.Discovery.Azure
         /// <returns><c>true</c> if the operation succeeded</returns>
         public async Task<bool> UpdateAsync(CancellationToken token = default)
         {
+            if (_entity is null)
+                throw new InvalidOperationException("Invalid update operation, actor has not been initialized");
+                    
             if (!await EnsureInitializedAsync(token))
                 return false;
 
@@ -236,8 +239,8 @@ namespace Akka.Discovery.Azure
         /// </summary>
         /// <param name="rowKey">The row RowKey</param>
         /// <param name="token"></param>
-        /// <returns><c>true</c> if the operation succeeded</returns>
-        public async Task<ClusterMember> GetEntityAsync(string rowKey, CancellationToken token)
+        /// <returns><see cref="ClusterMember"/> retrieved</returns>
+        public async Task<ClusterMember?> GetEntityAsync(string rowKey, CancellationToken token)
         {
             var query = _client
                 .QueryAsync<TableEntity>($"PartitionKey eq '{_serviceName}' and RowKey eq '{rowKey}'")
