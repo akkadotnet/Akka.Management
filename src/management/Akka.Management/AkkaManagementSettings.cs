@@ -6,6 +6,7 @@
 //-----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
@@ -15,50 +16,73 @@ namespace Akka.Management
 {
     public class AkkaManagementSettings
     {
-        public AkkaManagementSettings(Config config) => 
-            Http = new Http(config);
+        public static AkkaManagementSettings Create(Config config)
+            => new AkkaManagementSettings(Http.Create(config));
+
+        internal AkkaManagementSettings(Http http)
+        {
+            Http = http;
+        }
 
         public Http Http { get; }
     }
 
     public class Http
     {
-        public Http(Config config)
+        public static Http Create(Config config)
         {
-            var managementConfig = config.GetConfig("akka.management");
-            var cc = managementConfig.GetConfig("http");
+            var cc = config.GetConfig("akka.management.http");
 
-            var hostname = cc.GetString("hostname");
-            if (string.IsNullOrWhiteSpace(hostname) || hostname.Equals("<hostname>"))
+            var port = cc.GetInt("port");
+            var bindPort = !int.TryParse(cc.GetString("bind-port"), out var effectiveBindPort) ? port : effectiveBindPort;
+            
+            static bool IsValidFqcn(object value) => value != null && !string.IsNullOrWhiteSpace(value.ToString()) && value.ToString() != "null";
+
+            var routeProviders = cc.GetConfig("routes").AsEnumerable()
+                .Where(pair => IsValidFqcn(pair.Value.GetString()))
+                .Select(pair => new NamedRouteProvider(pair.Key, pair.Value.GetString()));
+
+            return new Http(
+                cc.GetString("hostname"),
+                port,
+                cc.GetString("bind-hostname"),
+                bindPort,
+                cc.GetString("base-path"),
+                routeProviders,
+                cc.GetBoolean("route-providers-read-only"));
+        }
+        
+        private Http(
+            string hostname,
+            int port,
+            string effectiveBindHostname,
+            int effectiveBindPort,
+            string basePath,
+            IEnumerable<NamedRouteProvider> routeProviders,
+            bool routeProvidersReadOnly)
+        {
+            Hostname = hostname;
+            if (string.IsNullOrWhiteSpace(Hostname) || Hostname.Equals("<hostname>"))
             {
                 var addresses = Dns.GetHostAddresses(Dns.GetHostName());
-                hostname = addresses
+                Hostname = addresses
                     .First(ip => !Equals(ip, IPAddress.Any) && !Equals(ip, IPAddress.IPv6Any))
                     .ToString();
             }
-            Hostname = hostname;
 
-            Port = cc.GetInt("port");
+            Port = port;
             if (Port < 0 || Port > 65535)
                 throw new ArgumentException($"akka.management.http.port must be 0 through 65535 (was {Port})");
 
-            var effectiveBindHostname = cc.GetString("bind-hostname");
             EffectiveBindHostname = !string.IsNullOrEmpty(effectiveBindHostname) ? effectiveBindHostname : Hostname;
             
-            EffectiveBindPort = !int.TryParse(cc.GetString("bind-port"), out var effectiveBindPort) ? Port : effectiveBindPort;
+            EffectiveBindPort = effectiveBindPort;
             if (EffectiveBindPort < 0 || EffectiveBindPort > 65535)
                 throw new ArgumentException($"akka.management.http.bind-port must be 0 through 65535 (was {EffectiveBindPort})");
 
-            BasePath = cc.GetString("base-path");
-
-            static bool IsValidFqcn(object value) => value != null && !string.IsNullOrWhiteSpace(value.ToString()) && value.ToString() != "null";
-
-            RouteProviders = cc.GetConfig("routes").AsEnumerable()
-                .Where(pair => IsValidFqcn(pair.Value.GetString()))
-                .Select(pair => new NamedRouteProvider(pair.Key, pair.Value.GetString()))
-                .ToImmutableList();
-
-            RouteProvidersReadOnly = cc.GetBoolean("route-providers-read-only");
+            BasePath = basePath;
+            RouteProviders = routeProviders.ToImmutableList();
+            RouteProvidersReadOnly = routeProvidersReadOnly;
         }
 
         public string Hostname { get; }
@@ -74,6 +98,23 @@ namespace Akka.Management
         public ImmutableList<NamedRouteProvider> RouteProviders { get; }
 
         public bool RouteProvidersReadOnly { get; }
+
+        internal Http Copy(
+            string hostname = null,
+            int? port = null,
+            string effectiveBindHostname = null,
+            int? effectiveBindPort = null,
+            string basePath = null,
+            IEnumerable<NamedRouteProvider> routeProviders = null,
+            bool? routeProvidersReadOnly = null)
+            => new Http(
+                hostname: hostname ?? Hostname,
+                port: port ?? Port,
+                effectiveBindHostname: effectiveBindHostname ?? EffectiveBindHostname,
+                effectiveBindPort: effectiveBindPort ?? EffectiveBindPort,
+                basePath: basePath ?? BasePath,
+                routeProviders: routeProviders ?? RouteProviders,
+                routeProvidersReadOnly: routeProvidersReadOnly ?? RouteProvidersReadOnly);
     }
 
     public sealed class NamedRouteProvider : IEquatable<NamedRouteProvider>

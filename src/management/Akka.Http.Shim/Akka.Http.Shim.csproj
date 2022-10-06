@@ -18,8 +18,7 @@
 
   <ItemGroup>
     <PackageReference Include="Akka" Version="$(AkkaVersion)" />
-    <PackageReference Condition="'$(TargetFramework)' == '$(LibraryFramework)'" Include="Microsoft.AspNetCore" Version="2.2.0" />
-    <FrameworkReference Condition="'$(TargetFramework)' == '$(NetFramework)'" Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Ceen.Httpd" Version="0.9.9" />
   </ItemGroup>
 
 </Project>

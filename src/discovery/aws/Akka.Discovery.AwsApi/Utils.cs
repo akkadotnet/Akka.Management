@@ -5,8 +5,11 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using Amazon.ECS.Model;
 
 namespace Akka.Discovery.AwsApi
 {
@@ -47,4 +50,59 @@ namespace Akka.Discovery.AwsApi
         }
     }
     
+    public static class EnumerableExtensions
+    {
+        public static IEnumerable<IEnumerable<T>> ChunkBy<T>(this IEnumerable<T> list, int chunk)
+            => list
+                .Select((value, index) => new { value, index })
+                .GroupBy(x => x.index / chunk)
+                .Select(x => x.Select(v => v.value));
+
+        public static bool IsSame<T>(this IEnumerable<T> left, IEnumerable<T> right, IEqualityComparer<T> comparer)
+        {
+            var l = new HashSet<T>(left, comparer);
+            var r = new HashSet<T>(right, comparer);
+            if (l.Count != r.Count)
+                return false;
+            var same = l.Where(tag => r.Contains(tag)).ToList();
+            return same.Count == l.Count;
+        }
+        
+        public static HashSet<T> Diff<T>(this IEnumerable<T> left, IEnumerable<T> right, IEqualityComparer<T> comparer)
+        {
+            var l = new HashSet<T>(left, comparer);
+            var r = new HashSet<T>(right, comparer);
+            var removed = l.Where(tag => r.Contains(tag)).ToList();
+
+            foreach (var remove in removed)
+            {
+                l.Remove(remove);
+                r.Remove(remove);
+            }
+            
+            var result = new HashSet<T>(l, comparer);
+            result.UnionWith(r);
+            return result;
+        }
+    }
+
+    public sealed class EcsTagComparer : IEqualityComparer<Tag>
+    {
+        public bool Equals(Tag x, Tag y)
+        {
+            if (ReferenceEquals(x, y)) return true;
+            if (ReferenceEquals(x, null)) return false;
+            if (ReferenceEquals(y, null)) return false;
+            if (x.GetType() != y.GetType()) return false;
+            return x.Key == y.Key && x.Value == y.Value;
+        }
+
+        public int GetHashCode(Tag obj)
+        {
+            unchecked
+            {
+                return ((obj.Key != null ? obj.Key.GetHashCode() : 0) * 397) ^ (obj.Value != null ? obj.Value.GetHashCode() : 0);
+            }
+        }
+    }
 }

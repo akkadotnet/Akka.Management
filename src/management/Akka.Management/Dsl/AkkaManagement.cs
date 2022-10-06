@@ -39,7 +39,11 @@ namespace Akka.Management
             _log = Logging.GetLogger(system, GetType());
 
             system.Settings.InjectTopLevelFallback(AkkaManagementProvider.DefaultConfiguration());
-            Settings = new AkkaManagementSettings(system.Settings.Config);
+            Settings = AkkaManagementSettings.Create(system.Settings.Config);
+
+            var setup = _system.Settings.Setup.Get<AkkaManagementSetup>();
+            if (setup.HasValue)
+                Settings = setup.Value.Apply(Settings);
 
             _routeProviders = LoadRouteProviders().ToImmutableList();
 
@@ -49,6 +53,27 @@ namespace Akka.Management
                 {
                     return Stop().ContinueWith(t => Done.Instance);
                 });
+            
+            var autoStart = system.Settings.Config.GetStringList("akka.extensions")
+                .Any(s => s.Contains(nameof(AkkaManagementProvider)));
+            if (autoStart)
+            {
+                _log.Info("Akka.Management loaded through 'akka.extensions' auto starting bootstrap.");
+                // Akka Management hosts the HTTP routes used by bootstrap
+                // we can't let it block extension init, so run it in a different thread and let constructor complete
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        await Get(system).Start();
+                    }
+                    catch (Exception e)
+                    {
+                        _log.Error(e, "Failed to autostart cluster bootstrap, terminating system");
+                        await system.Terminate();
+                    }
+                });
+            }
         }
 
         public static AkkaManagement Get(ActorSystem system) => system.WithExtension<AkkaManagement, AkkaManagementProvider>();
@@ -70,13 +95,22 @@ namespace Akka.Management
         /// <summary>
         /// Start an Akka HTTP server to serve the HTTP management endpoint.
         /// </summary>
-        public Task Start() => Start(Identity);
+        public Task<Uri> Start() => Start(Identity);
+
+        private Task<Uri> _startPromise;
+        public Task<Uri> Start(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings)
+        {
+            if (_startPromise != null)
+                return _startPromise;
+            _startPromise = InternalStart(transformSettings);
+            return _startPromise;
+        }
 
         /// <summary>
         /// <para>Amend the <see cref="ManagementRouteProviderSettings"/> and start an Akka HTTP server to serve the HTTP management endpoint.</para>
         /// <para>Use this when adding authentication and HTTPS.</para>
         /// </summary>
-        public async Task<Uri> Start(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings)
+        private async Task<Uri> InternalStart(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings)
         {
             var serverBindingPromise = new TaskCompletionSource<ServerBinding>();
 
@@ -101,17 +135,19 @@ namespace Akka.Management
                 
                 serverBindingPromise.SetResult(serverBinding);
 
-                var boundPort = ((DnsEndPoint)serverBinding.LocalAddress).Port;
-                _log.Info(
-                    "Bound Akka Management (HTTP) endpoint to: {0}:{1}", 
-                    ((DnsEndPoint)serverBinding.LocalAddress).Host, 
-                    boundPort);
+                var (boundAddress, boundPort) = serverBinding.LocalAddress switch
+                {
+                    DnsEndPoint ep => (ep.Host, ep.Port),
+                    IPEndPoint ep => (ep.Address.ToString(), ep.Port),
+                    _ => throw new Exception($"Unknown endpoint type: {serverBinding.LocalAddress.GetType()}")
+                };
+                _log.Info("Bound Akka Management (HTTP) endpoint to: {0}:{1}", boundAddress, boundPort);
 
                 return effectiveProviderSettings.SelfBaseUri.WithPort(boundPort);
             }
             catch (Exception ex)
             {
-                _log.Warning(ex.Message);
+                _log.Warning(ex, ex.Message);
                 throw new InvalidOperationException("Failed to start Akka Management HTTP endpoint.", ex);
             }
         }
@@ -143,9 +179,13 @@ namespace Akka.Management
             const string protocol = "http"; // changed to "https" if ManagementRouteProviderSettings.withHttpsConnectionContext is use
 
             var basePath = !string.IsNullOrWhiteSpace(Settings.Http.BasePath) ? Settings.Http.BasePath + "/" : string.Empty;
-            var selfBaseUri = new Uri($"{protocol}://{Settings.Http.Hostname}:{Settings.Http.Port}{basePath}");
+            var hostName = IsIPv6(Settings.Http.Hostname) ? $"[{Settings.Http.Hostname}]" : Settings.Http.Hostname;
+            var selfBaseUri = new Uri($"{protocol}://{hostName}:{Settings.Http.Port}{basePath}");
             return ManagementRouteProviderSettings.Create(selfBaseUri, Settings.Http.RouteProvidersReadOnly);
         }
+
+        private static bool IsIPv6(string hostName)
+            => hostName.Count(c => c == ':') == 7;
 
         private Route[] PrepareCombinedRoutes(ManagementRouteProviderSettings providerSettings)
         {
@@ -172,6 +212,10 @@ namespace Akka.Management
         {
             foreach (var (name, fqcn) in Settings.Http.RouteProviders)
             {
+                // Skip null or empty fqcn
+                if(string.IsNullOrWhiteSpace(fqcn))
+                    continue;
+                
                 var type = Type.GetType(fqcn);
                 if (type == null)
                     throw new ConfigurationException($"Could not load Type from FQCN [{fqcn}]");

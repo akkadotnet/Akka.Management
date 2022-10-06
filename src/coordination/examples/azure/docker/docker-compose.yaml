@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+  
+  cluster:
+    image: azure.stresstest:0.2.4
+    depends_on: 
+      - azurite
+    cap_add:
+      - NET_ADMIN
+    environment:
+      ACTORSYSTEM: "ClusterSystem"
+      AZURITE_HOST: "azurite"
+      USE_CHAOS: "false"
+      USE_PUBSUB: "false"

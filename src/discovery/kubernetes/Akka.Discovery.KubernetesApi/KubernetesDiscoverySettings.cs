@@ -12,21 +12,49 @@ namespace Akka.Discovery.KubernetesApi
 {
     public sealed class KubernetesDiscoverySettings
     {
+        public static readonly KubernetesDiscoverySettings Empty =
+            Create(KubernetesDiscovery.DefaultConfiguration().GetConfig("akka.discovery.kubernetes-api"));
+        
+        public static KubernetesDiscoverySettings Create(ActorSystem system)
+            => Create(system.Settings.Config.GetConfig("akka.discovery.kubernetes-api"));
+
+        public static KubernetesDiscoverySettings Create(Configuration.Config config)
+            => new KubernetesDiscoverySettings(
+                config.GetString("api-ca-path"),
+                config.GetString("api-token-path"),
+                config.GetString("api-service-host-env-name"),
+                config.GetString("api-service-port-env-name"),
+                config.GetString("pod-namespace-path"),
+                config.GetStringIfDefined("pod-namespace"),
+                config.GetString("pod-domain"),
+                config.GetString("pod-label-selector"),
+                config.GetBoolean("use-raw-ip"),
+                config.GetString("container-name")
+            );
+        
         private readonly string _podLabelSelector;
         
-        public KubernetesDiscoverySettings(ExtendedActorSystem system)
+        private KubernetesDiscoverySettings(
+            string apiCaPath,
+            string apiTokenPath,
+            string apiServiceHostEnvName,
+            string apiServicePortEnvName,
+            string podNamespacePath,
+            string podNamespace,
+            string podDomain,
+            string podLabelSelector,
+            bool rawIp,
+            string? containerName)
         {
-            var kubernetesApi = system.Settings.Config.GetConfig("akka.discovery.kubernetes-api");
-            ApiCaPath = kubernetesApi.GetString("api-ca-path");
-            ApiTokenPath = kubernetesApi.GetString("api-token-path");
-            ApiServiceHostEnvName = kubernetesApi.GetString("api-service-host-env-name");
-            ApiServicePortEnvName = kubernetesApi.GetString("api-service-port-env-name");
-            PodNamespacePath = kubernetesApi.GetString("pod-namespace-path");
-            PodNamespace = kubernetesApi.GetStringIfDefined("pod-namespace");
-            PodDomain = kubernetesApi.GetString("pod-domain");
-            _podLabelSelector = kubernetesApi.GetString("pod-label-selector");
-            RawIp = kubernetesApi.GetBoolean("use-raw-ip");
-            var containerName = kubernetesApi.GetString("container-name");
+            ApiCaPath = apiCaPath;
+            ApiTokenPath = apiTokenPath;
+            ApiServiceHostEnvName = apiServiceHostEnvName;
+            ApiServicePortEnvName = apiServicePortEnvName;
+            PodNamespacePath = podNamespacePath;
+            PodNamespace = podNamespace;
+            PodDomain = podDomain;
+            _podLabelSelector = podLabelSelector;
+            RawIp = rawIp;
             ContainerName = string.IsNullOrWhiteSpace(containerName) ? null : containerName;
         }
         
@@ -42,6 +70,51 @@ namespace Akka.Discovery.KubernetesApi
         public bool RawIp { get; }
         public string? ContainerName { get; }
 
+        public KubernetesDiscoverySettings WithApiCaPath(string apiCaPath)
+            => Copy(apiCaPath: apiCaPath);
+        public KubernetesDiscoverySettings WithApiTokenPath(string apiTokenPath)
+            => Copy(apiTokenPath: apiTokenPath);
+        public KubernetesDiscoverySettings WithApiServiceHostEnvName(string apiServiceHostEnvName)
+            => Copy(apiServiceHostEnvName: apiServiceHostEnvName);
+        public KubernetesDiscoverySettings WithApiServicePortEnvName(string apiServicePortEnvName)
+            => Copy(apiServicePortEnvName: apiServicePortEnvName);
+        public KubernetesDiscoverySettings WithPodNamespacePath(string podNamespacePath)
+            => Copy(podNamespacePath: podNamespacePath);
+        public KubernetesDiscoverySettings WithPodNamespace(string podNamespace)
+            => Copy(podNamespace: podNamespace);
+        public KubernetesDiscoverySettings WithPodDomain(string podDomain)
+            => Copy(podDomain: podDomain);
+        public KubernetesDiscoverySettings WithPodLabelSelector(string podLabelSelector)
+            => Copy(podLabelSelector: podLabelSelector);
+        public KubernetesDiscoverySettings WithRawIp(bool rawIp)
+            => Copy(rawIp: rawIp);
+        public KubernetesDiscoverySettings WithContainerName(string containerName)
+            => Copy(containerName: containerName);
+        
+        internal KubernetesDiscoverySettings Copy(
+            string? apiCaPath = null,
+            string? apiTokenPath = null,
+            string? apiServiceHostEnvName = null,
+            string? apiServicePortEnvName = null,
+            string? podNamespacePath = null,
+            string? podNamespace = null,
+            string? podDomain = null,
+            string? podLabelSelector = null,
+            bool? rawIp = null,
+            string? containerName = null)
+            => new KubernetesDiscoverySettings(
+                apiCaPath: apiCaPath?? ApiCaPath,
+                apiTokenPath: apiTokenPath?? ApiTokenPath,
+                apiServiceHostEnvName: apiServiceHostEnvName ?? ApiServiceHostEnvName,
+                apiServicePortEnvName: apiServicePortEnvName ?? ApiServicePortEnvName,
+                podNamespacePath: podNamespacePath ?? PodNamespacePath,
+                podNamespace: podNamespace ?? PodNamespace,
+                podDomain: podDomain ?? PodDomain,
+                podLabelSelector: podLabelSelector ?? _podLabelSelector,
+                rawIp: rawIp ?? RawIp,
+                containerName: containerName ?? ContainerName
+            );
+            
         public override string ToString()
             => $"Settings({ApiCaPath}, {ApiTokenPath}, {ApiServiceHostEnvName}, {ApiServicePortEnvName}, " +
                $"{PodNamespacePath}, {PodNamespace}, {PodDomain})";

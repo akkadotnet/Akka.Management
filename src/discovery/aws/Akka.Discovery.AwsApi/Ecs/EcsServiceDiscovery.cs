@@ -7,13 +7,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Util;
-using Amazon;
 using Amazon.ECS;
 using Amazon.ECS.Model;
 using EcsTask = Amazon.ECS.Model.Task;
@@ -22,24 +21,9 @@ namespace Akka.Discovery.AwsApi.Ecs
 {
     internal sealed class EcsServiceDiscovery : ServiceDiscovery
     {
-        private static Either<string, IPAddress> ContainerAddress
-        {
-            get
-            {
-                var hostName = Dns.GetHostName();
-                var ipHostEntries = Dns.GetHostEntry(hostName);
-                var ipEntries = ipHostEntries.AddressList
-                    .Where(ip => ip.IsSiteLocalAddress() && !ip.IsLoopbackAddress()).ToList();
-                if (ipEntries.Count == 0)
-                    return new Right<string, IPAddress>(ipEntries[0]);
-                return new Left<string, IPAddress>(
-                    $"Exactly one private address must be configured (found: [{string.Join(",", ipEntries)}])");
-            }
-        }
-
-        private readonly Configuration.Config _config;
-        private readonly string _cluster;
-        private readonly List<Tag> _tags = new List<Tag>();
+        public static readonly EcsTagComparer TagComparer = new EcsTagComparer();
+        
+        private readonly EcsServiceDiscoverySettings _settings;
 
         private AmazonECSClient _clientDoNotUseDirectly;
 
@@ -51,17 +35,6 @@ namespace Akka.Discovery.AwsApi.Ecs
                     return _clientDoNotUseDirectly;
 
                 var clientConfig = new AmazonECSConfig();
-                if (_config.HasPath("endpoint"))
-                {
-                    var endpoint = _config.GetString("endpoint");
-                    clientConfig.ServiceURL = endpoint;
-                }
-
-                if (_config.HasPath("region"))
-                {
-                    var region = _config.GetString("region");
-                    clientConfig.RegionEndpoint = RegionEndpoint.GetBySystemName(region);
-                }
 
                 _clientDoNotUseDirectly = new AmazonECSClient(clientConfig);
                 return _clientDoNotUseDirectly;
@@ -70,24 +43,19 @@ namespace Akka.Discovery.AwsApi.Ecs
         
         public EcsServiceDiscovery(ActorSystem system)
         {
-            _config = system.Settings.Config.GetConfig("akka.discovery.aws-api-ecs");
-            _cluster = _config.GetString("cluster");
-            var tags = _config.GetValue("tags").GetArray().Select(value => value.ToConfig()).ToList();
-            foreach (var tagValue in tags)
-            {
-                _tags.Add(new Tag
-                {
-                    Key = tagValue.GetString("key"),
-                    Value = tagValue.GetString("value")
-                });
-            }
+            _settings = AwsEcsDiscovery.Get(system).Settings;
         }
         
         public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
         {
             using (var cts = new CancellationTokenSource(resolveTimeout))
             {
-                var tasks = await ResolveTasks(EcsClient, _cluster, lookup.ServiceName, _tags, cts.Token);
+                var tasks = await ResolveTasks(
+                    ecsClient: EcsClient,
+                    cluster: _settings.Cluster,
+                    serviceName: lookup.ServiceName,
+                    tags: _settings.Tags,
+                    token: cts.Token);
 
                 var addresses = new List<ResolvedTarget>();
                 foreach (var task in tasks)
@@ -110,21 +78,13 @@ namespace Akka.Discovery.AwsApi.Ecs
             AmazonECSClient ecsClient,
             string cluster,
             string serviceName,
-            List<Tag> tags,
+            ImmutableList<Tag> tags,
             CancellationToken token)
         {
             var taskArns = await ListTaskArns(ecsClient, cluster, serviceName, token);
             var tasks = await DescribeTasks(ecsClient, cluster, taskArns, token);
-            var tasksWithTags = tasks.Where(task =>
-                {
-                    foreach (var tag in tags)
-                    {
-                        if (task.Tags.Any(t => t.Key == tag.Key && t.Value == tag.Value))
-                            return false;
-                    }
-                    return true;
-                }
-            ).ToList();
+            // only return tasks with the exact same tags as the filter
+            var tasksWithTags = tasks.Where(task => task.Tags.IsSame(tags, TagComparer)).ToList();
             return tasksWithTags;
         }
 
@@ -145,6 +105,8 @@ namespace Akka.Discovery.AwsApi.Ecs
             do
             {
                 var listTaskResult = await ecsClient.ListTasksAsync(listTaskRequest, token);
+                if (token.IsCancellationRequested)
+                    break;
                 accumulator.AddRange(listTaskResult.TaskArns);
                 listTaskRequest.NextToken = listTaskResult.NextToken;
             } while (listTaskRequest.NextToken != null);
@@ -161,22 +123,23 @@ namespace Akka.Discovery.AwsApi.Ecs
             var include = new List<string> {TaskField.TAGS};
             var accumulator = new List<EcsTask>();
             // split batch into chunks of 100 requests
-            var lists = taskArns
-                .Select((value, index) => new {value, index})
-                .GroupBy(x => x.index / 100)
-                .Select(x => x.Select(v => v.value).ToList());
+            var lists = taskArns.ChunkBy(100); 
             foreach (var arns in lists)
             {
                 var response = await ecsClient.DescribeTasksAsync(new DescribeTasksRequest
                 {
                     Cluster = cluster, 
-                    Tasks = arns,
+                    Tasks = arns.ToList(),
                     Include = include
                 }, token);
+                if (token.IsCancellationRequested)
+                    break;
+                
                 accumulator.AddRange(response.Tasks);
             }
 
             return accumulator;
         }
+
     }
 }

@@ -147,7 +147,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         {
             var exception = Record.Exception(() =>
             {
-                var settings = new ClusterBootstrapSettings(_systems[0].Settings.Config, NoLogger.Instance);
+                var settings = ClusterBootstrapSettings.Create(_systems[0].Settings.Config, NoLogger.Instance);
             });
             exception.Should().BeNull();
         }
@@ -181,7 +181,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             {
                 cluster.State.Members.Count.Should().Be(ClusterSize);
                 cluster.State.Members.Count(m => m.Status == MemberStatus.Up).Should().Be(ClusterSize);
-            }, RemainingOrDefault * ClusterSize);
+            }, RemainingOrDefault * ClusterSize * 2);
             
             // cluster bootstrap coordinator should stop after joining
             foreach (var tuple in probeList)

@@ -29,17 +29,18 @@ Update all AWSSDK versions</PackageReleaseNotes>
   <PropertyGroup>
     <AkkaPackageTags>akka;actors;actor model;Akka;concurrency;service discovery;cluster;clustering;</AkkaPackageTags>
     <LibraryFramework>netstandard2.0</LibraryFramework>
-    <NetFramework>net5.0</NetFramework>
+    <NetFramework>net6.0</NetFramework>
     <TestsNetCoreFramework>netcoreapp3.1</TestsNetCoreFramework>
-    <TestsNet>net5.0</TestsNet>
-    <XunitVersion>2.4.1</XunitVersion>
+    <TestsNet>net6.0</TestsNet>
+    <XunitVersion>2.4.2</XunitVersion>
     <XUnitRunnerVersion>2.4.3</XUnitRunnerVersion>
     <CoverletVersion>3.1.2</CoverletVersion>
-    <FluentAssertionVersion>6.6.0</FluentAssertionVersion>
-    <TestSdkVersion>17.1.0</TestSdkVersion>
-    <AkkaVersion>1.4.37</AkkaVersion>
+    <FluentAssertionVersion>6.7.0</FluentAssertionVersion>
+    <TestSdkVersion>17.3.2</TestSdkVersion>
+    <AkkaVersion>1.4.43</AkkaVersion>
+    <AkkaHostingVersion>0.5.0</AkkaHostingVersion>
     <KubernetesClientVersion>4.0.26</KubernetesClientVersion>
-    <PbmVersion>1.0.2</PbmVersion>
+    <PbmVersion>1.1.2</PbmVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
   <ItemGroup>

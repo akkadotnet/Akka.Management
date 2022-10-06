@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.17.1
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    
+  node1:
+    image: azurecluster:latest
+    ports:
+      - "8558:8558"
+    environment:
+      ACTORSYSTEM: "ClusterSystem"
+      CLUSTER_PORT: 4053
+      CLUSTER_IP: "node1"
+      AZURITE_HOST: "azurite"
+      USE_CHAOS: "false"
+      USE_PUBSUB: "false"
+      AKKA__REMOTE__DOT_NETTY__TCP__HOSTNAME: "node1"
+      AKKA__MANAGEMENT__HTTP__HOSTNAME: "node1"
+
+  node2:
+    image: azurecluster:latest
+    environment:
+      ACTORSYSTEM: "ClusterSystem"
+      CLUSTER_PORT: 4053
+      CLUSTER_IP: "node2"
+      AZURITE_HOST: "azurite"
+      USE_CHAOS: "false"
+      USE_PUBSUB: "false"
+      AKKA__REMOTE__DOT_NETTY__TCP__HOSTNAME: "node2"
+      AKKA__MANAGEMENT__HTTP__HOSTNAME: "node2"
+
+  node3:
+    image: azurecluster:latest
+    environment:
+      ACTORSYSTEM: "ClusterSystem"
+      CLUSTER_PORT: 4053
+      CLUSTER_IP: "node3"
+      AZURITE_HOST: "azurite"
+      USE_CHAOS: "false"
+      USE_PUBSUB: "false"
+      AKKA__REMOTE__DOT_NETTY__TCP__HOSTNAME: "node3"
+      AKKA__MANAGEMENT__HTTP__HOSTNAME: "node3"

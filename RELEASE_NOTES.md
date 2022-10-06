@@ -1,3 +1,87 @@
+#### 0.3.0-beta1 October 5 2022 ####
+
+Version 0.3.0-beta1 adds `Akka.Coordination.Azure` support, allowing you to use Azure Blob Storage as an Akka Lease backend. It also has a few breaking change to the `Akka.Coordination.KubernetesApi` `Akka.Hosting` support and `Akka.Discovery.Azure` `Akka.Hosting` support.
+
+* Update to [Akka.NET v1.4.43](https://github.com/akkadotnet/akka.net/releases/tag/1.4.43)
+* [[Coordination.Azure] Add Akka.Coordination.Azure Akka Lease support](https://github.com/akkadotnet/Akka.Management/pull/865)
+* [[Discovery.Aws] Add programmatic Setup class](https://github.com/akkadotnet/Akka.Management/pull/802)
+* [[Discovery.Aws] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/818)
+* [[Discovery.Aws.Ec2] Add validator to Ec2ServiceDiscoverySetup](https://github.com/akkadotnet/Akka.Management/pull/846)
+* [[Discovery.Azure] Refactor `DefaultAzureCredential` to `TokenCredential`](https://github.com/akkadotnet/Akka.Management/pull/892)
+* [[Discovery.Kubernetes] Add programmatic Setup class](https://github.com/akkadotnet/Akka.Management/pull/819)
+* [[Discovery.Kubernetes] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/822)
+* Update dependency NuGet package versions
+  * [Bump Akka.Hosting to 0.5.0](https://github.com/akkadotnet/Akka.Management/pull/907)
+  * [Bump Azure.Identity to 1.7.0](https://github.com/akkadotnet/Akka.Management/pull/859)
+  * [Bump Google.Protobuf to 3.21.7](https://github.com/akkadotnet/Akka.Management/pull/897)
+  * [Bump AWSSDK.ECS to 3.7.5.89](https://github.com/akkadotnet/Akka.Management/pull/905)
+  * [Bump AWSSDK.EC2 to 3.7.94](https://github.com/akkadotnet/Akka.Management/pull/906)
+  * [Bump AWSSDK.S3 to 3.7.9.54](https://github.com/akkadotnet/Akka.Management/pull/855)
+
+To use `Akka.Coordination.KubernetesApi` or `Akka.Coordination.Azure` lease with Akka split-brain resolver, instead of passing in a HOCON path into `LeaseImplementation` property inside the `LeaseMajorityOption` class, you will need to pass in `KubernetesLeaseOption` or `AzureLeaseOption` instance instead.
+
+All `DefaultAzureCredential` parameters and properties has been refactored to its base class `TokenCredential` for better flexibility. 
+
+#### 0.2.5-beta4 August 16 2022 ####
+
+Version 0.2.5-beta4 adds `Akka.Hosting` support to `Akka.Coordination.KubernetesApi`, allowing you to set a Kubernetes based lease lock through `Akka.Hosting`.
+
+* [[Management] Include `Exception` cause inside start-up failure warning](https://github.com/akkadotnet/Akka.Management/pull/779)
+* [[Discovery.Azure] Clean-up discovery entry during shutdown](https://github.com/akkadotnet/Akka.Management/pull/780)
+* [[Discovery.Azure] Add `DefaultAzureCredential` support](https://github.com/akkadotnet/Akka.Management/pull/778)
+* [[Discovery.Azure] Add `TableClientOption` support](https://github.com/akkadotnet/Akka.Management/pull/783)
+* [[Coordination.KubernetesApi] Add `ActorSystemSetup` support](https://github.com/akkadotnet/Akka.Management/pull/781)
+* [[Coordination.KubernetesApi] Add `Akka.Hosting` support](https://github.com/akkadotnet/Akka.Management/pull/784)
+* [[Management] Harden `Akka.Management` and `Cluster.Bootstrap` startup interaction](https://github.com/akkadotnet/Akka.Management/pull/789)
+* Update dependency NuGet package versions
+  * [Bump Grpc.Tools from 2.47.0 to 2.48.0 (#762)](https://github.com/akkadotnet/Akka.Management/pull/762)
+  * [Bump AWSSDK.CloudFormation from 3.7.11.15 to 3.7.11.20](https://github.com/akkadotnet/Akka.Management/pull/793)
+  * [Bump AWSSDK.EC2 from 3.7.81.2 to 3.7.83.3](https://github.com/akkadotnet/Akka.Management/pull/799)
+  * [Bump AWSSDK.ECS from 3.7.5.63 to 3.7.5.69](https://github.com/akkadotnet/Akka.Management/pull/798)
+  * [Bump AWSSDK.S3 from 3.7.9.39 to 3.7.9.45](https://github.com/akkadotnet/Akka.Management/pull/797)
+
+#### 0.2.5-beta3 August 16 2022 ####
+
+Version 0.2.5-beta3 adds `Akka.Hosting` support to `Akka.Management`, `Akka.Management.Cluster.Bootstrap`, and `Akka.Discovery.Azure`, allowing users to configure these modules through `Akka.Hosting`.
+
+* [[Discovery.Azure] Add shutdown cleanup implementation](https://github.com/akkadotnet/Akka.Management/pull/742)
+* [[Management] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/747)
+* [[ClusterBootstrap] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/747)
+* [[Discovery.Azure] Add Akka.Hosting support](https://github.com/akkadotnet/Akka.Management/pull/747)
+* Update dependency NuGet package versions
+  * [Bump Google.Protobuf from 3.21.4 to 3.21.5](https://github.com/akkadotnet/Akka.Management/pull/748)
+  * [Bump AWSSDK.S3 from 3.7.9.36 to 3.7.9.39](https://github.com/akkadotnet/Akka.Management/pull/758)
+  * [Bump AWSSDK.EC2 from 3.7.80.2 to 3.7.81.2](https://github.com/akkadotnet/Akka.Management/pull/758)
+  * [Bump AWSSDK.ECS from 3.7.5.60 to 3.7.5.63](https://github.com/akkadotnet/Akka.Management/pull/760)
+  * [Bump AWSSDK.CloudFormation from 3.7.11.12 to 3.7.11.15](https://github.com/akkadotnet/Akka.Management/pull/759)
+
+#### 0.2.5-beta2 August 9 2022 ####
+* [[ClusterBootstrap] Add programmatic setup to ClusterBootstrap](https://github.com/akkadotnet/Akka.Management/pull/730)
+* [[Discovery.Azure] Fix OData query bug and AskTimeoutException bug](https://github.com/akkadotnet/Akka.Management/pull/723)
+* [[Discovery.Azure] Fix inconsistent IP address resolution in guardian actor](https://github.com/akkadotnet/Akka.Management/pull/728)
+* [[Http.Shim] Replace internal HTTP server from Kestrel to Ceen.Httpd](https://github.com/akkadotnet/Akka.Management/pull/729)
+* [[Management] Add programmatic setup to Akka.Management](https://github.com/akkadotnet/Akka.Management/pull/731)
+* NuGet package version updates:
+  * [Update AWSSDK.EC2 from 3.7.79.2 to 3.7.80.2](https://github.com/akkadotnet/Akka.Management/pull/733)
+  * [Update AWSSDK.ECS from 3.7.5.57 to 3.7.5.60](https://github.com/akkadotnet/Akka.Management/pull/732)
+  * [Update Azure.Data.Tables from 12.6.0 to 12.6.1](https://github.com/akkadotnet/Akka.Management/pull/718)
+  * [Update Google.Protobuf from 3.21.2 to 3.21.4](https://github.com/akkadotnet/Akka.Management/pull/724)
+
+#### 0.2.5-beta1 August 1 2022 ####
+
+* Update to [Akka.NET v1.4.40](https://github.com/akkadotnet/akka.net/releases/tag/1.4.40)
+* Update AWS SDK versions to latest:
+  * [AWSSDK.S3 to 3.7.9.33](https://github.com/akkadotnet/Akka.Management/pull/709)
+  * [AWSSDK.EC2 to 3.7.79.2](https://github.com/akkadotnet/Akka.Management/pull/708)
+  * [AWSSDK.CloudFormation to 3.7.11.9](https://github.com/akkadotnet/Akka.Management/pull/710)
+  * [AWSSDK.ECS to 3.7.5.57](https://github.com/akkadotnet/Akka.Management/pull/711)
+* [Update PBM version to 1.1.0](https://github.com/akkadotnet/Akka.Management/pull/631)
+* [Add Akka.Discovery.Azure discovery feature](https://github.com/akkadotnet/Akka.Management/pull/716)
+
+__Akka.Discovery.Azure__
+
+This new discovery module leverages Azure Table Storage as a source for Akka.NET cluster discovery and bootstraping. A more complete documentation can be read [here](https://github.com/akkadotnet/Akka.Management/tree/dev/src/discovery/azure/Akka.Discovery.Azure)
+
 #### 0.2.4-beta3 May 5 2022 ####
 
 * [Fix async routing in netcoreapp3.1](https://github.com/akkadotnet/Akka.Management/pull/563)

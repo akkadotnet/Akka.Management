@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "Akka.Discovery.Azure.Model";
+
+message ClusterMemberProto {
+  string host = 1;
+  string address = 2;
+  int32 port = 3;
+  google.protobuf.Timestamp created = 4;
+}  

@@ -9,8 +9,14 @@
 
     <ItemGroup>
       <PackageReference Include="Akka.Discovery" Version="$(AkkaVersion)" />
-      <PackageReference Include="AWSSDK.EC2" Version="3.7.62.1" />
-      <PackageReference Include="AWSSDK.ECS" Version="3.7.5.12" />
+      <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
+      <PackageReference Include="AWSSDK.EC2" Version="3.7.95" />
+      <PackageReference Include="AWSSDK.ECS" Version="3.7.5.90" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="reference.conf" />
+      <EmbeddedResource Include="reference.conf" />
     </ItemGroup>
 
 </Project>

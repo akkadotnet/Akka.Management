@@ -87,7 +87,7 @@ metadata:
   name: lease-access
 subjects:
   - kind: User
-    name: system:serviceaccount:<YOUR NAMSPACE>:default
+    name: system:serviceaccount:<YOUR NAMESPACE>:default
 roleRef:
   kind: Role
   name: lease-access
@@ -120,7 +120,30 @@ spec:
 > 
 > The lease gets created only during an actual Split Brain.
 
-### Enable in SBR
+### Enable In SBR Using Akka.Cluster.Hosting
+
+To enable Kubernetes lease inside SBR, you need to pass a `LeaseMajorityOption` instance into the second parameter of the `WithClsutering()` extension method and specify that you're using the Kubernetes lease implementation.
+
+```csharp
+using var host = new HostBuilder()
+    .ConfigureServices((context, services) =>
+    {
+        services.AddAkka("k8sLeaseDemo", (builder, provider) =>
+        {
+            builder
+                .WithRemoting("", 4053)
+                .WithClustering(sbrOption: new LeaseMajorityOption
+                {
+                    LeaseImplementation = KubernetesLeaseOption.Instance,
+                    LeaseName = "myActorSystem-akka-sbr"
+                });
+        });
+    }).Build();
+
+await host.RunAsync();
+```
+
+### Enable In SBR Using HOCON Configuration
 
 To enable the lease for use within SBR:
 
