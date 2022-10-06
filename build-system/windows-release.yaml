@@ -23,6 +23,17 @@ variables:
     value: akkadotnet/Akka.Management #replace this
 
 steps:
+- task: UseDotNet@2
+  displayName: 'Use .NET 6 SDK 6.0.100'
+  inputs:
+    version: 6.0.100
+
+- task: UseDotNet@2
+  displayName: 'Use .NET Core Runtime 3.1.10'
+  inputs:
+    packageType: runtime
+    version: 3.1.10
+
 - task: BatchScript@1
   displayName: 'FAKE Build'
   inputs:
