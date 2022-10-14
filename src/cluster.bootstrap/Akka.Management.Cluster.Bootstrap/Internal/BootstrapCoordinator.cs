@@ -145,6 +145,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         private const string DecideTimerKey = "decide-key";
 
         private readonly Lookup _lookup;
+        private readonly int _fallbackPort;
 
         private ServiceContactsObservation _lastContactObservation;
         private ImmutableDictionary<ResolvedTarget, SeedNodesObservation> _seedNodesObservations 
@@ -164,6 +165,8 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 _settings.ContactPointDiscovery.EffectiveName(Context.System),
                 _settings.ContactPointDiscovery.PortName,
                 _settings.ContactPointDiscovery.Protocol);
+
+            _fallbackPort = _settings.ContactPoint.FallbackPort ?? AkkaManagement.Get(Context.System).Settings.Http.Port;
             
             Become(Receive());
         }
@@ -260,7 +263,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                         var contactPoints = resolved.Addresses;
                         var filteredContactPoints = SelectHosts(
                             _lookup,
-                            _settings.ContactPoint.FallbackPort,
+                            _fallbackPort,
                             _settings.ContactPoint.FilterOnFallbackPort,
                             contactPoints);
 
