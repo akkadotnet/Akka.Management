@@ -38,7 +38,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
             settings.ContactPointDiscovery.ResolveTimeout.Should().Be(TimeSpan.FromSeconds(3));
             settings.ContactPointDiscovery.ContactWithAllContactPoints.Should().BeTrue();
 
-            settings.ContactPoint.FallbackPort.Should().Be(8558);
+            settings.ContactPoint.FallbackPort.Should().BeNull();
             settings.ContactPoint.FilterOnFallbackPort.Should().BeTrue();
             settings.ContactPoint.ProbingFailureTimeout.Should().Be(TimeSpan.FromSeconds(3));
             settings.ContactPoint.ProbeInterval.Should().Be(TimeSpan.FromSeconds(1));
