@@ -1,3 +1,11 @@
+#### 0.3.0-beta2 October 20 2022 ####
+
+Version 0.3.0-beta2 is a minor release that contains some minor bug fixes. 
+
+* Update to [Akka.NET v1.4.45](https://github.com/akkadotnet/akka.net/releases/tag/1.4.45)
+* [[Cluster.Bootstrap] Fix wrong fallback port value](https://github.com/akkadotnet/Akka.Management/pull/925)
+* [Bump Azure.Storage.Blobs from 12.13.1 to 12.14.0](https://github.com/akkadotnet/Akka.Management/pull/931)
+
 #### 0.3.0-beta1 October 5 2022 ####
 
 Version 0.3.0-beta1 adds `Akka.Coordination.Azure` support, allowing you to use Azure Blob Storage as an Akka Lease backend. It also has a few breaking change to the `Akka.Coordination.KubernetesApi` `Akka.Hosting` support and `Akka.Discovery.Azure` `Akka.Hosting` support.
