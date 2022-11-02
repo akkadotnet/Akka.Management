@@ -35,10 +35,10 @@ Update all AWSSDK versions</PackageReleaseNotes>
     <XunitVersion>2.4.2</XunitVersion>
     <XUnitRunnerVersion>2.4.3</XUnitRunnerVersion>
     <CoverletVersion>3.1.2</CoverletVersion>
-    <FluentAssertionVersion>6.7.0</FluentAssertionVersion>
+    <FluentAssertionVersion>6.8.0</FluentAssertionVersion>
     <TestSdkVersion>17.3.2</TestSdkVersion>
     <AkkaVersion>1.4.45</AkkaVersion>
-    <AkkaHostingVersion>0.5.0</AkkaHostingVersion>
+    <AkkaHostingVersion>0.5.1</AkkaHostingVersion>
     <KubernetesClientVersion>4.0.26</KubernetesClientVersion>
     <PbmVersion>1.1.2</PbmVersion>
   </PropertyGroup>
