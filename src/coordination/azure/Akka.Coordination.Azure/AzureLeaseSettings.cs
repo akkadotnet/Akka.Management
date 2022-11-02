@@ -85,10 +85,16 @@ namespace Akka.Coordination.Azure
             => Copy(apiServiceRequestTimeout: apiServiceRequestTimeout);
         public AzureLeaseSettings WithBodyReadTimeout(TimeSpan bodyReadTimeout)
             => Copy(bodyReadTimeout: bodyReadTimeout);
-        public AzureLeaseSettings WithServiceEndpoint(Uri serviceEndpoint)
-            => Copy(serviceEndpoint: serviceEndpoint);
-        public AzureLeaseSettings WithAzureCredential(TokenCredential azureCredential)
-            => Copy(azureCredential: azureCredential);
+        public AzureLeaseSettings WithAzureCredential(TokenCredential azureCredential, Uri serviceEndpoint)
+        {
+            if (azureCredential is null)
+                throw new ArgumentNullException(nameof(azureCredential), "TokenCredential must not be null");
+            if(serviceEndpoint is null)
+                throw new ArgumentNullException(nameof(serviceEndpoint), "Service URI must not be null");
+            
+            return Copy(azureCredential: azureCredential, serviceEndpoint: serviceEndpoint);
+        }
+        
         public AzureLeaseSettings WithBlobClientOption(BlobClientOptions blobClientOptions)
             => Copy(blobClientOptions: blobClientOptions);
         

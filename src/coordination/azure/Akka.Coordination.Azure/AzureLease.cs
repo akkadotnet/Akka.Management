@@ -61,7 +61,7 @@ namespace Akka.Coordination.Azure
 
             var setup = system.Settings.Setup.Get<AzureLeaseSetup>();
             if (setup.HasValue)
-                azureLeaseSettings = setup.Value.Apply(azureLeaseSettings);
+                azureLeaseSettings = setup.Value.Apply(azureLeaseSettings, system);
             
             _timeout = _settings.TimeoutSettings.OperationTimeout;
             _leaseName = MakeDns1039Compatible(settings.LeaseName);
