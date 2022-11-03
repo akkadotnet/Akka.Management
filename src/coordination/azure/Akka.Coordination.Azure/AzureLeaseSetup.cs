@@ -5,7 +5,10 @@
 // -----------------------------------------------------------------------
 
 using System;
+using Akka.Actor;
 using Akka.Actor.Setup;
+using Akka.Configuration;
+using Akka.Event;
 using Azure.Core;
 using Azure.Storage.Blobs;
 
@@ -22,7 +25,7 @@ namespace Akka.Coordination.Azure
         public TokenCredential? AzureCredential { get; set; }
         public BlobClientOptions? BlobClientOptions { get; set; }
 
-        internal AzureLeaseSettings Apply(AzureLeaseSettings settings)
+        internal AzureLeaseSettings Apply(AzureLeaseSettings settings, ActorSystem? system)
         {
             if (ConnectionString is { })
                 settings = settings.WithConnectionString(ConnectionString);
@@ -36,11 +39,20 @@ namespace Akka.Coordination.Azure
             if (BodyReadTimeout is { })
                 settings = settings.WithBodyReadTimeout(BodyReadTimeout.Value);
 
-            if (ServiceEndpoint is { })
-                settings = settings.WithServiceEndpoint(ServiceEndpoint);
-
             if (AzureCredential is { })
-                settings = settings.WithAzureCredential(AzureCredential);
+            {
+                if(ServiceEndpoint is null)
+                {
+                    if (system is { })
+                    {
+                        var log = Logging.GetLogger(system, this);
+                        log.Error(
+                            "Skipping AzureCredential setup. Both AzureCredential and ServiceEndpoint must be defined.");
+                    }
+                }
+                else
+                    settings = settings.WithAzureCredential(AzureCredential, ServiceEndpoint);
+            }
 
             if (BlobClientOptions is { })
                 settings = settings.WithBlobClientOption(BlobClientOptions);
