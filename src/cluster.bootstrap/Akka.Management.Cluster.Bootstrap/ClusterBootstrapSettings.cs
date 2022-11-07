@@ -151,8 +151,7 @@ namespace Akka.Management.Cluster.Bootstrap
                 var contactPointConfig = config.GetConfig("akka.management.cluster.bootstrap.contact-point");
                 var fallback = contactPointConfig.GetString("fallback-port");
                 var fallbackPort = string.IsNullOrWhiteSpace(fallback) || fallback == "<fallback-port>"
-                    ? config.GetInt("akka.management.http.port")
-                    : int.Parse(fallback);
+                    ? (int?) null : int.Parse(fallback);
                 
                 return new ContactPointSettings(
                     fallbackPort: fallbackPort,
@@ -163,7 +162,7 @@ namespace Akka.Management.Cluster.Bootstrap
             }
             
             private ContactPointSettings(
-                int fallbackPort,
+                int? fallbackPort,
                 bool filterOnFallbackPort,
                 TimeSpan probingFailureTimeout,
                 TimeSpan probeInterval,
@@ -176,7 +175,7 @@ namespace Akka.Management.Cluster.Bootstrap
                 ProbeIntervalJitter = probeIntervalJitter;
             }
             
-            public int FallbackPort { get; }
+            public int? FallbackPort { get; }
             public bool FilterOnFallbackPort { get; }
             public TimeSpan ProbingFailureTimeout { get; }
             public TimeSpan ProbeInterval { get; }
