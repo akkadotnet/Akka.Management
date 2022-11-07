@@ -1,3 +1,18 @@
+#### 0.3.0-beta3 November 7 2022 ####
+
+Version 0.3.0-beta3 is a minor release that contains some minor bug fixes.
+
+* [[Coordination.Azure] `AzureLeaseSetup` will log an error if user did not set both `AzureCredential` and `ServiceEndpoint` properties](https://github.com/akkadotnet/Akka.Management/pull/991)
+* Update dependency NuGet package versions
+  * [Bump Petabridge.Cmd from 1.1.2 to 1.1.3](https://github.com/akkadotnet/Akka.Management/pull/954)
+  * [Bump Akka.Hosting from 0.5.0 to 0.5.1](https://github.com/akkadotnet/Akka.Management/pull/958)
+  * [Bump AWSSDK.S3 from 3.7.9.65 to 3.7.101.8](https://github.com/akkadotnet/Akka.Management/pull/995)
+  * [Bump AWSSDK.ECS from 3.7.5.90 to 3.7.100.8](https://github.com/akkadotnet/Akka.Management/pull/994)
+  * [Bump AWSSDK.EC2 from 3.7.95 to 3.7.102.1](https://github.com/akkadotnet/Akka.Management/pull/993)
+  * [Bump AWSSDK.CloudFormation from 3.7.11.41 to 3.7.101.4](https://github.com/akkadotnet/Akka.Management/pull/997)
+  * [Bump Azure.Storage.Blobs from 12.14.0 to 12.14.1](https://github.com/akkadotnet/Akka.Management/pull/957)
+  * [Bump GoogleProtobuf from 3.21.7 to 3.21.9](https://github.com/akkadotnet/Akka.Management/pull/976)
+
 #### 0.3.0-beta2 October 20 2022 ####
 
 Version 0.3.0-beta2 is a minor release that contains some minor bug fixes. 
