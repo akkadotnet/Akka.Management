@@ -42,7 +42,7 @@ namespace Akka.Management.Tests
                             logger.LogLevel = Event.LogLevel.DebugLevel;
                             logger.AddLoggerFactory();
                         })
-                            .AddHocon(TestKit.Xunit2.TestKit.DefaultConfig);
+                            .AddHocon(TestKit.Xunit2.TestKit.DefaultConfig, HoconAddMode.Append);
                         testSetup(builder);
                     });
                 }).Build();
