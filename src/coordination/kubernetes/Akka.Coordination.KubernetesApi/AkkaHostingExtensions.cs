@@ -72,7 +72,7 @@ namespace Akka.Coordination.KubernetesApi
             this AkkaConfigurationBuilder builder,
             KubernetesLeaseSetup setup)
         {
-            builder.AddHocon(KubernetesLease.DefaultConfiguration);
+            builder.AddHocon(KubernetesLease.DefaultConfiguration, HoconAddMode.Append);
             if (setup != null)
                 builder.AddSetup(setup);
             

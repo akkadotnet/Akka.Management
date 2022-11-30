@@ -66,7 +66,7 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
         }
         
         private const string ImageName = "localstack/localstack";
-        private const string Tag = "latest";
+        private const string Tag = "1.2";
         private readonly string _localStackImageName = $"{ImageName}:{Tag}";
 
         public async Task InitializeAsync()
@@ -95,7 +95,7 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
             // create the container
             await _client.Containers.CreateContainerAsync(new CreateContainerParameters
             {
-                Image = ImageName,
+                Image = _localStackImageName,
                 Name = _containerName,
                 Tty = true,
                 ExposedPorts = new Dictionary<string, EmptyStruct>
