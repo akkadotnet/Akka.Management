@@ -11,7 +11,7 @@
       <PackageReference Include="Akka.Discovery" Version="$(AkkaVersion)" />
       <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
       <PackageReference Include="AWSSDK.EC2" Version="3.7.102.1" />
-      <PackageReference Include="AWSSDK.ECS" Version="3.7.100.8" />
+      <PackageReference Include="AWSSDK.ECS" Version="3.7.102.2" />
     </ItemGroup>
 
     <ItemGroup>
