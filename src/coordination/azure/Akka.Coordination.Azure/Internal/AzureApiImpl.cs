@@ -34,16 +34,17 @@ namespace Akka.Coordination.Azure.Internal
 
             _containerClient = new Lazy<BlobContainerClient>(() =>
             {
-                var client = settings.AzureCredential != null && settings.ServiceEndpoint != null
-                    ? new BlobContainerClient(settings.ServiceEndpoint, settings.AzureCredential,
-                        settings.BlobClientOptions)
-                    : new BlobContainerClient(settings.ConnectionString, settings.ContainerName);
-
-                var response = client.Exists();
-                if (!response.Value)
-                    client.Create();
+                var serviceClient = settings.AzureCredential != null && settings.ServiceEndpoint != null
+                    ? new BlobServiceClient(settings.ServiceEndpoint, settings.AzureCredential, settings.BlobClientOptions)
+                    : new BlobServiceClient(settings.ConnectionString);
                 
-                return client;
+                var containerClient = serviceClient.GetBlobContainerClient(settings.ContainerName);
+
+                var response = containerClient.Exists();
+                if (!response.Value)
+                    containerClient.Create();
+                
+                return containerClient;
             });
         }
         
@@ -51,7 +52,7 @@ namespace Akka.Coordination.Azure.Internal
         public async Task<LeaseResource> ReadOrCreateLeaseResource(string name)
         {
             // TODO: backoff retry
-            var maxTries = 5;
+            const int maxTries = 5;
             var tries = 0;
             while (true)
             {
