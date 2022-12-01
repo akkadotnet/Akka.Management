@@ -1,6 +1,6 @@
 #### 0.3.0-beta4 December 1 2022 ####
 
-Version 0.3.0-beta3 is a minor release that contains some minor bug fixes and NuGet package updates.
+Version 0.3.0-beta4 is a minor release that contains some minor bug fixes and NuGet package updates.
 
 * Update to [Akka.NET v1.4.46](https://github.com/akkadotnet/akka.net/releases/tag/1.4.46)
 * [[Coordination.Azure] Fix missing container from REST API URI when using `AzureCredential`](https://github.com/akkadotnet/Akka.Management/pull/1063)
