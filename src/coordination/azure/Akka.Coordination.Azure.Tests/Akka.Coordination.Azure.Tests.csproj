@@ -6,6 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Akka.Hosting.TestKit" Version="$(AkkaHostingVersion)" />
+        <PackageReference Include="Akka.Cluster.Tools" Version="$(AkkaVersion)" />
         <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
         <PackageReference Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />

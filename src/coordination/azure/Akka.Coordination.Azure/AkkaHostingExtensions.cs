@@ -74,7 +74,7 @@ namespace Akka.Coordination.Azure
             this AkkaConfigurationBuilder builder,
             AzureLeaseSetup setup)
         {
-            builder.AddHocon(AzureLease.DefaultConfiguration);
+            builder.AddHocon(AzureLease.DefaultConfiguration, HoconAddMode.Append);
             if (setup != null)
                 builder.AddSetup(setup);
             
