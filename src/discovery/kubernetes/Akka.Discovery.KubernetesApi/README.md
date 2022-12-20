@@ -263,9 +263,6 @@ spec:
         app: clusterbootstrap
     spec:
       terminationGracePeriodSeconds: 35
-      dnsConfig:
-        options:
-        - name: use-vc
       containers:
       - name: clusterbootstrap
         image: akka.cluster.bootstrap:0.1.0
