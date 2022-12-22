@@ -2,6 +2,9 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
+        <Description>Akka.NET Service Discovery for Azure-hosted services. Works with App Service, Container Apps, and more.</Description>
+        <PackageTags>$(AkkaPackageTags);Azure;AppService;Service Discovery;Azure Table Storage</PackageTags>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
