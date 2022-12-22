@@ -2,7 +2,6 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <LangVersion>8.0</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,9 +13,9 @@
       <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
       <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
       <PackageReference Include="Azure.Data.Tables" Version="12.7.1" />
-      <PackageReference Include="Azure.Identity" Version="1.8.0" />
-      <PackageReference Include="Google.Protobuf" Version="3.21.9" />
-      <PackageReference Include="Grpc.Tools" Version="2.50.0">
+      <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
+      <PackageReference Include="Google.Protobuf" Version="$(ProtobufVersion)" />
+      <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsVersion)">
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         <PrivateAssets>all</PrivateAssets>
       </PackageReference>

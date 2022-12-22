@@ -5,7 +5,6 @@
         <Description>Akka.NET discovery module for Kubernetes</Description>
         <PackageTags>$(AkkaPackageTags);Kubernetes;</PackageTags>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <LangVersion>8.0</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

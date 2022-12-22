@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFrameworks>$(TestsNetFramework);$(TestsNetCoreFramework);$(TestsNet)</TargetFrameworks>
-      <IsPackable>false</IsPackable>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
