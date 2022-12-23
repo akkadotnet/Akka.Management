@@ -37,14 +37,14 @@ namespace Akka.Management.Cluster.Bootstrap
                     discoveryConfig.GetTimeSpan("resolve-timeout", null, false));
             }
             
-            private readonly string _effectiveName;
+            private readonly string? _effectiveName;
 
             private ContactPointDiscoverySettings(
-                string serviceName,
-                string serviceNamespace,
-                string portName,
-                string protocol,
-                string effectiveName,
+                string? serviceName,
+                string? serviceNamespace,
+                string? portName,
+                string? protocol,
+                string? effectiveName,
                 string discoveryMethod,
                 TimeSpan stableMargin,
                 TimeSpan interval,
@@ -88,12 +88,12 @@ namespace Akka.Management.Cluster.Bootstrap
                 ResolveTimeout = resolveTimeout;
             }
             
-            public string ServiceName { get; }
-            public string ServiceNamespace { get; }
-            public string PortName { get; }
-            public string Protocol { get; }
+            public string? ServiceName { get; }
+            public string? ServiceNamespace { get; }
+            public string? PortName { get; }
+            public string? Protocol { get; }
 
-            public string EffectiveName(ActorSystem system)
+            public string? EffectiveName(ActorSystem system)
             {
                 if (!string.IsNullOrEmpty(_effectiveName))
                     return _effectiveName;
@@ -115,12 +115,12 @@ namespace Akka.Management.Cluster.Bootstrap
             public TimeSpan ResolveTimeout { get; }
 
             internal ContactPointDiscoverySettings Copy(
-                string serviceName = null,
-                string serviceNamespace = null,
-                string portName = null,
-                string protocol = null,
-                string effectiveName = null,
-                string discoveryMethod = null,
+                string? serviceName = null,
+                string? serviceNamespace = null,
+                string? portName = null,
+                string? protocol = null,
+                string? effectiveName = null,
+                string? discoveryMethod = null,
                 TimeSpan? stableMargin = null,
                 TimeSpan? interval = null,
                 double? exponentialBackoffRandomFactor = null,
@@ -128,7 +128,7 @@ namespace Akka.Management.Cluster.Bootstrap
                 int? requiredContactPointsNr = null,
                 bool? contactWithAllContactPoints = null,
                 TimeSpan? resolveTimeout = null)
-                => new ContactPointDiscoverySettings(
+                => new (
                     serviceName: serviceName ?? ServiceName,
                     serviceNamespace: serviceNamespace ?? ServiceNamespace,
                     portName: portName ?? PortName,
@@ -224,7 +224,7 @@ namespace Akka.Management.Cluster.Bootstrap
         private readonly ILoggingAdapter _log;
 
         private ClusterBootstrapSettings(
-            string managementBasePath,
+            string? managementBasePath,
             bool newClusterEnabled,
             ContactPointDiscoverySettings contactPointDiscovery,
             ContactPointSettings contactPoint,
@@ -242,7 +242,7 @@ namespace Akka.Management.Cluster.Bootstrap
             _log = log;
         }
         
-        public string ManagementBasePath { get; }
+        public string? ManagementBasePath { get; }
         public bool NewClusterEnabled { get; }
         public ContactPointDiscoverySettings ContactPointDiscovery { get; }
         public ContactPointSettings ContactPoint { get; }
@@ -250,10 +250,10 @@ namespace Akka.Management.Cluster.Bootstrap
 
         internal ClusterBootstrapSettings Copy(
             bool? newClusterEnabled = null,
-            ContactPointDiscoverySettings contactPointDiscovery = null,
-            ContactPointSettings contactPoint = null,
-            JoinDeciderSettings joinDecider = null)
-            => new ClusterBootstrapSettings(
+            ContactPointDiscoverySettings? contactPointDiscovery = null,
+            ContactPointSettings? contactPoint = null,
+            JoinDeciderSettings? joinDecider = null)
+            => new (
                 managementBasePath: ManagementBasePath,
                 newClusterEnabled: newClusterEnabled ?? NewClusterEnabled,
                 contactPointDiscovery: contactPointDiscovery ?? ContactPointDiscovery,

@@ -69,9 +69,9 @@ namespace Akka.Management.Cluster.Bootstrap
         /// </example>
         public static AkkaConfigurationBuilder WithClusterBootstrap(
             this AkkaConfigurationBuilder builder,
-            string serviceName = null,
-            string serviceNamespace = null,
-            string portName = null,
+            string? serviceName = null,
+            string? serviceNamespace = null,
+            string? portName = null,
             int? requiredContactPoints = null,
             bool? newClusterEnabled = null,
             bool autoStart = true)
