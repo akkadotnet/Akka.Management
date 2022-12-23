@@ -100,7 +100,8 @@ namespace Akka.Management.Cluster.Bootstrap
                 throw new ConfigurationException(
                     $"Could not convert FQCN name into concrete type: [{Settings.JoinDecider.ImplClass}]");
 
-            _joinDecider = (IJoinDecider)Activator.CreateInstance(joinDeciderType, system, Settings);
+            _joinDecider = (IJoinDecider?)Activator.CreateInstance(joinDeciderType, system, Settings)
+                ?? throw new ConfigurationException($"Could not create an instance of {joinDeciderType} with argument (ActorSystem, ClusterBootstrapSettings)");
             
             var autoStart = system.Settings.Config.GetStringList("akka.extensions")
                 .Any(s => s.Contains(nameof(ClusterBootstrapProvider)));

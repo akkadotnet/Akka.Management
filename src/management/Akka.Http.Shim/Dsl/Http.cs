@@ -22,7 +22,7 @@ using Ceen.Httpd;
 
 namespace Akka.Http.Dsl
 {
-    public delegate Task<RouteResult.IRouteResult> Route(RequestContext context);
+    public delegate Task<RouteResult.IRouteResult?> Route(RequestContext context);
     public delegate Route RouteGenerator<T>(T obj);
     
     

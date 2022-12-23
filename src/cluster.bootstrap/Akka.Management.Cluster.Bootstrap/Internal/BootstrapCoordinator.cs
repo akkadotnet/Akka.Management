@@ -112,7 +112,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 => MembersChanged(other) ? other : this;
         }
         
-        public ITimerScheduler Timers { get; set; }
+        public ITimerScheduler? Timers { get; set; }
 
         internal static IImmutableList<ResolvedTarget> SelectHosts(
             Lookup lookup,
@@ -147,7 +147,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         private readonly Lookup _lookup;
         private readonly int _fallbackPort;
 
-        private ServiceContactsObservation _lastContactObservation;
+        private ServiceContactsObservation? _lastContactObservation;
         private ImmutableDictionary<ResolvedTarget, SeedNodesObservation> _seedNodesObservations 
             = ImmutableDictionary<ResolvedTarget, SeedNodesObservation>.Empty;
         private bool _decisionInProgress;
@@ -172,7 +172,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         }
 
         private void StartPeriodicDecisionTimer()
-            => Timers.StartPeriodicTimer(DecideTimerKey, DecideTick.Instance, _settings.ContactPoint.ProbeInterval);
+            => Timers!.StartPeriodicTimer(DecideTimerKey, DecideTick.Instance, _settings.ContactPoint.ProbeInterval);
 
         private void ResetDiscoveryInterval()
             => _discoveryFailedBackoffCounter = 0;
@@ -206,7 +206,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                 _settings.ContactPointDiscovery.Interval,
                 _settings.ContactPointDiscovery.ExponentialBackoffMax,
                 _settings.ContactPointDiscovery.ExponentialBackoffRandomFactor);
-            Timers.StartSingleTimer(DiscoveryTimerKey, DiscoverTick.Instance, interval);
+            Timers!.StartSingleTimer(DiscoveryTimerKey, DiscoverTick.Instance, interval);
         }
 
         protected override void PreStart()
@@ -218,7 +218,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
 
         protected override void PostStop()
         {
-            Timers.CancelAll();
+            Timers!.CancelAll();
             foreach (var child in Context.GetChildren())
             {
                 child.Tell(PoisonPill.Instance);
@@ -278,7 +278,9 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                         StartSingleDiscoveryTimer(); // keep looking in case other nodes join the discovery
                         return true;
 
+#pragma warning disable CS0618
                     case Failure ex:
+#pragma warning restore CS0618
                         _log.Warning(ex.Exception, "Resolve attempt failed! Cause: {0}", ex.Exception);
                         _lastContactObservation = null;
                         BackoffDiscoveryInterval();
@@ -422,7 +424,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             }
         }
 
-        protected virtual IActorRef EnsureProbing(string selfContactPointScheme, ResolvedTarget contactPoint)
+        protected virtual IActorRef? EnsureProbing(string selfContactPointScheme, ResolvedTarget contactPoint)
         {
             if (contactPoint.Address is null && contactPoint.Host is null)
             {

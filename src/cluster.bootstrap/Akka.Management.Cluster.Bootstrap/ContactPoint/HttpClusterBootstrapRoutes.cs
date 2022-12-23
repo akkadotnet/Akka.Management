@@ -33,9 +33,9 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
         {
             get
             {
-                return new Route[]{async context =>
+                return new Route[]{ async context =>
                 {
-                    if (context.Request.Method == "GET" && context.Request.Path == "/bootstrap/seed-nodes")
+                    if (context.Request is { Method: "GET", Path: "/bootstrap/seed-nodes" })
                     {
                         return await GetSeedNodes()(context);
                     }
@@ -51,24 +51,22 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
             {
                 var cluster = Akka.Cluster.Cluster.Get(context.ActorSystem);
 
-                ClusterMember MemberToClusterMember(Member m)
-                    => new ClusterMember(m.UniqueAddress.Address, m.UniqueAddress.Uid, m.Status, m.Roles);
+                ClusterMember MemberToClusterMember(Member m) =>
+                    new (m.UniqueAddress.Address, m.UniqueAddress.Uid, m.Status, m.Roles);
 
                 var state = cluster.State;
 
                 // TODO shuffle the members so in a big deployment nodes start joining different ones and not all the same?
                 var members = state.Members
                     .Where(m => !state.Unreachable.Contains(m))
-                    .Where(m => m.Status == MemberStatus.Up ||
-                                m.Status == MemberStatus.WeaklyUp ||
-                                m.Status == MemberStatus.Joining)
+                    .Where(m => m.Status is MemberStatus.Up or MemberStatus.WeaklyUp or MemberStatus.Joining)
                     .Take(_settings.ContactPoint.MaxSeedNodesToExpose)
                     .Select(MemberToClusterMember).ToImmutableHashSet();
 
                 var json = JsonConvert.SerializeObject(
                     new SeedNodes(cluster.SelfMember.UniqueAddress.Address, members));
 
-                return Task.FromResult((RouteResult.IRouteResult) new RouteResult.Complete(HttpResponse.Create(
+                return Task.FromResult((RouteResult.IRouteResult?) new RouteResult.Complete(HttpResponse.Create(
                     entity: new ResponseEntity(ContentTypes.ApplicationJson, ByteString.FromString(json)))));
             };
         }

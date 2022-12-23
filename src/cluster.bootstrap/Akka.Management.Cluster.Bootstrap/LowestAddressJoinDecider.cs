@@ -164,7 +164,7 @@ namespace Akka.Management.Cluster.Bootstrap
         /// </summary>
         /// <param name="info"></param>
         /// <returns></returns>
-        protected virtual ServiceDiscovery.ResolvedTarget LowestAddressContactPoint(SeedNodesInformation info)
+        protected virtual ServiceDiscovery.ResolvedTarget? LowestAddressContactPoint(SeedNodesInformation info)
         {
             // Note that we are using info.seedNodesObservations and not info.contactPoints here, but that
             // is the same when isConfirmedCommunicationWithAllContactPointsRequired == true
