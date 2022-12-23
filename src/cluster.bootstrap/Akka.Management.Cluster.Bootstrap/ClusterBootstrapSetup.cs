@@ -25,17 +25,17 @@ namespace Akka.Management.Cluster.Bootstrap
         /// Configuration for the first phase of bootstrapping, during which contact points are discovered
         /// using the configured service discovery mechanism (e.g. DNS records).
         /// </summary>
-        public ContactPointDiscoverySetup ContactPointDiscovery { get; set; }
+        public ContactPointDiscoverySetup? ContactPointDiscovery { get; set; }
         
         /// <summary>
         /// Configure how we communicate with the contact point once it is discovered
         /// </summary>
-        public ContactPointSetup ContactPoint { get; set; }
+        public ContactPointSetup? ContactPoint { get; set; }
         
         /// <summary>
         /// Join decider class configuration
         /// </summary>
-        public JoinDeciderSetup JoinDecider { get; set; }
+        public JoinDeciderSetup? JoinDecider { get; set; }
 
         internal ClusterBootstrapSettings Apply(ClusterBootstrapSettings settings)
             => settings.Copy(
@@ -52,7 +52,7 @@ namespace Akka.Management.Cluster.Bootstrap
         /// If undefined, the name will be taken from the AKKA__CLUSTER__BOOTSTRAP__SERVICE_NAME
         /// environment variable or extracted from the ActorSystem name
         /// </summary>
-        public string ServiceName { get; set; }
+        public string? ServiceName { get; set; }
         
         /// <summary>
         /// Added as suffix to the service-name to build the effective-service name used in the contact-point service lookups
@@ -61,17 +61,17 @@ namespace Akka.Management.Cluster.Bootstrap
         /// Examples, set this to:
         /// "default.svc.cluster.local" or "my-namespace.svc.cluster.local" for kubernetes clusters.
         /// </summary>
-        public string ServiceNamespace { get; set; }
+        public string? ServiceNamespace { get; set; }
         
         /// <summary>
         /// The portName passed to discovery. This should be set to the name of the port for Akka Management
         /// </summary>
-        public string PortName { get; set; }
+        public string? PortName { get; set; }
         
         /// <summary>
         /// The protocol passed to discovery.
         /// </summary>
-        public string Protocol { get; set; }
+        public string? Protocol { get; set; }
         
         /// <summary>
         /// Config path of discovery method to be used to locate the initial contact points.
@@ -81,7 +81,7 @@ namespace Akka.Management.Cluster.Bootstrap
         /// and reuse what is configured for it. You can set it explicitly to something else here, if you want to
         /// use a different discovery mechanism for the bootstrap than for the rest of the application.
         /// </summary>
-        public string DiscoveryMethod { get; set; }
+        public string? DiscoveryMethod { get; set; }
         
         /// <summary>
         /// The effective service name is the exact string that will be used to perform service discovery.
@@ -89,7 +89,7 @@ namespace Akka.Management.Cluster.Bootstrap
         /// Set this value to a specific string to override the default behaviour of building the effective name by
         /// concatenating the `service-name` with the optional `service-namespace` (e.g. "name.default").
         /// </summary>
-        public string EffectiveName { get; set; }
+        public string? EffectiveName { get; set; }
         
         /// <summary>
         /// Amount of time for which a discovery observation must remain "stable"
@@ -218,9 +218,9 @@ namespace Akka.Management.Cluster.Bootstrap
         /// It must extend akka.management.cluster.bootstrap.JoinDecider and
         /// have public constructor with ActorSystem and ClusterBootstrapSettings parameters.
         /// </summary>
-        public Type Class { get; set; }
+        public Type? Class { get; set; }
 
         internal ClusterBootstrapSettings.JoinDeciderSettings Apply(ClusterBootstrapSettings.JoinDeciderSettings settings)
-            => Class == null ? settings : settings.WithImplClass(Class.AssemblyQualifiedName);
+            => Class == null ? settings : settings.WithImplClass(Class.AssemblyQualifiedName!);
     }
 }
