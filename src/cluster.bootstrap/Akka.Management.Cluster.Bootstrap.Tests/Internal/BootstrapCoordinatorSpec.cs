@@ -263,7 +263,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.Internal
                 _log.Debug($"Resolving {contactPoint}");
                 var targetSoFar = _targets.Value;
                 _targets.CompareAndSet(targetSoFar, targetSoFar.Add(contactPoint));
-                return null;
+                return ActorRefs.Nobody;
             }
         }
     }

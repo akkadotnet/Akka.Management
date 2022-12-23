@@ -58,29 +58,29 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
             .WithFallback(AkkaManagementProvider.DefaultConfiguration())
             .WithFallback(ClusterBootstrap.DefaultConfiguration());
 
-        protected readonly ResolvedTarget ContactA = new ResolvedTarget(
+        protected readonly ResolvedTarget ContactA = new (
             host: "10-0-0-2.default.pod.cluster.local",
             port: null,
             address: IPAddress.Parse("10.0.0.2")); 
         
-        protected readonly ResolvedTarget ContactB = new ResolvedTarget(
+        protected readonly ResolvedTarget ContactB = new (
             host: "10-0-0-3.default.pod.cluster.local",
             port: null,
             address: IPAddress.Parse("10.0.0.3")); 
         
-        protected readonly ResolvedTarget ContactC = new ResolvedTarget(
+        protected readonly ResolvedTarget ContactC = new (
             host: "10-0-0-4.default.pod.cluster.local",
             port: null,
             address: IPAddress.Parse("10.0.0.4"));
 
-        protected ActorSystem System { get; private set; }
-        protected ILoggingAdapter Log { get; private set; }
+        protected ActorSystem? System { get; private set; }
+        protected ILoggingAdapter? Log { get; private set; }
 
         private readonly ITestOutputHelper _output;
         private readonly string _systemName;
         private readonly Config _config;
 
-        protected JoinDeciderSpec(Config config, string systemName, ITestOutputHelper output)
+        protected JoinDeciderSpec(Config? config, string systemName, ITestOutputHelper output)
         {
             _systemName = systemName;
             _output = output;
@@ -101,7 +101,8 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
 
         public async Task DisposeAsync()
         {
-            await System.Terminate();
+            if(System is { })
+                await System.Terminate();
         }
 
         protected abstract Task Start();
@@ -120,7 +121,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
 
     public class LowestAddressJoinDeciderSpec : JoinDeciderSpec
     {
-        private ClusterBootstrapSettings _settings;
+        private ClusterBootstrapSettings? _settings;
 
         public LowestAddressJoinDeciderSpec(ITestOutputHelper output) : base(null, "join-decider-spec-system", output)
         {
@@ -128,54 +129,56 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
 
         protected override Task Start()
         {
-            _settings = ClusterBootstrapSettings.Create(System.Settings.Config, Log);
+            _settings = ClusterBootstrapSettings.Create(System!.Settings.Config, Log!);
             return Task.CompletedTask;
         }
 
         [Fact(DisplayName = "LowestAddressJoinDecider should sort ResolvedTarget by lowest hostname:port")]
         public void SortResolvedTargetByLowestHostnameAndPort()
         {
+            // ReSharper disable RedundantArgumentDefaultValue
             var list = new List<ResolvedTarget>
             {
-                new ResolvedTarget("c", null, null),
-                new ResolvedTarget("a", null, null),
-                new ResolvedTarget("b", null, null),
+                new("c", null, null),
+                new("a", null, null),
+                new("b", null, null),
             };
             list.Sort(ResolvedTargetComparer.Instance);
             AssertList(list, new List<ResolvedTarget>
             {
-                new ResolvedTarget("a", null, null),
-                new ResolvedTarget("b", null, null),
-                new ResolvedTarget("c", null, null),
+                new("a", null, null),
+                new("b", null, null),
+                new("c", null, null),
             });
             
             list = new List<ResolvedTarget>
             {
-                new ResolvedTarget("c", 1, null),
-                new ResolvedTarget("a", 3, null),
-                new ResolvedTarget("b", 2, null),
+                new("c", 1, null),
+                new("a", 3, null),
+                new("b", 2, null),
             };
             list.Sort(ResolvedTargetComparer.Instance);
             AssertList(list, new List<ResolvedTarget>
             {
-                new ResolvedTarget("a", 3, null),
-                new ResolvedTarget("b", 2, null),
-                new ResolvedTarget("c", 1, null),
+                new("a", 3, null),
+                new("b", 2, null),
+                new("c", 1, null),
             });
             
             list = new List<ResolvedTarget>
             {
-                new ResolvedTarget("a", 2, null),
-                new ResolvedTarget("a", 1, null),
-                new ResolvedTarget("a", 3, null),
+                new("a", 2, null),
+                new("a", 1, null),
+                new("a", 3, null),
             };
             list.Sort(ResolvedTargetComparer.Instance);
             AssertList(list, new List<ResolvedTarget>
             {
-                new ResolvedTarget("a", 1, null),
-                new ResolvedTarget("a", 2, null),
-                new ResolvedTarget("a", 3, null),
+                new("a", 1, null),
+                new("a", 2, null),
+                new("a", 3, null),
             });
+            // ReSharper restore RedundantArgumentDefaultValue
         }
 
         [Fact(DisplayName = "LowestAddressJoinDecider, when addresses are known, should sort deterministically on address even when names are inconsistent")]
@@ -187,23 +190,23 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
             
             var list = new List<ResolvedTarget>
             {
-                new ResolvedTarget("c", null, addr2),
-                new ResolvedTarget("x", null, addr1),
-                new ResolvedTarget("b", null, addr3),
+                new("c", null, addr2),
+                new("x", null, addr1),
+                new("b", null, addr3),
             };
             list.Sort(ResolvedTargetComparer.Instance);
             AssertList(list, new List<ResolvedTarget>
             {
-                new ResolvedTarget("x", null, addr1),
-                new ResolvedTarget("c", null, addr2),
-                new ResolvedTarget("b", null, addr3),
+                new("x", null, addr1),
+                new("c", null, addr2),
+                new("b", null, addr3),
             });
         }
 
         [Fact(DisplayName = "LowestAddressJoinDecider should join existing cluster immediately")]
         public async Task LowestAddressJoinDeciderShouldJoinExistingClusterImmediately()
         {
-            var decider = new LowestAddressJoinDecider(System, _settings);
+            var decider = new LowestAddressJoinDecider(System!, _settings!);
             var now = DateTimeOffset.Now;
             var addr = new Address("akka", "join-decider-spec-system", "10.0.0.2", 2552);
             var info = new SeedNodesInformation(
@@ -224,7 +227,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Fact(DisplayName = "LowestAddressJoinDecider should keep probing when contact points changed within stable-margin")]
         public async Task KeepProbingWhenContactPointsChangedWithinStableMargin()
         {
-            var decider = new LowestAddressJoinDecider(System, _settings);
+            var decider = new LowestAddressJoinDecider(System!, _settings!);
             var now = DateTimeOffset.Now;
             var info = new SeedNodesInformation(
                 currentTime: now,
@@ -254,7 +257,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Fact(DisplayName = "LowestAddressJoinDecider should keep probing when not enough contact points")]
         public async Task KeepProbingWhenNotEnoughContactPoint()
         {
-            var decider = new LowestAddressJoinDecider(System, _settings);
+            var decider = new LowestAddressJoinDecider(System!, _settings!);
             var now = DateTimeOffset.Now;
             var info = new SeedNodesInformation(
                 currentTime: now,
@@ -279,7 +282,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Fact(DisplayName = "LowestAddressJoinDecider should keep probing when not enough confirmed contact points")]
         public async Task KeepProbingWhenNotEnoughConfirmedContactPoint()
         {
-            var decider = new LowestAddressJoinDecider(System, _settings);
+            var decider = new LowestAddressJoinDecider(System!, _settings!);
             var now = DateTimeOffset.Now;
             var info = new SeedNodesInformation(
                 currentTime: now,
@@ -304,9 +307,9 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Fact(DisplayName = "LowestAddressJoinDecider should join self when all conditions met and self has the lowest address")]
         public async Task JoinSelfWhenAllConditionsMetAndSelfHasTheLowestAddress()
         {
-            _settings.NewClusterEnabled.Should().BeTrue();
-            ClusterBootstrap.Get(System).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
-            var decider = new LowestAddressJoinDecider(System, _settings);
+            _settings!.NewClusterEnabled.Should().BeTrue();
+            ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
+            var decider = new LowestAddressJoinDecider(System!, _settings);
             var now = DateTimeOffset.Now;
             var info = new SeedNodesInformation(
                 currentTime: now,
@@ -342,23 +345,23 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         
         protected override int RemotingPort => 0;
 
-        private readonly ResolvedTarget _contactIPv6A = new ResolvedTarget(
+        private readonly ResolvedTarget _contactIPv6A = new(
             host: "240b-c0e0-202-5e2b-b424-2-0-450.default.pod.cluster.local",
             port: null,
             address: IPAddress.Parse("240b:c0e0:202:5e2b:b424:2:0:450"));
 
-        private readonly ResolvedTarget _contactIPv6B = new ResolvedTarget(
+        private readonly ResolvedTarget _contactIPv6B = new(
             host: "240b-c0e0-202-5e2b-b424-2-0-cc4.default.pod.cluster.local",
             port: null,
             address: IPAddress.Parse("240b:c0e0:202:5e2b:b424:2:0:cc4"));
 
-        private readonly ResolvedTarget _contactIPv6C = new ResolvedTarget(
+        private readonly ResolvedTarget _contactIPv6C = new(
             host: "240b-c0e0-202-5e2b-b424-2-0-cc5.default.pod.cluster.local",
             port: null,
             address: IPAddress.Parse("240b:c0e0:202:5e2b:b424:2:0:cc5"));
 
         private readonly SeedNodesInformation _seedNodes; 
-        private ClusterBootstrapSettings _settings;
+        private ClusterBootstrapSettings? _settings;
 
         public SelfAwareJoinDeciderIPv6Spec(ITestOutputHelper output) : base(Disabled, "join-decider-spec-system-selfaware-ipv6", output)
         {
@@ -390,8 +393,8 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Fact(DisplayName = "SelfAwareJoinDecider should return true if a target matches selfContactPoint")]
         public void ReturnTrueIfATargetMatchesSelfContactPoint()
         {
-            ClusterBootstrap.Get(System).SetSelfContactPoint(new Uri($"http://[240b:c0e0:202:5e2b:b424:2:0:450]:{ManagementPort}/test"));
-            var decider = new LowestAddressJoinDecider(System, _settings);
+            ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://[240b:c0e0:202:5e2b:b424:2:0:450]:{ManagementPort}/test"));
+            var decider = new LowestAddressJoinDecider(System!, _settings!);
             var selfContactPoint = decider.SelfContactPoint();
             var info = _seedNodes;
             var targetList = info.SeedNodesObservations.Select(o => o.ContactPoint).ToList();
@@ -403,8 +406,8 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Fact(DisplayName = "SelfAwareJoinDecider should be able to join self if all conditions met")]
         public void BeAbleToJoinSelfIfAllConditionsMet()
         {
-            ClusterBootstrap.Get(System).SetSelfContactPoint(new Uri($"http://[240b:c0e0:202:5e2b:b424:2:0:450]:{ManagementPort}/test"));
-            var decider = new LowestAddressJoinDecider(System, _settings);
+            ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://[240b:c0e0:202:5e2b:b424:2:0:450]:{ManagementPort}/test"));
+            var decider = new LowestAddressJoinDecider(System!, _settings!);
             var info = _seedNodes;
             var targetList = info.SeedNodesObservations.Select(o => o.ContactPoint).ToList();
             targetList.Sort(ResolvedTargetComparer.Instance);
@@ -415,15 +418,15 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Fact(DisplayName = "SelfAwareJoinDecider should not join self if `new-cluster-enabled=off`, even if all conditions met")]
         public async Task NotJoinSelfIfNewClusterEnabledIsSetToOffEvenWhenAllConditionsMet()
         {
-            _settings.NewClusterEnabled.Should().BeFalse();
-            ClusterBootstrap.Get(System).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
-            var decider = new LowestAddressJoinDecider(System, _settings);
+            _settings!.NewClusterEnabled.Should().BeFalse();
+            ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
+            var decider = new LowestAddressJoinDecider(System!, _settings);
             (await decider.Decide(_seedNodes)).Should().Be(KeepProbing.Instance);
         }
 
         protected override Task Start()
         {
-            _settings = ClusterBootstrapSettings.Create(System.Settings.Config, Log);
+            _settings = ClusterBootstrapSettings.Create(System!.Settings.Config, Log!);
             return Task.CompletedTask;
         }
     }
@@ -436,7 +439,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         protected override int RemotingPort => 0;
 
         private readonly SeedNodesInformation _seedNodes; 
-        private ClusterBootstrapSettings _settings;
+        private ClusterBootstrapSettings? _settings;
 
         public SelfAwareJoinDeciderSpec(ITestOutputHelper output) : base(Disabled, "join-decider-spec-system-selfaware", output)
         {
@@ -468,8 +471,8 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Fact(DisplayName = "SelfAwareJoinDecider (IPv6) should return true if a target matches selfContactPoint")]
         public void ReturnTrueIfATargetMatchesSelfContactPoint()
         {
-            ClusterBootstrap.Get(System).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
-            var decider = new LowestAddressJoinDecider(System, _settings);
+            ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
+            var decider = new LowestAddressJoinDecider(System!, _settings!);
             var selfContactPoint = decider.SelfContactPoint();
             var info = _seedNodes;
             var targetList = info.SeedNodesObservations.Select(o => o.ContactPoint).ToList();
@@ -481,8 +484,8 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Fact(DisplayName = "SelfAwareJoinDecider (IPv6) should be able to join self if all conditions met")]
         public void BeAbleToJoinSelfIfAllConditionsMet()
         {
-            ClusterBootstrap.Get(System).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
-            var decider = new LowestAddressJoinDecider(System, _settings);
+            ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
+            var decider = new LowestAddressJoinDecider(System!, _settings!);
             var info = _seedNodes;
             var targetList = info.SeedNodesObservations.Select(o => o.ContactPoint).ToList();
             targetList.Sort(ResolvedTargetComparer.Instance);
@@ -493,15 +496,15 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Fact(DisplayName = "SelfAwareJoinDecider (IPv6) should not join self if `new-cluster-enabled=off`, even if all conditions met")]
         public async Task NotJoinSelfIfNewClusterEnabledIsSetToOffEvenWhenAllConditionsMet()
         {
-            _settings.NewClusterEnabled.Should().BeFalse();
-            ClusterBootstrap.Get(System).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
-            var decider = new LowestAddressJoinDecider(System, _settings);
+            _settings!.NewClusterEnabled.Should().BeFalse();
+            ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
+            var decider = new LowestAddressJoinDecider(System!, _settings);
             (await decider.Decide(_seedNodes)).Should().Be(KeepProbing.Instance);
         }
 
         protected override Task Start()
         {
-            _settings = ClusterBootstrapSettings.Create(System.Settings.Config, Log);
+            _settings = ClusterBootstrapSettings.Create(System!.Settings.Config, Log!);
             return Task.CompletedTask;
         }
     }
