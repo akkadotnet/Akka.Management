@@ -138,7 +138,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
                         var nodes = JsonConvert.DeserializeObject<HttpBootstrapJsonProtocol.SeedNodes>(body);
-                        if(nodes.SelfNode == null)
+                        if(nodes?.SelfNode == null)
                             return new Status.Failure(new IllegalStateException(
                                 $"Failed to deserialize HTTP response, Self node address is empty. [{(int) response.StatusCode} {response.StatusCode}]. Body: '{body}'"));
                         return new Status.Success(nodes);
@@ -182,7 +182,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             });
         }
 
-        public ITimerScheduler Timers { get; set; }
+        public ITimerScheduler? Timers { get; set; }
         private TimeSpan EffectiveProbeInterval => _probeInterval + Jitter(_probeInterval);
 
         protected override void PreStart()
@@ -195,7 +195,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             _stopped = true;
             _cancellationTokenSource.Cancel();
             _cancellationTokenSource.Dispose();
-            Timers.CancelAll();
+            Timers!.CancelAll();
             base.PostStop();
         }
 
@@ -211,7 +211,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
 
         private void ScheduleNextContactPointProbing()
         {
-            Timers.StartSingleTimer(ProbingTimerKey, ProbeTick.Instance, EffectiveProbeInterval);
+            Timers!.StartSingleTimer(ProbingTimerKey, ProbeTick.Instance, EffectiveProbeInterval);
         }
 
         private TimeSpan Jitter(TimeSpan d)

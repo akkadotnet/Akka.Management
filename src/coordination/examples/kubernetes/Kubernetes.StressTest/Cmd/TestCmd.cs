@@ -64,8 +64,8 @@ namespace KubernetesCluster.Cmd
 
     public sealed class TestCommands : CommandPaletteHandler
     {
-        private ExtendedActorSystem _system;
-        private Props _handlerProps;
+        private ExtendedActorSystem? _system;
+        private Props? _handlerProps;
         
         public TestCommands() : base(TestCmd.TestCmdPalette)
         {

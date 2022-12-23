@@ -23,7 +23,7 @@ namespace KubernetesCluster.Actors
                     return;
                 
                 var msg = d.Message.ToString();
-                if (msg.Contains("Lease after update:"))
+                if (msg != null && msg.Contains("Lease after update:"))
                 {
                     _shuttingDown = true;
                     await Task.Delay(200);

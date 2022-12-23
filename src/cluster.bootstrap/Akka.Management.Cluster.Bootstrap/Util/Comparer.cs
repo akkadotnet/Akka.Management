@@ -17,7 +17,7 @@ namespace Akka.Management.Cluster.Bootstrap.Util
     {
         public static readonly ResolvedTargetComparer Instance = new ResolvedTargetComparer();
         
-        public int Compare(ResolvedTarget x, ResolvedTarget y)
+        public int Compare(ResolvedTarget? x, ResolvedTarget? y)
         {
             if (ReferenceEquals(x, y)) return 0;
             if (ReferenceEquals(null, y)) return 1;
@@ -30,11 +30,12 @@ namespace Akka.Management.Cluster.Bootstrap.Util
         }
     }
 
+    // ReSharper disable once InconsistentNaming
     public class IPAddressComparer : IComparer<IPAddress>
     {
         public static readonly IPAddressComparer Instance = new IPAddressComparer();
         
-        public int Compare(IPAddress x, IPAddress y)
+        public int Compare(IPAddress? x, IPAddress? y)
         {
             if (ReferenceEquals(x, y)) return 0;
             if (ReferenceEquals(null, y)) return 1;
