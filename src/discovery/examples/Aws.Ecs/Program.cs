@@ -55,14 +55,14 @@ namespace Aws.Ecs
                 case Left<string, IPAddress> left:
                     Console.Error.WriteLine($"{left.Value} Halting.");
                     Console.Error.Flush();
-                    Environment.Exit(1);
                     break;
                 
                 case Right<string, IPAddress> right:
                     return right.Value;
             }
             
-            return null;
+            Environment.Exit(1);
+            return IPAddress.None;
         }
     }
 }
