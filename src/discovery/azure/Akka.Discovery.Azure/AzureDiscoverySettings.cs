@@ -9,7 +9,6 @@ using System.Net;
 using Akka.Actor;
 using Azure.Core;
 using Azure.Data.Tables;
-using Azure.Identity;
 
 namespace Akka.Discovery.Azure
 {
@@ -74,9 +73,9 @@ namespace Akka.Discovery.Azure
             TimeSpan operationTimeout,
             TimeSpan retryBackoff,
             TimeSpan maximumRetryBackoff,
-            Uri azureTableEndpoint,
-            TokenCredential azureCredential,
-            TableClientOptions tableClientOptions)
+            Uri? azureTableEndpoint,
+            TokenCredential? azureCredential,
+            TableClientOptions? tableClientOptions)
         {
             if (ttlHeartbeatInterval <= TimeSpan.Zero)
                 throw new ArgumentException("Must be greater than zero", nameof(ttlHeartbeatInterval));
@@ -135,9 +134,9 @@ namespace Akka.Discovery.Azure
         public TimeSpan OperationTimeout { get; }
         public TimeSpan RetryBackoff { get; }
         public TimeSpan MaximumRetryBackoff { get; }
-        public Uri AzureTableEndpoint { get; }
-        public TokenCredential AzureAzureCredential { get; }
-        public TableClientOptions TableClientOptions { get; }
+        public Uri? AzureTableEndpoint { get; }
+        public TokenCredential? AzureAzureCredential { get; }
+        public TableClientOptions? TableClientOptions { get; }
 
         public override string ToString()
             => "[AzureDiscoverySettings](" +
@@ -189,28 +188,28 @@ namespace Akka.Discovery.Azure
         public AzureDiscoverySettings WithAzureCredential(
             Uri azureTableEndpoint,
             TokenCredential credential,
-            TableClientOptions tableClientOptions = null)
+            TableClientOptions? tableClientOptions = null)
             => Copy(
                 azureTableEndpoint: azureTableEndpoint,
                 credential: credential,
                 tableClientOptions: tableClientOptions);
         
         private AzureDiscoverySettings Copy(
-            string serviceName = null,
-            string host = null,
+            string? serviceName = null,
+            string? host = null,
             int? port = null,
-            string connectionString = null,
-            string tableName = null,
+            string? connectionString = null,
+            string? tableName = null,
             TimeSpan? pruneInterval = null,
             TimeSpan? staleTtlThreshold = null,
             TimeSpan? ttlHeartbeatInterval = null,
             TimeSpan? operationTimeout = null,
             TimeSpan? retryBackoff = null,
             TimeSpan? maximumRetryBackoff = null,
-            Uri azureTableEndpoint = null,
-            TokenCredential credential = null,
-            TableClientOptions tableClientOptions = null)
-            => new AzureDiscoverySettings(
+            Uri? azureTableEndpoint = null,
+            TokenCredential? credential = null,
+            TableClientOptions? tableClientOptions = null)
+            => new (
                 serviceName: serviceName ?? ServiceName,
                 hostName: host ?? HostName,
                 port: port ?? Port,

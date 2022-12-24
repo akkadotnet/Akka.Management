@@ -56,8 +56,8 @@ namespace Akka.Discovery.Azure
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
             string connectionString,
-            string serviceName = null,
-            string publicHostname = null,
+            string? serviceName = null,
+            string? publicHostname = null,
             int? publicPort = null)
         {
             var setup = new AzureDiscoverySetup
@@ -120,9 +120,9 @@ namespace Akka.Discovery.Azure
             this AkkaConfigurationBuilder builder,
             Uri azureTableEndpoint,
             TokenCredential azureCredential,
-            TableClientOptions tableClientOptions = null,
-            string serviceName = null,
-            string publicHostname = null,
+            TableClientOptions? tableClientOptions = null,
+            string? serviceName = null,
+            string? publicHostname = null,
             int? publicPort = null)
         {
             if (azureCredential == null) throw new ArgumentNullException(nameof(azureCredential));

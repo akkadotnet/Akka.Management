@@ -51,12 +51,12 @@ namespace Akka.Discovery.Azure.Actors
 
         protected override void PreStart()
         {
-            Timers.StartPeriodicTimer(_heartbeatTimerKey, _heartbeat, _heartbeatInterval);
+            Timers!.StartPeriodicTimer(_heartbeatTimerKey, _heartbeat, _heartbeatInterval);
         }
 
         protected override void PostStop()
         {
-            Timers.CancelAll();
+            Timers!.CancelAll();
             _shutdownCts.Cancel();
             _shutdownCts.Dispose();
         }
@@ -82,11 +82,14 @@ namespace Akka.Discovery.Azure.Actors
                     break;
                 
                 case Status.Failure f:
-                    if (!_shutdownCts.IsCancellationRequested)
+                    if (_shutdownCts.IsCancellationRequested)
                     {
-                        _log.Warning(f.Cause, "Failed to update TTL heartbeat, retrying");
-                        ExecuteUpdateOpWithRetry().PipeTo(Self);
+                        _log.Warning(f.Cause, "Failed to prune stale cluster member entries");
+                        return;
                     }
+                    
+                    _log.Warning(f.Cause, "Failed to update TTL heartbeat, retrying");
+                    ExecuteUpdateOpWithRetry().PipeTo(Self);
                     break;
                 
                 default:
@@ -95,7 +98,8 @@ namespace Akka.Discovery.Azure.Actors
             }
         }
 
-        private async Task<Status> ExecuteUpdateOpWithRetry()
+        // Always call this method using PipeTo, we'll be waiting for Status.Success or Status.Failure asynchronously
+        private async Task ExecuteUpdateOpWithRetry()
         {
             // Calculate backoff
             var backoff = new TimeSpan(_backoff.Ticks * _retryCount++);
@@ -106,21 +110,13 @@ namespace Akka.Discovery.Azure.Actors
             if (backoff > TimeSpan.Zero)
                 await Task.Delay(backoff, _shutdownCts.Token);
 
-            if (_shutdownCts.IsCancellationRequested)
-                return DefaultFailure;
+            _shutdownCts.Token.ThrowIfCancellationRequested();
 
-            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCts.Token))
-            {
-                cts.CancelAfter(_timeout);
-                if (!await _client.UpdateAsync(cts.Token))
-                {
-                    return DefaultFailure;
-                }
-            
-                return Status.Success.Instance;
-            }
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCts.Token);
+            cts.CancelAfter(_timeout);
+            await _client.UpdateAsync(cts.Token);
         }
 
-        public ITimerScheduler Timers { get; set; }
+        public ITimerScheduler? Timers { get; set; }
     }
 }
