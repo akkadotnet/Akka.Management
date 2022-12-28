@@ -35,7 +35,7 @@ namespace Akka.Discovery.Azure.Model
 
             Raw = entity;
             Proto = ClusterMemberProto.Parser.ParseFrom(entity.GetBinary(PayloadName));
-            LastUpdate = new DateTime(entity.GetInt64(LastUpdateName).Value);
+            LastUpdate = new DateTime(entity.GetInt64(LastUpdateName)!.Value);
         }
         
         #region Required fields
@@ -93,8 +93,7 @@ namespace Akka.Discovery.Azure.Model
             };
         }
 
-        public static ClusterMember FromEntity(TableEntity entity)
-            => new ClusterMember(entity);
+        public static ClusterMember FromEntity(TableEntity entity) => new(entity);
         
         internal static string CreateRowKey(string? host, IPAddress? address, int port)
             => $"{host}-{address?.MapToIPv4()}-{port}";

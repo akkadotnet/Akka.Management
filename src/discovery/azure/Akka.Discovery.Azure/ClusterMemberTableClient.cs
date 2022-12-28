@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -47,18 +48,21 @@ namespace Akka.Discovery.Azure
         /// <param name="address">The public Akka.Management IP address of this node</param>
         /// <param name="port">the public Akka.Management port of this node</param>
         /// <param name="token">CancellationToken to cancel this operation</param>
-        /// <returns>The immutable Azure cluster member entity entry of this node</returns>
-        public async ValueTask<ClusterMember?> GetOrCreateAsync(
-            string host,
-            IPAddress address,
+        /// <returns>The immutable Azure <see cref="ClusterMember"/> entity entry of this node</returns>
+        /// <exception cref="InitializationException">Failed to initialize the client, could not connect to Azure services</exception>
+        /// <exception cref="RequestFailedException">The Azure server returned an error</exception>
+        /// <exception cref="UpdateOperationException">Entity update operation failed, Azure service responded with an error</exception>
+        /// <exception cref="CreateEntityFailedException">Client failed to insert new entity row, Azure service responded with an error</exception>
+        public async ValueTask<ClusterMember> GetOrCreateAsync(
+            string? host,
+            IPAddress? address,
             int port,
             CancellationToken token = default)
         {
             if (_entity != null)
                 return _entity;
 
-            if (!await EnsureInitializedAsync(token))
-                return null;
+            await EnsureInitializedAsync(token);
 
             var rowKey = ClusterMember.CreateRowKey(host, address, port);
             var entry = await GetEntityAsync(rowKey, token);
@@ -76,9 +80,9 @@ namespace Akka.Discovery.Azure
             var response = await _client.AddEntityAsync(entity, token);
             if (response.IsError)
             {
-                _log.Error($"[{_serviceName}@{address}:{port}] Failed to insert entry row. " +
-                           $"Reason: {response.ReasonPhrase}");
-                return null;
+                throw new CreateEntityFailedException(
+                    $"[{_serviceName}@{address}:{port}] Failed to insert entry row. " +
+                    $"Reason: {response.ReasonPhrase}");
             }
 
             _entity = ClusterMember.FromEntity(entity);
@@ -96,10 +100,11 @@ namespace Akka.Discovery.Azure
         /// <returns>
         /// All cluster member entries that has their LastUpdate value greater than <paramref name="lastUpdate"/>
         /// </returns>
-        public async Task<ImmutableList<ClusterMember>?> GetAllAsync(long lastUpdate, CancellationToken token = default)
+        /// <exception cref="InitializationException">Failed to initialize the client, could not connect to Azure services</exception>
+        /// <exception cref="RequestFailedException">The Azure server returned an error</exception>
+        public async Task<ImmutableList<ClusterMember>> GetAllAsync(long lastUpdate, CancellationToken token = default)
         {
-            if (!await EnsureInitializedAsync(token))
-                return null;
+            await EnsureInitializedAsync(token);
 
             var query = _client
                 .QueryAsync<TableEntity>($"PartitionKey eq '{_serviceName}' and {ClusterMember.LastUpdateName} ge {lastUpdate}L")
@@ -121,28 +126,26 @@ namespace Akka.Discovery.Azure
         /// </summary>
         /// <param name="token">CancellationToken to cancel this operation</param>
         /// <returns><c>true</c> if the operation succeeded</returns>
-        public async Task<bool> UpdateAsync(CancellationToken token = default)
+        /// <exception cref="InvalidOperationException">Method was called before the actor was initialized</exception>
+        /// <exception cref="UpdateOperationException">Update operation failed, Azure service responded with an error</exception>
+        public async Task UpdateAsync(CancellationToken token = default)
         {
             if (_entity is null)
                 throw new InvalidOperationException("Invalid update operation, actor has not been initialized");
                     
-            if (!await EnsureInitializedAsync(token))
-                return false;
-
             var original = _entity.LastUpdate;
             _entity = _entity.Update();
             var response = await _client.UpdateEntityAsync(_entity.Raw, ETag.All, TableUpdateMode.Replace, token);
             if (response.IsError)
             {
-                _log.Error($"[{_serviceName}@{_entity.Address}:{_entity.Port}] Failed to update entity. " +
-                           $"Reason: {response.ReasonPhrase}");
-                return false;
+                throw new UpdateOperationException(
+                    $"[{_serviceName}@{_entity.Address}:{_entity.Port}] Failed to update entity. " +
+                    $"Reason: {response.ReasonPhrase}");
             }
             
             if(_log.IsDebugEnabled)
                 _log.Debug($"[{_serviceName}@{_entity.Address}:{_entity.Port}] LastUpdate successfully updated " +
                            $"from [{original}] to [{_entity.LastUpdate}]");
-            return true;
         }
 
         /// <summary>
@@ -151,10 +154,11 @@ namespace Akka.Discovery.Azure
         /// <param name="lastUpdate">The last update tick value to be considered</param>
         /// <param name="token">CancellationToken to cancel this operation</param>
         /// <returns><c>true</c> if the operation succeeded</returns>
-        public async Task<bool> PruneAsync(long lastUpdate, CancellationToken token = default)
+        /// <exception cref="InitializationException">Failed to initialize the client, could not connect to Azure services</exception>
+        /// <exception cref="PruneOperationException">At least one of the delete operations returned an error</exception>
+        public async Task PruneAsync(long lastUpdate, CancellationToken token = default)
         {
-            if (!await EnsureInitializedAsync(token))
-                return false;
+            await EnsureInitializedAsync(token);
 
             var query = _client
                 .QueryAsync<TableEntity>($"PartitionKey eq '{_serviceName}' and {ClusterMember.LastUpdateName} lt {lastUpdate}L")
@@ -172,34 +176,43 @@ namespace Akka.Discovery.Azure
                 // Nothing to prune
                 if(_log.IsDebugEnabled)
                     _log.Debug($"[{_serviceName}] No row entries are eligible to prune.");
-                return true;
+                return;
             }
 
             var responses = await _client.SubmitTransactionAsync(batch, token);
-            var errored = false;
-            foreach (var response in responses.Value)
+            var errors = responses.Value
+                .Where(r => r.IsError)
+                .Select(r => r.ReasonPhrase)
+                .ToList();
+            
+            if(errors.Count == 0)
             {
-                if (response.IsError)
+                if (_log.IsDebugEnabled)
                 {
-                    _log.Error($"[{_serviceName}] Failed to prune row entry. Reason: {response.ReasonPhrase}");
-                    errored = true;
+                    var sb = new StringBuilder().AppendLine($"[{_serviceName}] {batch.Count} row entries pruned:");
+                    foreach (var item in batch)
+                    {
+                        sb.AppendLine($"    {ClusterMember.FromEntity((TableEntity)item.Entity)}");
+                    }
+                    _log.Debug(sb.ToString());
                 }
             }
-
-            if(!errored && _log.IsDebugEnabled)
+            else
             {
-                var sb = new StringBuilder().AppendLine($"[{_serviceName}] {batch.Count} row entries pruned:");
-                foreach (var item in batch)
-                {
-                    sb.AppendLine($"    {ClusterMember.FromEntity((TableEntity)item.Entity)}");
-                }
-                _log.Debug(sb.ToString());
+                throw new PruneOperationException($"[{_serviceName}] Failed to prune row entry.", errors);
             }
-            return !errored;
         }
 
+        /// <summary>
+        /// Remove table entity row identifying this node
+        /// </summary>
+        /// <param name="token"><see cref="CancellationToken"/> to cancel this operation</param>
+        /// <exception cref="InvalidOperationException">Thrown when the method is called before the actor was initialized</exception>
         public async Task RemoveSelf(CancellationToken token = default)
         {
+            if (_entity is null)
+                throw new InvalidOperationException("Invalid remove operation, actor has not been initialized");
+                
             await _client.DeleteEntityAsync(_entity.PartitionKey, _entity.RowKey, ETag.All, token);
         }
 
@@ -210,10 +223,11 @@ namespace Akka.Discovery.Azure
         /// </summary>
         /// <param name="token">CancellationToken to cancel this operation</param>
         /// <returns><c>true</c> if the operation succeeded</returns>
-        private async Task<bool> EnsureInitializedAsync(CancellationToken token)
+        /// <exception cref="InitializationException">Failed to initialize the client, could not connect to Azure services</exception>
+        private async Task EnsureInitializedAsync(CancellationToken token)
         {
             if (_initialized)
-                return true;
+                return;
 
             try
             {
@@ -225,12 +239,10 @@ namespace Akka.Discovery.Azure
                         : $"[{_serviceName}] Azure table {_client.Name} already existed");
                 }
                 _initialized = true;
-                return true;
             }
-            catch (RequestFailedException ex)
+            catch (RequestFailedException e)
             {
-                _log.Error(ex, $"[{_serviceName}] Failed to create Azure table {_client.Name}");
-                return false;
+                throw new InitializationException($"[{_serviceName}] Failed to create Azure table {_client.Name}", e);
             }
         }
 
@@ -240,6 +252,7 @@ namespace Akka.Discovery.Azure
         /// <param name="rowKey">The row RowKey</param>
         /// <param name="token"></param>
         /// <returns><see cref="ClusterMember"/> retrieved</returns>
+        /// <exception cref="RequestFailedException">The Azure server returned an error</exception>
         public async Task<ClusterMember?> GetEntityAsync(string rowKey, CancellationToken token)
         {
             var query = _client
@@ -252,7 +265,8 @@ namespace Akka.Discovery.Azure
             {
                 return ClusterMember.FromEntity(entry);
             }
-            return null;
+
+            return default;
         }
 
         #endregion

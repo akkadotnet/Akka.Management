@@ -12,7 +12,6 @@ using Akka.Actor;
 using Akka.Cluster;
 using Akka.Event;
 using Akka.Util.Internal;
-using DotNetty.Common.Utilities;
 
 namespace Akka.Discovery.Azure.Actors
 {
@@ -27,21 +26,19 @@ namespace Akka.Discovery.Azure.Actors
         public static Props Props(AzureDiscoverySettings settings, ClusterMemberTableClient client)
             => Actor.Props.Create(() => new PruneActor(settings, client)).WithDeploy(Deploy.Local);
 
-        private static readonly Status.Failure DefaultFailure = new Status.Failure(null);
-        
-        private readonly string _pruneTimerKey = "prune-key";
-        private readonly string _prune = "prune";
-        
+        private const string PruneTimerKey = "prune-key";
+        private const string Prune = "prune";
+
         private readonly ClusterMemberTableClient _client;
         private readonly TimeSpan _timeout;
         private readonly TimeSpan _pruneInterval;
         private readonly TimeSpan _staleTtlThreshold;
         private readonly ILoggingAdapter _log;
         private readonly CancellationTokenSource _shutdownCts;
-        private CancellationTokenSource _leaderCts;
+        private CancellationTokenSource? _leaderCts;
         
-        private Cluster.Cluster _cluster;
-        private Address _selfAddress;
+        private Cluster.Cluster? _cluster;
+        private Address? _selfAddress;
         
         private readonly TimeSpan _backoff;
         private readonly TimeSpan _maxBackoff;
@@ -72,7 +69,7 @@ namespace Akka.Discovery.Azure.Actors
 
         protected override void PostStop()
         {
-            Timers.CancelAll();
+            Timers!.CancelAll();
             _shutdownCts.Cancel();
             _shutdownCts.Dispose();
         }
@@ -85,7 +82,7 @@ namespace Akka.Discovery.Azure.Actors
                     if(evt.Leader == _selfAddress)
                     {
                         // We just received leader status
-                        Timers.StartPeriodicTimer(_pruneTimerKey, _prune, _pruneInterval);
+                        Timers!.StartPeriodicTimer(PruneTimerKey, Prune, _pruneInterval);
                         _leaderCts = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCts.Token);
                         Become(Pruning);
                     }
@@ -100,7 +97,7 @@ namespace Akka.Discovery.Azure.Actors
         {
             switch (message)
             {
-                case string str when str == _prune:
+                case Prune:
                     if (_pruning)
                         return true;
 
@@ -116,23 +113,26 @@ namespace Akka.Discovery.Azure.Actors
                     if (evt.Leader != _selfAddress)
                     {
                         // we lost leader status
-                        Timers.CancelAll();
-                        _leaderCts.Cancel();
-                        _leaderCts.Dispose();
+                        Timers!.CancelAll();
+                        _leaderCts?.Cancel();
+                        _leaderCts?.Dispose();
                         Become(WaitingForLeadership);
                     }
                     return true;
                 
-                case Done _:
-                    _pruning = false;
-                    return true;
-                
                 case Status.Failure f:
-                    if (_shutdownCts.IsCancellationRequested || _leaderCts.IsCancellationRequested)
+                    if (_shutdownCts.IsCancellationRequested || _leaderCts!.IsCancellationRequested)
+                    {
+                        _log.Warning(f.Cause, "Failed to prune stale cluster member entries");
                         return true;
+                    }
                     
                     _log.Warning(f.Cause, "Failed to prune stale cluster member entries, retrying");
                     ExecutePruneOpWithRetry().PipeTo(Self);
+                    return true;
+                
+                case Status.Success :
+                    _pruning = false;
                     return true;
                 
                 default:
@@ -145,7 +145,8 @@ namespace Akka.Discovery.Azure.Actors
             throw new NotImplementedException("Should never reach this code");
         }
 
-        private async Task<Status> ExecutePruneOpWithRetry()
+        // Always call this method using PipeTo, we'll be waiting for Status.Success or Status.Failure asynchronously
+        private async Task ExecutePruneOpWithRetry()
         {
             // Calculate backoff
             var backoff = new TimeSpan(_backoff.Ticks * _retryCount++);
@@ -154,23 +155,16 @@ namespace Akka.Discovery.Azure.Actors
             
             // Perform backoff delay
             if (backoff > TimeSpan.Zero)
-                await Task.Delay(backoff, _leaderCts.Token);
+                await Task.Delay(backoff, _leaderCts!.Token);
 
-            if (_leaderCts.IsCancellationRequested)
-                return DefaultFailure;
+            _leaderCts!.Token.ThrowIfCancellationRequested();
 
-            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_leaderCts.Token))
-            {
-                cts.CancelAfter(_timeout);
-                if (!await _client.PruneAsync((DateTime.UtcNow - _staleTtlThreshold).Ticks, cts.Token))
-                {
-                    return DefaultFailure;
-                }
-            
-                return Status.Success.Instance;
-            }
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_leaderCts.Token);
+            cts.CancelAfter(_timeout);
+            await _client.PruneAsync((DateTime.UtcNow - _staleTtlThreshold).Ticks, cts.Token);
+            cts.Token.ThrowIfCancellationRequested();
         }
 
-        public ITimerScheduler Timers { get; set; }
+        public ITimerScheduler? Timers { get; set; }
     }
 }

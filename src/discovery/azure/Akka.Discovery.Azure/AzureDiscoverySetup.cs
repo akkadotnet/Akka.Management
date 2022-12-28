@@ -15,20 +15,20 @@ namespace Akka.Discovery.Azure
 {
     public sealed class AzureDiscoverySetup: Setup
     {
-        public string ServiceName { get; set; }
-        public string HostName { get; set; }
+        public string? ServiceName { get; set; }
+        public string? HostName { get; set; }
         public int? Port { get; set; }
-        public string ConnectionString { get; set; }
-        public string TableName { get; set; }
+        public string? ConnectionString { get; set; }
+        public string? TableName { get; set; }
         public TimeSpan? TtlHeartbeatInterval { get; set; }
         public TimeSpan? StaleTtlThreshold { get; set; }
         public TimeSpan? PruneInterval { get; set; }
         public TimeSpan? OperationTimeout { get; set; }
         public TimeSpan? RetryBackoff { get; set; }
         public TimeSpan? MaximumRetryBackoff { get; set; }
-        public Uri AzureTableEndpoint { get; set; }
-        public TokenCredential AzureCredential { get; set; }
-        public TableClientOptions TableClientOptions { get; set; }
+        public Uri? AzureTableEndpoint { get; set; }
+        public TokenCredential? AzureCredential { get; set; }
+        public TableClientOptions? TableClientOptions { get; set; }
         public AzureDiscoverySetup WithServiceName(string serviceName)
         {
             ServiceName = serviceName;
@@ -93,7 +93,7 @@ namespace Akka.Discovery.Azure
         public AzureDiscoverySetup WithAzureCredential(
             Uri azureTableEndpoint,
             TokenCredential credential,
-            TableClientOptions tableClientOptions = null)
+            TableClientOptions? tableClientOptions = null)
         {
             AzureTableEndpoint = azureTableEndpoint;
             AzureCredential = credential;

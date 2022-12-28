@@ -33,6 +33,18 @@ namespace Akka.Discovery.Azure.Actors
 
         public IActorRef ReplyTo { get; }
     }
+
+    internal sealed class DiscoveryStopFailed
+    {
+        public DiscoveryStopFailed(IActorRef replyTo, Exception cause)
+        {
+            ReplyTo = replyTo;
+            Cause = cause;
+        }
+
+        public IActorRef ReplyTo { get; }
+        public Exception Cause { get; }
+    }
     
     /// <summary>
     /// The guardian actor that manages the Azure client instance and the table entries management actors.
@@ -58,11 +70,11 @@ namespace Akka.Discovery.Azure.Actors
         
         private readonly ILoggingAdapter _log;
         private readonly AzureDiscoverySettings _settings;
-        private ClusterMemberTableClient _clientDoNotUseDirectly;
+        private ClusterMemberTableClient? _clientDoNotUseDirectly;
         private readonly TimeSpan _staleTtlThreshold;
         private readonly TimeSpan _timeout;
-        private string _host;
-        private IPAddress _address;
+        private string? _host;
+        private IPAddress? _address;
         private readonly int _port;
         private readonly CancellationTokenSource _shutdownCts;
         
@@ -70,7 +82,7 @@ namespace Akka.Discovery.Azure.Actors
         private readonly TimeSpan _maxBackoff;
         private int _retryCount;
         private bool _lookingUp;
-        private IActorRef _requester;
+        private IActorRef? _requester;
 
         private ClusterMemberTableClient Client
         {
@@ -210,7 +222,7 @@ namespace Akka.Discovery.Azure.Actors
                     ExecuteOperationWithRetry(async token =>
                         await Client.GetAllAsync(
                             lastUpdate: (DateTime.UtcNow - _staleTtlThreshold).Ticks, 
-                            token: _shutdownCts.Token))
+                            token: token))
                         .PipeTo(Self);
                     return true;
                 
@@ -225,7 +237,7 @@ namespace Akka.Discovery.Azure.Actors
                     ExecuteOperationWithRetry(async token =>
                             await Client.GetAllAsync(
                                 lastUpdate: (DateTime.UtcNow - _staleTtlThreshold).Ticks, 
-                                token: _shutdownCts.Token))
+                                token: token))
                         .PipeTo(Self);
                     return true;
                 
@@ -235,7 +247,9 @@ namespace Akka.Discovery.Azure.Actors
                     
                     var sender = Sender;
                     Client.RemoveSelf(_shutdownCts.Token)
-                        .PipeTo(Self, success: () => new DiscoveryStopped(sender));
+                        .PipeTo(Self, 
+                            success: () => new DiscoveryStopped(sender), 
+                            failure: e => new DiscoveryStopFailed(sender, e));
                     Become(Stopping);
                     return true;
                 
@@ -260,6 +274,12 @@ namespace Akka.Discovery.Azure.Actors
 
                 case DiscoveryStopped msg:
                     msg.ReplyTo.Tell(Done.Instance);
+                    Context.System.Stop(Self);
+                    return true;
+                
+                case DiscoveryStopFailed fail:
+                    _log.Warning(fail.Cause, "Failed to perform cleanup, node entry has not been removed from storage");
+                    fail.ReplyTo.Tell(Done.Instance);
                     Context.System.Stop(Self);
                     return true;
                 
@@ -288,13 +308,11 @@ namespace Akka.Discovery.Azure.Actors
             if (_shutdownCts.IsCancellationRequested)
                 return DefaultFailure;
 
-            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCts.Token))
-            {
-                cts.CancelAfter(_timeout);
-                // Any exception thrown from the async method will be converted to Status.Failure by PipeTo
-                var result = await operation(cts.Token);
-                return new Status.Success(result);
-            }
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCts.Token);
+            cts.CancelAfter(_timeout);
+            // Any exception thrown from the async method will be converted to Status.Failure by PipeTo
+            var result = await operation(cts.Token);
+            return new Status.Success(result);
         }
     }
 }

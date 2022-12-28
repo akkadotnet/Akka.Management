@@ -81,9 +81,10 @@ akka.remote.dot-netty.tcp.port = 0
             await WithinAsync(3.Seconds(), async () =>
             {
                 await EventFilter.Debug(contains: "LastUpdate successfully updated from")
-                    .ExpectOneAsync(async () =>
+                    .ExpectOneAsync(() =>
                     {
                         actor.Tell("heartbeat", actor); // Fake a timer message
+                        return Task.CompletedTask;
                     });
             });
 

@@ -17,6 +17,7 @@ using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
 using Xunit.Abstractions;
+using static FluentAssertions.FluentActions;
 
 namespace Akka.Discovery.Azure.Tests
 {
@@ -118,11 +119,13 @@ namespace Akka.Discovery.Azure.Tests
             await _client.GetOrCreateAsync(Host, _address, FirstPort);
 
             // update should also update the table entry
-            (await _client.UpdateAsync()).Should().BeTrue();
+            await Awaiting(async () => await _client.UpdateAsync())
+                .Should().NotThrowAsync();
 
             // Retrieve the entry directly from the table and check LastUpdate value
             var entry = await _client.GetEntityAsync(ClusterMember.CreateRowKey(Host, _address, FirstPort), default);
-            entry.LastUpdate.Should().BeApproximately(DateTime.UtcNow, 500.Milliseconds());
+            entry.Should().NotBeNull();
+            entry!.LastUpdate.Should().BeApproximately(DateTime.UtcNow, 500.Milliseconds());
         }
 
         [Fact(DisplayName = "PruneAsync should prunes entries and only on proper service name")]
@@ -134,7 +137,8 @@ namespace Akka.Discovery.Azure.Tests
             await _client.GetOrCreateAsync(Host, _address, FirstPort);
 
             var lastUpdate = DateTime.UtcNow - 10.Minutes();
-            (await _client.PruneAsync(lastUpdate.Ticks)).Should().BeTrue();
+            await Awaiting(async () => await _client.PruneAsync(lastUpdate.Ticks))
+                .Should().NotThrowAsync();
 
             // Grab all entries via the raw client
             var entries = new List<TableEntity>();
