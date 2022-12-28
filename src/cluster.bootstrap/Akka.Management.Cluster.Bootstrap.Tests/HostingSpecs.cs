@@ -13,6 +13,7 @@ using Akka.Hosting;
 using Akka.Remote.Hosting;
 using FluentAssertions;
 using FluentAssertions.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -68,13 +69,15 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Theory(DisplayName = "WithClusterBootstrap should work")]
         [MemberData(nameof(StartupFactory))]
         public async Task WithClusterBootstrapTest(
+#pragma warning disable xUnit1026
             string testName,
+#pragma warning restore xUnit1026
             Action<AkkaConfigurationBuilder> startupAction)
         {
             var tcs = new TaskCompletionSource<Done>();
             using var host = await StartHost(startupAction);
 
-            var system = (ActorSystem) host.Services.GetService(typeof(ActorSystem));
+            var system = host.Services.GetRequiredService<ActorSystem>();
             var cluster = Akka.Cluster.Cluster.Get(system);
             cluster.RegisterOnMemberUp(() =>
             {

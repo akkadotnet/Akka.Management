@@ -147,7 +147,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         {
             var exception = Record.Exception(() =>
             {
-                var settings = ClusterBootstrapSettings.Create(_systems[0].Settings.Config, NoLogger.Instance);
+                var _ = ClusterBootstrapSettings.Create(_systems[0].Settings.Config, NoLogger.Instance);
             });
             exception.Should().BeNull();
         }
@@ -162,7 +162,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                 var coordinatorProbe = CreateTestProbe(system);
                 var selection =
                     system.ActorSelection("akka://ClusterBootstrapAutostartIntegrationSpec/system/bootstrapCoordinator");
-                IActorRef coordinator = null;
+                IActorRef? coordinator = null;
                 AwaitAssert(() =>
                 {
                     selection.Tell(new Identify(null));
@@ -171,7 +171,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                     coordinator.Should().NotBeNull();
                     coordinatorProbe.Watch(coordinator);
                 });
-                probeList.Add((coordinatorProbe, coordinator));
+                probeList.Add((coordinatorProbe, coordinator!));
             }
 
             // All nodes should join
