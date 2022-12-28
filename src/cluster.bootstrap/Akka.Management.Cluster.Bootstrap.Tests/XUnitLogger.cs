@@ -30,7 +30,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
             WriteLogEntry(logLevel, eventId, formattedMessage, exception);
         }
 
-        private void WriteLogEntry(LogLevel logLevel, EventId eventId, string message, Exception exception)
+        private void WriteLogEntry(LogLevel logLevel, EventId eventId, string? message, Exception? exception)
         {
             var level = logLevel switch
             {
@@ -67,7 +67,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
             TState state,
             Exception exception,
             Func<TState, Exception, string> formatter,
-            out string result)
+            out string? result)
         {
             formatter = formatter ?? throw new ArgumentNullException(nameof(formatter));
             

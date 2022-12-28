@@ -76,7 +76,9 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
         [Theory(DisplayName = "WithClusterBootstrap should work")]
         [MemberData(nameof(StartupFactory))]
         public async Task WithClusterBootstrapTest(
+#pragma warning disable xUnit1026
             string testName,
+#pragma warning restore xUnit1026
             Action<AkkaConfigurationBuilder> startupAction)
         {
             var tcs = new TaskCompletionSource<Done>();
