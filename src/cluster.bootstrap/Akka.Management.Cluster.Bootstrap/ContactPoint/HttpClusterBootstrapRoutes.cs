@@ -10,17 +10,16 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Akka.Cluster;
+using Akka.Http;
 using Akka.Http.Dsl;
-using Akka.Http.Dsl.Model;
-using Akka.Http.Dsl.Server;
-using Akka.IO;
+using Akka.Http.Extensions;
 using Newtonsoft.Json;
 using static Akka.Management.Cluster.Bootstrap.ContactPoint.HttpBootstrapJsonProtocol;
-using HttpResponse = Akka.Http.Dsl.Model.HttpResponse;
+using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
 namespace Akka.Management.Cluster.Bootstrap.ContactPoint
 {
-    public class HttpClusterBootstrapRoutes
+    public class HttpClusterBootstrapRoutes: HttpModuleBase
     {
         private readonly ClusterBootstrapSettings _settings;
 
@@ -29,48 +28,33 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
             _settings = settings;
         }
 
-        public Route[] Routes
+        public Route[] Routes => new Route[] { ("/bootstrap/seed-nodes", this) };
+
+        public override async Task<bool> HandleAsync(IAkkaHttpContext context)
         {
-            get
-            {
-                return new Route[]{ async context =>
-                {
-                    if (context.Request is { Method: "GET", Path: "/bootstrap/seed-nodes" })
-                    {
-                        return await GetSeedNodes()(context);
-                    }
+            if (context.HttpContext.Request.Method.ToLowerInvariant() != "get")
+                return false;
+            
+            var cluster = Akka.Cluster.Cluster.Get(context.ActorSystem);
 
-                    return null;
-                }};
-            }
+            ClusterMember MemberToClusterMember(Member m) =>
+                new (m.UniqueAddress.Address, m.UniqueAddress.Uid, m.Status, m.Roles);
+
+            var state = cluster.State;
+
+            var members = state.Members
+                .Where(m => !state.Unreachable.Contains(m))
+                .Where(m => m.Status is MemberStatus.Up or MemberStatus.WeaklyUp or MemberStatus.Joining)
+                .Take(_settings.ContactPoint.MaxSeedNodesToExpose)
+                .Select(MemberToClusterMember).ToList().Shuffle();
+
+            var json = JsonConvert.SerializeObject(
+                new SeedNodes(cluster.SelfMember.UniqueAddress.Address, members.ToImmutableList()));
+
+            await context.HttpContext.Response.WriteAllJsonAsync(json);
+
+            return true;
         }
-
-        private Route GetSeedNodes()
-        {
-            return context =>
-            {
-                var cluster = Akka.Cluster.Cluster.Get(context.ActorSystem);
-
-                ClusterMember MemberToClusterMember(Member m) =>
-                    new (m.UniqueAddress.Address, m.UniqueAddress.Uid, m.Status, m.Roles);
-
-                var state = cluster.State;
-
-                // TODO shuffle the members so in a big deployment nodes start joining different ones and not all the same?
-                var members = state.Members
-                    .Where(m => !state.Unreachable.Contains(m))
-                    .Where(m => m.Status is MemberStatus.Up or MemberStatus.WeaklyUp or MemberStatus.Joining)
-                    .Take(_settings.ContactPoint.MaxSeedNodesToExpose)
-                    .Select(MemberToClusterMember).ToImmutableHashSet();
-
-                var json = JsonConvert.SerializeObject(
-                    new SeedNodes(cluster.SelfMember.UniqueAddress.Address, members));
-
-                return Task.FromResult((RouteResult.IRouteResult?) new RouteResult.Complete(HttpResponse.Create(
-                    entity: new ResponseEntity(ContentTypes.ApplicationJson, ByteString.FromString(json)))));
-            };
-        }
-        
     }
 
     public static class ClusterBootstrapRequests

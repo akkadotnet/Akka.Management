@@ -8,7 +8,7 @@
 using System;
 using Akka.Annotations;
 
-namespace Akka.Management
+namespace Akka.Management.Dsl
 {
     /// <summary>
     /// Settings object used to pass through information about the environment the routes will be running in,

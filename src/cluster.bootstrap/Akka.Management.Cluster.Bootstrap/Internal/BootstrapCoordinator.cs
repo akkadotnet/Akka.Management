@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Discovery;
 using Akka.Event;
+using Akka.Management.Dsl;
 using Akka.Util;
 using static Akka.Discovery.ServiceDiscovery;
 

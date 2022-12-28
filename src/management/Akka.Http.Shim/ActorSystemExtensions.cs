@@ -1,23 +1,16 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="AttributeKey.cs" company="Akka.NET Project">
+// <copyright file="ActorSystemExtensions.cs" company="Akka.NET Project">
 //     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
 //     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
 // </copyright>
 //-----------------------------------------------------------------------
 
-using System;
+using Akka.Actor;
 
-namespace Akka.Http.Dsl.Model
+namespace Akka.Http
 {
-    public class AttributeKey<T>
+    public static class HttpExtExtensions
     {
-        public AttributeKey(string name)
-        {
-            Name = name;
-            Type = typeof(T);
-        }
-
-        public string Name { get; }
-        public Type Type { get; }
+        public static HttpExt Http(this ActorSystem system) => system.WithExtension<HttpExt, Http>();
     }
 }

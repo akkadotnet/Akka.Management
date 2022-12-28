@@ -19,6 +19,7 @@ using Akka.Configuration;
 using Akka.Discovery;
 using Akka.Management;
 using Akka.Management.Cluster.Bootstrap;
+using Akka.Management.Dsl;
 using Akka.Util.Internal;
 
 namespace StressTest

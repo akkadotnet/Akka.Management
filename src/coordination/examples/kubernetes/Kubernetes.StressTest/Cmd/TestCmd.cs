@@ -5,7 +5,7 @@ using Akka.Actor;
 using Petabridge.Cmd;
 using Petabridge.Cmd.Host;
 
-namespace KubernetesCluster.Cmd
+namespace Kubernetes.StressTest.Cmd
 {
     internal static class TestCmd
     {

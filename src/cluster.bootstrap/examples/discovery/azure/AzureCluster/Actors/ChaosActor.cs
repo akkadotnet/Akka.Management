@@ -10,7 +10,7 @@ using Akka.Actor;
 using Akka.Event;
 using Akka.Util.Internal;
 
-namespace KubernetesCluster.Actors
+namespace AzureCluster.Actors
 {
     public sealed class ChaosActor : ReceiveActor
     {

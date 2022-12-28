@@ -5,7 +5,10 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace System.Threading.Tasks
+using System;
+using System.Threading.Tasks;
+
+namespace Akka.Http.Extensions
 {
     public static class TaskExtensions
     {

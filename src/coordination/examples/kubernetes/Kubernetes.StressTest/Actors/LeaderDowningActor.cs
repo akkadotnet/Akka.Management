@@ -3,7 +3,7 @@ using Akka.Actor;
 using Akka.Cluster;
 using Akka.Event;
 
-namespace KubernetesCluster.Actors
+namespace Kubernetes.StressTest.Actors
 {
     public class LeaderDowningActor:ReceiveActor
     {

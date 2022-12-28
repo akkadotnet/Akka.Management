@@ -5,9 +5,11 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Collections.Generic;
 using System.Net;
 using Akka.Actor;
 using Akka.Hosting;
+using Akka.Management.Dsl;
 
 namespace Akka.Management
 {
@@ -18,6 +20,10 @@ namespace Akka.Management
         /// </summary>
         /// <param name="builder">
         ///     The builder instance being configured.
+        /// </param>
+        /// <param name="providers">
+        ///     The <see cref="IManagementRouteProvider"/>s to be used with management.
+        ///     At least one provider is needed for management to work.
         /// </param>
         /// <param name="hostName">
         ///     The hostname where the HTTP Server for Http Cluster Management will be started.
@@ -48,21 +54,31 @@ namespace Akka.Management
         /// </returns>
         public static AkkaConfigurationBuilder WithAkkaManagement(
             this AkkaConfigurationBuilder builder,
+            Dictionary<string, IManagementRouteProvider>? providers = null,
             string hostName = null,
             int? port = null,
             string bindHostname = null,
             int? bindPort = null,
             bool autoStart = false)
-            => builder.WithAkkaManagement(new AkkaManagementSetup
+        {
+            var http = new HttpSetup
             {
-                Http = new HttpSetup
+                HostName = hostName,
+                Port = port,
+                BindHostName = bindHostname,
+                BindPort = bindPort
+            };
+
+            if (providers is { })
+            {
+                foreach (var kvp in providers)
                 {
-                    Hostname = hostName,
-                    Port = port,
-                    BindHostname = bindHostname,
-                    BindPort = bindPort
+                    http.RouteProviders[kvp.Key] = kvp.Value.GetType();
                 }
-            }, autoStart);
+            }
+            
+            return builder.WithAkkaManagement(new AkkaManagementSetup(http), autoStart);
+        }
 
         /// <summary>
         ///     Adds Akka.Management support to the <see cref="ActorSystem"/>
@@ -85,10 +101,7 @@ namespace Akka.Management
             Action<AkkaManagementSetup> configure,
             bool autoStart = false)
         {
-            var setup = new AkkaManagementSetup
-            {
-                Http = new HttpSetup()
-            };
+            var setup = new AkkaManagementSetup(new HttpSetup());
             configure(setup);
             return builder.WithAkkaManagement(setup, autoStart);
         }

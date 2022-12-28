@@ -9,6 +9,7 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Http.Extensions;
 
 namespace Akka.Http.Dsl
 {

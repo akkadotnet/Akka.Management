@@ -8,6 +8,7 @@
 using System;
 using Akka.Configuration;
 using Akka.Event;
+using Akka.Management.Dsl;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;

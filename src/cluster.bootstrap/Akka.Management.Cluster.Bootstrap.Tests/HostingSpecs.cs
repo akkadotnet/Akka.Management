@@ -10,9 +10,11 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Cluster.Hosting;
 using Akka.Hosting;
+using Akka.Management.Dsl;
 using Akka.Remote.Hosting;
 using FluentAssertions;
 using FluentAssertions.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -44,7 +46,13 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
                         });
                         builder.WithRemoting(hostname: "localhost", port: 12552);
                         builder.WithClustering();
-                        builder.WithAkkaManagement("localhost", 18558, "localhost", 18558);
+                        builder.WithAkkaManagement(config =>
+                        {
+                            config.Http.HostName = "localhost";
+                            config.Http.Port = 18558;
+                            config.Http.BindHostName = "localhost";
+                            config.Http.BindPort = 18558;
+                        });
                         builder.WithConfigDiscovery(
                             new Dictionary<string, List<string>>
                             {
@@ -74,7 +82,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
             var tcs = new TaskCompletionSource<Done>();
             using var host = await StartHost(startupAction);
 
-            var system = (ActorSystem) host.Services.GetService(typeof(ActorSystem));
+            var system = host.Services.GetRequiredService<ActorSystem>();
             var cluster = Akka.Cluster.Cluster.Get(system);
             cluster.RegisterOnMemberUp(() =>
             {
@@ -82,6 +90,8 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
             });
 
             tcs.Task.Wait(30.Seconds()).Should().BeTrue();
+            
+            await host.StopAsync();
         }
 
         public static IEnumerable<object[]> StartupFactory()
