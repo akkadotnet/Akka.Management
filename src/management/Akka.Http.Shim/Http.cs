@@ -15,24 +15,20 @@ using Akka.Actor;
 using Akka.Annotations;
 using Akka.Configuration;
 using Akka.Event;
-using Akka.Http.Dsl.Model;
-using Akka.Http.Dsl.Server;
+using Akka.Http.Dsl;
 using Akka.Http.Dsl.Settings;
 using Ceen.Httpd;
+using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
-namespace Akka.Http.Dsl
+namespace Akka.Http
 {
-    public delegate Task<RouteResult.IRouteResult?> Route(RequestContext context);
-    public delegate Route RouteGenerator<T>(T obj);
-    
-    
     public sealed class HttpExt : IExtension
     {
         private readonly ExtendedActorSystem _system;
         private readonly ServerSettings _settings;
         private readonly ILoggingAdapter _log;
         private readonly CancellationTokenSource _shutdownCts;
-        private Task _serverTask;
+        private Task? _serverTask;
 
         public HttpExt(ExtendedActorSystem system)
         {
@@ -56,10 +52,10 @@ namespace Akka.Http.Dsl
         /// for processing all incoming connections.
         /// </summary>
         public async Task<ServerBinding> BindAndHandleAsync(
-            Route route, 
-            string hostname = null, 
+            Route[] routes, 
+            string? hostname = null, 
             int? port = null, 
-            ServerSettings settings = null)
+            ServerSettings? settings = null)
         {
             var effectiveSetting = settings ?? _settings;
             var effectiveHostname = hostname ?? "localhost";
@@ -67,13 +63,13 @@ namespace Akka.Http.Dsl
 
             var config = new ServerConfig
             {
-                Router = new AkkaRouter(_system, route)
+                Router = new AkkaRouter(_system, routes)
             };
 
             // Start listening...
             if (!IPAddress.TryParse(effectiveHostname, out var ip))
             {
-                var addresses = Dns.GetHostAddresses(effectiveHostname);
+                var addresses = await Dns.GetHostAddressesAsync(effectiveHostname);
                 ip = addresses.First(i => i.AddressFamily == AddressFamily.InterNetwork && !Equals(i, IPAddress.Any));
             }
             var endpoint = new IPEndPoint(ip, effectivePort);

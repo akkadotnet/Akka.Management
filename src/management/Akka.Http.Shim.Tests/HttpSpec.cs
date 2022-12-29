@@ -17,8 +17,6 @@ using Akka.Http.Extensions;
 using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
-using HttpResponse = Akka.Http.Dsl.Model.HttpResponse;
-using static Akka.Http.Dsl.Server.RouteResult;
 
 namespace Akka.Http.Shim.Tests
 {
@@ -37,7 +35,11 @@ namespace Akka.Http.Shim.Tests
                 .NewServerAt("localhost", 8081)
                 .WithSettings(ServerSettings.Create((ExtendedActorSystem)Sys));
 
-            var serverBinding = await baseBuilder.Bind(new []{RouteOne(), RouteTwo()}.Concat()).ConfigureAwait(false);
+            var serverBinding = await baseBuilder.Bind(new (string, HttpModuleBase)[]
+            {
+                ("/test/one", new RouteHandler()), 
+                ("/test/two", new RouteHandler())
+            }).ConfigureAwait(false);
 
             Log.Info($"Bound Akka Management (HTTP) endpoint to: {serverBinding.LocalAddress}");
 
@@ -68,28 +70,17 @@ namespace Akka.Http.Shim.Tests
             result.StatusCode.Should().Be(expectedResult);
         }
 
-        private Route RouteOne()
+        internal class RouteHandler : HttpModuleBase
         {
-            return context =>
+            public override Task<bool> HandleAsync(IAkkaHttpContext httpContext)
             {
+                var context = httpContext.HttpContext;
                 var request = context.Request;
-                if (request.Method != "GET" || request.Path != "/test/one")
-                    return Task.FromResult<IRouteResult>(null);
-
-                return Task.FromResult<IRouteResult>(new Complete(HttpResponse.Create()));
-            };
-        }
-
-        private Route RouteTwo()
-        {
-            return context =>
-            {
-                var request = context.Request;
-                if (request.Method != "GET" || request.Path != "/test/two")
-                    return Task.FromResult<IRouteResult>(null);
-
-                return Task.FromResult<IRouteResult>(new Complete(HttpResponse.Create())); 
-            };
+                if (request.Method != "GET")
+                    return Task.FromResult(false);
+                context.Response.StatusCode = Ceen.HttpStatusCode.OK;
+                return Task.FromResult(true);
+            }
         }
     }
 }

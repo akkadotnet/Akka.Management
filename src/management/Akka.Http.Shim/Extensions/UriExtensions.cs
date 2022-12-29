@@ -5,7 +5,9 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace System
+using System;
+
+namespace Akka.Http.Extensions
 {
     public static class UriExtensions
     {

@@ -14,13 +14,14 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
+using Akka.Http;
 using Akka.Http.Dsl;
 using Akka.Http.Dsl.Settings;
 using Akka.Http.Extensions;
 using Akka.Util;
-using static Akka.Predef;
+using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
-namespace Akka.Management
+namespace Akka.Management.Dsl
 {
     //using Route = Akka.Http.Dsl.Route;
     
@@ -95,7 +96,7 @@ namespace Akka.Management
         /// <summary>
         /// Start an Akka HTTP server to serve the HTTP management endpoint.
         /// </summary>
-        public Task<Uri> Start() => Start(Identity);
+        public Task<Uri> Start() => Start(x => x);
 
         private Task<Uri> _startPromise;
         public Task<Uri> Start(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings)
@@ -131,7 +132,7 @@ namespace Akka.Management
                     .NewServerAt(effectiveBindHostname, effectiveBindPort)
                     .WithSettings(ServerSettings.Create(_system));
 
-                var serverBinding = await baseBuilder.Bind(combinedRoutes.Concat()).ConfigureAwait(false);
+                var serverBinding = await baseBuilder.Bind(combinedRoutes).ConfigureAwait(false);
                 
                 serverBindingPromise.SetResult(serverBinding);
 

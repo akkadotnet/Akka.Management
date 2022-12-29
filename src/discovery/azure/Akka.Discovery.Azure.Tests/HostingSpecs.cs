@@ -49,7 +49,13 @@ namespace Akka.Discovery.Azure.Tests
                         });
                         builder.WithRemoting(hostname: "localhost", port: 12552);
                         builder.WithClustering();
-                        builder.WithAkkaManagement("localhost", 18558, "localhost", 18558);
+                        builder.WithAkkaManagement(config =>
+                        {
+                            config.Http.HostName = "localhost";
+                            config.Http.Port = 18558;
+                            config.Http.BindHostName = "localhost";
+                            config.Http.BindPort = 18558;
+                        });
                         builder.WithClusterBootstrap(setup =>
                         {
                             setup.ContactPointDiscovery.ServiceName = "testService";

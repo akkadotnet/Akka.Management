@@ -15,6 +15,7 @@ using Akka.Configuration;
 using Akka.Discovery;
 using Akka.Event;
 using Akka.Management.Cluster.Bootstrap.Internal;
+using Akka.Management.Dsl;
 using Akka.Util;
 using FluentAssertions;
 using Xunit;

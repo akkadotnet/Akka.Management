@@ -7,6 +7,7 @@
 
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Management.Dsl;
 using Xunit;
 
 namespace Akka.Management.Cluster.Bootstrap.Tests

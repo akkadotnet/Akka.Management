@@ -17,16 +17,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using Akka.Cluster;
 using Akka.Configuration;
-using Akka.Http.Dsl.Model;
-using Akka.Http.Dsl.Server;
 using Akka.Http.Extensions;
+using Akka.Http.Dsl;
 using Akka.Management.Cluster.Bootstrap.ContactPoint;
+using Akka.Management.Dsl;
 using Ceen;
 using FluentAssertions;
 using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
-using HttpRequest = Akka.Http.Dsl.Model.HttpRequest;
 using static Akka.Management.Cluster.Bootstrap.ContactPoint.HttpBootstrapJsonProtocol;
 
 namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
@@ -57,9 +56,22 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             context.FakeRequest.Method = "GET";
             context.FakeRequest.Path = ClusterBootstrapRequests.BootstrapSeedNodes("").ToString();
             
-            var requestContext = new RequestContext(await HttpRequest.CreateAsync(context.Request), Sys);
-            var response = (RouteResult.Complete) await _httpBootstrap.Routes.Concat()(requestContext);
-            response.Response.Entity.DataBytes.ToString().Should().Contain("\"Nodes\":[]");
+            var requestContext = new AkkaHttpContext(Sys, context);
+            var handled = false;
+            foreach (var (path, handler) in _httpBootstrap.Routes)
+            {
+                if (path == context.Request.Path)
+                {
+                    if (await handler.HandleAsync(requestContext))
+                    {
+                        handled = true;
+                        var response = (FakeResponse)context.Response;
+                        response.Response.Should().Contain("\"Nodes\":[]");
+                    }
+                }
+            }
+
+            handled.Should().BeTrue("At least one handler has to handle the request");
         }
 
         [Fact( 
@@ -67,36 +79,53 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             DisplayName = "Http Bootstrap routes should include seed nodes when part of a cluster")]
         public async Task IncludeSeedsWhenPartOfCluster()
         {
+            var tcs = new TaskCompletionSource<Done>();
             var cluster = Akka.Cluster.Cluster.Get(Sys);
+            cluster.RegisterOnMemberUp(() =>
+            {
+                tcs.SetResult(Done.Instance);
+            });
             cluster.Join(cluster.SelfAddress);
 
-            var p = CreateTestProbe();
-            cluster.Subscribe(
-                p.Ref,
-                ClusterEvent.SubscriptionInitialStateMode.InitialStateAsEvents,
-                typeof(ClusterEvent.MemberUp));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
-            var up = p.ExpectMsg<ClusterEvent.MemberUp>();
-            up.Member.Should().Be(cluster.SelfMember);
+            await Task.WhenAny(Task.Delay(Timeout.Infinite, cts.Token), tcs.Task);
+            if (cts.IsCancellationRequested)
+                throw new TimeoutException("Cluster failed to form");
+            cts.Dispose();
 
-            var context = new DefaultHttpContext();
-            context.FakeRequest.Method = "GET";
-            context.FakeRequest.Path = ClusterBootstrapRequests.BootstrapSeedNodes("");
-            
-            var requestContext = new RequestContext(await HttpRequest.CreateAsync(context.Request), Sys);
-            var response = (RouteResult.Complete) await _httpBootstrap.Routes.Concat()(requestContext);
+            var context = new DefaultHttpContext
+            {
+                FakeRequest =
+                {
+                    Method = "GET",
+                    Path = ClusterBootstrapRequests.BootstrapSeedNodes("")
+                }
+            };
 
-            var responseString = response.Response.Entity.DataBytes.ToString();
-            var nodes = JsonConvert.DeserializeObject<SeedNodes>(responseString);
-            nodes.Should().NotBeNull();
-            
-            var seedNodes = nodes!.Nodes.Select(n => n.Node).ToList();
-            seedNodes.Contains(cluster.SelfAddress).Should()
-                .BeTrue(
-                    "Seed nodes should contain self address but it does not. Self address: [{0}], seed nodes: [{1}], response string: [{2}]",
-                    cluster.SelfAddress,
-                    string.Join(", ", seedNodes),
-                    responseString);
+            var requestContext = new AkkaHttpContext(Sys, context);
+            var handled = false;
+            foreach (var (path, handler) in _httpBootstrap.Routes)
+            {
+                if (path == context.Request.Path)
+                {
+                    if (await handler.HandleAsync(requestContext))
+                    {
+                        handled = true;
+                        var response = (FakeResponse)context.Response;
+                        var nodes = JsonConvert.DeserializeObject<SeedNodes>(response.Response);
+                        var seedNodes = nodes.Nodes.Select(n => n.Node).ToList();
+                        seedNodes.Contains(cluster.SelfAddress).Should()
+                            .BeTrue(
+                                "Seed nodes should contain self address but it does not. Self address: [{0}], seed nodes: [{1}], response string: [{2}]",
+                                cluster.SelfAddress,
+                                string.Join(", ", seedNodes),
+                                response.Response);
+                    }
+                }
+            }
+
+            handled.Should().BeTrue("At least one handler has to handle the request");
         }
     }
 
@@ -110,12 +139,11 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
         // ReSharper disable UnassignedGetOnlyAutoProperty
         public FakeRequest FakeRequest { get; } = new FakeRequest();
         public IHttpRequest Request => FakeRequest;
-        public IHttpResponse? Response { get; }
-        public IStorageCreator? Storage { get; }
-        public IDictionary<string, string>? Session { get; set; }
-        public IDictionary<string, string>? LogData { get; }
-        public ILoadedModuleInfo? LoadedModules { get; }
-        // ReSharper restore UnassignedGetOnlyAutoProperty
+        public IHttpResponse Response { get; } = new FakeResponse();
+        public IStorageCreator Storage { get; }
+        public IDictionary<string, string> Session { get; set; }
+        public IDictionary<string, string> LogData { get; }
+        public ILoadedModuleInfo LoadedModules { get; }
     }
 
     internal class FakeRequest : IHttpRequest
@@ -178,7 +206,15 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
 
     internal class FakeResponse : IHttpResponse
     {
-        public IResponseCookie AddCookie(string name, string value, string? path = null, string? domain = null, DateTime? expires = null,
+        public string Response { get; private set; }
+        
+        public IResponseCookie AddCookie(string name, string value, string path = null, string domain = null, DateTime? expires = null,
+            long maxage = -1, bool secure = false, bool httponly = false, string samesite = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IResponseCookie AddCookie(string name, string value, string path = null, string domain = null, DateTime? expires = null,
             long maxage = -1, bool secure = false, bool httponly = false)
         {
             throw new NotImplementedException();
@@ -199,29 +235,34 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
             throw new NotImplementedException();
         }
 
-        public Task WriteAllAsync(Stream data, string? contenttype = null)
+        public async Task WriteAllAsync(Stream data, string? contenttype = null)
         {
-            throw new NotImplementedException();
+            using var reader = new StreamReader(data);
+            Response = await reader.ReadToEndAsync();
         }
 
         public Task WriteAllAsync(byte[] data, string? contenttype = null)
         {
-            throw new NotImplementedException();
+            Response = Encoding.UTF8.GetString(data);
+            return Task.CompletedTask;
         }
 
         public Task WriteAllAsync(string data, string? contenttype = null)
         {
-            throw new NotImplementedException();
+            Response = data;
+            return Task.CompletedTask;
         }
 
         public Task WriteAllAsync(string data, Encoding encoding, string? contenttype = null)
         {
-            throw new NotImplementedException();
+            Response = data;
+            return Task.CompletedTask;
         }
 
         public Task WriteAllJsonAsync(string data)
         {
-            throw new NotImplementedException();
+            Response = data;
+            return Task.CompletedTask;
         }
 
         public void Redirect(string newurl)

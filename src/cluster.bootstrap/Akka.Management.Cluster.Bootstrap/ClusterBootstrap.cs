@@ -16,7 +16,9 @@ using Akka.Event;
 using Akka.Http.Dsl;
 using Akka.Management.Cluster.Bootstrap.ContactPoint;
 using Akka.Management.Cluster.Bootstrap.Internal;
+using Akka.Management.Dsl;
 using Akka.Util;
+using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
 namespace Akka.Management.Cluster.Bootstrap
 {

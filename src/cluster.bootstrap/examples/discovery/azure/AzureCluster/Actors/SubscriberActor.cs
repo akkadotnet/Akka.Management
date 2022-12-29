@@ -10,7 +10,7 @@ using Akka.Cluster.Tools.PublishSubscribe;
 using Akka.Event;
 using Akka.Util;
 
-namespace KubernetesCluster.Actors
+namespace AzureCluster.Actors
 {
     public class SubscriberActor : ReceiveActor
     {

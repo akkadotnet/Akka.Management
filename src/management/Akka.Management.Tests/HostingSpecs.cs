@@ -11,12 +11,16 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Hosting;
+using Akka.Http.Dsl;
+using Akka.Management.Dsl;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
+using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
 namespace Akka.Management.Tests
 {
@@ -70,20 +74,25 @@ namespace Akka.Management.Tests
             var client = new HttpClient();
             await testKit.AwaitAssertAsync(async () =>
             {
-                var response = await client.GetAsync("http://localhost:18558/alive");
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
-                response = await client.GetAsync("http://localhost:18558/ready");
+                var response = await client.GetAsync("http://localhost:18558/dotnet");
                 response.StatusCode.Should().Be(HttpStatusCode.OK);
             });
         }
 
         public static IEnumerable<object[]> StartupFactory()
         {
+            var routes = new Dictionary<string, IManagementRouteProvider>
+            {
+                ["dotnet"] = new MockProvider()
+            };
+            
             var startups = new Action<AkkaConfigurationBuilder>[]
             {
                 builder =>
                 {
-                    builder.WithAkkaManagement("localhost", 18558, "localhost", 18558)
+                    builder
+                        .WithAkkaManagement(routes, "localhost", 18558, "localhost", 18558)
+                        
                     .AddStartup(async (system, _) =>
                     {
                         await AkkaManagement.Get(system).Start();
@@ -91,17 +100,18 @@ namespace Akka.Management.Tests
                 },
                 builder =>
                 {
-                    builder.WithAkkaManagement("localhost", 18558, "localhost", 18558, true);
+                    builder.WithAkkaManagement(routes, "localhost", 18558, "localhost", 18558, true);
                 },
                 
                 builder =>
                 {
                     builder.WithAkkaManagement(setup =>
                     {
-                        setup.Http.Hostname = "localhost";
+                        setup.Http.HostName = "localhost";
                         setup.Http.Port = 18558;
-                        setup.Http.BindHostname = "localhost";
+                        setup.Http.BindHostName = "localhost";
                         setup.Http.BindPort = 18558;
+                        setup.Http.WithRouteProvider<MockProvider>("dotnet");
                     })
                     .AddStartup(async (system, _) =>
                     {
@@ -112,25 +122,23 @@ namespace Akka.Management.Tests
                 {
                     builder.WithAkkaManagement(setup =>
                     {
-                        setup.Http.Hostname = "localhost";
+                        setup.Http.HostName = "localhost";
                         setup.Http.Port = 18558;
-                        setup.Http.BindHostname = "localhost";
+                        setup.Http.BindHostName = "localhost";
                         setup.Http.BindPort = 18558;
+                        setup.Http.WithRouteProvider<MockProvider>("dotnet");
                     }, true);
                 },
                 
                 builder =>
                 {
-                    var setup = new AkkaManagementSetup
-                    {
-                        Http = new HttpSetup
+                    var setup = new AkkaManagementSetup( new HttpSetup
                         {
-                            Hostname = "localhost",
+                            HostName = "localhost",
                             Port = 18558,
-                            BindHostname = "localhost",
+                            BindHostName = "localhost",
                             BindPort = 18558,
-                        }
-                    };
+                        }.WithRouteProvider<MockProvider>("dotnet"));
                     builder.WithAkkaManagement(setup)
                     .AddStartup(async (system, _) =>
                     {
@@ -139,16 +147,13 @@ namespace Akka.Management.Tests
                 },
                 builder =>
                 {
-                    var setup = new AkkaManagementSetup
+                    var setup = new AkkaManagementSetup(new HttpSetup
                     {
-                        Http = new HttpSetup
-                        {
-                            Hostname = "localhost",
-                            Port = 18558,
-                            BindHostname = "localhost",
-                            BindPort = 18558,
-                        }
-                    };
+                        HostName = "localhost",
+                        Port = 18558,
+                        BindHostName = "localhost",
+                        BindPort = 18558,
+                    }.WithRouteProvider<MockProvider>("dotnet"));
                     builder.WithAkkaManagement(setup, true);
                 },
             };
@@ -161,5 +166,23 @@ namespace Akka.Management.Tests
                 };
             }
         }
+        
+        internal class MockProvider : HttpModuleBase, IManagementRouteProvider
+        {
+            public Route[] Routes(ManagementRouteProviderSettings settings)
+            {
+                return new Route[]{ ("/dotnet", this) };
+            }
+
+            public override Task<bool> HandleAsync(IAkkaHttpContext httpContext)
+            {
+                var context = httpContext.HttpContext;
+                if(context.Request.Method != "GET")
+                    return Task.FromResult(false);
+                context.Response.WriteAllAsync("hello");
+                return Task.FromResult(true);
+            }
+        }
     }
+    
 }

@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Event;
 using Akka.Http.Dsl.Settings;
+using Akka.Http.Extensions;
+using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
 namespace Akka.Http.Dsl
 {
@@ -64,8 +66,8 @@ namespace Akka.Http.Dsl
         /// <summary>
         /// Bind a new HTTP server and use the given asynchronous `handler` for processing all incoming connections.
         /// </summary>
-        public Task<ServerBinding> Bind(Route route) =>
-            _http.BindAndHandleAsync(route, Hostname, Port, Settings);
+        public Task<ServerBinding> Bind(Route[] routes) =>
+            _http.BindAndHandleAsync(routes, Hostname, Port, Settings);
         
         private ServerBuilder Copy(
             string hostname = null,

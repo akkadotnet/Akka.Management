@@ -41,14 +41,14 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
         
         public sealed class SeedNodes
         {
-            public SeedNodes(Address selfNode, ImmutableHashSet<ClusterMember> nodes)
+            public SeedNodes(Address selfNode, ImmutableList<ClusterMember> nodes)
             {
                 SelfNode = selfNode;
                 Nodes = nodes;
             }
 
             public Address SelfNode { get; }
-            public ImmutableHashSet<ClusterMember> Nodes { get; }
+            public ImmutableList<ClusterMember> Nodes { get; }
         }
     }
 }
