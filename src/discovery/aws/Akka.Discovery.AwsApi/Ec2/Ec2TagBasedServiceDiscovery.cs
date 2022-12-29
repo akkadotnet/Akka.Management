@@ -18,7 +18,6 @@ using Akka.Event;
 using Amazon;
 using Amazon.EC2;
 using Amazon.EC2.Model;
-using Amazon.Runtime;
 
 namespace Akka.Discovery.AwsApi.Ec2
 {
@@ -52,9 +51,9 @@ namespace Akka.Discovery.AwsApi.Ec2
         private readonly Filter _runningInstancesFilter;
         
         // JVM has its own retry mechanism in cluster bootstrap, but we don't have any, so keep the default.
-        private AmazonEC2Config DefaultClientConfiguration => new AmazonEC2Config();
+        private readonly AmazonEC2Config _defaultClientConfiguration = new ();
 
-        private AmazonEC2Client _ec2ClientDoNotUseDirectly;
+        private AmazonEC2Client? _ec2ClientDoNotUseDirectly;
         private AmazonEC2Client Ec2Client
         {
             get
@@ -65,7 +64,7 @@ namespace Akka.Discovery.AwsApi.Ec2
                 AmazonEC2Config clientConfig;
                 if (_settings.ClientConfig == null)
                 {
-                    clientConfig = DefaultClientConfiguration;
+                    clientConfig = _defaultClientConfiguration;
                 }
                 else
                 {
@@ -113,16 +112,14 @@ namespace Akka.Discovery.AwsApi.Ec2
         
         public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
         {
-            using(var cts = new CancellationTokenSource(resolveTimeout))
+            using var cts = new CancellationTokenSource(resolveTimeout);
+            try
             {
-                try
-                {
-                    return await Lookup(lookup, cts.Token);
-                }
-                catch (TaskCanceledException e)
-                {
-                    throw new TaskCanceledException($"Lookup for [{lookup}] timed out, within [{resolveTimeout}]", e);
-                }
+                return await Lookup(lookup, cts.Token);
+            }
+            catch (TaskCanceledException e)
+            {
+                throw new TaskCanceledException($"Lookup for [{lookup}] timed out, within [{resolveTimeout}]", e);
             }
         }
 
@@ -168,6 +165,8 @@ namespace Akka.Discovery.AwsApi.Ec2
             do
             {
                 var describeInstancesResult = await client.DescribeInstancesAsync(describeInstancesRequest, token);
+                token.ThrowIfCancellationRequested();
+                
                 var ips = (from reservation in describeInstancesResult.Reservations
                            from instance in reservation.Instances
                            select instance.PrivateIpAddress)
@@ -184,7 +183,7 @@ namespace Akka.Discovery.AwsApi.Ec2
             return accumulator;
         }
         
-        private T CreateInstance<T>(Type type)
+        private T CreateInstance<T>(Type type) where T: class
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
@@ -194,11 +193,13 @@ namespace Akka.Discovery.AwsApi.Ec2
             
             try
             {
-                return (T) Activator.CreateInstance(type, _system);
+                // !: Activator.CreateInstance only returns null when instantiating a Nullable<T>
+                return (T) Activator.CreateInstance(type, _system)!;
             }
             catch (MissingMethodException)
             {
-                return (T) Activator.CreateInstance(type);
+                // !: Activator.CreateInstance only returns null when instantiating a Nullable<T>
+                return (T) Activator.CreateInstance(type)!;
             }
         }
     }
