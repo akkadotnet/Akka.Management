@@ -28,7 +28,7 @@ namespace Akka.Http.Extensions
             return source.ContinueWith(t => selector(t.Result), TaskContinuationOptions.NotOnCanceled);
         }
 
-        public static Task WhenComplete<TSource>(this Task<TSource> source, Action<TSource, Exception> continuationAction) =>
+        public static Task WhenComplete<TSource>(this Task<TSource> source, Action<TSource?, Exception?> continuationAction) =>
             source.ContinueWith(t =>
             {
                 if (t.IsFaulted)
