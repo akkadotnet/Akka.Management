@@ -14,7 +14,7 @@ using Akka.Discovery;
 using Akka.Event;
 using Akka.Util;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests
+namespace Akka.Management.Tests.Cluster.Bootstrap
 {
     public class MockDiscovery : ServiceDiscovery
     {

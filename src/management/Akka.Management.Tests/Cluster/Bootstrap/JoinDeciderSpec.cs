@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
+using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Cluster.Bootstrap.Util;
 using Akka.Management.Dsl;
 using Akka.TestKit.Xunit2.Internals;
@@ -22,7 +23,7 @@ using Xunit;
 using Xunit.Abstractions;
 using static Akka.Discovery.ServiceDiscovery;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests
+namespace Akka.Management.Tests.Cluster.Bootstrap
 {
     public abstract class JoinDeciderSpec: IAsyncLifetime
     {

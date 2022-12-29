@@ -17,7 +17,6 @@ using Akka.Actor;
 using Akka.Cluster;
 using Akka.Configuration;
 using Akka.Discovery;
-using Akka.Management;
 using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Dsl;
 using Akka.Util.Internal;
@@ -91,7 +90,7 @@ namespace StressTest
                 akka {{
                     loglevel = INFO
                     # trigger autostart by loading the extension through config
-                    extensions = [""Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management.Cluster.Bootstrap""]
+                    extensions = [""Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management""]
                     actor.provider = cluster
 
                     # this can be referred to in tests to use the mock discovery implementation

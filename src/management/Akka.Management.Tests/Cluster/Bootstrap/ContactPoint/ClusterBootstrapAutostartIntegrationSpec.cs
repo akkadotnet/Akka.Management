@@ -17,6 +17,7 @@ using Akka.Cluster;
 using Akka.Configuration;
 using Akka.Discovery;
 using Akka.Event;
+using Akka.Management.Cluster.Bootstrap;
 using Akka.TestKit;
 using Akka.TestKit.Xunit2.Internals;
 using Akka.Util.Internal;
@@ -24,7 +25,7 @@ using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
+namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
 {
     public class ClusterBootstrapAutostartIntegrationSpec : TestKit.Xunit2.TestKit
     {
@@ -97,11 +98,11 @@ namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
                 akka {{
                     loglevel = INFO
                     # trigger autostart by loading the extension through config
-                    extensions = [""Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management.Cluster.Bootstrap""]
+                    extensions = [""Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management""]
                     actor.provider = cluster
 
                     # this can be referred to in tests to use the mock discovery implementation
-                    discovery.mock-dns.class = ""Akka.Management.Cluster.Bootstrap.Tests.MockDiscovery, Akka.Management.Cluster.Bootstrap.Tests""
+                    discovery.mock-dns.class = ""Akka.Management.Tests.Cluster.Bootstrap.MockDiscovery, Akka.Management.Tests""
                     
                     remote.dot-netty.tcp.hostname = ""127.0.0.1""
                     remote.dot-netty.tcp.port = {remotingPort}

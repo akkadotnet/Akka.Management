@@ -6,14 +6,14 @@
 //-----------------------------------------------------------------------
 
 using System;
-using Akka.Configuration;
 using Akka.Event;
+using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Dsl;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests
+namespace Akka.Management.Tests.Cluster.Bootstrap
 {
     public class ClusterBootstrapSettingsSpec
     {
@@ -45,7 +45,7 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
             settings.ContactPoint.ProbeInterval.Should().Be(TimeSpan.FromSeconds(1));
             settings.ContactPoint.ProbeIntervalJitter.Should().Be(0.2);
             settings.JoinDecider.ImplClass.Should()
-                .Be("Akka.Management.Cluster.Bootstrap.LowestAddressJoinDecider, Akka.Management.Cluster.Bootstrap");
+                .Be("Akka.Management.Cluster.Bootstrap.LowestAddressJoinDecider, Akka.Management");
         }
         
         [Fact(DisplayName = "ClusterBootstrapSetup should override ClusterBootstrapSettings")]

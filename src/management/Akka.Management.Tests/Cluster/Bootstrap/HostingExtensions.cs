@@ -12,7 +12,7 @@ using Akka.Configuration;
 using Akka.Discovery;
 using Akka.Hosting;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests
+namespace Akka.Management.Tests.Cluster.Bootstrap
 {
     public static class HostingExtensions
     {

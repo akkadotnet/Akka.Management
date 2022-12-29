@@ -14,6 +14,7 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Discovery;
 using Akka.Event;
+using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Cluster.Bootstrap.Internal;
 using Akka.Management.Dsl;
 using Akka.Util;
@@ -23,7 +24,7 @@ using Xunit.Abstractions;
 using static Akka.Discovery.ServiceDiscovery;
 using static Akka.Management.Cluster.Bootstrap.Internal.BootstrapCoordinator.Protocol;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests.Internal
+namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
 {
     public class BootstrapCoordinatorSpec : TestKit.Xunit2.TestKit
     {

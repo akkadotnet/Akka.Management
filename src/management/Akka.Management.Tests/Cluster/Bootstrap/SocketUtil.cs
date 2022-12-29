@@ -9,7 +9,7 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests
+namespace Akka.Management.Tests.Cluster.Bootstrap
 {
     public static class SocketUtil
     {

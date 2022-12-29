@@ -10,7 +10,7 @@ using Akka.Actor;
 using Akka.Management.Dsl;
 using Xunit;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests
+namespace Akka.Management.Tests.Cluster.Bootstrap
 {
     public class InactiveBootstrapSpec : IAsyncLifetime
     {

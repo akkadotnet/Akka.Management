@@ -10,7 +10,6 @@ using Akka.Configuration;
 using Akka.Coordination.KubernetesApi;
 using Akka.Discovery.KubernetesApi;
 using Akka.Hosting;
-using Akka.Management;
 using Akka.Management.Cluster.Bootstrap;
 using Akka.Remote.Hosting;
 using Akka.Util;

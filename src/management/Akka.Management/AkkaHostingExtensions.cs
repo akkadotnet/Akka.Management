@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Collections.Generic;
 using System.Net;
 using Akka.Actor;
 using Akka.Hosting;
@@ -54,30 +53,19 @@ namespace Akka.Management
         /// </returns>
         public static AkkaConfigurationBuilder WithAkkaManagement(
             this AkkaConfigurationBuilder builder,
-            Dictionary<string, IManagementRouteProvider>? providers = null,
             string hostName = null,
             int? port = null,
             string bindHostname = null,
             int? bindPort = null,
             bool autoStart = false)
         {
-            var http = new HttpSetup
+            return builder.WithAkkaManagement(new AkkaManagementSetup(new HttpSetup
             {
                 HostName = hostName,
                 Port = port,
                 BindHostName = bindHostname,
                 BindPort = bindPort
-            };
-
-            if (providers is { })
-            {
-                foreach (var kvp in providers)
-                {
-                    http.RouteProviders[kvp.Key] = kvp.Value.GetType();
-                }
-            }
-            
-            return builder.WithAkkaManagement(new AkkaManagementSetup(http), autoStart);
+            }), autoStart);
         }
 
         /// <summary>
