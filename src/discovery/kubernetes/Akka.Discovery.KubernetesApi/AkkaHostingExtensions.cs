@@ -49,7 +49,7 @@ namespace Akka.Discovery.KubernetesApi
         /// </example>
         public static AkkaConfigurationBuilder WithKubernetesDiscovery(
             this AkkaConfigurationBuilder builder,
-            string podLabelSelector = null)
+            string? podLabelSelector = null)
         {
             return builder.WithKubernetesDiscovery(new KubernetesDiscoverySetup
             {
@@ -133,7 +133,7 @@ namespace Akka.Discovery.KubernetesApi
             builder.AddSetup(setup);
             
             // Force start the module
-            builder.AddStartup((system, registry) =>
+            builder.AddStartup((system, _) =>
             {
                 KubernetesDiscovery.Get(system);
             });
