@@ -34,7 +34,7 @@ namespace Aws.Ecs
                             .WithAkkaManagement(setup =>
                             {
                                 setup.Http.Port = 8558;
-                                setup.Http.Hostname = privateAddress.ToString();
+                                setup.Http.HostName = privateAddress.ToString();
                             })
                             .WithClusterBootstrap(setup =>
                             {

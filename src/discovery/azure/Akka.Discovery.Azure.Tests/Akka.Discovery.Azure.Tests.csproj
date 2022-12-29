@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\cluster.bootstrap\Akka.Management.Cluster.Bootstrap\Akka.Management.Cluster.Bootstrap.csproj" />
+      <ProjectReference Include="..\..\..\management\Akka.Management\Akka.Management.csproj" />
       <ProjectReference Include="..\Akka.Discovery.Azure\Akka.Discovery.Azure.csproj" />
     </ItemGroup>
 

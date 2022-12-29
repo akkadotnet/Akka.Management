@@ -2,7 +2,7 @@
 using Akka.Cluster;
 using Akka.Event;
 
-namespace KubernetesCluster.Actors
+namespace AzureCluster.Actors
 {
     public class ClusterListener : ReceiveActor
     {

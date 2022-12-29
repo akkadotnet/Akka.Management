@@ -5,28 +5,30 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using Akka.Http.Dsl;
+using Route = System.ValueTuple<string, Akka.Http.Dsl.IAkkaHttpModule>;
 
 namespace Akka.Http.Extensions
 {
     public static class EnumerableExtensions
     {
-        public static Route Concat(this IEnumerable<Route> routes)
+        /// <summary>
+        /// Generic Knuth shuffle algorithm for <see cref="List{T}"/>
+        /// </summary>
+        /// <param name="list">The <see cref="List{T}"/> to be shuffled</param>
+        /// <typeparam name="T">Generic type</typeparam>
+        /// <returns>The same list being shuffled</returns>
+        public static List<T> Shuffle<T>(this List<T> list)
         {
-            var routeArray = routes.ToArray();
-            return async context =>
+            var rng = new Random();
+            for (var i = list.Count - 1; i > -1; i--)
             {
-                foreach (var route in routeArray)
-                {
-                    var result = await route(context);
-                    if (result != null)
-                        return result;
-                }
+                var j = rng.Next(0, i+1);
+                (list[i], list[j]) = (list[j], list[i]); // swap the 2 indices
+            }
 
-                return null;
-            };
+            return list;
         }
     }
 }

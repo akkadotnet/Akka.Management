@@ -5,7 +5,8 @@ using Akka.Event;
 using Akka.Management;
 using Azure.StressTest.Actors;
 using Azure.StressTest.Cmd;
-using LogLevel = Akka.Event.LogLevel;
+
+namespace Azure.StressTest;
 
 public static class Program
 {
@@ -40,7 +41,7 @@ coordinated-shutdown.run-by-actor-system-terminate = off")
                     // Add Akka.Management support
                     builder.WithAkkaManagement(setup =>
                     {
-                        setup.Http.Hostname = ip;
+                        setup.Http.HostName = ip;
                     });
                     
                     // Add Akka.Management.Cluster.Bootstrap support

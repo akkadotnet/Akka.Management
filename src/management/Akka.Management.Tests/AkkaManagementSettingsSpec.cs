@@ -11,9 +11,11 @@ using System.Linq;
 using System.Net;
 using Akka.Configuration;
 using Akka.Http.Dsl;
+using Akka.Management.Dsl;
 using FluentAssertions;
 using Xunit;
 using static FluentAssertions.FluentActions;
+using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
 namespace Akka.Management.Tests
 {
@@ -36,26 +38,23 @@ namespace Akka.Management.Tests
             http.EffectiveBindPort.Should().Be(8558);
             http.BasePath.Should().BeEmpty();
             http.RouteProviders.Count.Should().Be(1);
-            http.RouteProviders[0].Should()
-                .BeEquivalentTo(new NamedRouteProvider("health-checks", "Akka.Management.HealthCheckRoutes, Akka.Management"));
+            http.RouteProviders[0].Name.Should().Be("cluster-bootstrap");
+            http.RouteProviders[0].FullyQualifiedClassName.Should().Be("Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management");
             http.RouteProvidersReadOnly.Should().BeTrue();
         }
         
         [Fact(DisplayName = "AkkaManagementSetup should override AkkaManagementSettings value")]
         public void SetupOverrideSettings()
         {
-            var setup = new AkkaManagementSetup
+            var setup = new AkkaManagementSetup(new HttpSetup
             {
-                Http = new HttpSetup
-                {
-                    Hostname = "a",
-                    Port = 1234,
-                    BindHostname = "b",
-                    BindPort = 1235,
-                    BasePath = "c",
-                    RouteProvidersReadOnly = false,
-                }
-            };
+                HostName = "a",
+                Port = 1234,
+                BindHostName = "b",
+                BindPort = 1235,
+                BasePath = "c",
+                RouteProvidersReadOnly = false,
+            });
             setup.Http.WithRouteProvider<FakeRouteProvider>("test");
             var settings = setup.Apply(AkkaManagementSettings.Create(AkkaManagementProvider.DefaultConfiguration()));
             var http = settings.Http;
@@ -67,7 +66,7 @@ namespace Akka.Management.Tests
             http.BasePath.Should().Be("c");
             http.RouteProviders.Count.Should().Be(2);
             http.RouteProviders[0].Should()
-                .BeEquivalentTo(new NamedRouteProvider("health-checks", typeof(HealthCheckRoutes).AssemblyQualifiedName));
+                .BeEquivalentTo(new NamedRouteProvider("cluster-bootstrap", "Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management"));
             http.RouteProviders[1].Should()
                 .BeEquivalentTo(new NamedRouteProvider("test", typeof(FakeRouteProvider).AssemblyQualifiedName));
             http.RouteProvidersReadOnly.Should().BeFalse();
@@ -76,22 +75,20 @@ namespace Akka.Management.Tests
         [Fact(DisplayName = "AkkaManagementSetup.Apply should throw on invalid route provider type")]
         public void InvalidRouteProviderType()
         {
-            var setup = new AkkaManagementSetup
+            var setup = new AkkaManagementSetup(new HttpSetup
             {
-                Http = new HttpSetup
+                RouteProviders =
                 {
-                    RouteProviders =
-                    {
-                        ["invalid-route"] = typeof(InvalidRouteProvider)
-                    }
+                    ["test"] = typeof(FakeRouteProvider),
+                    ["invalid-route"] = typeof(InvalidRouteProvider)
                 }
-            };
+            });
 
             Invoking(() => setup.Apply(AkkaManagementSettings.Create(AkkaManagementProvider.DefaultConfiguration())))
                 .Should().ThrowExactly<ConfigurationException>()
                 .WithMessage("*invalid-route*").WithMessage("*InvalidRouteProvider*");
 
-            Invoking(() => setup.Http.WithRouteProvider<HealthCheckRoutes>("test2"))
+            Invoking(() => setup.Http.WithRouteProvider<FakeRouteProvider>("test2"))
                 .Should().ThrowExactly<ConfigurationException>()
                 .WithMessage("*already added");
         }

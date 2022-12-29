@@ -5,9 +5,9 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Akka.Http.Dsl;
+using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
-namespace Akka.Management
+namespace Akka.Management.Dsl
 {
     /// <summary>
     /// Extend this abstract class in your extension in order to allow it to contribute routes to Akka Management starts its HTTP endpoint
