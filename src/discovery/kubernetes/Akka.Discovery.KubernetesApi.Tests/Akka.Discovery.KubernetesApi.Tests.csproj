@@ -27,6 +27,9 @@
       <None Remove="multi-container-pod.json" />
       <EmbeddedResource Include="multi-container-pod.json" />
       <None Remove="pods.json" />
+      <None Update="xunit.runner.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

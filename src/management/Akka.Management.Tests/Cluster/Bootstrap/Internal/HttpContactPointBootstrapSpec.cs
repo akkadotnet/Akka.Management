@@ -10,7 +10,7 @@ using Akka.Management.Cluster.Bootstrap.Internal;
 using FluentAssertions;
 using Xunit;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests.Internal
+namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
 {
     public class HttpContactPointBootstrapSpec
     {

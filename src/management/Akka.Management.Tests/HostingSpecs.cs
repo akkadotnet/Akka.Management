@@ -74,24 +74,19 @@ namespace Akka.Management.Tests
             var client = new HttpClient();
             await testKit.AwaitAssertAsync(async () =>
             {
-                var response = await client.GetAsync("http://localhost:18558/dotnet");
-                response.StatusCode.Should().Be(HttpStatusCode.OK);
+                var response = await client.GetAsync("http://localhost:18558/bootstrap/seed-nodes");
+                response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
             });
         }
 
         public static IEnumerable<object[]> StartupFactory()
         {
-            var routes = new Dictionary<string, IManagementRouteProvider>
-            {
-                ["dotnet"] = new MockProvider()
-            };
-            
             var startups = new Action<AkkaConfigurationBuilder>[]
             {
                 builder =>
                 {
                     builder
-                        .WithAkkaManagement(routes, "localhost", 18558, "localhost", 18558)
+                        .WithAkkaManagement("localhost", 18558, "localhost", 18558)
                         
                     .AddStartup(async (system, _) =>
                     {
@@ -100,7 +95,7 @@ namespace Akka.Management.Tests
                 },
                 builder =>
                 {
-                    builder.WithAkkaManagement(routes, "localhost", 18558, "localhost", 18558, true);
+                    builder.WithAkkaManagement("localhost", 18558, "localhost", 18558, true);
                 },
                 
                 builder =>
@@ -111,7 +106,6 @@ namespace Akka.Management.Tests
                         setup.Http.Port = 18558;
                         setup.Http.BindHostName = "localhost";
                         setup.Http.BindPort = 18558;
-                        setup.Http.WithRouteProvider<MockProvider>("dotnet");
                     })
                     .AddStartup(async (system, _) =>
                     {
@@ -126,7 +120,6 @@ namespace Akka.Management.Tests
                         setup.Http.Port = 18558;
                         setup.Http.BindHostName = "localhost";
                         setup.Http.BindPort = 18558;
-                        setup.Http.WithRouteProvider<MockProvider>("dotnet");
                     }, true);
                 },
                 
@@ -138,7 +131,7 @@ namespace Akka.Management.Tests
                             Port = 18558,
                             BindHostName = "localhost",
                             BindPort = 18558,
-                        }.WithRouteProvider<MockProvider>("dotnet"));
+                        });
                     builder.WithAkkaManagement(setup)
                     .AddStartup(async (system, _) =>
                     {
@@ -153,7 +146,7 @@ namespace Akka.Management.Tests
                         Port = 18558,
                         BindHostName = "localhost",
                         BindPort = 18558,
-                    }.WithRouteProvider<MockProvider>("dotnet"));
+                    });
                     builder.WithAkkaManagement(setup, true);
                 },
             };
@@ -164,23 +157,6 @@ namespace Akka.Management.Tests
                 {
                     startup
                 };
-            }
-        }
-        
-        internal class MockProvider : HttpModuleBase, IManagementRouteProvider
-        {
-            public Route[] Routes(ManagementRouteProviderSettings settings)
-            {
-                return new Route[]{ ("/dotnet", this) };
-            }
-
-            public override Task<bool> HandleAsync(IAkkaHttpContext httpContext)
-            {
-                var context = httpContext.HttpContext;
-                if(context.Request.Method != "GET")
-                    return Task.FromResult(false);
-                context.Response.WriteAllAsync("hello");
-                return Task.FromResult(true);
             }
         }
     }

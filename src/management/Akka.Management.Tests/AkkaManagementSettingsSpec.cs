@@ -37,7 +37,9 @@ namespace Akka.Management.Tests
             http.EffectiveBindHostname.Should().Be(defaultHostname);
             http.EffectiveBindPort.Should().Be(8558);
             http.BasePath.Should().BeEmpty();
-            http.RouteProviders.Count.Should().Be(0);
+            http.RouteProviders.Count.Should().Be(1);
+            http.RouteProviders[0].Name.Should().Be("cluster-bootstrap");
+            http.RouteProviders[0].FullyQualifiedClassName.Should().Be("Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management");
             http.RouteProvidersReadOnly.Should().BeTrue();
         }
         
@@ -62,8 +64,10 @@ namespace Akka.Management.Tests
             http.EffectiveBindHostname.Should().Be("b");
             http.EffectiveBindPort.Should().Be(1235);
             http.BasePath.Should().Be("c");
-            http.RouteProviders.Count.Should().Be(1);
+            http.RouteProviders.Count.Should().Be(2);
             http.RouteProviders[0].Should()
+                .BeEquivalentTo(new NamedRouteProvider("cluster-bootstrap", "Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management"));
+            http.RouteProviders[1].Should()
                 .BeEquivalentTo(new NamedRouteProvider("test", typeof(FakeRouteProvider).AssemblyQualifiedName));
             http.RouteProvidersReadOnly.Should().BeFalse();
         }

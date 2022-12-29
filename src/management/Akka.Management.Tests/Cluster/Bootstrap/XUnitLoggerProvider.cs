@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests
+namespace Akka.Management.Tests.Cluster.Bootstrap
 {
     public class XUnitLoggerProvider : ILoggerProvider
     {

@@ -15,10 +15,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Akka.Cluster;
 using Akka.Configuration;
-using Akka.Http.Extensions;
 using Akka.Http.Dsl;
+using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Cluster.Bootstrap.ContactPoint;
 using Akka.Management.Dsl;
 using Ceen;
@@ -28,7 +27,7 @@ using Xunit;
 using Xunit.Abstractions;
 using static Akka.Management.Cluster.Bootstrap.ContactPoint.HttpBootstrapJsonProtocol;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests.ContactPoint
+namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
 {
     public class HttpContactPointRoutesSpec : TestKit.Xunit2.TestKit
     {

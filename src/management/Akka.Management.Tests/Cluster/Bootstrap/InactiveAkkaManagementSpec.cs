@@ -6,17 +6,16 @@
 // -----------------------------------------------------------------------
 
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 using Akka.Configuration;
 using Akka.Discovery;
 using Akka.Event;
+using Akka.Management.Cluster.Bootstrap;
 using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
-using Debug = System.Diagnostics.Debug;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests
+namespace Akka.Management.Tests.Cluster.Bootstrap
 {
     public class InactiveAkkaManagementSpec : TestKit.Xunit2.TestKit
     {

@@ -9,10 +9,12 @@ using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
+using Akka.Actor;
 using Akka.Cluster;
 using Akka.Http;
 using Akka.Http.Dsl;
 using Akka.Http.Extensions;
+using Ceen;
 using Newtonsoft.Json;
 using static Akka.Management.Cluster.Bootstrap.ContactPoint.HttpBootstrapJsonProtocol;
 using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
@@ -34,6 +36,24 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
         {
             if (context.HttpContext.Request.Method.ToLowerInvariant() != "get")
                 return false;
+            
+            // Check that clustering is in effect
+            if (((ExtendedActorSystem)context.ActorSystem).Provider is not IClusterActorRefProvider)
+            {
+                context.HttpContext.Response.StatusCode = HttpStatusCode.ServiceUnavailable;
+                var response = JsonConvert.SerializeObject(new
+                {
+                    error = new
+                    {
+                        reason = "not available",
+                        message = "Clustering is not available"
+                    },
+                    code = (int)HttpStatusCode.ServiceUnavailable,
+                    message = "Clustering is not available"
+                });
+                await context.HttpContext.Response.WriteAllJsonAsync(response);
+                return true;
+            }
             
             var cluster = Akka.Cluster.Cluster.Get(context.ActorSystem);
 

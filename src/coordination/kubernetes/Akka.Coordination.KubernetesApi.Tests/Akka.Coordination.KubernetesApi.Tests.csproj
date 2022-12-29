@@ -26,4 +26,10 @@
       <ProjectReference Include="..\Akka.Coordination.KubernetesApi\Akka.Coordination.KubernetesApi.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="xunit.runner.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

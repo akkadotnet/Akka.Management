@@ -174,11 +174,6 @@ namespace Akka.Management.Cluster.Bootstrap
                 builder.WithExtension<ClusterBootstrapProvider>();
             }
         
-            // Cluster bootstrap routes needs to be added for it to work with Akka.Management
-            builder.AddHocon(
-                $"akka.management.http.routes.cluster-bootstrap = \"{typeof(ClusterBootstrapProvider).AssemblyQualifiedName}\"", 
-                HoconAddMode.Prepend);
-            
             builder.AddSetup(setup);
             return builder;
         }

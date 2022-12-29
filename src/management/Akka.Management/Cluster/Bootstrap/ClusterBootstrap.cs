@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Cluster;
 using Akka.Configuration;
 using Akka.Discovery;
 using Akka.Event;
@@ -39,8 +40,7 @@ namespace Akka.Management.Cluster.Bootstrap
             }
         }
 
-        public static Config DefaultConfiguration()
-            => ConfigurationFactory.FromResource<ClusterBootstrap>("Akka.Management.Cluster.Bootstrap.reference.conf");
+        public static Config DefaultConfiguration() => AkkaManagementProvider.DefaultConfiguration();
 
         public static ClusterBootstrap Get(ActorSystem system)
             => system.WithExtension<ClusterBootstrap, ClusterBootstrapProvider>();
@@ -149,6 +149,16 @@ namespace Akka.Management.Cluster.Bootstrap
         
         public async Task Start()
         {
+            // Bootstrap can be started when clustering isn't available since it is pre-bundled with Akka.Management,
+            // need to check that clustering is enabled.
+            if (_system.Provider is not IClusterActorRefProvider)
+            {
+                _log.Info("Clustering is not available on this ActorSystem, bailing out of the bootstrap process! " +
+                          "If you want to use the automatic cluster bootstrap mechanism, make sure that you set " +
+                          "\"akka.actor.provider = cluster\"");
+                return;
+            }
+            
             var settingsSeedNodes = Akka.Cluster.Cluster.Get(_system).Settings.SeedNodes; 
             if (!settingsSeedNodes.IsEmpty)
             {

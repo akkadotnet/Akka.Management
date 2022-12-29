@@ -10,8 +10,10 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Cluster.Hosting;
 using Akka.Hosting;
+using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Dsl;
 using Akka.Remote.Hosting;
+using Akka.Util;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +22,7 @@ using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Akka.Management.Cluster.Bootstrap.Tests
+namespace Akka.Management.Tests.Cluster.Bootstrap
 {
     public class HostingSpecs
     {
@@ -49,14 +51,14 @@ namespace Akka.Management.Cluster.Bootstrap.Tests
                         builder.WithAkkaManagement(config =>
                         {
                             config.Http.HostName = "localhost";
-                            config.Http.Port = 18558;
+                            config.Http.Port = 15225;
                             config.Http.BindHostName = "localhost";
-                            config.Http.BindPort = 18558;
+                            config.Http.BindPort = 15225;
                         });
                         builder.WithConfigDiscovery(
                             new Dictionary<string, List<string>>
                             {
-                                ["testService"] = new List<string> { "localhost:18558" }
+                                ["testService"] = new List<string> { "localhost:15225" }
                             });
                         testSetup(builder);
                     });

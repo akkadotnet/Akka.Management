@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\cluster.bootstrap\Akka.Management.Cluster.Bootstrap\Akka.Management.Cluster.Bootstrap.csproj" />
+      <ProjectReference Include="..\..\..\management\Akka.Management\Akka.Management.csproj" />
       <ProjectReference Include="..\..\aws\Akka.Discovery.AwsApi\Akka.Discovery.AwsApi.csproj" />
     </ItemGroup>
 
