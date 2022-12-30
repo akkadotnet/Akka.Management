@@ -39,7 +39,7 @@ namespace Akka.Coordination.Azure.Tests
             Util.Cleanup(ConnectionString).GetAwaiter().GetResult();
         }
 
-        protected override Task ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
+        protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
         {
             builder
                 .WithRemoting()
@@ -56,8 +56,6 @@ namespace Akka.Coordination.Azure.Tests
                     var cluster = Cluster.Cluster.Get(system);
                     cluster.Join(cluster.SelfAddress);
                 });
-            
-            return Task.CompletedTask;
         }
 
         [Fact(DisplayName = "WithAzureLease and Cluster.Singleton should work")]

@@ -8,6 +8,7 @@ using System;
 using Akka.Actor.Setup;
 using Akka.Cluster.Hosting.SBR;
 using Akka.Hosting;
+using Akka.Hosting.Coordination;
 
 #nullable enable
 namespace Akka.Coordination.KubernetesApi
