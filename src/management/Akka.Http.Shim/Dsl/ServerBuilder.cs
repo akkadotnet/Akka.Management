@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Event;
 using Akka.Http.Dsl.Settings;
-using Akka.Http.Extensions;
 using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
 namespace Akka.Http.Dsl
@@ -30,7 +29,7 @@ namespace Akka.Http.Dsl
         public ServerSettings Settings { get; }
 
         internal static ServerBuilder Create(string hostname, int port, ExtendedActorSystem system) =>
-            new ServerBuilder(hostname, port, system.Log, ServerSettings.Create(system), system);
+            new (hostname, port, system.Log, ServerSettings.Create(system), system);
 
         private ServerBuilder(string hostname, int port, ILoggingAdapter log, ServerSettings settings, ActorSystem system)
         {
@@ -70,10 +69,16 @@ namespace Akka.Http.Dsl
             _http.BindAndHandleAsync(routes, Hostname, Port, Settings);
         
         private ServerBuilder Copy(
-            string hostname = null,
+            string? hostname = null,
             int? port = null,
-            ILoggingAdapter log = null,
-            ServerSettings settings = null,
-            ExtendedActorSystem system = null) => new ServerBuilder(hostname ?? Hostname, port ?? Port, log ?? Log, settings ?? Settings, system ?? _system);
+            ILoggingAdapter? log = null,
+            ServerSettings? settings = null,
+            ExtendedActorSystem? system = null) 
+            => new (
+                hostname: hostname ?? Hostname,
+                port: port ?? Port,
+                log: log ?? Log,
+                settings: settings ?? Settings,
+                system: system ?? _system);
     }
 }
