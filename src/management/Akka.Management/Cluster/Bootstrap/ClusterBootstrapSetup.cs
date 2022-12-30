@@ -25,24 +25,24 @@ namespace Akka.Management.Cluster.Bootstrap
         /// Configuration for the first phase of bootstrapping, during which contact points are discovered
         /// using the configured service discovery mechanism (e.g. DNS records).
         /// </summary>
-        public ContactPointDiscoverySetup? ContactPointDiscovery { get; set; }
-        
+        public ContactPointDiscoverySetup ContactPointDiscovery { get; set; } = new();
+
         /// <summary>
         /// Configure how we communicate with the contact point once it is discovered
         /// </summary>
-        public ContactPointSetup? ContactPoint { get; set; }
-        
+        public ContactPointSetup ContactPoint { get; set; } = new();
+
         /// <summary>
         /// Join decider class configuration
         /// </summary>
-        public JoinDeciderSetup? JoinDecider { get; set; }
+        public JoinDeciderSetup JoinDecider { get; set; } = new();
 
         internal ClusterBootstrapSettings Apply(ClusterBootstrapSettings settings)
             => settings.Copy(
                 newClusterEnabled: NewClusterEnabled,
-                contactPointDiscovery: ContactPointDiscovery?.Apply(settings.ContactPointDiscovery),
-                contactPoint: ContactPoint?.Apply(settings.ContactPoint),
-                joinDecider: JoinDecider?.Apply(settings.JoinDecider));
+                contactPointDiscovery: ContactPointDiscovery.Apply(settings.ContactPointDiscovery),
+                contactPoint: ContactPoint.Apply(settings.ContactPoint),
+                joinDecider: JoinDecider.Apply(settings.JoinDecider));
     }
 
     public sealed class ContactPointDiscoverySetup: Setup

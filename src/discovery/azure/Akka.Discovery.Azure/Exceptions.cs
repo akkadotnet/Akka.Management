@@ -82,7 +82,7 @@ public sealed class CreateEntityFailedException : AkkaException
     {
     }
 
-    public CreateEntityFailedException(string message, Exception cause = null) : base(message, cause)
+    public CreateEntityFailedException(string message, Exception? cause = null) : base(message, cause)
     {
     }
 
