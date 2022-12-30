@@ -15,7 +15,7 @@ namespace Akka.Coordination.Azure
 {
     public class AzureLeaseOption: LeaseOptionBase
     {
-        public static readonly AzureLeaseOption Instance = new AzureLeaseOption();
+        public static readonly AzureLeaseOption Instance = new ();
 
         private AzureLeaseOption()
         {
@@ -24,7 +24,7 @@ namespace Akka.Coordination.Azure
         public override string ConfigPath { get; } = "akka.coordination.lease.azure";
         public override Type Class { get; } = typeof(AzureLease);
         
-        public override void Apply(AkkaConfigurationBuilder builder, Setup setup = null)
+        public override void Apply(AkkaConfigurationBuilder builder, Setup? setup = null)
         {
             throw new NotImplementedException("Not intended to be applied, use the `WithAzureLease()` Akka.Hosting extension method instead.");
         }
