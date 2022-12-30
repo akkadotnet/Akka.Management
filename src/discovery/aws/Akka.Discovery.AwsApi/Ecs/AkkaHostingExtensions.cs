@@ -56,8 +56,8 @@ namespace Akka.Discovery.AwsApi.Ecs
         /// </example>
         public static AkkaConfigurationBuilder WithAwsEcsDiscovery(
             this AkkaConfigurationBuilder builder,
-            string clusterName = null,
-            IEnumerable<Tag> tags = null)
+            string? clusterName = null,
+            IEnumerable<Tag>? tags = null)
             => builder.WithAwsEcsDiscovery(new EcsServiceDiscoverySetup
             {
                 Cluster = clusterName,
