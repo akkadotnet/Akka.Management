@@ -145,7 +145,7 @@ namespace Akka.Management.Tests
                 "Akka.Management.Tests.HttpManagementEndpointSpecRoutesNetFxDsl, Akka.Management.Tests"));
 
             // Start() should be idempotent, it should return the same Task on multiple invocation
-            var tasks = new List<Task<Uri>>();
+            var tasks = new List<Task<Uri?>>();
             using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
             {
                 tasks.Add(management.Start());
