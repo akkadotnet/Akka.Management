@@ -156,21 +156,21 @@ namespace Akka.Discovery.AwsApi.Tests
         
         private class FakeCredProvider: Ec2CredentialProvider
         {
-            public override AWSCredentials ClientCredentials => null;
+            public override AWSCredentials ClientCredentials => new AnonymousAWSCredentials();
         }
         
         private class FakeCredProvider2: Ec2CredentialProvider
         {
             public FakeCredProvider2(ExtendedActorSystem system) { }
             
-            public override AWSCredentials ClientCredentials => null;
+            public override AWSCredentials ClientCredentials => new AnonymousAWSCredentials();
         }
         
         private class IllegalCredProvider: Ec2CredentialProvider
         {
             public IllegalCredProvider(string wrongParam) { }
             
-            public override AWSCredentials ClientCredentials => null;
+            public override AWSCredentials ClientCredentials => new AnonymousAWSCredentials();
         }
     }
 }
