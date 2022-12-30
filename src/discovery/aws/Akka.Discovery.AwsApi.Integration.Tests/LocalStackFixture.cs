@@ -31,16 +31,16 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
     {
         public const string BucketName = "bucket-test";
         private readonly string _containerName = $"localstack-{Guid.NewGuid():N}";
-        private readonly DockerClient _client;
+        private readonly DockerClient? _client;
 
         public int Port { get; }
 
         public string Endpoint => $"http://localhost:{Port}";
         
-        public AmazonCloudFormationClient CfCClient { get; private set; }
-        public AmazonEC2Client Ec2Client { get; private set; }
-        public AmazonS3Client S3Client { get; private set; }
-        public List<string> IpAddresses { get; } = new List<string>();
+        public AmazonCloudFormationClient? CfCClient { get; private set; }
+        public AmazonEC2Client? Ec2Client { get; private set; }
+        public AmazonS3Client? S3Client { get; private set; }
+        public List<string> IpAddresses { get; } = new ();
         
         public bool IsWindows { get; }
         
@@ -74,7 +74,7 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
             // LocalStack is linux only, we're skipping all tests if we're running in windows.
             if (IsWindows) return;
             
-            var images = await _client.Images.ListImagesAsync(new ImagesListParameters
+            var images = await _client!.Images.ListImagesAsync(new ImagesListParameters
             {
                 Filters = new Dictionary<string, IDictionary<string, bool>>
                 {
@@ -130,14 +130,14 @@ namespace Akka.Discovery.AwsApi.Integration.Tests
                 ShowStderr = true
             });
 
-            string line = null;
+            string? line = null;
             var timeoutInMilis = 60000;
             using (var reader = new StreamReader(logStream))
             {
                 var stopwatch = Stopwatch.StartNew();
                 while (stopwatch.ElapsedMilliseconds < timeoutInMilis && (line = await reader.ReadLineAsync()) != null)
                 {
-                    if (line == "Ready.")
+                    if (line is "Ready.")
                     {
                         break;
                     }
