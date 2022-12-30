@@ -1,13 +1,10 @@
 ﻿// -----------------------------------------------------------------------
 //  <copyright file="AkkaHostingSpec.cs" company="Akka.NET Project">
-//      Copyright (C) 2009-2022 Lightbend Inc. <http://www.lightbend.com>
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
 
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Setup;
@@ -16,7 +13,6 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
-using Xunit.Sdk;
 
 namespace Akka.Discovery.KubernetesApi.Tests
 {
@@ -26,9 +22,9 @@ namespace Akka.Discovery.KubernetesApi.Tests
         public async Task AkkaConfigurationBuilderTest()
         {
             var hostBuilder = new HostBuilder()
-                .ConfigureServices((context, services) =>
+                .ConfigureServices((_, services) =>
                 {
-                    services.AddAkka("test", (builder, provider) =>
+                    services.AddAkka("test", (builder, _) =>
                     {
                         builder
                             .WithKubernetesDiscovery(new KubernetesDiscoverySetup
@@ -38,27 +34,25 @@ namespace Akka.Discovery.KubernetesApi.Tests
                         
                         var setup = ExtractSetup<KubernetesDiscoverySetup>(builder);
                         setup.Should().NotBeNull();
-                        setup.PodNamespace.Should().Be("underTest");
+                        setup!.PodNamespace.Should().Be("underTest");
                         builder.Configuration.HasValue.Should().BeTrue();
                         builder.Configuration.Value.GetString("akka.discovery.method").Should().Be("kubernetes-api");
                     });
                 });
-            
-            using (var host = hostBuilder.Build())
-            {
-                await host.StartAsync();
+
+            using var host = hostBuilder.Build();
+            await host.StartAsync();
                 
-                var system = host.Services.GetRequiredService<ActorSystem>();
+            var system = host.Services.GetRequiredService<ActorSystem>();
                 
-                var settings = KubernetesDiscovery.Get(system).Settings;
-                settings.PodNamespace.Should().Be("underTest");
+            var settings = KubernetesDiscovery.Get(system).Settings;
+            settings.PodNamespace.Should().Be("underTest");
                 
-                system.Settings.Config.GetString("akka.discovery.method").Should().Be("kubernetes-api");
-            }
+            system.Settings.Config.GetString("akka.discovery.method").Should().Be("kubernetes-api");
         }
         
-        private static T ExtractSetup<T>(AkkaConfigurationBuilder builder) where T : Setup
-            => (T) builder.Setups.FirstOrDefault(s => s is T);
+        private static T? ExtractSetup<T>(AkkaConfigurationBuilder builder) where T : Setup
+            => builder.Setups.FirstOrDefault(s => s is T) as T;
         
     }
 }

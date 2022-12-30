@@ -7,7 +7,6 @@
 
 using Akka.Actor;
 
-#nullable enable
 namespace Akka.Discovery.KubernetesApi
 {
     public sealed class KubernetesDiscoverySettings
@@ -19,7 +18,7 @@ namespace Akka.Discovery.KubernetesApi
             => Create(system.Settings.Config.GetConfig("akka.discovery.kubernetes-api"));
 
         public static KubernetesDiscoverySettings Create(Configuration.Config config)
-            => new KubernetesDiscoverySettings(
+            => new (
                 config.GetString("api-ca-path"),
                 config.GetString("api-token-path"),
                 config.GetString("api-service-host-env-name"),
@@ -40,7 +39,7 @@ namespace Akka.Discovery.KubernetesApi
             string apiServiceHostEnvName,
             string apiServicePortEnvName,
             string podNamespacePath,
-            string podNamespace,
+            string? podNamespace,
             string podDomain,
             string podLabelSelector,
             bool rawIp,
@@ -63,7 +62,7 @@ namespace Akka.Discovery.KubernetesApi
         public string ApiServiceHostEnvName { get; }
         public string ApiServicePortEnvName { get; }
         public string PodNamespacePath { get; }
-        public string PodNamespace { get; }
+        public string? PodNamespace { get; }
         public string PodDomain { get; }
         public string PodLabelSelector(string name)
             => string.Format(_podLabelSelector, name);
@@ -102,7 +101,7 @@ namespace Akka.Discovery.KubernetesApi
             string? podLabelSelector = null,
             bool? rawIp = null,
             string? containerName = null)
-            => new KubernetesDiscoverySettings(
+            => new (
                 apiCaPath: apiCaPath?? ApiCaPath,
                 apiTokenPath: apiTokenPath?? ApiTokenPath,
                 apiServiceHostEnvName: apiServiceHostEnvName ?? ApiServiceHostEnvName,
