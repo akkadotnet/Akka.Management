@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -21,7 +20,6 @@ using k8s.Models;
 using Microsoft.Rest;
 using Newtonsoft.Json;
 
-#nullable enable
 namespace Akka.Discovery.KubernetesApi
 {
     public class KubernetesApiServiceDiscovery : ServiceDiscovery
@@ -43,7 +41,7 @@ namespace Akka.Discovery.KubernetesApi
         private string PodNamespace =>
             _settings.PodNamespace
                 .DefaultIfNullOrWhitespace(ReadConfigVarFromFileSystem(_settings.PodNamespacePath, "pod-namespace"))
-                .DefaultIfNullOrWhitespace("default");
+                .DefaultIfNullOrWhitespace("default")!;
         
         public KubernetesApiServiceDiscovery(ExtendedActorSystem system)
         {

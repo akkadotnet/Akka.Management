@@ -71,7 +71,7 @@ namespace Akka.Management.Tests
     
     public class AkkaManagementHttpEndpointSpec
     {
-        private static Config Config = ConfigurationFactory.ParseString(@"
+        private static readonly Config Config = ConfigurationFactory.ParseString(@"
             akka.remote.log-remote-lifecycle-events = off
             akka.remote.netty.tcp.port = 0
             akka.remote.artery.canonical.port = 0

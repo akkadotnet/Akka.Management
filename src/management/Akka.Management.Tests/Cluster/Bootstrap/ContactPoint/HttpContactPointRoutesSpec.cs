@@ -38,22 +38,26 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
             .WithFallback(ClusterBootstrap.DefaultConfiguration())
             .WithFallback(AkkaManagementProvider.DefaultConfiguration());
 
-        private readonly ClusterBootstrapSettings _settings;
         private readonly HttpClusterBootstrapRoutes _httpBootstrap;
 
         public HttpContactPointRoutesSpec(ITestOutputHelper helper) 
             : base(Config, nameof(HttpContactPointRoutesSpec), helper)
         {
-            _settings = ClusterBootstrapSettings.Create(Sys.Settings.Config, Sys.Log);
-            _httpBootstrap = new HttpClusterBootstrapRoutes(_settings);
+            var settings = ClusterBootstrapSettings.Create(Sys.Settings.Config, Sys.Log);
+            _httpBootstrap = new HttpClusterBootstrapRoutes(settings);
         }
 
         [Fact(DisplayName = "Http Bootstrap routes should empty list if node is not part of a cluster")]
         public async Task EmptyListIfNotPartOfCluster()
         {
-            var context = new DefaultHttpContext();
-            context.FakeRequest.Method = "GET";
-            context.FakeRequest.Path = ClusterBootstrapRequests.BootstrapSeedNodes("").ToString();
+            var context = new DefaultHttpContext
+            {
+                FakeRequest =
+                {
+                    Method = "GET",
+                    Path = ClusterBootstrapRequests.BootstrapSeedNodes("")
+                }
+            };
             
             var requestContext = new AkkaHttpContext(Sys, context);
             var handled = false;
@@ -84,6 +88,8 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
             {
                 tcs.SetResult(Done.Instance);
             });
+            
+            // ReSharper disable once MethodHasAsyncOverload
             cluster.Join(cluster.SelfAddress);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
@@ -113,6 +119,9 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
                         handled = true;
                         var response = (FakeResponse)context.Response;
                         var nodes = JsonConvert.DeserializeObject<SeedNodes>(response.Response);
+                        if (nodes is null)
+                            throw new Exception($"Could not deserialize response. Response: {response.Response}");
+                        
                         var seedNodes = nodes.Nodes.Select(n => n.Node).ToList();
                         seedNodes.Contains(cluster.SelfAddress).Should()
                             .BeTrue(
@@ -139,10 +148,10 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
         public FakeRequest FakeRequest { get; } = new FakeRequest();
         public IHttpRequest Request => FakeRequest;
         public IHttpResponse Response { get; } = new FakeResponse();
-        public IStorageCreator Storage { get; }
-        public IDictionary<string, string> Session { get; set; }
-        public IDictionary<string, string> LogData { get; }
-        public ILoadedModuleInfo LoadedModules { get; }
+        public IStorageCreator? Storage { get; }
+        public IDictionary<string, string>? Session { get; set; }
+        public IDictionary<string, string>? LogData { get; }
+        public ILoadedModuleInfo? LoadedModules { get; }
     }
 
     internal class FakeRequest : IHttpRequest
@@ -205,15 +214,9 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
 
     internal class FakeResponse : IHttpResponse
     {
-        public string Response { get; private set; }
+        public string Response { get; private set; } = string.Empty;
         
-        public IResponseCookie AddCookie(string name, string value, string path = null, string domain = null, DateTime? expires = null,
-            long maxage = -1, bool secure = false, bool httponly = false, string samesite = null)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IResponseCookie AddCookie(string name, string value, string path = null, string domain = null, DateTime? expires = null,
+        public IResponseCookie AddCookie(string name, string value, string? path = null, string? domain = null, DateTime? expires = null,
             long maxage = -1, bool secure = false, bool httponly = false)
         {
             throw new NotImplementedException();
