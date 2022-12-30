@@ -51,7 +51,7 @@ namespace Akka.Management.Dsl
 
         public override ManagementRouteProviderSettings WithReadOnly(bool readOnly) => Copy(readOnly: readOnly);
 
-        private ManagementRouteProviderSettings Copy(Uri selfBaseUri = null, bool? readOnly = null) =>
+        private ManagementRouteProviderSettings Copy(Uri? selfBaseUri = null, bool? readOnly = null) =>
             new ManagementRouteProviderSettingsImpl(
                 selfBaseUri: selfBaseUri ?? SelfBaseUri,
                 readOnly: readOnly ?? ReadOnly);

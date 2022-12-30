@@ -17,7 +17,7 @@ namespace Akka.Management
     public class AkkaManagementSettings
     {
         public static AkkaManagementSettings Create(Config config)
-            => new AkkaManagementSettings(Http.Create(config));
+            => new (Http.Create(config));
 
         internal AkkaManagementSettings(Http http)
         {
@@ -36,7 +36,7 @@ namespace Akka.Management
             var port = cc.GetInt("port");
             var bindPort = !int.TryParse(cc.GetString("bind-port"), out var effectiveBindPort) ? port : effectiveBindPort;
             
-            static bool IsValidFqcn(object value) => value != null && !string.IsNullOrWhiteSpace(value.ToString()) && value.ToString() != "null";
+            static bool IsValidFqcn(object? value) => value != null && !string.IsNullOrWhiteSpace(value.ToString()) && value.ToString() != "null";
 
             var routeProviders = cc.GetConfig("routes").AsEnumerable()
                 .Where(pair => IsValidFqcn(pair.Value.GetString()))
@@ -71,13 +71,13 @@ namespace Akka.Management
             }
 
             Port = port;
-            if (Port < 0 || Port > 65535)
+            if (Port is < 0 or > 65535)
                 throw new ArgumentException($"akka.management.http.port must be 0 through 65535 (was {Port})");
 
             EffectiveBindHostname = !string.IsNullOrEmpty(effectiveBindHostname) ? effectiveBindHostname : Hostname;
             
             EffectiveBindPort = effectiveBindPort;
-            if (EffectiveBindPort < 0 || EffectiveBindPort > 65535)
+            if (EffectiveBindPort is < 0 or > 65535)
                 throw new ArgumentException($"akka.management.http.bind-port must be 0 through 65535 (was {EffectiveBindPort})");
 
             BasePath = basePath;
@@ -100,14 +100,14 @@ namespace Akka.Management
         public bool RouteProvidersReadOnly { get; }
 
         internal Http Copy(
-            string hostname = null,
+            string? hostname = null,
             int? port = null,
-            string effectiveBindHostname = null,
+            string? effectiveBindHostname = null,
             int? effectiveBindPort = null,
-            string basePath = null,
-            IEnumerable<NamedRouteProvider> routeProviders = null,
+            string? basePath = null,
+            IEnumerable<NamedRouteProvider>? routeProviders = null,
             bool? routeProvidersReadOnly = null)
-            => new Http(
+            => new (
                 hostname: hostname ?? Hostname,
                 port: port ?? Port,
                 effectiveBindHostname: effectiveBindHostname ?? EffectiveBindHostname,
@@ -120,35 +120,35 @@ namespace Akka.Management
     public sealed class NamedRouteProvider : IEquatable<NamedRouteProvider>
     {
         public string Name { get; }
-        public string FullyQualifiedClassName { get; }
+        public string? FullyQualifiedClassName { get; }
 
-        public NamedRouteProvider(string name, string fullyQualifiedClassName)
+        public NamedRouteProvider(string name, string? fullyQualifiedClassName)
         {
             Name = name;
             FullyQualifiedClassName = fullyQualifiedClassName;
         }
 
-        public void Deconstruct(out string name, out string fullyQualifiedClassName)
+        public void Deconstruct(out string name, out string? fullyQualifiedClassName)
         {
             name = Name;
             fullyQualifiedClassName = FullyQualifiedClassName;
         }
 
-        public bool Equals(NamedRouteProvider other)
+        public bool Equals(NamedRouteProvider? other)
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Name == other.Name && FullyQualifiedClassName == other.FullyQualifiedClassName;
         }
 
-        public override bool Equals(object obj) => 
+        public override bool Equals(object? obj) => 
             ReferenceEquals(this, obj) || obj is NamedRouteProvider other && Equals(other);
 
         public override int GetHashCode()
         {
             unchecked
             {
-                return ((Name != null ? Name.GetHashCode() : 0) * 397) ^ (FullyQualifiedClassName != null ? FullyQualifiedClassName.GetHashCode() : 0);
+                return (Name.GetHashCode() * 397) ^ (FullyQualifiedClassName != null ? FullyQualifiedClassName.GetHashCode() : 0);
             }
         }
     }

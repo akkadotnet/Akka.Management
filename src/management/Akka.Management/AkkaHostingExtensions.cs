@@ -20,10 +20,6 @@ namespace Akka.Management
         /// <param name="builder">
         ///     The builder instance being configured.
         /// </param>
-        /// <param name="providers">
-        ///     The <see cref="IManagementRouteProvider"/>s to be used with management.
-        ///     At least one provider is needed for management to work.
-        /// </param>
         /// <param name="hostName">
         ///     The hostname where the HTTP Server for Http Cluster Management will be started.
         ///     This defines the interface to use.
@@ -53,9 +49,9 @@ namespace Akka.Management
         /// </returns>
         public static AkkaConfigurationBuilder WithAkkaManagement(
             this AkkaConfigurationBuilder builder,
-            string hostName = null,
+            string? hostName = null,
             int? port = null,
-            string bindHostname = null,
+            string? bindHostname = null,
             int? bindPort = null,
             bool autoStart = false)
         {
