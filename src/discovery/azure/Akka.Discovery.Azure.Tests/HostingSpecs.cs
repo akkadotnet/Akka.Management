@@ -16,6 +16,7 @@ using Akka.Management.Cluster.Bootstrap;
 using Akka.Remote.Hosting;
 using FluentAssertions;
 using FluentAssertions.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -86,7 +87,7 @@ namespace Akka.Discovery.Azure.Tests
             var tcs = new TaskCompletionSource<Done>();
             using var host = await StartHost(startupAction);
 
-            var system = (ActorSystem) host.Services.GetService(typeof(ActorSystem));
+            var system = host.Services.GetRequiredService<ActorSystem>();
             var cluster = Cluster.Cluster.Get(system);
             cluster.RegisterOnMemberUp(() =>
             {

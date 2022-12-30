@@ -22,7 +22,7 @@ namespace Akka.Discovery.Azure.Tests
         {
             var settings = AzureDiscoverySettings.Create(AzureServiceDiscovery.DefaultConfig);
 
-            var assemblyName = typeof(AzureServiceDiscovery).Assembly.FullName.Split(',')[0].Trim();
+            var assemblyName = typeof(AzureServiceDiscovery).Assembly.FullName!.Split(',')[0].Trim();
             var config = AzureServiceDiscovery.DefaultConfig.GetConfig("akka.discovery.azure");
             config.GetString("class").Should().Be($"{typeof(AzureServiceDiscovery).Namespace}.{nameof(AzureServiceDiscovery)}, {assemblyName}");
             
