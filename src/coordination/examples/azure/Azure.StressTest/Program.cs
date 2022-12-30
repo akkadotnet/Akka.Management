@@ -34,9 +34,14 @@ coordinated-shutdown.run-by-actor-system-terminate = off")
                     builder.WithRemoting(hostname: ip, port: 4053);
                     
                     // Add Akka.Cluster support
-                    builder.WithClustering(
-                        options: new ClusterOptions { Roles = new[] { "cluster" } },
-                        new LeaseMajorityOption { LeaseImplementation = AzureLeaseOption.Instance });
+                    builder.WithClustering(new ClusterOptions
+                        {
+                            Roles = new[] { "cluster" }, 
+                            SplitBrainResolver = new LeaseMajorityOption
+                            {
+                                LeaseImplementation = AzureLeaseOption.Instance
+                            }
+                        });
 
                     // Add Akka.Management support
                     builder.WithAkkaManagement(setup =>
