@@ -49,7 +49,8 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 .Should().NotBeNull();
             var setup = ExtractSetup(builder);
             setup.Should().NotBeNull();
-            setup.Namespace.Should().Be("underTest");
+            // !: null check above
+            setup!.Namespace.Should().Be("underTest");
         }
         
         [Fact(DisplayName = "Hosting Setup extension should add Setup class and default hocon settings")]
@@ -67,12 +68,13 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 .Should().NotBeNull();
             var setup = ExtractSetup(builder);
             setup.Should().NotBeNull();
-            setup.Namespace.Should().Be("underTest");
+            // !: null check above
+            setup!.Namespace.Should().Be("underTest");
         }
 
-        private KubernetesLeaseSetup ExtractSetup(AkkaConfigurationBuilder builder)
+        private KubernetesLeaseSetup? ExtractSetup(AkkaConfigurationBuilder builder)
         {
-            return (KubernetesLeaseSetup) builder.Setups.FirstOrDefault(s => s is KubernetesLeaseSetup);
+            return builder.Setups.FirstOrDefault(s => s is KubernetesLeaseSetup) as KubernetesLeaseSetup;
         }
     }
 }
