@@ -15,13 +15,13 @@ namespace Akka.Coordination.KubernetesApi
 {
     public class KubernetesLeaseOption: LeaseOptionBase
     {
-        public static readonly KubernetesLeaseOption Instance = new KubernetesLeaseOption();
+        public static readonly KubernetesLeaseOption Instance = new ();
 
         private KubernetesLeaseOption()
         {
         }
         
-        public override string ConfigPath { get; } = "akka.coordination.lease.kubernetes";
+        public override string ConfigPath => KubernetesLease.ConfigPath;
         public override Type Class { get; } = typeof(KubernetesLease);
         
         public override void Apply(AkkaConfigurationBuilder builder, Setup? setup = null)
