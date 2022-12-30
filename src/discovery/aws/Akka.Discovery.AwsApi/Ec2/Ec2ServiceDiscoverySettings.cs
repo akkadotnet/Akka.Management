@@ -16,7 +16,7 @@ namespace Akka.Discovery.AwsApi.Ec2
 {
     public class Ec2ServiceDiscoverySettings
     {
-        public static readonly Ec2ServiceDiscoverySettings Empty = new Ec2ServiceDiscoverySettings(
+        public static readonly Ec2ServiceDiscoverySettings Empty = new (
             null,
             typeof(Ec2InstanceMetadataCredentialProvider),
             "service",
@@ -30,7 +30,7 @@ namespace Akka.Discovery.AwsApi.Ec2
         
         public static Ec2ServiceDiscoverySettings Create(Configuration.Config config)
         {
-            Type clientConfigType = null;
+            Type? clientConfigType = null;
             var clientConfigTypeName = config.GetString("client-config");
             if (!string.IsNullOrWhiteSpace(clientConfigTypeName))
             {
@@ -74,13 +74,13 @@ namespace Akka.Discovery.AwsApi.Ec2
         }
         
         public Ec2ServiceDiscoverySettings(
-            Type clientConfig,
+            Type? clientConfig,
             Type credentialsProvider,
             string tagKey, 
             ImmutableList<Filter> filters,
             ImmutableList<int> ports,
-            string endpoint,
-            string region)
+            string? endpoint,
+            string? region)
         {
             ClientConfig = clientConfig;
             CredentialsProvider = credentialsProvider;
@@ -91,13 +91,13 @@ namespace Akka.Discovery.AwsApi.Ec2
             Region = region;
         }
 
-        public Type ClientConfig { get; }
+        public Type? ClientConfig { get; }
         public Type CredentialsProvider { get; }
         public string TagKey { get; }
         public ImmutableList<Filter> Filters { get; }
         public ImmutableList<int> Ports { get; }
-        public string Endpoint { get; }
-        public string Region { get; }
+        public string? Endpoint { get; }
+        public string? Region { get; }
 
         internal Ec2ServiceDiscoverySettings WithClientConfig(Type clientConfig)
             => Copy(clientConfig: clientConfig);
@@ -125,14 +125,14 @@ namespace Akka.Discovery.AwsApi.Ec2
             => Copy(region: region);
         
         private Ec2ServiceDiscoverySettings Copy(
-            Type clientConfig = null,
-            Type credentialsProvider = null,
-            string tagKey = null,
-            ImmutableList<Filter> filters = null,
-            ImmutableList<int> ports = null,
-            string endpoint = null,
-            string region = null)
-            => new Ec2ServiceDiscoverySettings(
+            Type? clientConfig = null,
+            Type? credentialsProvider = null,
+            string? tagKey = null,
+            ImmutableList<Filter>? filters = null,
+            ImmutableList<int>? ports = null,
+            string? endpoint = null,
+            string? region = null)
+            => new (
                 clientConfig: clientConfig ?? ClientConfig,
                 credentialsProvider: credentialsProvider ?? CredentialsProvider,
                 tagKey: tagKey ?? TagKey,

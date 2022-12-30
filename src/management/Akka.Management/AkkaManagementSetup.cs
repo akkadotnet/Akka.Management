@@ -38,7 +38,7 @@ namespace Akka.Management
         /// akka.remote.dot-netty.tcp.public-hostname is used if not overriden or empty.
         /// if akka.remote.dot-netty.tcp.public-hostname is empty, <see cref="Dns.GetHostName"/> is used.
         /// </summary>
-        public string HostName { get; set; }
+        public string? HostName { get; set; }
         
         /// <summary>
         /// The port where the HTTP Server for Http Cluster Management will be bound.
@@ -51,7 +51,7 @@ namespace Akka.Management
         /// than the HTTP Server for Http Cluster Management.
         /// Use "0.0.0.0" to bind to all interfaces.
         /// </summary>
-        public string BindHostName { get; set; }
+        public string? BindHostName { get; set; }
         
         /// <summary>
         /// Use this setting to bind a network interface to a different port
@@ -66,7 +66,7 @@ namespace Akka.Management
         /// specified, you'll want to use the same value for all nodes that use akka management so
         /// that they can know which path to access each other on.
         /// </summary>
-        public string BasePath { get; set; }
+        public string? BasePath { get; set; }
         
         /// <summary>
         /// Definition of management route providers which shall contribute routes to the management HTTP endpoint.
@@ -78,7 +78,7 @@ namespace Akka.Management
         ///
         /// RouteProviders["health-check"] = null; 
         /// </summary>
-        public Dictionary<string, Type> RouteProviders { get; } = new Dictionary<string, Type>();
+        public Dictionary<string, Type> RouteProviders { get; } = new ();
 
         public HttpSetup WithRouteProvider<T>(string name) where T : IManagementRouteProvider
         {
