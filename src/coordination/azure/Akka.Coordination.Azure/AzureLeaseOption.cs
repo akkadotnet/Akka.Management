@@ -9,6 +9,7 @@ using System;
 using Akka.Actor.Setup;
 using Akka.Cluster.Hosting.SBR;
 using Akka.Hosting;
+using Akka.Hosting.Coordination;
 
 namespace Akka.Coordination.Azure
 {

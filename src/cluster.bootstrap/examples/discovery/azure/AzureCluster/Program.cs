@@ -45,9 +45,11 @@ namespace AzureCluster
                         builder.WithRemoting(hostname: "", port: 4053);
                         
                         // Add Akka.Cluster support
-                        builder.WithClustering(
-                                options: new ClusterOptions { Roles = new[] { "cluster" } },
-                                sbrOptions: new KeepMajorityOption());
+                        builder.WithClustering(new ClusterOptions
+                            {
+                                Roles = new[] { "cluster" },
+                                SplitBrainResolver = new KeepMajorityOption()
+                            });
 
                         // Add Akka.Management.Cluster.Bootstrap support
                         builder.WithClusterBootstrap(setup =>
