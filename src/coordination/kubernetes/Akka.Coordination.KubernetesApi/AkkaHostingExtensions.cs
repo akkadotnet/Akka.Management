@@ -25,7 +25,7 @@ namespace Akka.Coordination.KubernetesApi
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
         public static AkkaConfigurationBuilder WithKubernetesLease(this AkkaConfigurationBuilder builder)
-            => builder.WithKubernetesLease((KubernetesLeaseSetup) null!); // !: roslyn bug, the method does accept null
+            => builder.WithKubernetesLease(null as KubernetesLeaseSetup);
         
         /// <summary>
         ///     Adds Akka.Coordination.KubernetesApi <see cref="Lease"/> support to the <see cref="ActorSystem"/>.
