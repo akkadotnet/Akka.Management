@@ -21,11 +21,11 @@ namespace Akka.Discovery.AwsApi.Ecs
 {
     internal sealed class EcsServiceDiscovery : ServiceDiscovery
     {
-        public static readonly EcsTagComparer TagComparer = new EcsTagComparer();
+        public static readonly EcsTagComparer TagComparer = new ();
         
         private readonly EcsServiceDiscoverySettings _settings;
 
-        private AmazonECSClient _clientDoNotUseDirectly;
+        private AmazonECSClient? _clientDoNotUseDirectly;
 
         private AmazonECSClient EcsClient
         {
@@ -48,30 +48,28 @@ namespace Akka.Discovery.AwsApi.Ecs
         
         public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
         {
-            using (var cts = new CancellationTokenSource(resolveTimeout))
-            {
-                var tasks = await ResolveTasks(
-                    ecsClient: EcsClient,
-                    cluster: _settings.Cluster,
-                    serviceName: lookup.ServiceName,
-                    tags: _settings.Tags,
-                    token: cts.Token);
+            using var cts = new CancellationTokenSource(resolveTimeout);
+            var tasks = await ResolveTasks(
+                ecsClient: EcsClient,
+                cluster: _settings.Cluster,
+                serviceName: lookup.ServiceName,
+                tags: _settings.Tags,
+                token: cts.Token);
 
-                var addresses = new List<ResolvedTarget>();
-                foreach (var task in tasks)
+            var addresses = new List<ResolvedTarget>();
+            foreach (var task in tasks)
+            {
+                foreach (var container in task.Containers)
                 {
-                    foreach (var container in task.Containers)
+                    foreach (var networkInterface in container.NetworkInterfaces)
                     {
-                        foreach (var networkInterface in container.NetworkInterfaces)
-                        {
-                            var address = networkInterface.PrivateIpv4Address;
-                            var parsed = IPAddress.TryParse(address, out var ip) ;
-                            addresses.Add(new ResolvedTarget(address, null, parsed ? ip : null));
-                        }
+                        var address = networkInterface.PrivateIpv4Address;
+                        var parsed = IPAddress.TryParse(address, out var ip) ;
+                        addresses.Add(new ResolvedTarget(address, null, parsed ? ip : null));
                     }
                 }
-                return new Resolved(lookup.ServiceName, addresses);
             }
+            return new Resolved(lookup.ServiceName, addresses);
         }
 
         private static async Task<List<EcsTask>> ResolveTasks(

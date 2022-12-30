@@ -19,7 +19,7 @@ namespace Akka.Discovery.AwsApi.Ec2
 {
     public sealed class Ec2ServiceDiscoverySetup : Setup
     {
-        private Type _clientConfig;
+        private Type? _clientConfig;
 
         /// <summary>
         ///     A class <see cref="Type"/> that extends <see cref="AmazonEC2Config"/> with either 
@@ -28,7 +28,7 @@ namespace Akka.Discovery.AwsApi.Ec2
         /// <exception cref="ConfigurationException">
         ///     The class <see cref="Type"/> did not extend <see cref="AmazonEC2Config"/>
         /// </exception>
-        public Type ClientConfig
+        public Type? ClientConfig
         {
             get => _clientConfig;
             set
@@ -39,7 +39,7 @@ namespace Akka.Discovery.AwsApi.Ec2
             }
         } 
 
-        private Type _credProvider;
+        private Type? _credProvider;
         
         /// <summary>
         ///     A class <see cref="Type"/> that extends <see cref="Ec2CredentialProvider"/> with either 
@@ -48,7 +48,7 @@ namespace Akka.Discovery.AwsApi.Ec2
         /// <exception cref="ConfigurationException">
         ///     The class <see cref="Type"/> did not extend <see cref="Ec2CredentialProvider"/>
         /// </exception>
-        public Type CredentialsProvider
+        public Type? CredentialsProvider
         {
             get => _credProvider;
             set
@@ -62,18 +62,18 @@ namespace Akka.Discovery.AwsApi.Ec2
         /// <summary>
         ///     The tag name used on the EC2 instances to filter the ones to be considered as possible contact points
         /// </summary>
-        public string TagKey { get; set; }
+        public string? TagKey { get; set; }
         
         /// <summary>
         ///     Additional filtering rules to be applied to the possible EC2 contact points
         /// </summary>
-        public List<Filter> Filters { get; set; }
+        public List<Filter>? Filters { get; set; }
         
         /// <summary>
         ///     List of ports to be considered as Akka.Management ports on each instance.
         ///     Use this if you have multiple Akka.NET nodes per EC2 instance
         /// </summary>
-        public List<int> Ports { get; set; }
+        public List<int>? Ports { get; set; }
         
         /// <summary>
         /// <para>
@@ -82,7 +82,7 @@ namespace Akka.Discovery.AwsApi.Ec2
         /// </para>
         ///     NOTE: You can only set either an endpoint OR a region, not both. Region will always win if both are declared.
         /// </summary>
-        public string Endpoint { get; set; }
+        public string? Endpoint { get; set; }
         
         /// <summary>
         /// <para>
@@ -90,7 +90,7 @@ namespace Akka.Discovery.AwsApi.Ec2
         /// </para>
         ///     NOTE: You can only set either an endpoint OR a region, not both. Region will always win if both are declared.
         /// </summary>
-        public string Region { get; set; }
+        public string? Region { get; set; }
 
         /// <summary>
         ///     Sets the <see cref="ClientConfig"/> property, static typed.
@@ -132,7 +132,7 @@ namespace Akka.Discovery.AwsApi.Ec2
                 throw new ConfigurationException($"{paramName} Type value need to extend {typeof(T).Name}. Was: {type.Name}");
 
             var ctorInfo = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, Type.EmptyTypes, null);
-            if (!(ctorInfo is null)) 
+            if (ctorInfo is not null) 
                 return;
             
             ctorInfo = type.GetConstructor(BindingFlags.Instance | BindingFlags.Public, null, new [] {typeof(ExtendedActorSystem)}, null);
