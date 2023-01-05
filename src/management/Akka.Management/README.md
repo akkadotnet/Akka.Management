@@ -1,8 +1,39 @@
+# Table Of Contents
+
+- [Akka Management](#akka-management)
+  - [Basic Usage](#basic-usage)
+  - [Basic Configuration](#basic-configuration)
+    - [Configure Using Akka.Hosting](#configure-using-akkahosting)
+    - [Configure Using HOCON Configuration](#configure-using-hocon-configuration)
+  - [Exposed REST API Endpoints](#exposed-rest-api-endpoints)
+  - [Security](#security)
+  - [Stopping Akka Management](#stopping-akka-management)
+  - [Reference HOCON Configuration](#reference-hocon-configuration)
+- [Akka.Management.Cluster.Bootstrap](#akkamanagementclusterbootstrap)
+  - [Usage](#usage)
+    - [Setting up Cluster.Bootstrap using `Akka.Hosting`](#setting-up-clusterbootstrap-using-akkahosting)
+    - [Setting Up Cluster.Bootstrap from HOCON Configuration](#setting-up-clusterbootstrap-from-hocon-configuration)
+    - [Setting Up Cluster.Bootstrap Programmatically](#setting-up-clusterbootstrap-programmatically)
+    - [Exposed Akka.Management REST API Endpoint](#exposed-akkamanagement-rest-api-endpoint)
+  - [How It Works](#how-it-works)
+  - [Joining Mechanism Precedence](#joining-mechanism-precedence)
+  - [Deployment Considerations](#deployment-considerations)
+    - [Initial deployment](#initial-deployment)
+    - [Recommended Configuration](#recommended-configuration)
+    - [Rolling Updates](#rolling-updates)
+      - [Graceful Shutdown](#graceful-shutdown)
+      - [Number of Nodes to Redeploy At Once](#number-of-nodes-to-redeploy-at-once)
+      - [Cluster Singleton](#cluster-singleton)
+    - [Split Brains and Ungraceful Shutdown](#split-brains-and-ungraceful-shutdown)
+  - [Reference Configuration](#reference-configuration)
+ 
 # Akka Management
+[Back To Top](#table-of-contents)
 
 Akka Management is the core module of the management utilities which provides a central HTTP endpoint for Akka management extensions.
 
 ## Basic Usage
+[Back To Top](#table-of-contents)
 
 With a few exceptions, Akka Management does not start automatically and the routes will only be exposed once you trigger:
 
@@ -17,8 +48,10 @@ This allows users to prepare anything further before exposing routes for the boo
 > Once Akka.Management started, you can not add or expose more routes on the HTTP endpoint.
 
 ## Basic Configuration
+[Back To Top](#table-of-contents)
 
 ### Configure Using Akka.Hosting
+[Back To Top](#table-of-contents)
 
 Setting up Akka.Management through Akka.Hosting is quite simple.
 
@@ -108,6 +141,7 @@ builder.WithAkkaManagement(new AkkaManagementSetup {
 ```
 
 ### Configure Using HOCON Configuration
+[Back To Top](#table-of-contents)
 
 You can configure hostname and port to use for the HTTP Cluster management by overriding the following:
 
@@ -129,28 +163,34 @@ When running Akka nodes behind NATs or inside docker containers in bridge mode, 
 ```
 
 ## Exposed REST API Endpoints
+[Back To Top](#table-of-contents)
 
-Two Akka.Management REST API endpoints are exposed by default, the health check endpoint at `http://{host}:{port}/health` and readiness check endpoint at `http://{host}:{port}/alive`; endpoint paths are configurable inside the HOCON configuration. 
+`Akka.Management.Cluster.Bootstrap` Akka.Management REST API endpoint are exposed by default, it is being mapped to `http://{host}:{port}/bootstrap/seed-nodes`.
 
-Both endpoints will return a 200-OK if all of its callbacks returns a `Done` instance. If any of the callbacks returns a string, the endpoint will return a 500-Internal Server Error code and includes the string reason message inside the HTTP body.
+The end point will return 200-OK with JSON serialized data of current seed nodes inside the HTTP body if the `ActorSystem` actor provider is set to "cluster" and returns 503-ServiceUnavailable if clustering is not available.
 
 ## Security
+[Back To Top](#table-of-contents)
 
 Note that http protocol is used by default and, as of now, there is no way to set up security on any HTTP endpoints. Management endpoints are not designed to be and should never be opened to the public.
 
 ## Stopping Akka Management
+[Back To Top](#table-of-contents)
+
 In a dynamic environment you might stop instances of Akka Management, for example if you want to free up resources taken by the HTTP server serving the Management routes.
 
 You can do so by calling Stop() on AkkaManagement. This method return a Task to inform when the server has been stopped.
 
 ```C#
 var management = AkkaManagement.Get(system);
-await management.start();
+await management.Start();
 //...
-await management.stop();
+await management.Stop();
 ```
 
 ## Reference HOCON Configuration
+[Back To Top](#table-of-contents)
+
 ```
 ######################################################
 # Akka Http Cluster Management Reference Config File #
@@ -248,6 +288,7 @@ akka.management {
 ```
 
 # Akka.Management.Cluster.Bootstrap
+[Back To Top](#table-of-contents)
 
 Akka Cluster Bootstrap helps forming (or joining to) a cluster by using Akka Discovery to discover peer nodes.
 It is an alternative to configuring static seed-nodes in dynamic deployment environments such as on Kubernetes or AWS.
@@ -259,9 +300,12 @@ Cluster bootstrap depends on:
 - Akka.Management to host HTTP endpoints used during the bootstrap process
 
 ## Usage
+[Back To Top](#table-of-contents)
+
 Akka management must be started as well as the bootstrap process, this can either be done through [Akka.Hosting](https://github.com/akkadotnet/Akka.Hosting), HOCON config, or programmatically.
 
 ### Setting up Cluster.Bootstrap using [Akka.Hosting](https://github.com/akkadotnet/Akka.Hosting)
+[Back To Top](#table-of-contents)
 
 _ClusterBootstrap_ can be enabled using the _Akka.Hosting_ extension method:
 ```csharp
@@ -303,6 +347,7 @@ builder.AddStartup(async (system, registry) =>
 If management or bootstrap configuration is incorrect, the autostart will log an error and terminate the actor system.
 
 ### Setting Up Cluster.Bootstrap from HOCON Configuration
+[Back To Top](#table-of-contents)
 
 Listing the ClusterBootstrap extension among the autoloaded akka.extensions in your configuration will cause it to autostart:
 
@@ -314,6 +359,8 @@ akka.extensions = ["Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, 
 If management or bootstrap configuration is incorrect, the autostart will log an error and terminate the actor system.
 
 ### Setting Up Cluster.Bootstrap Programmatically
+[Back To Top](#table-of-contents)
+
 ```
 // Akka Management hosts the HTTP routes used by bootstrap
 await AkkaManagement.Get(system).Start();
@@ -332,6 +379,7 @@ The following configuration is required, more details for each and additional co
   (from what choices [Akka Discovery](https://getakka.net/articles/discovery/index.html) provides). If unset, falls back to the system-wide default from akka.discovery.method.
 
 ### Exposed Akka.Management REST API Endpoint
+[Back To Top](#table-of-contents)
 
 `Akka.Management.Cluster.Bootstrap` will add a new REST HTTP API endpoint to the `Akka.Management` HTTP
 server at the address `http://{host}:{port}/bootstrap/seed-nodes`. Calling a GET on this endpoint will
@@ -339,6 +387,7 @@ return a JSON document containing the Akka cluster address of the node and a lis
 from the that Akka node.
 
 ## How It Works
+[Back To Top](#table-of-contents)
 
 - Each node exposes an HTTP endpoint `/bootstrap/seed-nodes`. This is provided by Akka.Management.Cluster.Bootstrap and
   exposed automatically by starting Akka.Management.
@@ -355,6 +404,8 @@ from the that Akka node.
 Please see the [complete bootstrap process documentation](./docs/BOOTSTRAP_PROCESS.md) for more information.
 
 ## Joining Mechanism Precedence
+[Back To Top](#table-of-contents)
+
 As Akka Cluster allows nodes to join to a cluster using multiple different methods, the precedence of each method is strictly defined and is as follows:
 
 - If akka.cluster.seed-nodes (in your HOCON configuration) are non-empty, those nodes will be joined,
@@ -368,7 +419,11 @@ As Akka Cluster allows nodes to join to a cluster using multiple different metho
 > It is __NOT__ recommended to mix various joining mechanisms. Pick one mechanism and stick to it in order to avoid any surprises during cluster formation. E.g. do __NOT__ set akka.cluster.seed-nodes and do __NOT__ call Cluster.Join if you are going to be using the Bootstrap mechanism.
 
 ## Deployment Considerations
+[Back To Top](#table-of-contents)
+
 ### Initial deployment
+[Back To Top](#table-of-contents)
+
 Cluster Bootstrap will always attempt to join an existing cluster if possible. However if no other contact point advertises any `seed-nodes`, a new cluster will be formed by the node decided by the `JoinDecider` where the default sorts the addresses then picks the lowest.
 
 The HOCON setting `akka.management.cluster.bootstrap.new-cluster-enabled` can be used to disable new cluster formation and to only allow the node to join existing clusters.
@@ -380,6 +435,8 @@ The HOCON setting `akka.management.cluster.bootstrap.new-cluster-enabled` can be
 This can be used to provide additional safety during restarts and redeploys while there is a network partition present. Without new cluster formation disabled, an isolated set of nodes could form a new cluster, creating a split-brain.
 
 ### Recommended Configuration
+[Back To Top](#table-of-contents)
+
 When using the bootstrap module, there are some underlying Akka Cluster settings that should be specified to ensure that your deployment is robust.
 
 Since the target environments for this module are dynamic, that is, instances can come and go, failure needs to be considered. The following configuration will result in your application being shut down after 30 seconds if it is unable to join the discovered seed nodes. In this case, the orchestrator (i.e. Kubernetes or Marathon) will restart your node and the operation will (presumably) eventually succeed. You will want to specify the following in your HOCON configuration:
@@ -389,7 +446,11 @@ akka.cluster.shutdown-after-unsuccessful-join-seed-nodes = 30s
 ```
 
 ### Rolling Updates
+[Back To Top](#table-of-contents)
+
 #### Graceful Shutdown
+[Back To Top](#table-of-contents)
+
 Akka Cluster can handle hard failures using a downing provider such as the split brain resolver discussed below.  However this should not be relied upon for regular rolling redeploys. Features such as ClusterSingletons and ClusterSharding can safely restart actors on new nodes far quicker when it is certain that a node has shutdown rather than crashed.
 
 Graceful leaving will happen with the default settings as it is part of Coordinated Shutdown. Just ensure that a node is sent a SIGTERM and not a SIGKILL. Environments such as Kubernetes will do this, it is important to ensure that if the CLR is wrapped with a script that it forwards the signal.
@@ -400,15 +461,23 @@ Upon receiving a SIGTERM Coordinated Shutdown will:
 - The status of the member will be changed to Exiting while allowing any shards to be shutdown gracefully and ClusterSingletons to be migrated if this was the oldest node. Finally the node is removed from the Akka Cluster membership.
 
 #### Number of Nodes to Redeploy At Once
+[Back To Top](#table-of-contents)
+
 Akka bootstrap requires a `stable-period` where service discovery returns a stable set of contact points. When doing rolling updates, it is best to wait for a node (or group of nodes) to finish joining the cluster before adding and removing other nodes.
 
 #### Cluster Singleton
+[Back To Top](#table-of-contents)
+
 `ClusterSingleton`s run on the oldest node in the cluster. To avoid singletons moving during every node deployment, it is advised to start a rolling redeploy starting at the newest node. Then ClusterSingletons only move once. This is the default behaviour for Kubernetes deployments. Cluster Sharding uses a singleton internally so this is important, even if not using singletons directly.
 
 ### Split Brains and Ungraceful Shutdown
+[Back To Top](#table-of-contents)
+
 Nodes can crash causing cluster members to become unreachable. This is a tricky problem as it is not possible to distinguish between a network partition and a node failure. To rectify this in an automated manner, make sure you enable the Split Brain Resolver. This module has a number of strategies that can ensure that the cluster continues to function during network partitions and node failures.
 
 ## Reference Configuration
+[Back To Top](#table-of-contents)
+
 ```
 ######################################################
 # Akka Cluster Bootstrap Config                      #
