@@ -50,7 +50,7 @@ namespace Akka.Coordination.Azure.Tests
         {
             var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
             
-            builder.WithAzureLease(new AzureLeaseSetup
+            builder.WithAzureLease(new AzureLeaseOption
             {
                 ContainerName = "underTest"
             });

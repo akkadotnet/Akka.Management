@@ -20,12 +20,11 @@ namespace Akka.Coordination.Azure
         public string? ConnectionString { get; set; }
         public string? ContainerName { get; set; }
         public TimeSpan? ApiServiceRequestTimeout { get; set; }
-        public TimeSpan? BodyReadTimeout { get; set; }
         public Uri? ServiceEndpoint { get; set; }
         public TokenCredential? AzureCredential { get; set; }
         public BlobClientOptions? BlobClientOptions { get; set; }
 
-        internal AzureLeaseSettings Apply(AzureLeaseSettings settings, ActorSystem? system)
+        internal AzureLeaseSettings Apply(AzureLeaseSettings settings, ActorSystem system)
         {
             if (ConnectionString is { })
                 settings = settings.WithConnectionString(ConnectionString);
@@ -36,19 +35,13 @@ namespace Akka.Coordination.Azure
             if (ApiServiceRequestTimeout is { })
                 settings = settings.WithApiServiceRequestTimeout(ApiServiceRequestTimeout.Value);
 
-            if (BodyReadTimeout is { })
-                settings = settings.WithBodyReadTimeout(BodyReadTimeout.Value);
-
             if (AzureCredential is { })
             {
                 if(ServiceEndpoint is null)
                 {
-                    if (system is { })
-                    {
-                        var log = Logging.GetLogger(system, this);
-                        log.Error(
-                            "Skipping AzureCredential setup. Both AzureCredential and ServiceEndpoint must be defined.");
-                    }
+                    var log = Logging.GetLogger(system, this);
+                    log.Error(
+                        "Skipping AzureCredential setup. Both AzureCredential and ServiceEndpoint must be defined.");
                 }
                 else
                     settings = settings.WithAzureCredential(AzureCredential, ServiceEndpoint);

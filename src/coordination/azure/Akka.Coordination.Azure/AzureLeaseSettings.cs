@@ -50,19 +50,19 @@ namespace Akka.Coordination.Azure
             var config = rootConfig.GetConfig(AzureLease.ConfigPath);
             
             var requestTimeoutValue = config.GetStringIfDefined("api-service-request-timeout");
-            var apiServerRequestTimeout = !string.IsNullOrWhiteSpace(requestTimeoutValue)
+            var apiServiceRequestTimeout = !string.IsNullOrWhiteSpace(requestTimeoutValue)
                 ? config.GetTimeSpan("api-service-request-timeout")
                 : new TimeSpan(leaseTimeoutSettings.OperationTimeout.Ticks * 2 / 5);  // 2/5 gives two API operations + a buffer
 
-            if (apiServerRequestTimeout >= leaseTimeoutSettings.OperationTimeout)
+            if (apiServiceRequestTimeout >= leaseTimeoutSettings.OperationTimeout)
                 throw new ConfigurationException(
                     "'api-service-request-timeout can not be less than 'akka.coordination.lease.lease-operation-timeout'");
             
             return new AzureLeaseSettings(
                 connectionString: config.GetStringIfDefined("connection-string"),
                 containerName: config.GetStringIfDefined("container-name"),
-                apiServiceRequestTimeout: apiServerRequestTimeout,
-                bodyReadTimeout: new TimeSpan(apiServerRequestTimeout.Ticks / 2),
+                apiServiceRequestTimeout: apiServiceRequestTimeout,
+                bodyReadTimeout: new TimeSpan(apiServiceRequestTimeout.Ticks / 2),
                 serviceEndpoint: null,
                 azureCredential: null,
                 blobClientOptions: null
@@ -82,9 +82,9 @@ namespace Akka.Coordination.Azure
         public AzureLeaseSettings WithContainerName(string containerName)
             => Copy(containerName: containerName);
         public AzureLeaseSettings WithApiServiceRequestTimeout(TimeSpan apiServiceRequestTimeout)
-            => Copy(apiServiceRequestTimeout: apiServiceRequestTimeout);
-        public AzureLeaseSettings WithBodyReadTimeout(TimeSpan bodyReadTimeout)
-            => Copy(bodyReadTimeout: bodyReadTimeout);
+            => Copy(
+                apiServiceRequestTimeout: apiServiceRequestTimeout,
+                bodyReadTimeout: new TimeSpan(apiServiceRequestTimeout.Ticks / 2));
         public AzureLeaseSettings WithAzureCredential(TokenCredential azureCredential, Uri serviceEndpoint)
         {
             if (azureCredential is null)
