@@ -29,8 +29,8 @@ namespace Akka.Coordination.KubernetesApi
 
         private static string TruncateTo63Characters(string name) => name.Length > 63 ? name.Substring(0, 63) : name;
 
-        private static readonly Regex Rx1 = new Regex("[_.]");
-        private static readonly Regex Rx2 = new Regex("[^-a-z0-9]");
+        private static readonly Regex Rx1 = new ("[_.]", RegexOptions.Compiled);
+        private static readonly Regex Rx2 = new ("[^-a-z0-9]", RegexOptions.Compiled);
         private static string MakeDns1039Compatible(string name)
         {
             var normalized = name.Normalize(NormalizationForm.FormKD).ToLowerInvariant();
@@ -57,7 +57,7 @@ namespace Akka.Coordination.KubernetesApi
             _settings = settings;
             
             _log = Logging.GetLogger(system, GetType());
-            var kubernetesSettings = KubernetesSettings.Create(system, settings.TimeoutSettings);
+            var kubernetesSettings = KubernetesSettings.Create(system);
 
             var setup = system.Settings.Setup.Get<KubernetesLeaseSetup>();
             if (setup.HasValue)
