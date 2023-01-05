@@ -1,17 +1,22 @@
 # Akka Management
 This project provides a home for Akka.NET cluster management, bootstrapping, and more.
-These tools aims to help with cluster management in various dynamic environments such as Amazon AWS and Kubernetes.
+These tools aims to help with cluster management in various dynamic environments such as Azure, Amazon AWS and Kubernetes.
 
 ## Supported Plugins
 
 * [`Akka.Management`](/src/management/Akka.Management) - Akka.Cluster management tool over HTTP. 
   You can read more in the documentation [here](/src/management/Akka.Management/README.md).
-* [`Akka.Management.Cluster.Bootstrap`](/src/cluster.bootstrap/Akka.Management.Cluster.Bootstrap) - Automated Akka.Cluster bootstrapping
-  in a dynamic environment. You can read more in the documentation [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/cluster.bootstrap/Akka.Management.Cluster.Bootstrap/README.md).
-* [`Akka.Discovery.AwsApi`](/src/discovery/aws/Akka.Discovery.AwsApi) - Akka.Cluster bootstrapping discovery service using EC2 and the AWS API.
-  You can read more in the documentation [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/aws/Akka.Discovery.AwsApi/README.md).
-* [`Akka.Discovery.KubernetesApi`](/src/discovery/kubernetes/Akka.Discovery.KubernetesApi) - Akka.Cluster bootstrapping discovery service using Kubernetes API
-  You can read more in the documentation [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/kubernetes/Akka.Discovery.KubernetesApi/README.md)
+* `Akka.Management.Cluster.Bootstrap` - Automated Akka.Cluster bootstrapping
+  in a dynamic environment. You can read more in the documentation [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/management/Akka.Management/README.md#akkamanagementclusterbootstrap).
+  > **NOTE**
+  >
+  > As of version 1.0.0, cluster bootstrap came bundled with the core `Akka.Management` NuGet package and are part of the default HTTP endpoint for `Akka.Management`. All `Akka.Management.Cluster.Bootstrap` NuGet package versions below 1.0.0 should now be considered deprecated.
+* [`Akka.Discovery.AwsApi`](/src/discovery/aws/Akka.Discovery.AwsApi) - Akka.Cluster bootstrapping discovery service using EC2, ECS, and the AWS API. You can read more in the documentation [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/aws/Akka.Discovery.AwsApi/README.md).
+* [`Akka.Discovery.KubernetesApi`](/src/discovery/kubernetes/Akka.Discovery.KubernetesApi) - Akka.Cluster bootstrapping discovery service using Kubernetes API. You can read more in the documentation [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/kubernetes/Akka.Discovery.KubernetesApi/README.md).
+* [`Akka.Discovery.Azure`](src/discovery/azure/Akka.Discovery.Azure) - Akka.Cluster bootstrapping discovery service using Azure Table Storage. You can read more in the documentation [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/discovery/azure/Akka.Discovery.Azure/README.md).
+* [`Akka.Coordination.KubernetesApi`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/coordination/kubernetes/Akka.Coordination.KubernetesApi) - provides a lease-based distributed lock mechanism backed by [Kubernetes CRD](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definitions/) for [Akka.NET Split Brain Resolver](https://getakka.net/articles/clustering/split-brain-resolver.html), [Akka.Cluster.Sharding](https://getakka.net/articles/clustering/cluster-sharding.html), and [Akka.Cluster.Singleton](https://getakka.net/articles/clustering/cluster-singleton.html). Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/coordination/kubernetes/Akka.Coordination.KubernetesApi/README.md)
+* [`Akka.Coordination.Azure`](https://github.com/akkadotnet/Akka.Management/tree/dev/src/coordination/azure/Akka.Coordination.Azure) - provides a lease-based distributed lock mechanism backed by [Microsoft Azure Blob Storage](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blobs-overview) for [Akka.NET Split Brain Resolver](https://getakka.net/articles/clustering/split-brain-resolver.html), [Akka.Cluster.Sharding](https://getakka.net/articles/clustering/cluster-sharding.html), and [Akka.Cluster.Singleton](https://getakka.net/articles/clustering/cluster-singleton.html). Documentation can be read [here](https://github.com/akkadotnet/Akka.Management/blob/dev/src/coordination/azure/Akka.Coordination.Azure/README.md)
+
 ## Build Instructions
 
 ### Supported Commands
