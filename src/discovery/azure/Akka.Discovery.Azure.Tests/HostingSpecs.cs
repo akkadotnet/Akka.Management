@@ -16,6 +16,7 @@ using Akka.Management.Cluster.Bootstrap;
 using Akka.Remote.Hosting;
 using FluentAssertions;
 using FluentAssertions.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -49,7 +50,13 @@ namespace Akka.Discovery.Azure.Tests
                         });
                         builder.WithRemoting(hostname: "localhost", port: 12552);
                         builder.WithClustering();
-                        builder.WithAkkaManagement("localhost", 18558, "localhost", 18558);
+                        builder.WithAkkaManagement(config =>
+                        {
+                            config.Http.HostName = "localhost";
+                            config.Http.Port = 18558;
+                            config.Http.BindHostName = "localhost";
+                            config.Http.BindPort = 18558;
+                        });
                         builder.WithClusterBootstrap(setup =>
                         {
                             setup.ContactPointDiscovery.ServiceName = "testService";
@@ -80,7 +87,7 @@ namespace Akka.Discovery.Azure.Tests
             var tcs = new TaskCompletionSource<Done>();
             using var host = await StartHost(startupAction);
 
-            var system = (ActorSystem) host.Services.GetService(typeof(ActorSystem));
+            var system = host.Services.GetRequiredService<ActorSystem>();
             var cluster = Cluster.Cluster.Get(system);
             cluster.RegisterOnMemberUp(() =>
             {

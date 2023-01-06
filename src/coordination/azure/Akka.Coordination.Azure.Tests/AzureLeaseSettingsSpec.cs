@@ -101,14 +101,13 @@ namespace Akka.Coordination.Azure.Tests
                 .WithConnectionString("a")
                 .WithContainerName("b")
                 .WithApiServiceRequestTimeout(11.Seconds())
-                .WithBodyReadTimeout(12.Seconds())
                 .WithAzureCredential(cred, uri)
                 .WithBlobClientOption(opt);
             
             settings.ConnectionString.Should().Be("a");
             settings.ContainerName.Should().Be("b");
             settings.ApiServiceRequestTimeout.Should().Be(11.Seconds());
-            settings.BodyReadTimeout.Should().Be(12.Seconds()); 
+            settings.BodyReadTimeout.Should().Be(5.5.Seconds()); 
             settings.ServiceEndpoint.Should().Be(uri);
             settings.AzureCredential.Should().Be(cred); 
             settings.BlobClientOptions.Should().Be(opt);
@@ -126,17 +125,16 @@ namespace Akka.Coordination.Azure.Tests
                 ConnectionString = "a",
                 ContainerName = "b",
                 ApiServiceRequestTimeout = 11.Seconds(),
-                BodyReadTimeout = 12.Seconds(),
                 ServiceEndpoint = uri,
                 AzureCredential = cred,
                 BlobClientOptions = opt
             };
             
-            var settings = setup.Apply(AzureLeaseSettings.Empty, null);
+            var settings = setup.Apply(AzureLeaseSettings.Empty, null!);
             settings.ConnectionString.Should().Be("a");
             settings.ContainerName.Should().Be("b");
             settings.ApiServiceRequestTimeout.Should().Be(11.Seconds());
-            settings.BodyReadTimeout.Should().Be(12.Seconds()); 
+            settings.BodyReadTimeout.Should().Be(5.5.Seconds()); 
             settings.ServiceEndpoint.Should().Be(uri);
             settings.AzureCredential.Should().Be(cred); 
             settings.BlobClientOptions.Should().Be(opt);

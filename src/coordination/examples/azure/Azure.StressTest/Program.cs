@@ -5,76 +5,88 @@ using Akka.Event;
 using Akka.Management;
 using Azure.StressTest.Actors;
 using Azure.StressTest.Cmd;
-using LogLevel = Akka.Event.LogLevel;
+
+namespace Azure.StressTest;
 
 public static class Program
 {
-    public static async Task Main(params string[] args)
+public static async Task Main(params string[] args)
+{
+using var host = new HostBuilder()
+    .ConfigureServices((hostContext, services) =>
     {
-        using var host = new HostBuilder()
-            .ConfigureServices((hostContext, services) =>
-            {
-                services.AddLogging();
-                
-                var systemName = Environment.GetEnvironmentVariable("ACTORSYSTEM")?.Trim() ?? "AkkaService";
-                var ip = Environment.GetEnvironmentVariable("CLUSTER_IP")?.Trim() ?? Dns.GetHostName();
-                services.AddAkka(systemName, (builder, provider) =>
-                {
-                    // Add HOCON configuration from Docker
-                    builder.AddHocon(
-                        ((Config)@"
+        services.AddLogging();
+        
+        var systemName = Environment.GetEnvironmentVariable("ACTORSYSTEM")?.Trim() ?? "AkkaService";
+        var ip = Environment.GetEnvironmentVariable("CLUSTER_IP")?.Trim() ?? Dns.GetHostName();
+
+        var leaseOptions = new AzureLeaseOption
+        {
+            ConnectionString = ConnectionString()
+        };
+        
+        services.AddAkka(systemName, (builder, provider) =>
+        {
+            // Add HOCON configuration from Docker
+            builder.AddHocon(
+                ((Config)@"
 # don't shutdown gracefully if SIGTERM is received
 coordinated-shutdown.run-by-clr-shutdown-hook = off
 coordinated-shutdown.run-by-actor-system-terminate = off")
-                            .BootstrapFromDocker(), 
-                        HoconAddMode.Prepend);
+                    .BootstrapFromDocker(), 
+                HoconAddMode.Prepend);
 
-                    // Add Akka.Remote support.
-                    builder.WithRemoting(hostname: ip, port: 4053);
-                    
-                    // Add Akka.Cluster support
-                    builder.WithClustering(
-                        options: new ClusterOptions { Roles = new[] { "cluster" } },
-                        new LeaseMajorityOption { LeaseImplementation = AzureLeaseOption.Instance });
-
-                    // Add Akka.Management support
-                    builder.WithAkkaManagement(setup =>
+            // Add Akka.Remote support.
+            builder.WithRemoting(hostname: ip, port: 4053);
+            
+            // Add Akka.Coordination.Azure lease support
+            builder.WithAzureLease(setup => { setup.ConnectionString = ConnectionString(); });
+            
+            // Add Akka.Cluster support
+            builder.WithClustering(new ClusterOptions
+                {
+                    Roles = new[] { "cluster" }, 
+                    SplitBrainResolver = new LeaseMajorityOption
                     {
-                        setup.Http.Hostname = ip;
-                    });
-                    
-                    // Add Akka.Management.Cluster.Bootstrap support
-                    builder.WithClusterBootstrap(setup =>
-                    {
-                        setup.ContactPointDiscovery.ServiceName = "clusterbootstrap";
-                        setup.ContactPointDiscovery.PortName = "management";
-                    }, autoStart: true);
-
-                    // Add Akka.Discovery.Azure support
-                    builder.WithAzureDiscovery(
-                        connectionString: ConnectionString(),
-                        serviceName: "clusterbootstrap", 
-                        publicHostname: ip);
-                    
-                    // Add Akka.Coordination.Azure lease support
-                    builder.WithAzureLease(setup => { setup.ConnectionString = ConnectionString(); });
-                    
-                    // Add https://cmd.petabridge.com/ for diagnostics
-                    builder.WithPetabridgeCmd("0.0.0.0", 9110, ClusterCommands.Instance, new RemoteCommands(), new TestCommands());
-
-                    // Add start-up code
-                    builder.AddTestActors();
+                        LeaseImplementation = new AzureLeaseOption()
+                    }
                 });
-            })
-            .ConfigureLogging((hostContext, configLogging) =>
-            {
-                configLogging.AddConsole();
-            })
-            .UseConsoleLifetime()
-            .Build();
 
-        await host.RunAsync();
-    }
+            // Add Akka.Management support
+            builder.WithAkkaManagement(setup =>
+            {
+                setup.Http.HostName = ip;
+            });
+            
+            // Add Akka.Management.Cluster.Bootstrap support
+            builder.WithClusterBootstrap(setup =>
+            {
+                setup.ContactPointDiscovery.ServiceName = "clusterbootstrap";
+                setup.ContactPointDiscovery.PortName = "management";
+            }, autoStart: true);
+
+            // Add Akka.Discovery.Azure support
+            builder.WithAzureDiscovery(
+                connectionString: ConnectionString(),
+                serviceName: "clusterbootstrap", 
+                publicHostname: ip);
+            
+            // Add https://cmd.petabridge.com/ for diagnostics
+            builder.WithPetabridgeCmd("0.0.0.0", 9110, ClusterCommands.Instance, new RemoteCommands(), new TestCommands());
+
+            // Add start-up code
+            builder.AddTestActors();
+        });
+    })
+    .ConfigureLogging((hostContext, configLogging) =>
+    {
+        configLogging.AddConsole();
+    })
+    .UseConsoleLifetime()
+    .Build();
+
+await host.RunAsync();
+}
     
     private const string AzuriteConnectionString = 
         "DefaultEndpointsProtocol=http;" +

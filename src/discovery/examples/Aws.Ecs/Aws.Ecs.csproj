@@ -4,16 +4,17 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\cluster.bootstrap\Akka.Management.Cluster.Bootstrap\Akka.Management.Cluster.Bootstrap.csproj" />
+      <ProjectReference Include="..\..\..\management\Akka.Management\Akka.Management.csproj" />
       <ProjectReference Include="..\..\aws\Akka.Discovery.AwsApi\Akka.Discovery.AwsApi.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Akka.Bootstrap.Docker" Version="0.5.3" />
-      <PackageReference Include="Akka.Cluster.Hosting" Version="0.5.1" />
+      <PackageReference Include="Akka.Bootstrap.Docker" Version="$(BootstrapDockerVersion)" />
+      <PackageReference Include="Akka.Cluster.Hosting" Version="$(AkkaHostingVersion)" />
     </ItemGroup>
 
 </Project>

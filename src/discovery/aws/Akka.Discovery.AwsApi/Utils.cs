@@ -88,7 +88,7 @@ namespace Akka.Discovery.AwsApi
 
     public sealed class EcsTagComparer : IEqualityComparer<Tag>
     {
-        public bool Equals(Tag x, Tag y)
+        public bool Equals(Tag? x, Tag? y)
         {
             if (ReferenceEquals(x, y)) return true;
             if (ReferenceEquals(x, null)) return false;

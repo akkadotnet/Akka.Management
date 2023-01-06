@@ -8,7 +8,7 @@
 using System;
 using Akka.Annotations;
 
-namespace Akka.Management
+namespace Akka.Management.Dsl
 {
     /// <summary>
     /// Settings object used to pass through information about the environment the routes will be running in,
@@ -51,7 +51,7 @@ namespace Akka.Management
 
         public override ManagementRouteProviderSettings WithReadOnly(bool readOnly) => Copy(readOnly: readOnly);
 
-        private ManagementRouteProviderSettings Copy(Uri selfBaseUri = null, bool? readOnly = null) =>
+        private ManagementRouteProviderSettings Copy(Uri? selfBaseUri = null, bool? readOnly = null) =>
             new ManagementRouteProviderSettingsImpl(
                 selfBaseUri: selfBaseUri ?? SelfBaseUri,
                 readOnly: readOnly ?? ReadOnly);

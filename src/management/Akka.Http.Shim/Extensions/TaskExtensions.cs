@@ -5,7 +5,10 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace System.Threading.Tasks
+using System;
+using System.Threading.Tasks;
+
+namespace Akka.Http.Extensions
 {
     public static class TaskExtensions
     {
@@ -25,7 +28,7 @@ namespace System.Threading.Tasks
             return source.ContinueWith(t => selector(t.Result), TaskContinuationOptions.NotOnCanceled);
         }
 
-        public static Task WhenComplete<TSource>(this Task<TSource> source, Action<TSource, Exception> continuationAction) =>
+        public static Task WhenComplete<TSource>(this Task<TSource> source, Action<TSource?, Exception?> continuationAction) =>
             source.ContinueWith(t =>
             {
                 if (t.IsFaulted)

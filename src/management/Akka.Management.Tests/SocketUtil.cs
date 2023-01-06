@@ -5,6 +5,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System;
 using System.Net;
 using System.Net.Sockets;
 
@@ -18,6 +19,9 @@ namespace Akka.Management.Tests
             {
                 var endpoint = new IPEndPoint(IPAddress.Parse(hostName), 0);
                 socket.Bind(endpoint);
+                if (socket.LocalEndPoint is null)
+                    throw new Exception("Failed to obtain a local endpoint using TemporaryTcpAddress");
+                
                 return (IPEndPoint) socket.LocalEndPoint;
             }
         }

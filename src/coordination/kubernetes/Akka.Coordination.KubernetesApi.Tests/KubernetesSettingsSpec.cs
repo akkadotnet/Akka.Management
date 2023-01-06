@@ -24,7 +24,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                     .WithFallback(LeaseProvider.DefaultConfig())
                 : KubernetesLease.DefaultConfiguration
                     .WithFallback(LeaseProvider.DefaultConfig());
-            return KubernetesSettings.Create(config.GetConfig(KubernetesLease.ConfigPath), TimeoutSettings.Create(config.GetConfig("akka.coordination.lease")));
+            return KubernetesSettings.Create(config.GetConfig(KubernetesLease.ConfigPath).WithFallback(config.GetConfig("akka.coordination.lease")));
         }
         
         [Fact(DisplayName = "default request-timeout should be 2/5 of the lease-operation-timeout")]
@@ -51,7 +51,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
         }
 
         [Fact(DisplayName =
-            "Kubernetes settings should not allow server request timeout greater than operation timeout")]
+            "Kubernetes settings should not allow service request timeout greater than operation timeout")]
         public void InvalidServerRequestTimeout()
         {
             Assert.Throws<ConfigurationException>(() =>
@@ -59,7 +59,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 Conf(@"
                     akka.coordination.lease.lease-operation-timeout=5s
                     akka.coordination.lease.kubernetes.api-service-request-timeout=6s");
-            }).Message.Should().Be("'api-service-request-timeout can not be less than 'lease-operation-timeout'");
+            }).Message.Should().Be("'api-service-request-timeout can not be greater than 'lease-operation-timeout'");
         }
 
         [Fact(DisplayName = "KubernetesSettings should contain default values")]

@@ -4,7 +4,7 @@
     <Description>Akka cluster management module for Akka.NET</Description>
     <PackageTags>$(AkkaPackageTags)</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <LangVersion>8.0</LangVersion>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" Version="$(AkkaVersion)" />
+    <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
+    <PackageReference Include="Akka.Discovery" Version="$(AkkaVersion)" />
     <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
   </ItemGroup>
 
@@ -20,4 +21,7 @@
     <ProjectReference Include="..\Akka.Http.Shim\Akka.Http.Shim.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

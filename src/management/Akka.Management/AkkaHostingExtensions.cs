@@ -8,6 +8,7 @@ using System;
 using System.Net;
 using Akka.Actor;
 using Akka.Hosting;
+using Akka.Management.Dsl;
 
 namespace Akka.Management
 {
@@ -48,21 +49,20 @@ namespace Akka.Management
         /// </returns>
         public static AkkaConfigurationBuilder WithAkkaManagement(
             this AkkaConfigurationBuilder builder,
-            string hostName = null,
+            string? hostName = null,
             int? port = null,
-            string bindHostname = null,
+            string? bindHostname = null,
             int? bindPort = null,
             bool autoStart = false)
-            => builder.WithAkkaManagement(new AkkaManagementSetup
+        {
+            return builder.WithAkkaManagement(new AkkaManagementSetup(new HttpSetup
             {
-                Http = new HttpSetup
-                {
-                    Hostname = hostName,
-                    Port = port,
-                    BindHostname = bindHostname,
-                    BindPort = bindPort
-                }
-            }, autoStart);
+                HostName = hostName,
+                Port = port,
+                BindHostName = bindHostname,
+                BindPort = bindPort
+            }), autoStart);
+        }
 
         /// <summary>
         ///     Adds Akka.Management support to the <see cref="ActorSystem"/>
@@ -85,10 +85,7 @@ namespace Akka.Management
             Action<AkkaManagementSetup> configure,
             bool autoStart = false)
         {
-            var setup = new AkkaManagementSetup
-            {
-                Http = new HttpSetup()
-            };
+            var setup = new AkkaManagementSetup(new HttpSetup());
             configure(setup);
             return builder.WithAkkaManagement(setup, autoStart);
         }

@@ -41,7 +41,8 @@ namespace Akka.Coordination.Azure.Tests
                 .Should().NotBeNull();
             var setup = ExtractSetup(builder);
             setup.Should().NotBeNull();
-            setup.ContainerName.Should().Be("underTest");
+            // !: null checked above
+            setup!.ContainerName.Should().Be("underTest");
         }
         
         [Fact(DisplayName = "Hosting Setup extension should add Setup class and default hocon settings")]
@@ -49,7 +50,7 @@ namespace Akka.Coordination.Azure.Tests
         {
             var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
             
-            builder.WithAzureLease(new AzureLeaseSetup
+            builder.WithAzureLease(new AzureLeaseOption
             {
                 ContainerName = "underTest"
             });
@@ -59,12 +60,13 @@ namespace Akka.Coordination.Azure.Tests
                 .Should().NotBeNull();
             var setup = ExtractSetup(builder);
             setup.Should().NotBeNull();
-            setup.ContainerName.Should().Be("underTest");
+            // !: null checked above
+            setup!.ContainerName.Should().Be("underTest");
         }
 
-        private static AzureLeaseSetup ExtractSetup(AkkaConfigurationBuilder builder)
+        private static AzureLeaseSetup? ExtractSetup(AkkaConfigurationBuilder builder)
         {
-            return (AzureLeaseSetup) builder.Setups.FirstOrDefault(s => s is AzureLeaseSetup);
+            return builder.Setups.FirstOrDefault(s => s is AzureLeaseSetup) as AzureLeaseSetup;
         }
     }
 }

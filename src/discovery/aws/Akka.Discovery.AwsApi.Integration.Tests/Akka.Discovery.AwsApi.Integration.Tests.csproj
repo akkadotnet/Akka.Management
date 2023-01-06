@@ -9,8 +9,8 @@
         <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
         <PackageReference Include="Akka.TestKit" Version="$(AkkaVersion)" />
         <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
-        <PackageReference Include="AWSSDK.CloudFormation" Version="3.7.101.4" />
-        <PackageReference Include="AWSSDK.S3" Version="3.7.101.8" />
+        <PackageReference Include="AWSSDK.CloudFormation" Version="3.7.102.11" />
+        <PackageReference Include="AWSSDK.S3" Version="3.7.101.33" />
         <PackageReference Include="Docker.DotNet" Version="3.125.12" />
         <PackageReference Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
@@ -33,6 +33,9 @@
     <ItemGroup>
       <None Remove="akka-cluster.json" />
       <EmbeddedResource Include="akka-cluster.json" />
+      <None Update="xunit.runner.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

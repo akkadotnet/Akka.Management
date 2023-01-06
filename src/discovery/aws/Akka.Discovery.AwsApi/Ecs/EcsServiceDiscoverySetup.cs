@@ -13,8 +13,8 @@ namespace Akka.Discovery.AwsApi.Ecs
 {
     public class EcsServiceDiscoverySetup: Setup
     {
-        public string Cluster { get; set; }
-        public IEnumerable<Tag> Tags { get; set; }
+        public string? Cluster { get; set; }
+        public IEnumerable<Tag>? Tags { get; set; }
 
         internal EcsServiceDiscoverySettings Apply(EcsServiceDiscoverySettings settings)
         {

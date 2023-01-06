@@ -10,7 +10,6 @@ using Akka.Configuration;
 using Akka.Coordination.KubernetesApi;
 using Akka.Discovery.KubernetesApi;
 using Akka.Hosting;
-using Akka.Management;
 using Akka.Management.Cluster.Bootstrap;
 using Akka.Remote.Hosting;
 using Akka.Util;
@@ -45,9 +44,14 @@ namespace KubernetesCluster
                         builder.WithRemoting(hostname: "", port: 4053);
                         
                         // Add Akka.Cluster support
-                        builder.WithClustering(
-                                options: new ClusterOptions { Roles = new[] { "cluster" } },
-                                sbrOptions: new LeaseMajorityOption { LeaseImplementation = KubernetesLeaseOption.Instance });
+                        builder.WithClustering(new ClusterOptions
+                            {
+                                Roles = new[] { "cluster" }, 
+                                SplitBrainResolver = new LeaseMajorityOption
+                                {
+                                    LeaseImplementation = new KubernetesLeaseOption()
+                                }
+                            });
                         
                         // Add Akka.Management.Cluster.Bootstrap support
                         builder.WithClusterBootstrap(setup =>

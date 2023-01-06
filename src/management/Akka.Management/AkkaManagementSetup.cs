@@ -11,16 +11,22 @@ using System.Linq;
 using System.Net;
 using Akka.Actor.Setup;
 using Akka.Configuration;
+using Akka.Management.Dsl;
 
 namespace Akka.Management
 {
     public sealed class AkkaManagementSetup: Setup
     {
-        public HttpSetup Http { get; set; }
+        public AkkaManagementSetup(HttpSetup http)
+        {
+            Http = http;
+        }
+
+        public HttpSetup Http { get; }
 
         internal AkkaManagementSettings Apply(AkkaManagementSettings settings)
         {
-            return Http is null ? settings : new AkkaManagementSettings(Http.Apply(settings.Http));
+            return new AkkaManagementSettings(Http.Apply(settings.Http));
         }
     }
 
@@ -32,7 +38,7 @@ namespace Akka.Management
         /// akka.remote.dot-netty.tcp.public-hostname is used if not overriden or empty.
         /// if akka.remote.dot-netty.tcp.public-hostname is empty, <see cref="Dns.GetHostName"/> is used.
         /// </summary>
-        public string Hostname { get; set; }
+        public string? HostName { get; set; }
         
         /// <summary>
         /// The port where the HTTP Server for Http Cluster Management will be bound.
@@ -45,7 +51,7 @@ namespace Akka.Management
         /// than the HTTP Server for Http Cluster Management.
         /// Use "0.0.0.0" to bind to all interfaces.
         /// </summary>
-        public string BindHostname { get; set; }
+        public string? BindHostName { get; set; }
         
         /// <summary>
         /// Use this setting to bind a network interface to a different port
@@ -60,24 +66,19 @@ namespace Akka.Management
         /// specified, you'll want to use the same value for all nodes that use akka management so
         /// that they can know which path to access each other on.
         /// </summary>
-        public string BasePath { get; set; }
+        public string? BasePath { get; set; }
         
         /// <summary>
         /// Definition of management route providers which shall contribute routes to the management HTTP endpoint.
         /// Management route providers should be regular extensions that additionally extend the
         /// <see cref="IManagementRouteProvider"/> interface.
         /// 
-        /// By default the <see cref="HealthCheckRoutes"/> is enabled.
-        /// 
         /// Route providers included by a library (from reference.conf) can be excluded by an application
         /// by using null as type, for example:
         ///
         /// RouteProviders["health-check"] = null; 
         /// </summary>
-        public Dictionary<string, Type> RouteProviders { get; } = new Dictionary<string, Type>
-        {
-            ["health-checks"] = typeof(HealthCheckRoutes)
-        };
+        public Dictionary<string, Type> RouteProviders { get; } = new ();
 
         public HttpSetup WithRouteProvider<T>(string name) where T : IManagementRouteProvider
         {
@@ -115,9 +116,9 @@ namespace Akka.Management
             var routeProviders = providers.Select(kvp => new NamedRouteProvider(kvp.Key, kvp.Value));
             
             return settings.Copy(
-                hostname: Hostname,
+                hostname: HostName,
                 port: Port,
-                effectiveBindHostname: BindHostname,
+                effectiveBindHostname: BindHostName,
                 effectiveBindPort: BindPort,
                 basePath: BasePath,
                 routeProviders: routeProviders,

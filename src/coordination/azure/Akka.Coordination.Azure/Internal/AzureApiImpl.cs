@@ -34,16 +34,17 @@ namespace Akka.Coordination.Azure.Internal
 
             _containerClient = new Lazy<BlobContainerClient>(() =>
             {
-                var client = settings.AzureCredential != null && settings.ServiceEndpoint != null
-                    ? new BlobContainerClient(settings.ServiceEndpoint, settings.AzureCredential,
-                        settings.BlobClientOptions)
-                    : new BlobContainerClient(settings.ConnectionString, settings.ContainerName);
-
-                var response = client.Exists();
-                if (!response.Value)
-                    client.Create();
+                var serviceClient = settings.AzureCredential != null && settings.ServiceEndpoint != null
+                    ? new BlobServiceClient(settings.ServiceEndpoint, settings.AzureCredential, settings.BlobClientOptions)
+                    : new BlobServiceClient(settings.ConnectionString);
                 
-                return client;
+                var containerClient = serviceClient.GetBlobContainerClient(settings.ContainerName);
+
+                var response = containerClient.Exists();
+                if (!response.Value)
+                    containerClient.Create();
+                
+                return containerClient;
             });
         }
         
@@ -51,7 +52,7 @@ namespace Akka.Coordination.Azure.Internal
         public async Task<LeaseResource> ReadOrCreateLeaseResource(string name)
         {
             // TODO: backoff retry
-            var maxTries = 5;
+            const int maxTries = 5;
             var tries = 0;
             while (true)
             {
@@ -146,7 +147,7 @@ namespace Akka.Coordination.Azure.Internal
             }
         }
 
-        private async Task<LeaseResource> CreateLeaseResource(string leaseName)
+        private async Task<LeaseResource?> CreateLeaseResource(string leaseName)
         {
             var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
             try
@@ -154,8 +155,8 @@ namespace Akka.Coordination.Azure.Internal
                 var blobClient = _containerClient.Value.GetBlobClient(leaseName);
                 var leaseBody = new LeaseBody();
                 var operationResponse = await blobClient.UploadAsync(
-                        content: new BinaryData(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(leaseBody))), 
-                        overwrite: false, 
+                        content: new BinaryData(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(leaseBody))),
+                        overwrite: false,
                         cancellationToken: cts.Token)
                     .ConfigureAwait(false);
 
@@ -164,10 +165,11 @@ namespace Akka.Coordination.Azure.Internal
             }
             catch (RequestFailedException e)
             {
-                switch ((HttpStatusCode) e.Status)
+                switch ((HttpStatusCode)e.Status)
                 {
                     case HttpStatusCode.Conflict:
-                        _log.Debug(e, "Creation of lease resource failed as already exists. Will attempt to read again");
+                        _log.Debug(e,
+                            "Creation of lease resource failed as already exists. Will attempt to read again");
                         // someone else has created it
                         return null;
 
@@ -175,7 +177,7 @@ namespace Akka.Coordination.Azure.Internal
                         throw new LeaseException(
                             "Forbidden to communicate with Azure Blob server. " +
                             $"Reason: [{e.ErrorCode}]", e);
-                        
+
                     case HttpStatusCode.Unauthorized:
                         throw new LeaseException(
                             "Unauthorized to communicate with Azure Blob API server. " +
@@ -230,7 +232,7 @@ namespace Akka.Coordination.Azure.Internal
         }
         
         
-        private async Task<LeaseResource> GetLeaseResource(string leaseName)
+        private async Task<LeaseResource?> GetLeaseResource(string leaseName)
         {
             var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
             try
@@ -266,6 +268,10 @@ namespace Akka.Coordination.Azure.Internal
                             $"Unexpected response from API server when retrieving lease StatusCode: ${unexpected}. " +
                             $"Reason: [{e.ErrorCode}]", e);
                 }
+            }
+            catch (InvalidOperationException e)
+            {
+                throw new LeaseException("Failed to create lease", e);
             }
             catch (OperationCanceledException e)
             {
@@ -324,14 +330,18 @@ namespace Akka.Coordination.Azure.Internal
         }
         
         private static LeaseResource ToLeaseResource(LeaseBody body, Response<BlobContentInfo> response)
-            => new LeaseResource(body, response.Value.ETag);
+            => new (body, response.Value.ETag);
 
         private static LeaseResource ToLeaseResource(BlobDownloadInfo response)
         {
             using var reader = new StreamReader(response.Content);
             var body = reader.ReadToEnd();
             
-            return new LeaseResource(JsonConvert.DeserializeObject<LeaseBody>(body), response.Details.ETag);
+            var lease = JsonConvert.DeserializeObject<LeaseBody>(body);
+            if (lease is null)
+                throw new InvalidOperationException($"Failed to deserialize blob to LeaseBody. Response: [{body}]");
+            
+            return new LeaseResource(lease, response.Details.ETag);
         }
     }
 }

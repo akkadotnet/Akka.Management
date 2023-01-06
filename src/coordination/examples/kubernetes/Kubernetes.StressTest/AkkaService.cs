@@ -11,8 +11,8 @@ using Akka.DependencyInjection;
 using Akka.Event;
 using Akka.Util;
 using Akka.Util.Internal;
-using KubernetesCluster.Actors;
-using KubernetesCluster.Cmd;
+using Kubernetes.StressTest.Actors;
+using Kubernetes.StressTest.Cmd;
 using Microsoft.Extensions.Hosting;
 using Petabridge.Cmd.Cluster;
 using Petabridge.Cmd.Host;
@@ -79,14 +79,14 @@ namespace Kubernetes.StressTest
     
     public class AkkaService: IHostedService
     {
-        public ActorSystem System { get; private set; }
-        public Task TerminationHandle => System.WhenTerminated;
+        public ActorSystem? System { get; private set; }
+        public Task TerminationHandle => System?.WhenTerminated ?? Task.CompletedTask;
         private readonly IServiceProvider _serviceProvider;
 
         // needed to help guarantee clean shutdowns
         private readonly IHostApplicationLifetime _lifetime;
 
-        public IActorRef ClusterListener {get; private set;}
+        public IActorRef? ClusterListener {get; private set;}
 
         public AkkaService(IServiceProvider serviceProvider, IHostApplicationLifetime lifetime)
         {
@@ -146,8 +146,8 @@ namespace Kubernetes.StressTest
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            await System.Terminate();
-            //await CoordinatedShutdown.Get(System).Run(CoordinatedShutdown.ClrExitReason.Instance);
+            if(System is { })
+                await System.Terminate();
         }
     }
 }

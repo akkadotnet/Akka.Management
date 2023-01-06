@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFrameworks>$(TestsNetFramework);$(TestsNetCoreFramework);$(TestsNet)</TargetFrameworks>
-      <IsPackable>false</IsPackable>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,6 +21,12 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Akka.Discovery.AwsApi\Akka.Discovery.AwsApi.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="xunit.runner.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

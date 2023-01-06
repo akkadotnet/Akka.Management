@@ -1,3 +1,41 @@
+#### 1.0.0-beta1 January 6 2023 ####
+
+* Update to [Akka.NET v1.4.48](https://github.com/akkadotnet/akka.net/releases/tag/1.4.48)
+* [Replace original JVM web routing port with Ceen routing](https://github.com/akkadotnet/Akka.Management/pull/1152)
+* [Delete health check endpoint and merge cluster bootstrap endpoint to akka.management](https://github.com/akkadotnet/Akka.Management/pull/1053)
+* [[Coordination.Kubernetes] Hosting extension now accepts options class and not setup](https://github.com/akkadotnet/Akka.Management/pull/1172)
+* [[Coordination.Azure] Hosting extension now accepts options class and not setup](https://github.com/akkadotnet/Akka.Management/pull/1181)
+* Update dependency NuGet package versions
+  * [Bump Petabridge.Cmd from 1.2.0 to 1.2.1](https://github.com/akkadotnet/Akka.Management/pull/1071)
+  * [Bump Akka.Hosting from 0.5.2-beta1 to 1.0.0](https://github.com/akkadotnet/Akka.Management/pull/1154)
+  * [Bump AWSSDK.S3 from 3.7.101.30 to 3.7.101.33](https://github.com/akkadotnet/Akka.Management/pull/1076)
+  * [Bump AWSSDK.ECS from 3.7.102.8 to 3.7.102.11](https://github.com/akkadotnet/Akka.Management/pull/1077)
+  * [Bump AWSSDK.CloudFormation from 3.7.102.9 to 3.7.102.11](https://github.com/akkadotnet/Akka.Management/pull/1074)
+  * [Bump AWSSDK.EC2 from 3.7.111.1 to 3.7.113](https://github.com/akkadotnet/Akka.Management/pull/1067)
+  * [Bump Google.Protobuf from 3.21.11 to 3.21.12](https://github.com/akkadotnet/Akka.Management/pull/1073)
+
+**API breaking change**
+
+* To make the API consistent with other `Akka.Hosting` plugin ecosystem, `Akka.Coordination.Kubernetes` `WithKubernetesLease()` now takes `KubernetesLeaseOption` as its argument, not `KubernetesLeaseSetup`.
+* To make the API consistent with other `Akka.Hosting` plugin ecosystem, `Akka.Coordination.Azure` `WithAzureLease()` now takes `AzureLeaseOption` as its argument, not `AzureLeaseSetup`.
+* Health check functions are consolidated into `Akka.HealthCheck`, the default health check endpoint are removed from `Akka.Management`
+* `Akka.Management.Cluster.Bootstrap` endpoint is merged into `Akka.Management` and became the default endpoint.
+
+#### 0.3.0-beta4 December 1 2022 ####
+
+Version 0.3.0-beta4 is a minor release that contains some minor bug fixes and NuGet package updates.
+
+* Update to [Akka.NET v1.4.46](https://github.com/akkadotnet/akka.net/releases/tag/1.4.46)
+* [[Coordination.Azure] Fix missing container from REST API URI when using `AzureCredential`](https://github.com/akkadotnet/Akka.Management/pull/1063)
+* Update dependency NuGet package versions
+  * [Bump Akka.Hosting from 0.5.1 to 0.5.2-beta1](https://github.com/akkadotnet/Akka.Management/pull/1054)
+  * [Bump Azure.Identity from 1.7.0 to 1.8.0](https://github.com/akkadotnet/Akka.Management/pull/1046)
+  * [Bump Azure.Data.Tables from 12.6.1 to 12.7.1](https://github.com/akkadotnet/Akka.Management/pull/957)
+  * [Bump AWSSDK.EC2 from 3.7.102.1 to 3.7.111.1](https://github.com/akkadotnet/Akka.Management/pull/1067)
+  * [Bump AWSSDK.S3 from 3.7.9.101.8 to 3.7.101.26](https://github.com/akkadotnet/Akka.Management/pull/1065)
+  * [Bump AWSSDK.ECS from 3.7.100.8 to 3.7.102.3](https://github.com/akkadotnet/Akka.Management/pull/1064)
+  * [Bump AWSSDK.CloudFormation from 3.7.101.4 to 3.7.102.7](https://github.com/akkadotnet/Akka.Management/pull/997)
+
 #### 0.3.0-beta3 November 7 2022 ####
 
 Version 0.3.0-beta3 is a minor release that contains some minor bug fixes.

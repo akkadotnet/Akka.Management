@@ -13,8 +13,8 @@ using Akka.Hosting;
 using Akka.Management.Cluster.Bootstrap;
 using Akka.Remote.Hosting;
 using Akka.Util;
+using AzureCluster.Actors;
 using AzureCluster.Cmd;
-using KubernetesCluster.Actors;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -45,9 +45,11 @@ namespace AzureCluster
                         builder.WithRemoting(hostname: "", port: 4053);
                         
                         // Add Akka.Cluster support
-                        builder.WithClustering(
-                                options: new ClusterOptions { Roles = new[] { "cluster" } },
-                                sbrOptions: new KeepMajorityOption());
+                        builder.WithClustering(new ClusterOptions
+                            {
+                                Roles = new[] { "cluster" },
+                                SplitBrainResolver = new KeepMajorityOption()
+                            });
 
                         // Add Akka.Management.Cluster.Bootstrap support
                         builder.WithClusterBootstrap(setup =>

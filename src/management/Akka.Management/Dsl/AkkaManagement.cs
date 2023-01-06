@@ -14,13 +14,14 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Event;
+using Akka.Http;
 using Akka.Http.Dsl;
 using Akka.Http.Dsl.Settings;
 using Akka.Http.Extensions;
 using Akka.Util;
-using static Akka.Predef;
+using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
-namespace Akka.Management
+namespace Akka.Management.Dsl
 {
     //using Route = Akka.Http.Dsl.Route;
     
@@ -29,7 +30,7 @@ namespace Akka.Management
         private readonly ILoggingAdapter _log;
         private readonly ExtendedActorSystem _system;
         private readonly ImmutableList<IManagementRouteProvider> _routeProviders;
-        private readonly AtomicReference<Task<ServerBinding>> _bindingFuture = new AtomicReference<Task<ServerBinding>>();
+        private readonly AtomicReference<Task<ServerBinding>> _bindingFuture = new();
 
         public AkkaManagementSettings Settings { get; }
 
@@ -51,7 +52,7 @@ namespace Akka.Management
             coordinatedShutdown.AddTask(CoordinatedShutdown.PhaseBeforeClusterShutdown, "akka-management-exiting",
                 () =>
                 {
-                    return Stop().ContinueWith(t => Done.Instance);
+                    return Stop().ContinueWith(_ => Done.Instance);
                 });
             
             var autoStart = system.Settings.Config.GetStringList("akka.extensions")
@@ -95,10 +96,11 @@ namespace Akka.Management
         /// <summary>
         /// Start an Akka HTTP server to serve the HTTP management endpoint.
         /// </summary>
-        public Task<Uri> Start() => Start(Identity);
+        public Task<Uri?> Start() => Start(x => x);
 
-        private Task<Uri> _startPromise;
-        public Task<Uri> Start(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings)
+        private Task<Uri?>? _startPromise;
+        // ReSharper disable once MemberCanBePrivate.Global
+        public Task<Uri?> Start(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings)
         {
             if (_startPromise != null)
                 return _startPromise;
@@ -110,11 +112,12 @@ namespace Akka.Management
         /// <para>Amend the <see cref="ManagementRouteProviderSettings"/> and start an Akka HTTP server to serve the HTTP management endpoint.</para>
         /// <para>Use this when adding authentication and HTTPS.</para>
         /// </summary>
-        private async Task<Uri> InternalStart(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings)
+        private async Task<Uri?> InternalStart(Func<ManagementRouteProviderSettings, ManagementRouteProviderSettings> transformSettings)
         {
             var serverBindingPromise = new TaskCompletionSource<ServerBinding>();
 
-            if (!_bindingFuture.CompareAndSet(null, serverBindingPromise.Task)) 
+            // TODO: !: Remove bang when Akka.Utils.AtomicReference supports nullable
+            if (!_bindingFuture.CompareAndSet(null!, serverBindingPromise.Task)) 
                 return null;
             
             try
@@ -131,7 +134,7 @@ namespace Akka.Management
                     .NewServerAt(effectiveBindHostname, effectiveBindPort)
                     .WithSettings(ServerSettings.Create(_system));
 
-                var serverBinding = await baseBuilder.Bind(combinedRoutes.Concat()).ConfigureAwait(false);
+                var serverBinding = await baseBuilder.Bind(combinedRoutes).ConfigureAwait(false);
                 
                 serverBindingPromise.SetResult(serverBinding);
 
@@ -162,7 +165,8 @@ namespace Akka.Management
                     return Task.FromResult(Done.Instance);
                 }
 
-                if (!_bindingFuture.CompareAndSet(binding, null))
+                // TODO: !: Remove bang when Akka.Utils.AtomicReference supports nullable
+                if (!_bindingFuture.CompareAndSet(binding, null!))
                 {
                     // retry, CAS was not successful, someone else completed the stop()
                     continue;
@@ -240,7 +244,8 @@ namespace Akka.Management
                             throw new Exception($"While trying to load route provider extension [{name} = {fqcn}]", e);
                         }
                         
-                        extension = _system.RegisterExtension((IExtensionId)extension);
+                        // !: Activator.CreateInstance will only return null when instancing a Nullable<T>
+                        extension = _system.RegisterExtension((IExtensionId)extension!);
                     }
 
                     yield return (IManagementRouteProvider)extension;
@@ -255,11 +260,13 @@ namespace Akka.Management
                     {
                         try
                         {
-                            instance = (IManagementRouteProvider) Activator.CreateInstance(type);
+                            // !: Activator.CreateInstance will only return null when instancing a Nullable<T>
+                            instance = (IManagementRouteProvider) Activator.CreateInstance(type)!;
                         }
                         catch (MissingMethodException)
                         {
-                            instance = (IManagementRouteProvider) Activator.CreateInstance(type, _system);
+                            // !: Activator.CreateInstance will only return null when instancing a Nullable<T>
+                            instance = (IManagementRouteProvider) Activator.CreateInstance(type, _system)!;
                         }
                     }
                     catch (Exception e)

@@ -23,17 +23,13 @@ namespace Akka.Discovery.AwsApi.Ecs
         {
             if (config == null)
                 throw new ArgumentNullException(nameof(config));
-            
-            var tags = new List<Tag>();
+
             var tagConfigs = config.GetValue("tags").GetArray().Select(value => value.ToConfig()).ToList();
-            foreach (var tagValue in tagConfigs)
+            var tags = tagConfigs.Select(tagValue => new Tag
             {
-                tags.Add(new Tag
-                {
-                    Key = tagValue.GetString("key"),
-                    Value = tagValue.GetString("value")
-                });
-            }
+                Key = tagValue.GetString("key"), 
+                Value = tagValue.GetString("value")
+            }).ToList();
 
             return new EcsServiceDiscoverySettings(
                 cluster: config.GetString("cluster"),
@@ -58,8 +54,8 @@ namespace Akka.Discovery.AwsApi.Ecs
         public EcsServiceDiscoverySettings WithTags(IEnumerable<Tag> tags)
             => Copy(tags: tags.ToImmutableList());
 
-        private EcsServiceDiscoverySettings Copy(string cluster = null, ImmutableList<Tag> tags = null)
-            => new EcsServiceDiscoverySettings(
+        private EcsServiceDiscoverySettings Copy(string? cluster = null, ImmutableList<Tag>? tags = null)
+            => new (
                 cluster: cluster ?? Cluster,
                 tags: tags ?? Tags);
     }

@@ -9,18 +9,17 @@ using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.Event;
 using Akka.Http.Dsl;
-using Akka.Http.Dsl.Model;
 using Akka.IO;
+using Akka.Management.Dsl;
 using Akka.TestKit.Xunit2.Internals;
 using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
-using HttpResponse = Akka.Http.Dsl.Model.HttpResponse;
-using static Akka.Http.Dsl.Server.RouteResult;
+using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
 namespace Akka.Management.Tests
 {
-    internal class HttpManagementEndpointSpecRoutesDotNetDsl : IManagementRouteProvider
+    internal class HttpManagementEndpointSpecRoutesDotNetDsl : HttpModuleBase, IManagementRouteProvider
     {
         public static bool Started { get; set; }
 
@@ -32,18 +31,20 @@ namespace Akka.Management.Tests
         
         public Route[] Routes(ManagementRouteProviderSettings settings)
         {
-            return new Route[]{ctx =>
-            {
-                if (ctx.Request.Method != "GET" || ctx.Request.Path != "/dotnet")
-                    return Task.FromResult<IRouteResult>(null);
-                return Task.FromResult<IRouteResult>(new Complete(
-                    HttpResponse.Create(entity: new ResponseEntity(ContentTypes.TextPlainUtf8,
-                        ByteString.FromString("hello .NET Core")))));
-            }} ;
+            return new Route[]{ ("/dotnet", this) };
+        }
+
+        public override Task<bool> HandleAsync(IAkkaHttpContext httpContext)
+        {
+            var context = httpContext.HttpContext;
+            if(context.Request.Method != "GET")
+                return Task.FromResult(false);
+            context.Response.WriteAllAsync("hello .NET Core");
+            return Task.FromResult(true);
         }
     }
     
-    internal class HttpManagementEndpointSpecRoutesNetFxDsl : IManagementRouteProvider
+    internal class HttpManagementEndpointSpecRoutesNetFxDsl : HttpModuleBase, IManagementRouteProvider
     {
         public static bool Started { get; set; }
 
@@ -55,20 +56,22 @@ namespace Akka.Management.Tests
         
         public Route[] Routes(ManagementRouteProviderSettings settings)
         {
-            return new Route[]{ctx =>
-            {
-                if (ctx.Request.Method != "GET" || ctx.Request.Path != "/netfx")
-                    return Task.FromResult<IRouteResult>(null);
-                return Task.FromResult<IRouteResult>(new Complete(
-                    HttpResponse.Create(entity: new ResponseEntity(ContentTypes.TextPlainUtf8,
-                        ByteString.FromString("hello .NET Framework")))));
-            }};
+            return new Route[]{ ("/netfx", this) };
+        }
+
+        public override Task<bool> HandleAsync(IAkkaHttpContext httpContext)
+        {
+            var context = httpContext.HttpContext;
+            if(context.Request.Method != "GET")
+                return Task.FromResult(false);
+            context.Response.WriteAllAsync("hello .NET Framework");
+            return Task.FromResult(true);
         }
     }
     
     public class AkkaManagementHttpEndpointSpec
     {
-        private static Config Config = ConfigurationFactory.ParseString(@"
+        private static readonly Config Config = ConfigurationFactory.ParseString(@"
             akka.remote.log-remote-lifecycle-events = off
             akka.remote.netty.tcp.port = 0
             akka.remote.artery.canonical.port = 0
@@ -95,13 +98,10 @@ namespace Akka.Management.Tests
 
             var setup = BootstrapSetup.Create()
                 .WithConfig(Config.WithFallback(config))
-                .And(new AkkaManagementSetup
+                .And(new AkkaManagementSetup(new HttpSetup
                 {
-                    Http = new HttpSetup
-                    {
-                        RouteProviders = { ["test1"] = null }
-                    }
-                });
+                    RouteProviders = { ["test1"] = null! }
+                }));
 
             HttpManagementEndpointSpecRoutesDotNetDsl.Started = false;
             HttpManagementEndpointSpecRoutesNetFxDsl.Started = false;
@@ -145,7 +145,7 @@ namespace Akka.Management.Tests
                 "Akka.Management.Tests.HttpManagementEndpointSpecRoutesNetFxDsl, Akka.Management.Tests"));
 
             // Start() should be idempotent, it should return the same Task on multiple invocation
-            var tasks = new List<Task<Uri>>();
+            var tasks = new List<Task<Uri?>>();
             using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
             {
                 tasks.Add(management.Start());

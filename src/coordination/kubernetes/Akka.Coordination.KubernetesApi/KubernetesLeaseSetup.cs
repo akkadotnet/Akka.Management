@@ -12,12 +12,12 @@ namespace Akka.Coordination.KubernetesApi
 {
     public class KubernetesLeaseSetup: Setup
     {
-        public string ApiCaPath { get; set; }
-        public string ApiTokenPath { get; set; }
-        public string ApiServiceHostEnvName { get; set; }
-        public string ApiServicePortEnvName { get; set; }
-        public string Namespace { get; set; }
-        public string NamespacePath { get; set; }
+        public string? ApiCaPath { get; set; }
+        public string? ApiTokenPath { get; set; }
+        public string? ApiServiceHostEnvName { get; set; }
+        public string? ApiServicePortEnvName { get; set; }
+        public string? Namespace { get; set; }
+        public string? NamespacePath { get; set; }
         public TimeSpan? ApiServiceRequestTimeout { get; set; }
         public bool? Secure { get; set; }
         public TimeSpan? BodyReadTimeout { get; set; }

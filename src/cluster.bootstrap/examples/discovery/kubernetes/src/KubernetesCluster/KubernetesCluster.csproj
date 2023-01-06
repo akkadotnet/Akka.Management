@@ -2,8 +2,9 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
@@ -12,14 +13,14 @@
         <PackageReference Include="Akka.DependencyInjection" Version="$(AkkaVersion)" />
         <PackageReference Include="Petabridge.Cmd.Cluster" Version="$(PbmVersion)" />
         <PackageReference Include="Petabridge.Cmd.Remote" Version="$(PbmVersion)" />
-        <PackageReference Include="Akka.Bootstrap.Docker" Version="0.5.3" />
-        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.0" />
+        <PackageReference Include="Akka.Bootstrap.Docker" Version="$(BootstrapDockerVersion)" />
+        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\..\..\..\coordination\kubernetes\Akka.Coordination.KubernetesApi\Akka.Coordination.KubernetesApi.csproj" />
       <ProjectReference Include="..\..\..\..\..\..\discovery\kubernetes\Akka.Discovery.KubernetesApi\Akka.Discovery.KubernetesApi.csproj" />
-      <ProjectReference Include="..\..\..\..\..\Akka.Management.Cluster.Bootstrap\Akka.Management.Cluster.Bootstrap.csproj" />
+      <ProjectReference Include="..\..\..\..\..\..\management\Akka.Management\Akka.Management.csproj" />
     </ItemGroup>
 
 </Project>
