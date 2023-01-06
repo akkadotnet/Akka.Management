@@ -5,7 +5,6 @@
     <PackageTags>$(AkkaPackageTags)</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>Akka.Http</RootNamespace>
-    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
