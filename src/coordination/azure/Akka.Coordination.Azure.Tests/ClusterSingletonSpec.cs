@@ -41,16 +41,22 @@ namespace Akka.Coordination.Azure.Tests
 
         protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
         {
+            var options = new AzureLeaseOption
+            {
+                ConnectionString = ConnectionString,
+                ContainerName = "akka-coordination-lease"
+            };
             builder
                 .WithRemoting()
                 .WithClustering()
-                .WithAzureLease(new AzureLeaseSetup
-                {
-                    ConnectionString = ConnectionString,
-                    ContainerName = "akka-coordination-lease"
-                })
-                .WithSingleton<SingletonKey>("Echo-singleton", Props.Create(() => new EchoActor()))
-                .AddHocon("akka.cluster.singleton.use-lease = \"akka.coordination.lease.azure\"", HoconAddMode.Prepend)
+                .WithAzureLease(options)
+                .WithSingleton<SingletonKey>(
+                    "Echo-singleton", 
+                    Props.Create(() => new EchoActor()),
+                    new ClusterSingletonOptions
+                    {
+                        LeaseImplementation = options
+                    })
                 .AddStartup((system, registry) =>
                 {
                     var cluster = Cluster.Cluster.Get(system);

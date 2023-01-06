@@ -49,7 +49,7 @@ namespace KubernetesCluster
                                 Roles = new[] { "cluster" }, 
                                 SplitBrainResolver = new LeaseMajorityOption
                                 {
-                                    LeaseImplementation = KubernetesLeaseOption.Instance
+                                    LeaseImplementation = new KubernetesLeaseOption()
                                 }
                             });
                         

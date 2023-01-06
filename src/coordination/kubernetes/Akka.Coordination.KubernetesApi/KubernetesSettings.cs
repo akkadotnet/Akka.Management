@@ -14,16 +14,16 @@ namespace Akka.Coordination.KubernetesApi
 {
     public class KubernetesSettings
     {
-        public static readonly KubernetesSettings Empty = new KubernetesSettings(
+        public static readonly KubernetesSettings Empty = new (
             apiCaPath: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
             apiTokenPath: "/var/run/secrets/kubernetes.io/serviceaccount/token",
             apiServiceHostEnvName: "KUBERNETES_SERVICE_HOST",
             apiServicePortEnvName: "KUBERNETES_SERVICE_PORT",
             ns: null,
             namespacePath: "/var/run/secrets/kubernetes.io/serviceaccount/namespace",
-            apiServiceRequestTimeout: TimeSpan.FromSeconds(2),
+            apiServiceRequestTimeout: TimeSpan.FromSeconds(2), // 2/5 of 5 seconds
             secure: true,
-            bodyReadTimeout: TimeSpan.FromSeconds(1)); 
+            bodyReadTimeout: TimeSpan.FromSeconds(1)); // half of 2 
         
         public KubernetesSettings(
             string apiCaPath,
@@ -47,11 +47,12 @@ namespace Akka.Coordination.KubernetesApi
             BodyReadTimeout = bodyReadTimeout ?? TimeSpan.FromSeconds(1);
         }
 
-        public static KubernetesSettings Create(ActorSystem system, TimeoutSettings leaseTimeoutSettings)
-            => Create(system.Settings.Config.GetConfig(KubernetesLease.ConfigPath), leaseTimeoutSettings);
+        public static KubernetesSettings Create(ActorSystem system)
+            => Create(system.Settings.Config.GetConfig(KubernetesLease.ConfigPath));
         
-        public static KubernetesSettings Create(Config config, TimeoutSettings leaseTimeoutSettings)
+        public static KubernetesSettings Create(Config config)
         {
+            var leaseTimeoutSettings = TimeoutSettings.Create(config);
             var requestTimeoutValue = config.GetStringIfDefined("api-service-request-timeout");
             var apiServerRequestTimeout = !string.IsNullOrWhiteSpace(requestTimeoutValue)
                 ? config.GetTimeSpan("api-service-request-timeout")
@@ -59,7 +60,7 @@ namespace Akka.Coordination.KubernetesApi
 
             if (apiServerRequestTimeout >= leaseTimeoutSettings.OperationTimeout)
                 throw new ConfigurationException(
-                    "'api-service-request-timeout can not be less than 'lease-operation-timeout'");
+                    "'api-service-request-timeout can not be greater than 'lease-operation-timeout'");
             
             var secureValue = config.GetStringIfDefined("secure-api-server");
             var secure = string.IsNullOrWhiteSpace(secureValue) ? (bool?) null : config.GetBoolean("secure-api-server");
@@ -116,7 +117,7 @@ namespace Akka.Coordination.KubernetesApi
             TimeSpan? apiServiceRequestTimeout = null,
             bool? secure = null,
             TimeSpan? bodyReadTimeout = null)
-            => new KubernetesSettings(
+            => new (
                 apiCaPath: apiCaPath ?? ApiCaPath,
                 apiTokenPath: apiTokenPath ?? ApiTokenPath,
                 apiServiceHostEnvName: apiServiceHostEnvName ?? ApiServiceHostEnvName,

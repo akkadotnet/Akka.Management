@@ -27,7 +27,7 @@ namespace Akka.Coordination.Azure
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
         public static AkkaConfigurationBuilder WithAzureLease(this AkkaConfigurationBuilder builder, string connectionString)
-            => WithAzureLease(builder, new AzureLeaseSetup{ ConnectionString = connectionString });
+            => WithAzureLease(builder, new AzureLeaseOption{ ConnectionString = connectionString });
         
         /// <summary>
         ///     Adds Akka.Coordination.Azure <see cref="Lease"/> support to the <see cref="ActorSystem"/>.
@@ -46,12 +46,12 @@ namespace Akka.Coordination.Azure
         /// </returns>
         public static AkkaConfigurationBuilder WithAzureLease(
             this AkkaConfigurationBuilder builder,
-            Action<AzureLeaseSetup> configure)
+            Action<AzureLeaseOption> configure)
         {
             if (configure == null)
                 throw new ArgumentNullException(nameof(configure));
             
-            var setup = new AzureLeaseSetup();
+            var setup = new AzureLeaseOption();
             configure(setup);
             return WithAzureLease(builder, setup);
         }
@@ -72,12 +72,10 @@ namespace Akka.Coordination.Azure
         /// </returns>
         public static AkkaConfigurationBuilder WithAzureLease(
             this AkkaConfigurationBuilder builder,
-            AzureLeaseSetup setup)
+            AzureLeaseOption setup)
         {
+            setup.Apply(builder);
             builder.AddHocon(AzureLease.DefaultConfiguration, HoconAddMode.Append);
-            if (setup != null)
-                builder.AddSetup(setup);
-            
             return builder;
         }
         
