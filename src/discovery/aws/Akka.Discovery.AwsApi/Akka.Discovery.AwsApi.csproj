@@ -5,6 +5,7 @@
         <Description>Akka.NET discovery module for AWS</Description>
         <PackageTags>$(AkkaPackageTags);AWS;EC2;Amazon Web Services;EC2;</PackageTags>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,4 +20,7 @@
       <EmbeddedResource Include="reference.conf" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
 </Project>

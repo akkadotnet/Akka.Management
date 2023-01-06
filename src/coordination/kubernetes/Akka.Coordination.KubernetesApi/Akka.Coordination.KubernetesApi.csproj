@@ -5,6 +5,7 @@
         <Description>Akka.NET coordination module for Kubernetes</Description>
         <PackageTags>$(AkkaPackageTags);Kubernetes;</PackageTags>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,4 +20,7 @@
       <EmbeddedResource Include="reference.conf" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
 </Project>
