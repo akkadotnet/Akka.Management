@@ -5,6 +5,7 @@
         <Description>Akka.NET Service Discovery for Azure-hosted services. Works with App Service, Container Apps, and more.</Description>
         <PackageTags>$(AkkaPackageTags);Azure;AppService;Service Discovery;Azure Table Storage</PackageTags>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -33,4 +34,7 @@
       <EmbeddedResource Include="reference.conf" />
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
 </Project>
