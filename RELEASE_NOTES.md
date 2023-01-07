@@ -1,3 +1,7 @@
+#### 1.0.0-beta2 January 6 2023 ####
+
+* [Add missing Akka.Http.Shim package](https://github.com/akkadotnet/Akka.Management/pull/1191)
+
 #### 1.0.0-beta1 January 6 2023 ####
 
 * Update to [Akka.NET v1.4.48](https://github.com/akkadotnet/akka.net/releases/tag/1.4.48)
