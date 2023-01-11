@@ -39,9 +39,9 @@ namespace Akka.Discovery.KubernetesApi
         ///     services.AddAkka("mySystem", builder => {
         ///         builder
         ///             .WithClustering()
-        ///             .WithClusterBootstrap(setup =>
+        ///             .WithClusterBootstrap(options =>
         ///             {
-        ///                 setup.ContactPointDiscovery.ServiceName = "testService";
+        ///                 options.ContactPointDiscovery.ServiceName = "testService";
         ///             }, autoStart: true)
         ///             .WithKubernetesDiscovery();
         ///     }
@@ -51,7 +51,7 @@ namespace Akka.Discovery.KubernetesApi
             this AkkaConfigurationBuilder builder,
             string? podLabelSelector = null)
         {
-            return builder.WithKubernetesDiscovery(new KubernetesDiscoverySetup
+            return builder.WithKubernetesDiscovery(new KubernetesDiscoveryOptions
             {
                 PodLabelSelector = podLabelSelector
             });
@@ -66,7 +66,7 @@ namespace Akka.Discovery.KubernetesApi
         ///     The builder instance being configured.
         /// </param>
         /// <param name="configure">
-        ///     An action that modifies an <see cref="KubernetesDiscoverySetup"/> instance, used
+        ///     An action that modifies an <see cref="KubernetesDiscoveryOptions"/> instance, used
         ///     to configure Akka.Discovery.KubernetesApi.
         /// </param>
         /// <returns>
@@ -77,23 +77,23 @@ namespace Akka.Discovery.KubernetesApi
         ///     services.AddAkka("mySystem", builder => {
         ///         builder
         ///             .WithClustering()
-        ///             .WithClusterBootstrap(setup =>
+        ///             .WithClusterBootstrap(options =>
         ///             {
-        ///                 setup.ContactPointDiscovery.ServiceName = "testService";
+        ///                 options.ContactPointDiscovery.ServiceName = "testService";
         ///             }, autoStart: true)
-        ///             .WithKubernetesDiscovery(setup => {
-        ///                 setup.PodNamespace = "my-cluster-namespace";
+        ///             .WithKubernetesDiscovery(options => {
+        ///                 options.PodNamespace = "my-cluster-namespace";
         ///             });
         ///     }
         ///   </code>
         /// </example>
         public static AkkaConfigurationBuilder WithKubernetesDiscovery(
             this AkkaConfigurationBuilder builder,
-            Action<KubernetesDiscoverySetup> configure)
+            Action<KubernetesDiscoveryOptions> configure)
         {
-            var setup = new KubernetesDiscoverySetup();
-            configure(setup);
-            return builder.WithKubernetesDiscovery(setup);
+            var options = new KubernetesDiscoveryOptions();
+            configure(options);
+            return builder.WithKubernetesDiscovery(options);
         }
         
         /// <summary>
@@ -104,8 +104,8 @@ namespace Akka.Discovery.KubernetesApi
         /// <param name="builder">
         ///     The builder instance being configured.
         /// </param>
-        /// <param name="setup">
-        ///     The <see cref="KubernetesDiscoverySetup"/> instance used to configure Akka.Discovery.KubernetesApi.
+        /// <param name="options">
+        ///     The <see cref="KubernetesDiscoveryOptions"/> instance used to configure Akka.Discovery.KubernetesApi.
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
@@ -115,11 +115,11 @@ namespace Akka.Discovery.KubernetesApi
         ///     services.AddAkka("mySystem", builder => {
         ///         builder
         ///             .WithClustering()
-        ///             .WithClusterBootstrap(setup =>
+        ///             .WithClusterBootstrap(options =>
         ///             {
-        ///                 setup.ContactPointDiscovery.ServiceName = "testService";
+        ///                 options.ContactPointDiscovery.ServiceName = "testService";
         ///             }, autoStart: true)
-        ///             .WithKubernetesDiscovery(new KubernetesDiscoverySetup {
+        ///             .WithKubernetesDiscovery(new KubernetesDiscoveryOptions {
         ///                 PodNamespace = "my-cluster-namespace"
         ///             });
         ///     }
@@ -127,10 +127,11 @@ namespace Akka.Discovery.KubernetesApi
         /// </example>
         public static AkkaConfigurationBuilder WithKubernetesDiscovery(
             this AkkaConfigurationBuilder builder,
-            KubernetesDiscoverySetup setup)
+            KubernetesDiscoveryOptions options)
         {
-            builder.AddHocon("akka.discovery.method=kubernetes-api", HoconAddMode.Prepend);
-            builder.AddSetup(setup);
+            options.Apply(builder);
+            builder.AddHocon($"akka.discovery.method = {options.ConfigPath}", HoconAddMode.Prepend);
+            builder.AddHocon(KubernetesDiscovery.DefaultConfiguration(), HoconAddMode.Append);
             
             // Force start the module
             builder.AddStartup((system, _) =>
