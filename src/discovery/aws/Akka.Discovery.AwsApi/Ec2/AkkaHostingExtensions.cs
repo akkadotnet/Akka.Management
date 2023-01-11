@@ -1,6 +1,5 @@
 ﻿// -----------------------------------------------------------------------
 //  <copyright file="AkkaHostingExtensions.cs" company="Akka.NET Project">
-//      Copyright (C) 2009-2022 Lightbend Inc. <http://www.lightbend.com>
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
@@ -29,17 +28,17 @@ namespace Akka.Discovery.AwsApi.Ec2
         ///     services.AddAkka("mySystem", builder => {
         ///         builder
         ///             .WithClustering()
-        ///             .WithClusterBootstrap(setup =>
+        ///             .WithClusterBootstrap(options =>
         ///             {
-        ///                 setup.ContactPointDiscovery.ServiceName = "testService";
-        ///                 setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///                 options.ContactPointDiscovery.ServiceName = "testService";
+        ///                 options.ContactPointDiscovery.RequiredContactPointsNr = 1;
         ///             }, autoStart: true)
         ///             .WithAwsEc2Discovery();
         ///     }
         ///   </code>
         /// </example>
         public static AkkaConfigurationBuilder WithAwsEc2Discovery(this AkkaConfigurationBuilder builder)
-            => builder.WithAwsEc2Discovery(new Ec2ServiceDiscoverySetup());
+            => builder.WithAwsEc2Discovery(new Ec2ServiceDiscoveryOptions());
 
         /// <summary>
         ///     Adds Akka.Discovery.AwsApi.Ec2 support to the <see cref="ActorSystem"/>.
@@ -61,25 +60,25 @@ namespace Akka.Discovery.AwsApi.Ec2
         ///     services.AddAkka("mySystem", builder => {
         ///         builder
         ///             .WithClustering()
-        ///             .WithClusterBootstrap(setup =>
+        ///             .WithClusterBootstrap(options =>
         ///             {
-        ///                 setup.ContactPointDiscovery.ServiceName = "testService";
-        ///                 setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///                 options.ContactPointDiscovery.ServiceName = "testService";
+        ///                 options.ContactPointDiscovery.RequiredContactPointsNr = 1;
         ///             }, autoStart: true)
-        ///             .WithAwsEc2Discovery(setup => {
-        ///                 setup.WithCredentialProvider&lt;AnonymousEc2CredentialProvider&gt;();
-        ///                 setup.TagKey = "myTag";
+        ///             .WithAwsEc2Discovery(options => {
+        ///                 options.WithCredentialProvider&lt;AnonymousEc2CredentialProvider&gt;();
+        ///                 options.TagKey = "myTag";
         ///             });
         ///     }
         ///   </code>
         /// </example>
         public static AkkaConfigurationBuilder WithAwsEc2Discovery(
             this AkkaConfigurationBuilder builder,
-            Action<Ec2ServiceDiscoverySetup> configure)
+            Action<Ec2ServiceDiscoveryOptions> configure)
         {
-            var setup = new Ec2ServiceDiscoverySetup();
-            configure(setup);
-            return builder.WithAwsEc2Discovery(setup);
+            var options = new Ec2ServiceDiscoveryOptions();
+            configure(options);
+            return builder.WithAwsEc2Discovery(options);
         }
 
         /// <summary>
@@ -90,7 +89,7 @@ namespace Akka.Discovery.AwsApi.Ec2
         /// <param name="builder">
         ///     The builder instance being configured.
         /// </param>
-        /// <param name="setup">
+        /// <param name="options">
         ///     The <see cref="Ec2ServiceDiscoverySetup"/> instance used to configure Akka.Discovery.Azure.
         /// </param>
         /// <returns>
@@ -101,12 +100,12 @@ namespace Akka.Discovery.AwsApi.Ec2
         ///     services.AddAkka("mySystem", builder => {
         ///         builder
         ///             .WithClustering()
-        ///             .WithClusterBootstrap(setup =>
+        ///             .WithClusterBootstrap(options =>
         ///             {
-        ///                 setup.ContactPointDiscovery.ServiceName = "testService";
-        ///                 setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///                 options.ContactPointDiscovery.ServiceName = "testService";
+        ///                 options.ContactPointDiscovery.RequiredContactPointsNr = 1;
         ///             }, autoStart: true)
-        ///             .WithAwsEc2Discovery(new Ec2ServiceDiscoverySetup {
+        ///             .WithAwsEc2Discovery(new Ec2ServiceDiscoveryOptions {
         ///                 TagKey = "myTag"
         ///             });
         ///     }
@@ -114,10 +113,11 @@ namespace Akka.Discovery.AwsApi.Ec2
         /// </example>
         public static AkkaConfigurationBuilder WithAwsEc2Discovery(
             this AkkaConfigurationBuilder builder,
-            Ec2ServiceDiscoverySetup setup)
+            Ec2ServiceDiscoveryOptions options)
         {
-            builder.AddHocon("akka.discovery.method = aws-api-ec2-tag-based", HoconAddMode.Prepend);
-            builder.AddSetup(setup);
+            builder.AddHocon($"akka.discovery.method = {options.ConfigPath}", HoconAddMode.Prepend);
+            options.Apply(builder);
+            builder.AddHocon(AwsEc2Discovery.DefaultConfiguration(), HoconAddMode.Append);
             
             // force start the module
             builder.AddStartup((system, registry) =>
