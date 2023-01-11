@@ -78,12 +78,12 @@ namespace Akka.Management
         ///
         /// RouteProviders["health-check"] = null; 
         /// </summary>
-        public Dictionary<string, Type> RouteProviders { get; } = new ();
+        public Dictionary<string, Type?> RouteProviders { get; } = new ();
 
         public HttpSetup WithRouteProvider<T>(string name) where T : IManagementRouteProvider
         {
             var type = typeof(T);
-            if (RouteProviders.Values.Contains(type))
+            if (RouteProviders.ContainsValue(type))
                 throw new ConfigurationException($"The route provider of type {type.Name} already added");
             
             RouteProviders[name] = type;
