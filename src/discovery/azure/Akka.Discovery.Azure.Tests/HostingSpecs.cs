@@ -117,7 +117,7 @@ namespace Akka.Discovery.Azure.Tests
                 },
                 builder =>
                 {
-                    var setup = new AzureDiscoverySetup
+                    var setup = new AkkaDiscoveryOptions
                     {
                         ConnectionString = ConnectionString,
                         ServiceName = "testService",
