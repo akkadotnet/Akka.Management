@@ -75,10 +75,10 @@ namespace Akka.Management.Cluster.Bootstrap
             int? requiredContactPoints = null,
             bool? newClusterEnabled = null,
             bool autoStart = true)
-            => builder.WithClusterBootstrap(new ClusterBootstrapSetup
+            => builder.WithClusterBootstrap(new ClusterBootstrapOptions
             {
                 NewClusterEnabled = newClusterEnabled,
-                ContactPointDiscovery = new ContactPointDiscoverySetup
+                ContactPointDiscovery =
                 {
                     ServiceName = serviceName,
                     ServiceNamespace = serviceNamespace,
@@ -94,7 +94,7 @@ namespace Akka.Management.Cluster.Bootstrap
         ///     The builder instance being configured.
         /// </param>
         /// <param name="configure">
-        ///     An action that modifies a <see cref="ClusterBootstrapSetup"/> instance, used
+        ///     An action that modifies a <see cref="ClusterBootstrapOptions"/> instance, used
         ///     to configure Akka.Management.Cluster.Bootstrap.
         /// </param>
         /// <param name="autoStart">
@@ -107,8 +107,8 @@ namespace Akka.Management.Cluster.Bootstrap
         /// <example >
         ///     Starting Cluster.Bootstrap manually:
         ///     <code>
-        ///         builder.WithClusterBootstrap(setup => {
-        ///             setup.ContactPointDiscovery.ServiceName = "myService"
+        ///         builder.WithClusterBootstrap(options => {
+        ///             options.ContactPointDiscovery.ServiceName = "myService"
         ///         }, autoStart: false);
         ///         builder.AddStartup(async (system, registry) =>
         ///         {
@@ -119,15 +119,10 @@ namespace Akka.Management.Cluster.Bootstrap
         /// </example>
         public static AkkaConfigurationBuilder WithClusterBootstrap(
             this AkkaConfigurationBuilder builder,
-            Action<ClusterBootstrapSetup> configure,
+            Action<ClusterBootstrapOptions> configure,
             bool autoStart = true)
         {
-            var setup = new ClusterBootstrapSetup
-            {
-                ContactPoint = new ContactPointSetup(),
-                ContactPointDiscovery = new ContactPointDiscoverySetup(),
-                JoinDecider = new JoinDeciderSetup()
-            };
+            var setup = new ClusterBootstrapOptions();
             configure(setup);
             return builder.WithClusterBootstrap(setup, autoStart);
         }
@@ -138,7 +133,7 @@ namespace Akka.Management.Cluster.Bootstrap
         /// <param name="builder">
         ///     The builder instance being configured.
         /// </param>
-        /// <param name="setup">
+        /// <param name="options">
         ///     The <see cref="ClusterBootstrapSetup"/> that will be used to configure Akka.Management.Cluster.Bootstrap
         /// </param>
         /// <param name="autoStart">
@@ -151,8 +146,8 @@ namespace Akka.Management.Cluster.Bootstrap
         /// <example >
         ///     Starting Cluster.Bootstrap manually:
         ///     <code>
-        ///         builder.WithClusterBootstrap( new ClusterBootstrapSetup {
-        ///             ContactPointDiscovery = new ContactPointDiscoverySetup {
+        ///         builder.WithClusterBootstrap( new ClusterBootstrapOptions {
+        ///             ContactPointDiscovery = new ContactPointDiscoveryOptions {
         ///                 ServiceName = "myService"
         ///             }
         ///         }, autoStart: false);
@@ -165,7 +160,7 @@ namespace Akka.Management.Cluster.Bootstrap
         /// </example>
         public static AkkaConfigurationBuilder WithClusterBootstrap(
             this AkkaConfigurationBuilder builder,
-            ClusterBootstrapSetup setup,
+            ClusterBootstrapOptions options,
             bool autoStart = true)
         {
             if (autoStart)
@@ -174,7 +169,9 @@ namespace Akka.Management.Cluster.Bootstrap
                 builder.WithExtension<ClusterBootstrapProvider>();
             }
         
-            builder.AddSetup(setup);
+            options.Apply(builder);
+            builder.AddHocon(ClusterBootstrap.DefaultConfiguration(), HoconAddMode.Append);
+            
             return builder;
         }
     }
