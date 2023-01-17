@@ -1,6 +1,5 @@
 ﻿// -----------------------------------------------------------------------
 //  <copyright file="AkkaHostingExtensions.cs" company="Akka.NET Project">
-//      Copyright (C) 2009-2022 Lightbend Inc. <http://www.lightbend.com>
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
@@ -45,10 +44,10 @@ namespace Akka.Discovery.AwsApi.Ecs
         ///     services.AddAkka("mySystem", builder => {
         ///         builder
         ///             .WithClustering()
-        ///             .WithClusterBootstrap(setup =>
+        ///             .WithClusterBootstrap(options =>
         ///             {
-        ///                 setup.ContactPointDiscovery.ServiceName = "testService";
-        ///                 setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///                 options.ContactPointDiscovery.ServiceName = "testService";
+        ///                 options.ContactPointDiscovery.RequiredContactPointsNr = 1;
         ///             }, autoStart: true)
         ///             .WithAwsEcsDiscovery();
         ///     }
@@ -58,7 +57,7 @@ namespace Akka.Discovery.AwsApi.Ecs
             this AkkaConfigurationBuilder builder,
             string? clusterName = null,
             IEnumerable<Tag>? tags = null)
-            => builder.WithAwsEcsDiscovery(new EcsServiceDiscoverySetup
+            => builder.WithAwsEcsDiscovery(new EcsServiceDiscoveryOptions
             {
                 Cluster = clusterName,
                 Tags = tags
@@ -73,8 +72,8 @@ namespace Akka.Discovery.AwsApi.Ecs
         ///     The builder instance being configured.
         /// </param>
         /// <param name="configure">
-        ///     An action that modifies an <see cref="EcsServiceDiscoverySetup"/> instance, used
-        ///     to configure Akka.Discovery.AwsApi.Ec2.
+        ///     An action that modifies an <see cref="EcsServiceDiscoveryOptions"/> instance, used
+        ///     to configure Akka.Discovery.AwsApi.Ecs.
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
@@ -84,22 +83,22 @@ namespace Akka.Discovery.AwsApi.Ecs
         ///     services.AddAkka("mySystem", builder => {
         ///         builder
         ///             .WithClustering()
-        ///             .WithClusterBootstrap(setup =>
+        ///             .WithClusterBootstrap(options =>
         ///             {
-        ///                 setup.ContactPointDiscovery.ServiceName = "testService";
-        ///                 setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///                 options.ContactPointDiscovery.ServiceName = "testService";
+        ///                 options.ContactPointDiscovery.RequiredContactPointsNr = 1;
         ///             }, autoStart: true)
-        ///             .WithAwsEcsDiscovery(setup => {
-        ///                 setup.Cluster = "my-ecs-cluster-name";
+        ///             .WithAwsEcsDiscovery(options => {
+        ///                 options.Cluster = "my-ecs-cluster-name";
         ///             });
         ///     }
         ///   </code>
         /// </example>
         public static AkkaConfigurationBuilder WithAwsEcsDiscovery(
             this AkkaConfigurationBuilder builder,
-            Action<EcsServiceDiscoverySetup> configure)
+            Action<EcsServiceDiscoveryOptions> configure)
         {
-            var setup = new EcsServiceDiscoverySetup();
+            var setup = new EcsServiceDiscoveryOptions();
             configure(setup);
             return builder.WithAwsEcsDiscovery(setup);
         }
@@ -112,8 +111,8 @@ namespace Akka.Discovery.AwsApi.Ecs
         /// <param name="builder">
         ///     The builder instance being configured.
         /// </param>
-        /// <param name="setup">
-        ///     The <see cref="EcsServiceDiscoverySetup"/> instance used to configure Akka.Discovery.Azure.
+        /// <param name="options">
+        ///     The <see cref="EcsServiceDiscoveryOptions"/> instance used to configure Akka.Discovery.AwsApi.Ecs.
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
@@ -123,12 +122,12 @@ namespace Akka.Discovery.AwsApi.Ecs
         ///     services.AddAkka("mySystem", builder => {
         ///         builder
         ///             .WithClustering()
-        ///             .WithClusterBootstrap(setup =>
+        ///             .WithClusterBootstrap(options =>
         ///             {
-        ///                 setup.ContactPointDiscovery.ServiceName = "testService";
-        ///                 setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///                 options.ContactPointDiscovery.ServiceName = "testService";
+        ///                 options.ContactPointDiscovery.RequiredContactPointsNr = 1;
         ///             }, autoStart: true)
-        ///             .WithAwsEcsDiscovery(new EcsServiceDiscoverySetup {
+        ///             .WithAwsEcsDiscovery(new EcsServiceDiscoveryOptions {
         ///                 Cluster = "my-ecs-cluster-name"
         ///             });
         ///     }
@@ -136,10 +135,11 @@ namespace Akka.Discovery.AwsApi.Ecs
         /// </example>
         public static AkkaConfigurationBuilder WithAwsEcsDiscovery(
             this AkkaConfigurationBuilder builder,
-            EcsServiceDiscoverySetup setup)
+            EcsServiceDiscoveryOptions options)
         {
-            builder.AddHocon("akka.discovery.method = aws-api-ecs", HoconAddMode.Prepend);
-            builder.AddSetup(setup);
+            builder.AddHocon($"akka.discovery.method = {options.ConfigPath}", HoconAddMode.Prepend);
+            options.Apply(builder);
+            builder.AddHocon(AwsEcsDiscovery.DefaultConfiguration(), HoconAddMode.Append);
             
             // force start the module
             builder.AddStartup((system, registry) =>
