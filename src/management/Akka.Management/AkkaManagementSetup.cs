@@ -30,7 +30,7 @@ namespace Akka.Management
         }
     }
 
-    public sealed class HttpSetup: Setup
+    public sealed class HttpSetup
     {
         /// <summary>
         /// The hostname where the HTTP Server for Http Cluster Management will be started.
