@@ -44,10 +44,10 @@ namespace Akka.Discovery.Azure
         /// <example>
         ///   <code>
         ///     services.AddAkka("mySystem", builder => {
-        ///         builder.WithClusterBootstrap(setup =>
+        ///         builder.WithClusterBootstrap(options =>
         ///         {
-        ///             setup.ContactPointDiscovery.ServiceName = "testService";
-        ///             setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///             options.ContactPointDiscovery.ServiceName = "testService";
+        ///             options.ContactPointDiscovery.RequiredContactPointsNr = 1;
         ///         }, autoStart: true)
         ///         builder.WithAzureDiscovery("UseDevelopmentStorage=true");
         ///     }
@@ -60,14 +60,14 @@ namespace Akka.Discovery.Azure
             string? publicHostname = null,
             int? publicPort = null)
         {
-            var setup = new AzureDiscoverySetup
+            var options = new AkkaDiscoveryOptions
             {
                 ConnectionString = connectionString,
                 ServiceName = serviceName,
                 HostName = publicHostname,
                 Port = publicPort
             };
-            return builder.WithAzureDiscovery(setup);
+            return builder.WithAzureDiscovery(options);
         }
 
         /// <summary>
@@ -104,10 +104,10 @@ namespace Akka.Discovery.Azure
         /// <example>
         ///   <code>
         ///     services.AddAkka("mySystem", builder => {
-        ///         builder.WithClusterBootstrap(setup =>
+        ///         builder.WithClusterBootstrap(options =>
         ///         {
-        ///             setup.ContactPointDiscovery.ServiceName = "testService";
-        ///             setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///             options.ContactPointDiscovery.ServiceName = "testService";
+        ///             options.ContactPointDiscovery.RequiredContactPointsNr = 1;
         ///         }, autoStart: true)
         ///         builder.WithAzureDiscovery(
         ///             azureTableEndpoint: new Uri("https://{yourAccountName}.table.core.windows.net/"),
@@ -126,7 +126,7 @@ namespace Akka.Discovery.Azure
             int? publicPort = null)
         {
             if (azureCredential == null) throw new ArgumentNullException(nameof(azureCredential));
-            var setup = new AzureDiscoverySetup
+            var options = new AkkaDiscoveryOptions
             {
                 AzureTableEndpoint = azureTableEndpoint,
                 AzureCredential = azureCredential,
@@ -135,7 +135,7 @@ namespace Akka.Discovery.Azure
                 HostName = publicHostname,
                 Port = publicPort
             };
-            return builder.WithAzureDiscovery(setup);
+            return builder.WithAzureDiscovery(options);
         }
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace Akka.Discovery.Azure
         ///     The builder instance being configured.
         /// </param>
         /// <param name="configure">
-        ///     An action that modifies an <see cref="AzureDiscoverySetup"/> instance, used
+        ///     An action that modifies an <see cref="AkkaDiscoveryOptions"/> instance, used
         ///     to configure Akka.Discovery.Azure.
         /// </param>
         /// <returns>
@@ -156,22 +156,22 @@ namespace Akka.Discovery.Azure
         /// <example>
         ///   <code>
         ///     services.AddAkka("mySystem", builder => {
-        ///         builder.WithClusterBootstrap(setup =>
+        ///         builder.WithClusterBootstrap(options =>
         ///         {
-        ///             setup.ContactPointDiscovery.ServiceName = "testService";
-        ///             setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///             options.ContactPointDiscovery.ServiceName = "testService";
+        ///             options.ContactPointDiscovery.RequiredContactPointsNr = 1;
         ///         }, autoStart: true)
-        ///         builder.WithAzureDiscovery( setup => {
-        ///             setup.ConnectionString = "UseDevelopmentStorage=true"
+        ///         builder.WithAzureDiscovery( options => {
+        ///             options.ConnectionString = "UseDevelopmentStorage=true"
         ///         });
         ///     }
         ///   </code>
         /// </example>
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
-            Action<AzureDiscoverySetup> configure)
+            Action<AkkaDiscoveryOptions> configure)
         {
-            var setup = new AzureDiscoverySetup();
+            var setup = new AkkaDiscoveryOptions();
             configure(setup);
             return builder.WithAzureDiscovery(setup);
         }
@@ -184,8 +184,8 @@ namespace Akka.Discovery.Azure
         /// <param name="builder">
         ///     The builder instance being configured.
         /// </param>
-        /// <param name="setup">
-        ///     The <see cref="AzureDiscoverySetup"/> instance used to configure Akka.Discovery.Azure.
+        /// <param name="options">
+        ///     The <see cref="AkkaDiscoveryOptions"/> instance used to configure Akka.Discovery.Azure.
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
@@ -193,12 +193,12 @@ namespace Akka.Discovery.Azure
         /// <example>
         ///   <code>
         ///     services.AddAkka("mySystem", builder => {
-        ///         builder.WithClusterBootstrap(setup =>
+        ///         builder.WithClusterBootstrap(options =>
         ///         {
-        ///             setup.ContactPointDiscovery.ServiceName = "testService";
-        ///             setup.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///             options.ContactPointDiscovery.ServiceName = "testService";
+        ///             options.ContactPointDiscovery.RequiredContactPointsNr = 1;
         ///         }, autoStart: true)
-        ///         builder.WithAzureDiscovery( new AzureDiscoverySetup {
+        ///         builder.WithAzureDiscovery( new AkkaDiscoveryOptions {
         ///             ConnectionString = "UseDevelopmentStorage=true"
         ///         });
         ///     }
@@ -206,13 +206,14 @@ namespace Akka.Discovery.Azure
         /// </example>
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
-            AzureDiscoverySetup setup)
+            AkkaDiscoveryOptions options)
         {
             builder.AddHocon(
                 ((Configuration.Config)"akka.discovery.method = azure").WithFallback(AzureServiceDiscovery.DefaultConfig), 
                 HoconAddMode.Prepend);
+            options.Apply(builder);
+            builder.AddHocon(AzureServiceDiscovery.DefaultConfig, HoconAddMode.Append);
 
-            builder.AddSetup(setup);
             return builder;
         }
     }

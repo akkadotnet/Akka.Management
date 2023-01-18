@@ -1,3 +1,27 @@
+#### 1.0.0 January 18 2023 ####
+
+This version 1.0.0 release is the RTM release for `Akka.Management`; all public API will be frozen from this point forward and backed by our backward compatibility promise.
+
+* [[Management] Change Hosting extension method argument from Setup to Options](https://github.com/akkadotnet/Akka.Management/pull/1211)
+* [[Discovery.AWS] Change Hosting extension method argument from Setup to Options](https://github.com/akkadotnet/Akka.Management/pull/1211)
+* [[Discovery.Azure] Change Hosting extension method argument from Setup to Options](https://github.com/akkadotnet/Akka.Management/pull/1205)
+* [[Discovery.Kubernetes] Change Hosting extension method argument from Setup to Options](https://github.com/akkadotnet/Akka.Management/pull/1200)
+* [Clean up Setup class internals](https://github.com/akkadotnet/Akka.Management/pull/1226)
+* Update dependency NuGet package versions
+  * [Bump Akka.Hosting from 1.0.0 to 1.0.1](https://github.com/akkadotnet/Akka.Management/pull/1199)
+  * [Bump AWSSDK.CloudFormation from 3.7.102.11 to 3.7.102.36](https://github.com/akkadotnet/Akka.Management/pull/1223)
+  * [Bump AWSSDK.ECS from 3.7.102.11 to 3.7.104.15](https://github.com/akkadotnet/Akka.Management/pull/1222)
+  * [Bump AWSSDK.EC2 from to 3.7.113 to 3.7.115.1](https://github.com/akkadotnet/Akka.Management/pull/1224)
+  * [Bump Azure.Identity from 1.8.0 to 1.8.1](https://github.com/akkadotnet/Akka.Management/pull/1217)
+
+All Akka.Hosting extension methods now takes a POCO Options class instead of a Setup class; they can now be bound directly using `Microsoft.Extensions.Configuration` `IConfiguration.Get&lt;T&gt;()` and `IConfiguration.Bind()` methods. 
+
+You can still use Setup classes by using the `Akka.Hosting` `.AddSetup()` extension method.
+
+#### 1.0.0-beta2 January 6 2023 ####
+
+* [Add missing Akka.Http.Shim package](https://github.com/akkadotnet/Akka.Management/pull/1191)
+
 #### 1.0.0-beta1 January 6 2023 ####
 
 * Update to [Akka.NET v1.4.48](https://github.com/akkadotnet/akka.net/releases/tag/1.4.48)

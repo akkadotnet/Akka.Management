@@ -27,18 +27,18 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <XunitVersion>2.4.2</XunitVersion>
         <XUnitRunnerVersion>2.4.3</XUnitRunnerVersion>
         <CoverletVersion>3.2.0</CoverletVersion>
-        <FluentAssertionVersion>6.8.0</FluentAssertionVersion>
+        <FluentAssertionVersion>6.9.0</FluentAssertionVersion>
         <TestSdkVersion>17.4.1</TestSdkVersion>
         <WireMockVersion>1.5.13</WireMockVersion>
         
         <AkkaVersion>1.4.48</AkkaVersion>
-        <AkkaHostingVersion>1.0.0</AkkaHostingVersion>
+        <AkkaHostingVersion>1.0.1</AkkaHostingVersion>
         <PbmVersion>1.2.1</PbmVersion>
         <BootstrapDockerVersion>0.5.3</BootstrapDockerVersion>
         
         <KubernetesClientVersion>4.0.26</KubernetesClientVersion>
         <MicrosoftExtensionsVersion>7.0.0</MicrosoftExtensionsVersion>
-        <AzureIdentityVersion>1.8.0</AzureIdentityVersion>
+        <AzureIdentityVersion>1.8.1</AzureIdentityVersion>
         <ProtobufVersion>3.21.12</ProtobufVersion>
         <GrpcToolsVersion>2.51.0</GrpcToolsVersion>
     </PropertyGroup>

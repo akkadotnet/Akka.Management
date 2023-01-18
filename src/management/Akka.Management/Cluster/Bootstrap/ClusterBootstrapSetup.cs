@@ -45,7 +45,7 @@ namespace Akka.Management.Cluster.Bootstrap
                 joinDecider: JoinDecider.Apply(settings.JoinDecider));
     }
 
-    public sealed class ContactPointDiscoverySetup: Setup
+    public sealed class ContactPointDiscoverySetup
     {
         /// <summary>
         /// Define this name to be looked up in service discovery for "neighboring" nodes
@@ -166,7 +166,7 @@ namespace Akka.Management.Cluster.Bootstrap
                 resolveTimeout: ResolveTimeout);
     }
 
-    public sealed class ContactPointSetup : Setup
+    public sealed class ContactPointSetup
     {
         /// <summary>
         /// If no port is discovered along with the host/ip of a contact point this port will be used as fallback
@@ -211,7 +211,7 @@ namespace Akka.Management.Cluster.Bootstrap
                 probeIntervalJitter: ProbeIntervalJitter);
     }
     
-    public sealed class JoinDeciderSetup : Setup
+    public sealed class JoinDeciderSetup
     {
         /// <summary>
         /// Implementation of JoinDecider.

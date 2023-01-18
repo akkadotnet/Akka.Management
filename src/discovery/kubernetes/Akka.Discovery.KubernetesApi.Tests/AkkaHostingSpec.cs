@@ -27,16 +27,10 @@ namespace Akka.Discovery.KubernetesApi.Tests
                     services.AddAkka("test", (builder, _) =>
                     {
                         builder
-                            .WithKubernetesDiscovery(new KubernetesDiscoverySetup
+                            .WithKubernetesDiscovery(new KubernetesDiscoveryOptions
                             {
                                 PodNamespace = "underTest",
                             });
-                        
-                        var setup = ExtractSetup<KubernetesDiscoverySetup>(builder);
-                        setup.Should().NotBeNull();
-                        setup!.PodNamespace.Should().Be("underTest");
-                        builder.Configuration.HasValue.Should().BeTrue();
-                        builder.Configuration.Value.GetString("akka.discovery.method").Should().Be("kubernetes-api");
                     });
                 });
 
@@ -49,10 +43,9 @@ namespace Akka.Discovery.KubernetesApi.Tests
             settings.PodNamespace.Should().Be("underTest");
                 
             system.Settings.Config.GetString("akka.discovery.method").Should().Be("kubernetes-api");
+            
+            var config = system.Settings.Config.GetConfig("akka.discovery.kubernetes-api");
+            config.Should().NotBeNull();
         }
-        
-        private static T? ExtractSetup<T>(AkkaConfigurationBuilder builder) where T : Setup
-            => builder.Setups.FirstOrDefault(s => s is T) as T;
-        
     }
 }
