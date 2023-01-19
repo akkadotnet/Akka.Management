@@ -33,7 +33,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
         
         <AkkaVersion>1.4.48</AkkaVersion>
         <AkkaHostingVersion>1.0.1</AkkaHostingVersion>
-        <PbmVersion>1.2.1</PbmVersion>
+        <PbmVersion>1.2.2</PbmVersion>
         <BootstrapDockerVersion>0.5.3</BootstrapDockerVersion>
         
         <KubernetesClientVersion>4.0.26</KubernetesClientVersion>
