@@ -1,6 +1,5 @@
 ﻿// -----------------------------------------------------------------------
 //  <copyright file="AzureLeaseOption.cs" company="Akka.NET Project">
-//      Copyright (C) 2009-2022 Lightbend Inc. <http://www.lightbend.com>
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
@@ -8,7 +7,6 @@
 using System;
 using System.Text;
 using Akka.Actor.Setup;
-using Akka.Cluster.Hosting.SBR;
 using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Hosting.Coordination;
@@ -51,20 +49,20 @@ namespace Akka.Coordination.Azure
                 sb.AppendLine($"lease-operation-timeout = {LeaseOperationTimeout.ToHocon()}");
             sb.AppendLine("}");
 
+            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+            
+            if(AzureCredential is null && ServiceEndpoint is null)
+                return;
+            
             if ((ServiceEndpoint is { } && AzureCredential is null) ||
                 (ServiceEndpoint is null && AzureCredential is { }))
                 throw new ConfigurationException("To use AzureCredential, both AzureCredential and ServiceEndpoint need to be populated.");
-
-            builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
 
             var setup = new AzureLeaseSetup
             {
                 AzureCredential = AzureCredential,
                 ServiceEndpoint = ServiceEndpoint,
                 BlobClientOptions = BlobClientOptions,
-                ApiServiceRequestTimeout = ApiServiceRequestTimeout,
-                ConnectionString = ConnectionString,
-                ContainerName = ContainerName
             };
 
             builder.AddSetup(setup);
