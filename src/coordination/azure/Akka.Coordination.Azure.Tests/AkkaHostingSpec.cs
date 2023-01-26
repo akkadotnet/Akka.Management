@@ -26,7 +26,7 @@ namespace Akka.Coordination.Azure.Tests
                 .Should().NotBeNull();
         }
         
-        [Fact(DisplayName = "Hosting Action<Setup> extension should add Setup class and default hocon settings")]
+        [Fact(DisplayName = "Hosting Action<Options> extension should add default hocon settings")]
         public void HostingExtension2Test()
         {
             var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
@@ -37,15 +37,12 @@ namespace Akka.Coordination.Azure.Tests
             });
                         
             builder.Configuration.HasValue.Should().BeTrue();
-            builder.Configuration.Value.GetConfig("akka.coordination.lease.azure")
-                .Should().NotBeNull();
-            var setup = ExtractSetup(builder);
-            setup.Should().NotBeNull();
-            // !: null checked above
-            setup!.ContainerName.Should().Be("underTest");
+            var config = builder.Configuration.Value.GetConfig("akka.coordination.lease.azure");
+            config.Should().NotBeNull();
+            config.GetString("container-name").Should().Be("underTest");
         }
         
-        [Fact(DisplayName = "Hosting Setup extension should add Setup class and default hocon settings")]
+        [Fact(DisplayName = "Hosting options extension should add default hocon settings")]
         public void HostingExtension3Test()
         {
             var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
@@ -56,17 +53,9 @@ namespace Akka.Coordination.Azure.Tests
             });
                         
             builder.Configuration.HasValue.Should().BeTrue();
-            builder.Configuration.Value.GetConfig("akka.coordination.lease.azure")
-                .Should().NotBeNull();
-            var setup = ExtractSetup(builder);
-            setup.Should().NotBeNull();
-            // !: null checked above
-            setup!.ContainerName.Should().Be("underTest");
-        }
-
-        private static AzureLeaseSetup? ExtractSetup(AkkaConfigurationBuilder builder)
-        {
-            return builder.Setups.FirstOrDefault(s => s is AzureLeaseSetup) as AzureLeaseSetup;
+            var config = builder.Configuration.Value.GetConfig("akka.coordination.lease.azure");
+            config.Should().NotBeNull();
+            config.GetString("container-name").Should().Be("underTest");
         }
     }
 }
