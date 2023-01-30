@@ -167,6 +167,7 @@ namespace Akka.Coordination.Azure.Internal
             {
                 switch ((HttpStatusCode)e.Status)
                 {
+                    case HttpStatusCode.PreconditionFailed:
                     case HttpStatusCode.Conflict:
                         _log.Debug(e,
                             "Creation of lease resource failed as already exists. Will attempt to read again");
