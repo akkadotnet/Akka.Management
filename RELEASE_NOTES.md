@@ -1,3 +1,12 @@
+#### 1.0.1 January 30 2023 ####
+
+Version 1.0.1 contains a patch for `Akka.Coordination.Azure` bug throwing uncaught exceptions.
+
+* Update to [Akka.NET v1.4.49](https://github.com/akkadotnet/akka.net/releases/tag/1.4.49)
+* [[Lease.Azure] Fix uncaught exception and implement async-await pattern](https://github.com/akkadotnet/Akka.Management/pull/1256)
+* Update dependency NuGet package versions
+  * [Bump AWSSDK.S3 from 3.7.101.55 to 3.7.101.60](https://github.com/akkadotnet/Akka.Management/pull/1250)
+
 #### 1.0.0 January 18 2023 ####
 
 This version 1.0.0 release is the RTM release for `Akka.Management`; all public API will be frozen from this point forward and backed by our backward compatibility promise.

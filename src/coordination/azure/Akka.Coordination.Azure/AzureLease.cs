@@ -85,23 +85,19 @@ namespace Akka.Coordination.Azure
         public override bool CheckLease()
             => _leaseTaken.Value;
         
-        public override Task<bool> Release()
+        public override async Task<bool> Release()
         {
-            // replace with transform once 2.11 dropped
             try
             {
                 if(_log.IsDebugEnabled)
                     _log.Debug("Releasing lease");
-                return _leaseActor.Ask(LeaseActor.Release.Instance, _timeout)
-                    .ContinueWith(t =>
-                    {
-                        return t.Result switch
-                        {
-                            LeaseActor.LeaseReleased _ => true,
-                            LeaseActor.InvalidRequest req => throw new LeaseException(req.Reason),
-                            _ => false
-                        };
-                    });
+                var result = await _leaseActor.Ask(LeaseActor.Release.Instance, _timeout);
+                return result switch
+                {
+                    LeaseActor.LeaseReleased _ => true,
+                    LeaseActor.InvalidRequest req => throw new LeaseException(req.Reason),
+                    _ => throw new LeaseException($"Unexpected response type: {result.GetType()}")
+                };
             }
             catch (AskTimeoutException)
             {
@@ -113,24 +109,20 @@ namespace Akka.Coordination.Azure
         public override Task<bool> Acquire()
             => Acquire(null);
 
-        public override Task<bool> Acquire(Action<Exception?>? leaseLostCallback)
+        public override async Task<bool> Acquire(Action<Exception?>? leaseLostCallback)
         {
-            // replace with transform once 2.11 dropped
             try
             {
                 if(_log.IsDebugEnabled)
                     _log.Debug("Acquiring lease");
-                return _leaseActor.Ask(new LeaseActor.Acquire(leaseLostCallback), _timeout)
-                    .ContinueWith(t =>
-                    {
-                        return t.Result switch
-                        {
-                            LeaseActor.LeaseAcquired _ => true,
-                            LeaseActor.LeaseTaken _ => false,
-                            LeaseActor.InvalidRequest req => throw new LeaseException(req.Reason),
-                            _ => false
-                        };
-                    });
+                var result = await _leaseActor.Ask(new LeaseActor.Acquire(leaseLostCallback), _timeout);
+                return result switch
+                {
+                    LeaseActor.LeaseAcquired _ => true,
+                    LeaseActor.LeaseTaken _ => false,
+                    LeaseActor.InvalidRequest req => throw new LeaseException(req.Reason),
+                    _ => throw new LeaseException($"Unexpected response type: {result.GetType()}")
+                };
             }
             catch (AskTimeoutException)
             {
