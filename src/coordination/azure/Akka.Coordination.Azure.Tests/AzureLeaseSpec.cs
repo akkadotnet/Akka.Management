@@ -40,18 +40,26 @@ akka.coordination.lease.azure.connection-string = ""UseDevelopmentStorage=true""
     public void NonAcquiredReleaseTest()
     {
         var probe = CreateTestProbe();
-        var _ = _lease.Release().ContinueWith(r =>
+        var _ = _lease.Release().ContinueWith(task =>
         {
-            r.IsFaulted.Should().BeTrue();
-            r.Exception.Should().NotBeNull();
-            var exception = r.Exception!.InnerException;
-            exception.Should().NotBeNull();
-            exception.Should().BeOfType<LeaseException>();
-            exception!.Message.Should().Be("Tried to release a lease that is not acquired");
-            probe.Tell(Done.Instance);
+            probe.Tell(task);
         });
 
-        probe.ExpectMsg<Done>();
+        var task = probe.ExpectMsg<Task<bool>>();
+        task.IsFaulted.Should().BeFalse();
+        task.Exception.Should().BeNull();
+        task.Result.Should().BeFalse();
+    }
+
+    [Fact(DisplayName = "Acquire should be idempotent and returns the same task while acquire is in progress")]
+    public async Task MultipleAcquireTest()
+    {
+        var task1 = _lease.Acquire();
+        var task2 = _lease.Acquire();
+        var task3 = _lease.Acquire();
+
+        task1.Should().Be(task2).And.Be(task3);
+        (await task1).Should().BeTrue();
     }
 
     public async Task InitializeAsync()
