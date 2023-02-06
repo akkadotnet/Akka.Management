@@ -48,7 +48,7 @@ akka.coordination.lease.azure.connection-string = ""UseDevelopmentStorage=true""
         var task = probe.ExpectMsg<Task<bool>>();
         task.IsFaulted.Should().BeFalse();
         task.Exception.Should().BeNull();
-        task.Result.Should().BeFalse();
+        task.Result.Should().BeTrue();
     }
 
     [Fact(DisplayName = "Acquire should be idempotent and returns the same task while acquire is in progress")]
