@@ -102,8 +102,8 @@ namespace Akka.Coordination.Azure
                         case LeaseActor.LeaseReleased:
                             return true;
                         case LeaseActor.InvalidReleaseRequest:
-                            _log.Debug("Tried to release a lease that is not acquired");
-                            return false;
+                            _log.Info("Tried to release a lease that is not acquired");
+                            return true;
                         case Status.Failure f:
                             throw new LeaseException($"Failure while releasing lease: {f.Cause.Message}", f.Cause);
                         default:
