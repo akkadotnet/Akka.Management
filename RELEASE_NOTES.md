@@ -1,3 +1,15 @@
+#### 1.0.2 January 30 2023 ####
+
+Version 1.0.1 contains a code cleanup for `Akka.Coordination.Azure` to suppress non-needed noise emitted by lease release and acquire.
+
+* [[Lease.Azure] Fix lease release/acquire operation logic](https://github.com/akkadotnet/Akka.Management/pull/1289)
+* Update dependency NuGet package versions
+  * [Bump Akka.Hosting from 1.0.1 to 1.0.3](https://github.com/akkadotnet/Akka.Management/pull/1250)
+  * [Bump AWSSDK.EC2 from 3.7.115.1 to 3.7.120](https://github.com/akkadotnet/Akka.Management/pull/1270)
+  * [Bump AWSSDK.ECS from 3.7.104.15 to 3.7.104.24](https://github.com/akkadotnet/Akka.Management/pull/1273)
+  * [Bump AWSSDK.S3 from 3.7.101.60 to 3.7.103.1](https://github.com/akkadotnet/Akka.Management/pull/1250)
+  * [Bump AWSSDK.CludFormation from 3.7.102.36 to 3.7.104.5](https://github.com/akkadotnet/Akka.Management/pull/1275)
+
 #### 1.0.1 January 30 2023 ####
 
 Version 1.0.1 contains a patch for `Akka.Coordination.Azure` bug throwing uncaught exceptions.
