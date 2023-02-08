@@ -1,6 +1,6 @@
 #### 1.0.2 January 30 2023 ####
 
-Version 1.0.1 contains a code cleanup for `Akka.Coordination.Azure` to suppress non-needed noise emitted by lease release and acquire.
+Version 1.0.2 contains a code cleanup for `Akka.Coordination.Azure` to suppress non-needed noise emitted by lease release and acquire.
 
 * [[Lease.Azure] Fix lease release/acquire operation logic](https://github.com/akkadotnet/Akka.Management/pull/1289)
 * Update dependency NuGet package versions
