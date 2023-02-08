@@ -5,8 +5,11 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Linq;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
@@ -45,6 +48,8 @@ namespace Akka.Coordination.Azure
         private readonly TimeSpan _timeout;
         private readonly string _leaseName;
         private readonly IActorRef _leaseActor;
+        private readonly object _acquireLock = new ();
+        private Task<bool>? _acquireTask;
 
         public AzureLease(LeaseSettings settings, ExtendedActorSystem system) :
             this(system, new AtomicBoolean(), settings)
@@ -92,12 +97,18 @@ namespace Akka.Coordination.Azure
                 if(_log.IsDebugEnabled)
                     _log.Debug("Releasing lease");
                 var result = await _leaseActor.Ask(LeaseActor.Release.Instance, _timeout);
-                return result switch
+                switch (result)
                 {
-                    LeaseActor.LeaseReleased _ => true,
-                    LeaseActor.InvalidRequest req => throw new LeaseException(req.Reason),
-                    _ => throw new LeaseException($"Unexpected response type: {result.GetType()}")
-                };
+                        case LeaseActor.LeaseReleased:
+                            return true;
+                        case LeaseActor.InvalidReleaseRequest:
+                            _log.Info("Tried to release a lease that is not acquired");
+                            return true;
+                        case Status.Failure f:
+                            throw new LeaseException($"Failure while releasing lease: {f.Cause.Message}", f.Cause);
+                        default:
+                            throw new LeaseException($"Unexpected response type: {result.GetType()}");
+                }
             }
             catch (AskTimeoutException)
             {
@@ -109,25 +120,59 @@ namespace Akka.Coordination.Azure
         public override Task<bool> Acquire()
             => Acquire(null);
 
-        public override async Task<bool> Acquire(Action<Exception?>? leaseLostCallback)
+        public override Task<bool> Acquire(Action<Exception?>? leaseLostCallback)
         {
-            try
+            lock (_acquireLock)
             {
+                if (_acquireTask is not null)
+                {
+                    if(_log.IsDebugEnabled)
+                        _log.Debug("Lease is already being acquired");
+                    return _acquireTask;
+                }
+
                 if(_log.IsDebugEnabled)
                     _log.Debug("Acquiring lease");
-                var result = await _leaseActor.Ask(new LeaseActor.Acquire(leaseLostCallback), _timeout);
-                return result switch
-                {
-                    LeaseActor.LeaseAcquired _ => true,
-                    LeaseActor.LeaseTaken _ => false,
-                    LeaseActor.InvalidRequest req => throw new LeaseException(req.Reason),
-                    _ => throw new LeaseException($"Unexpected response type: {result.GetType()}")
-                };
-            }
-            catch (AskTimeoutException)
-            {
-                throw new LeaseTimeoutException(
-                    $"Timed out trying to acquire lease [{_leaseName}, {_settings.OwnerName}]. It may still be taken.");
+                _acquireTask = _leaseActor.Ask(new LeaseActor.Acquire(leaseLostCallback), _timeout)
+                    .ContinueWith(t =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            if (t.Exception is { })
+                            {
+                                var flattened = t.Exception.Flatten();
+                                if (flattened.InnerExceptions.Count > 0 
+                                    && flattened.InnerExceptions.Any(e => e is AskTimeoutException))
+                                {
+                                    throw new LeaseTimeoutException(
+                                        $"Timed out trying to acquire lease [{_leaseName}, {_settings.OwnerName}]. It may still be taken.",
+                                        t.Exception);
+                                }
+                            }
+
+                            throw new LeaseException(
+                                $"Faulted trying to acquire lease [{_leaseName}, {_settings.OwnerName}]. It may still be taken.",
+                                t.Exception);
+                        }
+
+                        // For completeness, we're not using cancellation token
+                        if (t.IsCanceled)
+                        {
+                            throw new LeaseException(
+                                $"Canceled while trying to acquire lease [{_leaseName}, {_settings.OwnerName}]. It may still be taken.", 
+                                t.Exception);
+                        }
+
+                        return t.Result switch
+                        {
+                            LeaseActor.LeaseAcquired => true,
+                            LeaseActor.LeaseTaken => false,
+                            Status.Failure f => throw new LeaseException($"Failure while acquiring lease: {f.Cause.Message}", f.Cause),
+                            _ => throw new LeaseException($"Unexpected response type: {t.Result.GetType()}")
+                        };
+                    });
+                
+                return _acquireTask;
             }
         }
         

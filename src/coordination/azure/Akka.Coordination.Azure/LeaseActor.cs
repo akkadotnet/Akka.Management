@@ -188,15 +188,11 @@ namespace Akka.Coordination.Azure
             private LeaseReleased() {}
         }
         
-        public sealed class InvalidRequest: IResponse, IDeadLetterSuppression
+        public sealed class InvalidReleaseRequest: IResponse, IDeadLetterSuppression
         {
-            public InvalidRequest(string reason)
-            {
-                Reason = reason;
-            }
-
-            // ReSharper disable once MemberHidesStaticFromOuterClass
-            public string Reason { get; }
+            public static readonly InvalidReleaseRequest Instance = new ();
+            private InvalidReleaseRequest()
+            { }
         }
 
         public static Props Props(IAzureApi client, LeaseSettings leaseSettings, string leaseName, AtomicBoolean granted)
@@ -481,7 +477,7 @@ namespace Akka.Coordination.Azure
                             _ownerName,
                             leaseName,
                             StateName);
-                        Sender.Tell(new InvalidRequest("Tried to release a lease that is not acquired"));
+                        Sender.Tell(InvalidReleaseRequest.Instance);
                         return Stay().Using(@event.StateData);
                     
                     case Status.Failure f when @event.StateData is IReplyRequired replyRequired:
