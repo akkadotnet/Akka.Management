@@ -106,7 +106,7 @@ namespace Akka.Discovery.Azure.Actors
                     if (_log.IsDebugEnabled)
                         _log.Debug("Pruning stale cluster member entries");
 
-                    ExecutePruneOpWithRetry().PipeTo(Self);
+                    ExecutePruneOpWithRetry().PipeTo(Self, success: () => Status.Success.Instance);
                     return true;
                 
                 case ClusterEvent.LeaderChanged evt:
@@ -128,7 +128,7 @@ namespace Akka.Discovery.Azure.Actors
                     }
                     
                     _log.Warning(f.Cause, "Failed to prune stale cluster member entries, retrying");
-                    ExecutePruneOpWithRetry().PipeTo(Self);
+                    ExecutePruneOpWithRetry().PipeTo(Self, success: () => Status.Success.Instance);
                     return true;
                 
                 case Status.Success :

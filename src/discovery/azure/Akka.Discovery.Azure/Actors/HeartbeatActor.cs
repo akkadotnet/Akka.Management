@@ -74,7 +74,7 @@ namespace Akka.Discovery.Azure.Actors
                     if(_log.IsDebugEnabled)
                         _log.Debug("Updating cluster member entry TTL");
 
-                    ExecuteUpdateOpWithRetry().PipeTo(Self);
+                    ExecuteUpdateOpWithRetry().PipeTo(Self, success: () => Status.Success.Instance);
                     break;
                 
                 case Status.Success _:
@@ -89,7 +89,7 @@ namespace Akka.Discovery.Azure.Actors
                     }
                     
                     _log.Warning(f.Cause, "Failed to update TTL heartbeat, retrying");
-                    ExecuteUpdateOpWithRetry().PipeTo(Self);
+                    ExecuteUpdateOpWithRetry().PipeTo(Self, success: () => Status.Success.Instance);
                     break;
                 
                 default:
