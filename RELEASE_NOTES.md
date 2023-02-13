@@ -1,3 +1,12 @@
+#### 1.0.3 February 13 2023 ####
+Version 1.0.3 is a patch release for `Akka.Coordination.Azure` lease acquire and pruning bug. The default Azure REST API timeout have been raised from 1 second to 6 seconds.
+
+* [[Lease.Azure] Fix lease release/acquire bug](https://github.com/akkadotnet/Akka.Management/pull/1310)
+* [[Lease.Azure] Streamline AzureLeaseSettings](https://github.com/akkadotnet/Akka.Management/pull/1315)
+* Update dependency NuGet package versions
+  * [Bump Azure.Data.Tables from 12.7.1 to 12.8.0](https://github.com/akkadotnet/Akka.Management/pull/1300)
+  * [Bump Azure.Identity from 1.8.1 to 1.8.2](https://github.com/akkadotnet/Akka.Management/pull/1305)
+
 #### 1.0.2 January 30 2023 ####
 
 Version 1.0.2 contains a code cleanup for `Akka.Coordination.Azure` to suppress non-needed noise emitted by lease release and acquire.
