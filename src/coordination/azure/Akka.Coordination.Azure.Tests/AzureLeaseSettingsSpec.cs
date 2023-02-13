@@ -25,29 +25,22 @@ namespace Akka.Coordination.Azure.Tests
                     .WithFallback(LeaseProvider.DefaultConfig())
                 : AzureLease.DefaultConfiguration
                     .WithFallback(LeaseProvider.DefaultConfig());
-            return AzureLeaseSettings.Create(config, TimeoutSettings.Create(config.GetConfig("akka.coordination.lease")));
+            return AzureLeaseSettings.Create(config, TimeoutSettings.Create(config.GetConfig(AzureLease.ConfigPath)));
         }
         
         [Fact(DisplayName = "default request-timeout should be 2/5 of the lease-operation-timeout")]
         public void RequestTimeoutIsTwoFifthOfLeaseOperationTimeout()
         {
-            Conf("akka.coordination.lease.lease-operation-timeout=10s")
+            Conf($"{AzureLease.ConfigPath}.lease-operation-timeout=10s")
                 .ApiServiceRequestTimeout.Should().Be(TimeSpan.FromSeconds(4));
-        }
-
-        [Fact(DisplayName = "default body-read timeout should be 1/2 of api request timeout")]
-        public void BodyReadTimeoutIsHalfOfApiRequestTimeout()
-        {
-            Conf("akka.coordination.lease.lease-operation-timeout=10s")
-                .BodyReadTimeout.Should().Be(TimeSpan.FromSeconds(2));
         }
 
         [Fact(DisplayName = "Azure settings should allow api server request timeout override")]
         public void ShouldAllowServerRequestTimeoutOverride()
         {
-            Conf(@"
-            akka.coordination.lease.lease-operation-timeout=5s
-            akka.coordination.lease.azure.api-service-request-timeout=4s").ApiServiceRequestTimeout
+            Conf(@$"
+            {AzureLease.ConfigPath}.lease-operation-timeout=5s
+            {AzureLease.ConfigPath}.api-service-request-timeout=4s").ApiServiceRequestTimeout
                 .Should().Be(TimeSpan.FromSeconds(4));
         }
 
@@ -57,10 +50,10 @@ namespace Akka.Coordination.Azure.Tests
         {
             Assert.Throws<ConfigurationException>(() =>
             {
-                Conf(@"
-                    akka.coordination.lease.lease-operation-timeout=5s
-                    akka.coordination.lease.azure.api-service-request-timeout=6s");
-            }).Message.Should().Be("'api-service-request-timeout can not be less than 'akka.coordination.lease.lease-operation-timeout'");
+                Conf(@$"
+                    {AzureLease.ConfigPath}.lease-operation-timeout=5s
+                    {AzureLease.ConfigPath}.api-service-request-timeout=6s");
+            }).Message.Should().Be("'api-service-request-timeout can not be less than 'akka.coordination.azure.lease-operation-timeout'");
         }
 
         [Fact(DisplayName = "AzureLeaseSettings should contain default values")]
@@ -69,8 +62,7 @@ namespace Akka.Coordination.Azure.Tests
             var settings = Conf(null);
             settings.ConnectionString.Should().Be("");
             settings.ContainerName.Should().Be("akka-coordination-lease");
-            settings.ApiServiceRequestTimeout.Should().Be(2.Seconds());
-            settings.BodyReadTimeout.Should().Be(1.Seconds());
+            settings.ApiServiceRequestTimeout.Should().Be(6.Seconds());
             settings.ServiceEndpoint.Should().BeNull();
             settings.AzureCredential.Should().BeNull();
             settings.BlobClientOptions.Should().BeNull();
@@ -84,7 +76,6 @@ namespace Akka.Coordination.Azure.Tests
             empty.ConnectionString.Should().Be(settings.ConnectionString);
             empty.ContainerName.Should().Be(settings.ContainerName);
             empty.ApiServiceRequestTimeout.Should().Be(settings.ApiServiceRequestTimeout);
-            empty.BodyReadTimeout.Should().Be(settings.BodyReadTimeout);
             empty.ServiceEndpoint.Should().Be(settings.ServiceEndpoint);
             empty.AzureCredential.Should().Be(settings.AzureCredential); 
             empty.BlobClientOptions.Should().Be(settings.BlobClientOptions);
@@ -107,7 +98,6 @@ namespace Akka.Coordination.Azure.Tests
             settings.ConnectionString.Should().Be("a");
             settings.ContainerName.Should().Be("b");
             settings.ApiServiceRequestTimeout.Should().Be(11.Seconds());
-            settings.BodyReadTimeout.Should().Be(5.5.Seconds()); 
             settings.ServiceEndpoint.Should().Be(uri);
             settings.AzureCredential.Should().Be(cred); 
             settings.BlobClientOptions.Should().Be(opt);
@@ -134,7 +124,6 @@ namespace Akka.Coordination.Azure.Tests
             settings.ConnectionString.Should().Be("a");
             settings.ContainerName.Should().Be("b");
             settings.ApiServiceRequestTimeout.Should().Be(11.Seconds());
-            settings.BodyReadTimeout.Should().Be(5.5.Seconds()); 
             settings.ServiceEndpoint.Should().Be(uri);
             settings.AzureCredential.Should().Be(cred); 
             settings.BlobClientOptions.Should().Be(opt);
