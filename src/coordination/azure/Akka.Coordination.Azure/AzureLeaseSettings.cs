@@ -18,8 +18,7 @@ namespace Akka.Coordination.Azure
         public static readonly AzureLeaseSettings Empty = new AzureLeaseSettings(
             connectionString: "",
             containerName: "akka-coordination-lease",
-            apiServiceRequestTimeout: TimeSpan.FromSeconds(2),
-            bodyReadTimeout: TimeSpan.FromSeconds(1),
+            apiServiceRequestTimeout: TimeSpan.FromSeconds(6), // 2/5th of 15 seconds (lease-operation-timeout default)
             serviceEndpoint: null,
             azureCredential: null,
             blobClientOptions: null); 
@@ -28,7 +27,6 @@ namespace Akka.Coordination.Azure
             string connectionString,
             string containerName,
             TimeSpan apiServiceRequestTimeout,
-            TimeSpan? bodyReadTimeout,
             Uri? serviceEndpoint,
             TokenCredential? azureCredential,
             BlobClientOptions? blobClientOptions)
@@ -36,7 +34,6 @@ namespace Akka.Coordination.Azure
             ConnectionString = connectionString;
             ContainerName = containerName;
             ApiServiceRequestTimeout = apiServiceRequestTimeout;
-            BodyReadTimeout = bodyReadTimeout ?? TimeSpan.FromSeconds(1);
             ServiceEndpoint = serviceEndpoint;
             AzureCredential = azureCredential;
             BlobClientOptions = blobClientOptions;
@@ -56,13 +53,12 @@ namespace Akka.Coordination.Azure
 
             if (apiServiceRequestTimeout >= leaseTimeoutSettings.OperationTimeout)
                 throw new ConfigurationException(
-                    "'api-service-request-timeout can not be less than 'akka.coordination.lease.lease-operation-timeout'");
+                    "'api-service-request-timeout can not be less than 'akka.coordination.azure.lease-operation-timeout'");
             
             return new AzureLeaseSettings(
                 connectionString: config.GetStringIfDefined("connection-string"),
                 containerName: config.GetStringIfDefined("container-name"),
                 apiServiceRequestTimeout: apiServiceRequestTimeout,
-                bodyReadTimeout: new TimeSpan(apiServiceRequestTimeout.Ticks / 2),
                 serviceEndpoint: null,
                 azureCredential: null,
                 blobClientOptions: null
@@ -72,7 +68,6 @@ namespace Akka.Coordination.Azure
         public string ConnectionString { get; }
         public string ContainerName { get; }
         public TimeSpan ApiServiceRequestTimeout { get; }
-        public TimeSpan BodyReadTimeout { get; }
         public Uri? ServiceEndpoint { get; }
         public TokenCredential? AzureCredential { get; }
         public BlobClientOptions? BlobClientOptions { get; }
@@ -82,9 +77,7 @@ namespace Akka.Coordination.Azure
         public AzureLeaseSettings WithContainerName(string containerName)
             => Copy(containerName: containerName);
         public AzureLeaseSettings WithApiServiceRequestTimeout(TimeSpan apiServiceRequestTimeout)
-            => Copy(
-                apiServiceRequestTimeout: apiServiceRequestTimeout,
-                bodyReadTimeout: new TimeSpan(apiServiceRequestTimeout.Ticks / 2));
+            => Copy(apiServiceRequestTimeout: apiServiceRequestTimeout);
         public AzureLeaseSettings WithAzureCredential(TokenCredential azureCredential, Uri serviceEndpoint)
         {
             if (azureCredential is null)
@@ -102,7 +95,6 @@ namespace Akka.Coordination.Azure
             string? connectionString = null,
             string? containerName = null,
             TimeSpan? apiServiceRequestTimeout = null,
-            TimeSpan? bodyReadTimeout = null,
             Uri? serviceEndpoint = null,
             TokenCredential? azureCredential = null,
             BlobClientOptions? blobClientOptions = null)
@@ -110,7 +102,6 @@ namespace Akka.Coordination.Azure
                 connectionString: connectionString ?? ConnectionString,
                 containerName: containerName ?? ContainerName,
                 apiServiceRequestTimeout: apiServiceRequestTimeout ?? ApiServiceRequestTimeout,
-                bodyReadTimeout: bodyReadTimeout ?? BodyReadTimeout,
                 serviceEndpoint: serviceEndpoint ?? ServiceEndpoint,
                 azureCredential: azureCredential ?? AzureCredential,
                 blobClientOptions: blobClientOptions ?? BlobClientOptions);

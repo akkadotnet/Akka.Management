@@ -84,7 +84,7 @@ namespace Akka.Coordination.Azure.Internal
         public async Task<Either<LeaseResource, LeaseResource>> UpdateLeaseResource(
             string leaseName, string ownerName, ETag version, DateTimeOffset? time = null)
         {
-            var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
+            var cts = new CancellationTokenSource(_settings.ApiServiceRequestTimeout);
             try
             {
                 _log.Debug("Updating {0}", leaseName);
@@ -149,7 +149,7 @@ namespace Akka.Coordination.Azure.Internal
 
         private async Task<LeaseResource?> CreateLeaseResource(string leaseName)
         {
-            var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
+            var cts = new CancellationTokenSource(_settings.ApiServiceRequestTimeout);
             try
             {
                 var blobClient = _containerClient.Value.GetBlobClient(leaseName);
@@ -202,7 +202,7 @@ namespace Akka.Coordination.Azure.Internal
 
         private async Task<bool> LeaseResourceExists(string leaseName)
         {
-            var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
+            var cts = new CancellationTokenSource(_settings.ApiServiceRequestTimeout);
             try
             {
                 var blobClient = _containerClient.Value.GetBlobClient(leaseName);
@@ -235,7 +235,7 @@ namespace Akka.Coordination.Azure.Internal
         
         private async Task<LeaseResource?> GetLeaseResource(string leaseName)
         {
-            var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
+            var cts = new CancellationTokenSource(_settings.ApiServiceRequestTimeout);
             try
             {
                 var blobClient = _containerClient.Value.GetBlobClient(leaseName);
@@ -286,7 +286,7 @@ namespace Akka.Coordination.Azure.Internal
 
         internal async Task<Done> RemoveLease(string leaseName)
         {
-            var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
+            var cts = new CancellationTokenSource(_settings.ApiServiceRequestTimeout);
             try
             {
                 var blobClient = _containerClient.Value.GetBlobClient(leaseName);
