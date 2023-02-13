@@ -74,7 +74,7 @@ namespace Akka.Discovery.Azure.Actors
                     if(_log.IsDebugEnabled)
                         _log.Debug("Updating cluster member entry TTL");
 
-                    ExecuteUpdateOpWithRetry().PipeTo(Self, success: () => Status.Success.Instance);
+                    ExecuteUpdateOpWithRetry().PipeTo(Self);
                     break;
                 
                 case Status.Success _:
@@ -89,7 +89,7 @@ namespace Akka.Discovery.Azure.Actors
                     }
                     
                     _log.Warning(f.Cause, "Failed to update TTL heartbeat, retrying");
-                    ExecuteUpdateOpWithRetry().PipeTo(Self, success: () => Status.Success.Instance);
+                    ExecuteUpdateOpWithRetry().PipeTo(Self);
                     break;
                 
                 default:
@@ -99,7 +99,7 @@ namespace Akka.Discovery.Azure.Actors
         }
 
         // Always call this method using PipeTo, we'll be waiting for Status.Success or Status.Failure asynchronously
-        private async Task ExecuteUpdateOpWithRetry()
+        private async Task<Status> ExecuteUpdateOpWithRetry()
         {
             // Calculate backoff
             var backoff = new TimeSpan(_backoff.Ticks * _retryCount++);
@@ -115,6 +115,8 @@ namespace Akka.Discovery.Azure.Actors
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(_shutdownCts.Token);
             cts.CancelAfter(_timeout);
             await _client.UpdateAsync(cts.Token);
+
+            return Status.Success.Instance;
         }
 
         public ITimerScheduler? Timers { get; set; }

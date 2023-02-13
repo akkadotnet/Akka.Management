@@ -106,7 +106,7 @@ namespace Akka.Discovery.Azure.Actors
                     if (_log.IsDebugEnabled)
                         _log.Debug("Pruning stale cluster member entries");
 
-                    ExecutePruneOpWithRetry().PipeTo(Self, success: () => Status.Success.Instance);
+                    ExecutePruneOpWithRetry().PipeTo(Self);
                     return true;
                 
                 case ClusterEvent.LeaderChanged evt:
@@ -128,7 +128,7 @@ namespace Akka.Discovery.Azure.Actors
                     }
                     
                     _log.Warning(f.Cause, "Failed to prune stale cluster member entries, retrying");
-                    ExecutePruneOpWithRetry().PipeTo(Self, success: () => Status.Success.Instance);
+                    ExecutePruneOpWithRetry().PipeTo(Self);
                     return true;
                 
                 case Status.Success :
@@ -146,7 +146,7 @@ namespace Akka.Discovery.Azure.Actors
         }
 
         // Always call this method using PipeTo, we'll be waiting for Status.Success or Status.Failure asynchronously
-        private async Task ExecutePruneOpWithRetry()
+        private async Task<Status> ExecutePruneOpWithRetry()
         {
             // Calculate backoff
             var backoff = new TimeSpan(_backoff.Ticks * _retryCount++);
@@ -163,6 +163,8 @@ namespace Akka.Discovery.Azure.Actors
             cts.CancelAfter(_timeout);
             await _client.PruneAsync((DateTime.UtcNow - _staleTtlThreshold).Ticks, cts.Token);
             cts.Token.ThrowIfCancellationRequested();
+
+            return Status.Success.Instance;
         }
 
         public ITimerScheduler? Timers { get; set; }
