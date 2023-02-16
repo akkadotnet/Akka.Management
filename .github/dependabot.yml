@@ -1,7 +1,19 @@
 version: 2
 updates:
 - package-ecosystem: nuget
+  target-branch: "dev"
   directory: "/"
   schedule:
     interval: daily
   open-pull-requests-limit: 10
+  labels:
+    - "dependencies"
+
+- package-ecosystem: nuget
+  target-branch: "v1.4"
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  labels:
+    - "dependencies"
