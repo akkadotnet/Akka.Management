@@ -6,6 +6,7 @@ trigger:
       - dev
       - master
       - feature/*
+      - v1.*
 
 pr:
   autoCancel: true # indicates whether additional pushes to a PR should cancel in-progress runs for the same PR. Defaults to true
