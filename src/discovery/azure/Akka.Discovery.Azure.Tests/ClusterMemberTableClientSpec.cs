@@ -48,15 +48,11 @@ namespace Akka.Discovery.Azure.Tests
             _rawClient = new TableClient(ConnectionString, TableName);
         }
         
-        public async Task InitializeAsync()
+        public override async Task InitializeAsync()
         {
+            await base.InitializeAsync();
             // Tables are wiped out at every test start
             await DbUtils.Cleanup(ConnectionString);
-        }
-
-        public Task DisposeAsync()
-        {
-            return Task.CompletedTask;
         }
 
         [Fact(DisplayName = "GetOrCreateAsync should insert a new entry")]

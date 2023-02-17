@@ -62,13 +62,9 @@ akka.coordination.lease.azure.connection-string = ""UseDevelopmentStorage=true""
         (await task1).Should().BeTrue();
     }
 
-    public async Task InitializeAsync()
+    public override async Task InitializeAsync()
     {
+        await base.InitializeAsync();
         await Util.Cleanup("UseDevelopmentStorage=true");
-    }
-
-    public Task DisposeAsync()
-    {
-        return Task.CompletedTask;
     }
 }

@@ -55,15 +55,11 @@ akka.remote.dot-netty.tcp.port = 0
             _rawClient = new TableClient(ConnectionString, TableName);
         }
         
-        public async Task InitializeAsync()
+        public override async Task InitializeAsync()
         {
+            await base.InitializeAsync();
             // Tables are wiped out at every test start
             await DbUtils.Cleanup(ConnectionString);
-        }
-
-        public Task DisposeAsync()
-        {
-            return Task.CompletedTask;
         }
 
         [Fact(DisplayName = "HeartbeatActor should update ClusterMember entry")]
@@ -120,9 +116,10 @@ akka.remote.dot-netty.tcp.port = 0
             await WithinAsync(3.Seconds(), async () =>
             {
                 await EventFilter.Debug(contains: "row entries pruned:")
-                    .ExpectOneAsync(async () =>
+                    .ExpectOneAsync(() =>
                     {
                         actor.Tell("prune", actor); // Fake a timer message
+                        return Task.CompletedTask;
                     });
             });
 
