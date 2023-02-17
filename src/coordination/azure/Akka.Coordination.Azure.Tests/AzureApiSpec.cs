@@ -37,14 +37,10 @@ namespace Akka.Coordination.Azure.Tests
             _underTest = new AzureApiImpl(Sys, _settings);
         }
         
-        public async Task InitializeAsync()
+        public override async Task InitializeAsync()
         {
+            await base.InitializeAsync();
             await Util.Cleanup("UseDevelopmentStorage=true");
-        }
-
-        public Task DisposeAsync()
-        {
-            return Task.CompletedTask;
         }
         
         [Fact(DisplayName = "Azure lease resource should be able to be created")]
