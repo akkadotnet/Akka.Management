@@ -14,7 +14,7 @@
         <PackageReference Include="Petabridge.Cmd.Cluster" Version="$(PbmVersion)" />
         <PackageReference Include="Petabridge.Cmd.Remote" Version="$(PbmVersion)" />
         <PackageReference Include="Akka.Bootstrap.Docker" Version="$(BootstrapDockerVersion)" />
-        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="7.0.0" />
+        <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="7.0.1" />
     </ItemGroup>
 
     <ItemGroup>
