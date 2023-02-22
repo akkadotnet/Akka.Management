@@ -28,7 +28,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <XUnitRunnerVersion>2.4.3</XUnitRunnerVersion>
         <CoverletVersion>3.2.0</CoverletVersion>
         <FluentAssertionVersion>6.10.0</FluentAssertionVersion>
-        <TestSdkVersion>17.4.1</TestSdkVersion>
+        <TestSdkVersion>17.5.0</TestSdkVersion>
         <WireMockVersion>1.5.16</WireMockVersion>
         
         <AkkaVersion>1.4.49</AkkaVersion>
