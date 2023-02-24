@@ -18,7 +18,7 @@
 		<PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
 		<PackageReference Include="Akka.Cluster.Hosting" Version="$(AkkaHostingVersion)" />
 		<PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.14.1" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.15.0" />
 		<PackageReference Include="Google.Protobuf" Version="$(ProtobufVersion)" />
 		<PackageReference Include="Grpc.Tools" Version="$(GrpcToolsVersion)">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
