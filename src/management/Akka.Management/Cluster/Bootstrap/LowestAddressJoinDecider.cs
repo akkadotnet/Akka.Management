@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Discovery;
+using Akka.Event;
 using Akka.Management.Cluster.Bootstrap.Util;
 
 namespace Akka.Management.Cluster.Bootstrap

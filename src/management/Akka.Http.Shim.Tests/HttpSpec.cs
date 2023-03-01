@@ -11,6 +11,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
+using Akka.Event;
 using Akka.Http.Dsl;
 using Akka.Http.Dsl.Settings;
 using Akka.Http.Extensions;

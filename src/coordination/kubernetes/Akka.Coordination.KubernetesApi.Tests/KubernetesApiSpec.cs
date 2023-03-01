@@ -62,12 +62,12 @@ namespace Akka.Coordination.KubernetesApi.Tests
             _underTest = new MockKubernetesApi(Sys, _settings);
         }
         
-        protected override async Task AfterAllAsync()
+        protected override void AfterAll()
         {
-            await base.AfterAllAsync();
             _wireMockServer.Stop();
             Environment.SetEnvironmentVariable("KUBERNETES_SERVICE_HOST", null);
             Environment.SetEnvironmentVariable("KUBERNETES_SERVICE_PORT", null);
+            base.AfterAll();
         }
         
         private class MockKubernetesApi : KubernetesApiImpl

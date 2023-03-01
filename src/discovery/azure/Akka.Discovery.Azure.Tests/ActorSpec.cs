@@ -55,11 +55,15 @@ akka.remote.dot-netty.tcp.port = 0
             _rawClient = new TableClient(ConnectionString, TableName);
         }
         
-        public override async Task InitializeAsync()
+        public async Task InitializeAsync()
         {
-            await base.InitializeAsync();
             // Tables are wiped out at every test start
             await DbUtils.Cleanup(ConnectionString);
+        }
+
+        public Task DisposeAsync()
+        {
+            return Task.CompletedTask;
         }
 
         [Fact(DisplayName = "HeartbeatActor should update ClusterMember entry")]
