@@ -18,7 +18,7 @@ namespace StressTest
             {
                 var endpoint = new IPEndPoint(IPAddress.Parse(hostName), 0);
                 socket.Bind(endpoint);
-                return (IPEndPoint) socket.LocalEndPoint;
+                return (IPEndPoint) socket.LocalEndPoint!;
             }
         }
     }

@@ -19,7 +19,7 @@ namespace Akka.Discovery.Azure.Tests
             _logLevel = logLevel;
         }
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
             if (!IsEnabled(logLevel))
                 return;
@@ -58,15 +58,15 @@ namespace Akka.Discovery.Azure.Tests
             };
         }
 
-        public IDisposable BeginScope<TState>(TState state)
+        public IDisposable BeginScope<TState>(TState state) where TState: notnull
         {
             throw new NotImplementedException();
         }
         
         private static bool TryFormatMessage<TState>(
             TState state,
-            Exception exception,
-            Func<TState, Exception, string> formatter,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter,
             out string? result)
         {
             formatter = formatter ?? throw new ArgumentNullException(nameof(formatter));
