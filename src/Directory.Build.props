@@ -36,7 +36,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <PbmVersion>1.2.2</PbmVersion>
         <BootstrapDockerVersion>0.5.3</BootstrapDockerVersion>
         
-        <KubernetesClientVersion>4.0.26</KubernetesClientVersion>
+        <KubernetesClientVersion>10.1.4</KubernetesClientVersion>
         <MicrosoftExtensionsVersion>7.0.0</MicrosoftExtensionsVersion>
         <AzureIdentityVersion>1.8.2</AzureIdentityVersion>
         <ProtobufVersion>3.21.12</ProtobufVersion>
