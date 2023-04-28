@@ -1,6 +1,7 @@
 # Pull request validation for Windows against the `dev` and `master` branches
 # See https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema for reference
 trigger:
+  batch: true
   branches:
     include:
       - dev
