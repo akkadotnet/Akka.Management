@@ -8,7 +8,7 @@ trigger:
       - master
       - feature/*
       - v1.*
-      - gh-readonly-queue/v1.4
+      - gh-readonly-queue/*
      
 pr:
   autoCancel: true # indicates whether additional pushes to a PR should cancel in-progress runs for the same PR. Defaults to true
