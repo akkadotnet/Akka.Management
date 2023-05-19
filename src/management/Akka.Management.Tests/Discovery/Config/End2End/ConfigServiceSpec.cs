@@ -10,9 +10,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Cluster.Hosting;
+using Akka.Discovery.Config.Hosting;
 using Akka.Hosting;
-using Akka.Hosting.TestKit.Internals;
-using Akka.Management;
 using Akka.Management.Cluster.Bootstrap;
 using Akka.Remote.Hosting;
 using Akka.Util;
@@ -22,7 +21,7 @@ using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Akka.Discovery.Config.Hosting.Tests.End2End;
+namespace Akka.Management.Tests.Discovery.Config.End2End;
 
 public class ConfigServiceSpec: Akka.Hosting.TestKit.TestKit
 {
@@ -61,7 +60,7 @@ public class ConfigServiceSpec: Akka.Hosting.TestKit.TestKit
             .ConfigureLogging(logger =>
             {
                 logger.ClearProviders();
-                logger.AddProvider(new XUnitLoggerProvider(Output, LogLevel));
+                logger.AddProvider(new XUnitLoggerProvider(Output!, LogLevel));
                 logger.AddFilter("Akka.*", LogLevel);
             })
             .ConfigureServices((_, services) =>
@@ -110,6 +109,17 @@ public class ConfigServiceSpec: Akka.Hosting.TestKit.TestKit
                     Name = "LocalService",
                     Endpoints = _managementEndpoints
                 });
+            })
+            .WithConfigDiscovery(new ConfigServiceDiscoveryOptions
+            {
+                Services = new List<Service>
+                {
+                    new Service
+                    {
+                        Name = "LocalService",
+                        Endpoints = _managementEndpoints
+                    }
+                }
             });
     }
     
@@ -118,7 +128,7 @@ public class ConfigServiceSpec: Akka.Hosting.TestKit.TestKit
         AddConfigDiscovery(builder, 0)
             .AddStartup((system, _) =>
             {
-                var cluster = Cluster.Cluster.Get(system);
+                var cluster = Akka.Cluster.Cluster.Get(system);
                 cluster.RegisterOnMemberUp(() =>
                 {
                     _clusterFormed.CompareAndSet(false, true);

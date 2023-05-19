@@ -9,9 +9,10 @@ using System;
 using Akka.Actor;
 using Akka.Hosting;
 
+// ReSharper disable once CheckNamespace
 namespace Akka.Discovery.Config.Hosting;
 
-public static class AkkaHostingExtensions
+public static class ConfigServiceAkkaHostingExtensions
 {
     /// <summary>
     ///     Adds Akka.Discovery.Config.Hosting support to the <see cref="ActorSystem"/>.
@@ -35,12 +36,18 @@ public static class AkkaHostingExtensions
     ///             .WithClustering()
     ///             .WithClusterBootstrap(options =>
     ///             {
-    ///                 options.ContactPointDiscovery.ServiceName = "testService";
-    ///                 options.ContactPointDiscovery.RequiredContactPointsNr = 1;
+    ///                 options.ContactPointDiscovery.ServiceName = "configService";
+    ///                 options.ContactPointDiscovery.RequiredContactPointsNr = 2;
+    ///                 // NOTE: this is needed to prevent cluster bootstrap from filtering out
+    ///                 //       multiple result from a single domain name. The name does not matter.
+    ///                 options.ContactPointDiscovery.PortName = "configPort";
     ///             }, autoStart: true)
     ///             .WithConfigDiscovery(options => {
-    ///                 options.WithCredentialProvider&lt;AnonymousEc2CredentialProvider&gt;();
-    ///                 options.TagKey = "myTag";
+    ///                 opt.Services.Add(new Service
+    ///                 {
+    ///                     Name = "configService",
+    ///                     Endpoints = new [] { "localhost:9999", "localhost:10005" }
+    ///                 });
     ///             });
     ///     }
     ///   </code>
@@ -75,11 +82,21 @@ public static class AkkaHostingExtensions
     ///             .WithClustering()
     ///             .WithClusterBootstrap(options =>
     ///             {
-    ///                 options.ContactPointDiscovery.ServiceName = "testService";
-    ///                 options.ContactPointDiscovery.RequiredContactPointsNr = 1;
+    ///                 options.ContactPointDiscovery.ServiceName = "configService";
+    ///                 options.ContactPointDiscovery.RequiredContactPointsNr = 2;
+    ///                 // NOTE: this is needed to prevent cluster bootstrap from filtering out
+    ///                 //       multiple result from a single domain name. The name does not matter.
+    ///                 options.ContactPointDiscovery.PortName = "configPort";
     ///             }, autoStart: true)
-    ///             .WithAwsEc2Discovery(new Ec2ServiceDiscoveryOptions {
-    ///                 TagKey = "myTag"
+    ///             .WithConfigDiscovery(new ConfigServiceDiscoveryOptions
+    ///             {
+    ///                 Services = new List&lt;Service&gt; {
+    ///                     new Service
+    ///                     {
+    ///                         Name = "configService",
+    ///                         Endpoints = new [] { "localhost:9999", "localhost:10005" }
+    ///                     }
+    ///                 }
     ///             });
     ///     }
     ///   </code>

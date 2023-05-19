@@ -90,12 +90,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Coordination.Azure.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.StressTest", "src\coordination\examples\azure\Azure.StressTest\Azure.StressTest.csproj", "{296A0309-2370-4153-B3B0-A4105622CC9A}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{79E68C27-8172-4740-ADFC-B17D0979C96D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.Config.Hosting", "src\discovery\config\Akka.Discovery.Config.Hosting\Akka.Discovery.Config.Hosting.csproj", "{DEE5D818-CE59-4B0B-96DD-07A3EE74AE27}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.Config.Hosting.Tests", "src\discovery\config\Akka.Discovery.Config.Hosting.Tests\Akka.Discovery.Config.Hosting.Tests.csproj", "{8345EF8D-C1ED-4DD1-A142-A9B6EBE0A41F}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -186,14 +180,6 @@ Global
 		{296A0309-2370-4153-B3B0-A4105622CC9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{296A0309-2370-4153-B3B0-A4105622CC9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{296A0309-2370-4153-B3B0-A4105622CC9A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DEE5D818-CE59-4B0B-96DD-07A3EE74AE27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DEE5D818-CE59-4B0B-96DD-07A3EE74AE27}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DEE5D818-CE59-4B0B-96DD-07A3EE74AE27}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DEE5D818-CE59-4B0B-96DD-07A3EE74AE27}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8345EF8D-C1ED-4DD1-A142-A9B6EBE0A41F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8345EF8D-C1ED-4DD1-A142-A9B6EBE0A41F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8345EF8D-C1ED-4DD1-A142-A9B6EBE0A41F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8345EF8D-C1ED-4DD1-A142-A9B6EBE0A41F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -228,9 +214,6 @@ Global
 		{55BB0B68-1364-41EB-A9AA-AB054FB39329} = {00CE6BBE-BFAD-452A-82A5-826F7B99F5FB}
 		{296A0309-2370-4153-B3B0-A4105622CC9A} = {C4C8BE03-A7C0-4F2E-8922-92854FE7A5BF}
 		{24FEBA95-1FC2-4AC2-8386-6AB13AE87056} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
-		{79E68C27-8172-4740-ADFC-B17D0979C96D} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
-		{DEE5D818-CE59-4B0B-96DD-07A3EE74AE27} = {79E68C27-8172-4740-ADFC-B17D0979C96D}
-		{8345EF8D-C1ED-4DD1-A142-A9B6EBE0A41F} = {79E68C27-8172-4740-ADFC-B17D0979C96D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}

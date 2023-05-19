@@ -11,6 +11,7 @@ using Akka.Actor.Setup;
 using Akka.Configuration;
 using Akka.Hosting;
 
+// ReSharper disable once CheckNamespace
 namespace Akka.Discovery.Config.Hosting;
 
 public class ConfigServiceDiscoveryOptions: IHoconOption

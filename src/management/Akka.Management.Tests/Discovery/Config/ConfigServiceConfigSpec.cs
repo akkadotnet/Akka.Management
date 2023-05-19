@@ -6,12 +6,14 @@
 
 using System;
 using System.Collections.Generic;
+using Akka.Discovery.Config;
+using Akka.Discovery.Config.Hosting;
 using Akka.Hosting;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace Akka.Discovery.Config.Hosting.Tests;
+namespace Akka.Management.Tests.Discovery.Config;
 
 public class ConfigServiceConfigSpec
 {
