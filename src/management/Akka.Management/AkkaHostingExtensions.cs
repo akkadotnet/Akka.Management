@@ -55,13 +55,13 @@ namespace Akka.Management
             int? bindPort = null,
             bool autoStart = false)
         {
-            return builder.WithAkkaManagement(new AkkaManagementSetup(new HttpSetup
+            return builder.WithAkkaManagement(new AkkaManagementOptions
             {
                 HostName = hostName,
                 Port = port,
                 BindHostName = bindHostname,
                 BindPort = bindPort
-            }), autoStart);
+            }, autoStart);
         }
 
         /// <summary>
@@ -88,6 +88,62 @@ namespace Akka.Management
             var setup = new AkkaManagementSetup(new HttpSetup());
             configure(setup);
             return builder.WithAkkaManagement(setup, autoStart);
+        }
+
+        /// <summary>
+        ///     Adds Akka.Management support to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="configure">
+        ///     An action that modifies an <see cref="AkkaManagementOptions"/> instance, used
+        ///     to configure Akka.Management.
+        /// </param>
+        /// <param name="autoStart">
+        ///     When set to true, Akka.Management will be started automatically on <see cref="ActorSystem"/> startup.
+        /// </param>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithAkkaManagement(
+            this AkkaConfigurationBuilder builder,
+            Action<AkkaManagementOptions> configure,
+            bool autoStart = false)
+        {
+            var setup = new AkkaManagementOptions();
+            configure(setup);
+            return builder.WithAkkaManagement(setup, autoStart);
+        }
+
+        /// <summary>
+        ///     Adds Akka.Management support to the <see cref="ActorSystem"/>
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="options">
+        ///     The <see cref="AkkaManagementOptions"/> that will be used to configure Akka.Management
+        /// </param>
+        /// <param name="autoStart">
+        ///     When set to true, Akka.Management will be started automatically on <see cref="ActorSystem"/> startup.
+        /// </param>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        public static AkkaConfigurationBuilder WithAkkaManagement(
+            this AkkaConfigurationBuilder builder,
+            AkkaManagementOptions options,
+            bool autoStart = false)
+        {
+            options.Apply(builder);
+            builder.AddHocon(AkkaManagementProvider.DefaultConfiguration(), HoconAddMode.Append);
+            if (autoStart)
+            {
+                builder.WithExtensions(typeof(AkkaManagementProvider));
+            }
+
+            return builder;
         }
 
         /// <summary>
