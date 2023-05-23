@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text;
 using Akka.Configuration;
@@ -51,7 +52,7 @@ public class AkkaManagementOptions
     /// that they can know which path to access each other on.
     /// </summary>
     public string? BasePath { get; set; }
-    
+
     /// <summary>
     /// Definition of management route providers which shall contribute routes to the management HTTP endpoint.
     /// Management route providers should be regular extensions that additionally extend the
@@ -62,7 +63,19 @@ public class AkkaManagementOptions
     ///
     /// RouteProviders["health-check"] = null; 
     /// </summary>
-    public Dictionary<string, Type?>? RouteProviders { get; }
+    public Dictionary<string, Type?>? RouteProviders { get; set; }
+
+    public AkkaManagementOptions WithRouteProvider<T>(string name) where T : IManagementRouteProvider
+    {
+        var type = typeof(T);
+        RouteProviders ??= new Dictionary<string, Type?>();
+        
+        if (RouteProviders.ContainsValue(type))
+            throw new ConfigurationException($"The route provider of type {type.Name} already added");
+            
+        RouteProviders[name] = type;
+        return this;
+    }
 
     /// <summary>
     /// Should Management route providers only expose read only endpoints? It is up to each route provider
@@ -70,9 +83,19 @@ public class AkkaManagementOptions
     /// </summary>
     public bool? RouteProvidersReadOnly { get; set; }
 
-    
     public void Apply(AkkaConfigurationBuilder builder)
     {
+        if (RouteProviders is not null)
+        {
+            var providerType = typeof(IManagementRouteProvider);
+            var illegals = RouteProviders
+                .Where(kvp => kvp.Value != null && !providerType.IsAssignableFrom(kvp.Value))
+                .Select(kvp => (kvp.Key, kvp.Value)).ToList();
+
+            if (illegals.Count > 0)
+                throw new ConfigurationException($"Invalid route provider types in {nameof(RouteProviders)}: [{string.Join(", ", illegals.Select(pair => $"{pair.Key}:{pair.Value}"))}]");
+        }
+        
         var sb = new StringBuilder();
         sb.AppendLine("akka.management.http {");
 
@@ -100,6 +123,8 @@ public class AkkaManagementOptions
         }
         
         sb.AppendLine("}");
+
+        builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
     }
 
 }
