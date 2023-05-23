@@ -1,3 +1,16 @@
+#### 1.5.7 May 23 2023 ####
+
+* Update to [Akka.NET v1.5.7](https://github.com/akkadotnet/akka.net/releases/tag/1.5.7)
+* [Add Akka.Discovery.Config support](https://github.com/akkadotnet/Akka.Management/pull/1758)
+* Update dependency NuGet package versions to latest versions
+  * [Bump Akka.Hosting to 1.5.7](https://github.com/akkadotnet/Akka.Management/pull/1770)
+  * [Bump AWSSDK.S3 to 3.7.104.11](https://github.com/akkadotnet/Akka.Management/pull/1734)
+  * [Bump AWSSDK.EC2 to 3.7.135.1](https://github.com/akkadotnet/Akka.Management/pull/1769)
+  * [Bump AWSSDK.CludFormation to 3.7.105.25](https://github.com/akkadotnet/Akka.Management/pull/1767)
+  * [Bump AWSSDK.ECS to 5.7.108.7](https://github.com/akkadotnet/Akka.Management/pull/1768)
+  * [Bump Google.Protobuf to 3.23.1](https://github.com/akkadotnet/Akka.Management/pull/1755)
+  * [Bump Azure.Storage.Blobs to 12.16.0](https://github.com/akkadotnet/Akka.Management/pull/1594)
+
 #### 1.5.5 May 4 2023 ####
 
 * Update to [Akka.NET v1.5.5](https://github.com/akkadotnet/akka.net/releases/tag/1.5.5)
