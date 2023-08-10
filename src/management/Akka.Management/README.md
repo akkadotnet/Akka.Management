@@ -660,7 +660,7 @@ akka.management {
 
       # Adds "noise" to vary the intervals between retries slightly (0.2 means 20% of base value).
       # This is important in order to avoid the various nodes performing lookups in the same interval,
-      # potentially causing a thundering heard effect. Usually there is no need to tweak this parameter.
+      # potentially causing a thundering herd effect. Usually there is no need to tweak this parameter.
       exponential-backoff-random-factor = 0.2
 
       # Maximum interval to which the exponential backoff is allowed to grow
