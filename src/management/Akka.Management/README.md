@@ -353,7 +353,7 @@ Listing the ClusterBootstrap extension among the autoloaded akka.extensions in y
 
 ```
 # trigger autostart by loading the extension through config
-akka.extensions = ["Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management.Cluster.Bootstrap"]
+akka.extensions = ["Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management"]
 ```
 
 If management or bootstrap configuration is incorrect, the autostart will log an error and terminate the actor system.
