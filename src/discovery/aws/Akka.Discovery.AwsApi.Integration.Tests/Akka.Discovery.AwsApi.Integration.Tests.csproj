@@ -10,7 +10,7 @@
         <PackageReference Include="Akka.TestKit" Version="$(AkkaVersion)" />
         <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
         <PackageReference Include="AWSSDK.CloudFormation" Version="3.7.203" />
-        <PackageReference Include="AWSSDK.S3" Version="3.7.201.7" />
+        <PackageReference Include="AWSSDK.S3" Version="3.7.203.15" />
         <PackageReference Include="Docker.DotNet" Version="3.125.15" />
         <PackageReference Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
