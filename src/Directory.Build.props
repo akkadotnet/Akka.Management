@@ -29,7 +29,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <CoverletVersion>6.0.0</CoverletVersion>
         <FluentAssertionVersion>6.12.0</FluentAssertionVersion>
         <TestSdkVersion>17.7.2</TestSdkVersion>
-        <WireMockVersion>1.5.37</WireMockVersion>
+        <WireMockVersion>1.5.46</WireMockVersion>
         
         <AkkaVersion>1.5.13</AkkaVersion>
         <AkkaHostingVersion>1.5.13</AkkaHostingVersion>
@@ -39,13 +39,13 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <KubernetesClientVersion>4.0.26</KubernetesClientVersion>
         <MicrosoftExtensionsVersion>7.0.0</MicrosoftExtensionsVersion>
         <AzureIdentityVersion>1.10.1</AzureIdentityVersion>
-        <ProtobufVersion>3.24.3</ProtobufVersion>
+        <ProtobufVersion>3.25.1</ProtobufVersion>
         <GrpcToolsVersion>2.59.0</GrpcToolsVersion>
     </PropertyGroup>
     
     <!-- SourceLink support for all Akka.NET projects -->
     <ItemGroup>
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
     </ItemGroup>
     <PropertyGroup>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
