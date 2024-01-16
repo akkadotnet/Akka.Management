@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <IsPackable>false</IsPackable>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,7 +15,6 @@
         <PackageReference Include="Akka.Cluster.Hosting" Version="$(AkkaHostingVersion)" />
         <PackageReference Include="Petabridge.Cmd.Cluster" Version="$(PbmVersion)" />
         <PackageReference Include="Petabridge.Cmd.Remote" Version="$(PbmVersion)" />
-        <PackageReference Include="Akka.Bootstrap.Docker" Version="$(BootstrapDockerVersion)" />
     </ItemGroup>
 
     <ItemGroup>

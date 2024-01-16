@@ -2,7 +2,6 @@
 using System.Text;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Bootstrap.Docker;
 using Akka.Cluster;
 using Akka.Cluster.Hosting;
 using Akka.Cluster.Hosting.SBR;
@@ -15,6 +14,8 @@ using Akka.Remote.Hosting;
 using Akka.Util;
 using AzureCluster.Actors;
 using AzureCluster.Cmd;
+using AzureCluster.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -29,28 +30,35 @@ namespace AzureCluster
         public static async Task Main(string[] args)
         {
             var host = new HostBuilder()
+                .ConfigureAppConfiguration(builder =>
+                {
+                    builder.AddCommandLine(args);
+                    builder.AddEnvironmentVariables();
+                })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddLogging();
                     
-                    var systemName = Environment.GetEnvironmentVariable("ACTORSYSTEM")?.Trim() ?? "AkkaService";
+                    var systemName = hostContext.Configuration.GetValue<string>("actorsystem")?.Trim() ?? "AkkaService"; 
                     services.AddAkka(systemName, (builder, provider) =>
                     {
                         // Add HOCON configuration from Docker
-                        builder.AddHocon(Config.Empty.BootstrapFromDocker(), HoconAddMode.Prepend);
-                        
-                        // Add Akka.Remote support.
-                        // Empty hostname is intentional and necessary to make sure that remoting binds to the public
-                        // IP address
-                        builder.WithRemoting(hostname: "", port: 4053);
-                        
-                        // Add Akka.Cluster support
-                        builder.WithClustering(new ClusterOptions
+                        builder.BootstrapFromDocker(
+                            provider,
+                            // Add Akka.Remote support.
+                            // Empty hostname is intentional and necessary to make sure that remoting binds to the public IP address
+                            remoteOptions =>
                             {
-                                Roles = new[] { "cluster" },
-                                SplitBrainResolver = new KeepMajorityOption()
+                                remoteOptions.HostName = "";
+                                remoteOptions.Port = 4053;
+                            },
+                            // Add Akka.Cluster support
+                            clusterOptions =>
+                            {
+                                clusterOptions.Roles = ["cluster"];
+                                clusterOptions.SplitBrainResolver = new KeepMajorityOption();
                             });
-
+                        
                         // Add Akka.Management.Cluster.Bootstrap support
                         builder.WithClusterBootstrap(setup =>
                             {

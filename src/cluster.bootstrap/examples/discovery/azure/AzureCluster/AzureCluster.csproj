@@ -5,6 +5,7 @@
         <TargetFramework>$(TestsNet)</TargetFramework>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <IsPackable>false</IsPackable>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -13,7 +14,6 @@
         <PackageReference Include="Akka.DependencyInjection" Version="$(AkkaVersion)" />
         <PackageReference Include="Petabridge.Cmd.Cluster" Version="$(PbmVersion)" />
         <PackageReference Include="Petabridge.Cmd.Remote" Version="$(PbmVersion)" />
-        <PackageReference Include="Akka.Bootstrap.Docker" Version="$(BootstrapDockerVersion)" />
     </ItemGroup>
     
     <ItemGroup>

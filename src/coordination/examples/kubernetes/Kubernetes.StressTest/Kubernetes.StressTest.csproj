@@ -5,20 +5,15 @@
         <TargetFramework>net6.0</TargetFramework>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <IsPackable>false</IsPackable>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="app.conf">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-
-    <ItemGroup>
+        <PackageReference Include="Akka.Cluster.Hosting" Version="$(AkkaHostingVersion)" />
         <PackageReference Include="Akka.Cluster.Tools" Version="$(AkkaVersion)" />
         <PackageReference Include="Akka.DependencyInjection" Version="$(AkkaVersion)" />
         <PackageReference Include="Petabridge.Cmd.Cluster" Version="$(PbmVersion)" />
         <PackageReference Include="Petabridge.Cmd.Remote" Version="$(PbmVersion)" />
-        <PackageReference Include="Akka.Bootstrap.Docker" Version="$(BootstrapDockerVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="$(MicrosoftExtensionsVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="$(MicrosoftExtensionsVersion)" />
@@ -26,6 +21,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\..\discovery\kubernetes\Akka.Discovery.KubernetesApi\Akka.Discovery.KubernetesApi.csproj" />
+      <ProjectReference Include="..\..\..\..\management\Akka.Management\Akka.Management.csproj" />
       <ProjectReference Include="..\..\..\kubernetes\Akka.Coordination.KubernetesApi\Akka.Coordination.KubernetesApi.csproj" />
     </ItemGroup>
 

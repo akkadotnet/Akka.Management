@@ -5,6 +5,8 @@ using Akka.Event;
 using Akka.Management;
 using Azure.StressTest.Actors;
 using Azure.StressTest.Cmd;
+using Azure.StressTest.Configuration;
+using Microsoft.Extensions.Configuration;
 
 namespace Azure.StressTest;
 
@@ -13,49 +15,54 @@ public static class Program
 public static async Task Main(params string[] args)
 {
 using var host = new HostBuilder()
+    .ConfigureAppConfiguration(builder =>
+    {
+        builder.AddCommandLine(args);
+        builder.AddEnvironmentVariables();
+    })
     .ConfigureServices((hostContext, services) =>
     {
         services.AddLogging();
         
-        var systemName = Environment.GetEnvironmentVariable("ACTORSYSTEM")?.Trim() ?? "AkkaService";
-        var ip = Environment.GetEnvironmentVariable("CLUSTER_IP")?.Trim() ?? Dns.GetHostName();
-
-        var leaseOptions = new AzureLeaseOption
-        {
-            ConnectionString = ConnectionString()
-        };
-        
+        var systemName = hostContext.Configuration.GetValue<string>("actorsystem")?.Trim() ?? "AkkaService";
         services.AddAkka(systemName, (builder, provider) =>
         {
-            // Add HOCON configuration from Docker
+            // don't shutdown gracefully if SIGTERM is received
             builder.AddHocon(
-                ((Config)@"
-# don't shutdown gracefully if SIGTERM is received
-coordinated-shutdown.run-by-clr-shutdown-hook = off
-coordinated-shutdown.run-by-actor-system-terminate = off")
-                    .BootstrapFromDocker(), 
+                """
+                akka.coordinated-shutdown.run-by-clr-shutdown-hook = off
+                akka.coordinated-shutdown.run-by-actor-system-terminate = off
+                """, 
                 HoconAddMode.Prepend);
 
-            // Add Akka.Remote support.
-            builder.WithRemoting(hostname: ip, port: 4053);
+            // Add HOCON configuration from Docker
+            builder.BootstrapFromDocker(
+                provider,
+                // Add Akka.Remote support.
+                remoteOptions =>
+                {
+                    remoteOptions.HostName = "";
+                    remoteOptions.Port = 4053;
+                },
+                // Add Akka.Cluster support
+                clusterOptions =>
+                {
+                    clusterOptions.Roles = ["cluster"];
+                    clusterOptions.SplitBrainResolver = new LeaseMajorityOption
+                    {
+                        LeaseImplementation = new AzureLeaseOption()
+                    };
+                });
             
             // Add Akka.Coordination.Azure lease support
             builder.WithAzureLease(setup => { setup.ConnectionString = ConnectionString(); });
             
-            // Add Akka.Cluster support
-            builder.WithClustering(new ClusterOptions
-                {
-                    Roles = new[] { "cluster" }, 
-                    SplitBrainResolver = new LeaseMajorityOption
-                    {
-                        LeaseImplementation = new AzureLeaseOption()
-                    }
-                });
-
             // Add Akka.Management support
+            var configuration = provider.GetRequiredService<IConfiguration>();
+            var clusterConfigOptions = configuration.GetSection("cluster").Get<ClusterConfigOptions>();
             builder.WithAkkaManagement(setup =>
             {
-                setup.Http.HostName = ip;
+                setup.Http.HostName = clusterConfigOptions.Ip;
             });
             
             // Add Akka.Management.Cluster.Bootstrap support
@@ -69,7 +76,7 @@ coordinated-shutdown.run-by-actor-system-terminate = off")
             builder.WithAzureDiscovery(
                 connectionString: ConnectionString(),
                 serviceName: "clusterbootstrap", 
-                publicHostname: ip);
+                publicHostname: clusterConfigOptions.Ip);
             
             // Add https://cmd.petabridge.com/ for diagnostics
             builder.WithPetabridgeCmd("0.0.0.0", 9110, ClusterCommands.Instance, new RemoteCommands(), new TestCommands());
