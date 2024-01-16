@@ -14,8 +14,8 @@ services:
       - "8558:8558"
     environment:
       ACTORSYSTEM: "ClusterSystem"
-      CLUSTER_PORT: 4053
-      CLUSTER_IP: "node1"
+      CLUSTER__PORT: 4053
+      CLUSTER__IP: "node1"
       AZURITE_HOST: "azurite"
       USE_CHAOS: "false"
       USE_PUBSUB: "false"
@@ -26,8 +26,8 @@ services:
     image: azurecluster:latest
     environment:
       ACTORSYSTEM: "ClusterSystem"
-      CLUSTER_PORT: 4053
-      CLUSTER_IP: "node2"
+      CLUSTER__PORT: 4053
+      CLUSTER__IP: "node2"
       AZURITE_HOST: "azurite"
       USE_CHAOS: "false"
       USE_PUBSUB: "false"
@@ -38,8 +38,8 @@ services:
     image: azurecluster:latest
     environment:
       ACTORSYSTEM: "ClusterSystem"
-      CLUSTER_PORT: 4053
-      CLUSTER_IP: "node3"
+      CLUSTER__PORT: 4053
+      CLUSTER__IP: "node3"
       AZURITE_HOST: "azurite"
       USE_CHAOS: "false"
       USE_PUBSUB: "false"
