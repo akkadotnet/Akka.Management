@@ -47,7 +47,7 @@ using var host = new HostBuilder()
                 // Add Akka.Cluster support
                 clusterOptions =>
                 {
-                    clusterOptions.Roles = ["cluster"];
+                    clusterOptions.Roles = new []{ "cluster" };
                     clusterOptions.SplitBrainResolver = new LeaseMajorityOption
                     {
                         LeaseImplementation = new AzureLeaseOption()

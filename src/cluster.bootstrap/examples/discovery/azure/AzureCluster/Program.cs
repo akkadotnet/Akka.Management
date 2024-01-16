@@ -55,7 +55,7 @@ namespace AzureCluster
                             // Add Akka.Cluster support
                             clusterOptions =>
                             {
-                                clusterOptions.Roles = ["cluster"];
+                                clusterOptions.Roles = new []{ "cluster" };
                                 clusterOptions.SplitBrainResolver = new KeepMajorityOption();
                             });
                         

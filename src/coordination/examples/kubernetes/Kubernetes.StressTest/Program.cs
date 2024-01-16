@@ -59,7 +59,7 @@ namespace Kubernetes.StressTest
                             // Add Akka.Cluster support
                             clusterOptions =>
                             {
-                                clusterOptions.Roles = ["cluster"];
+                                clusterOptions.Roles = new []{ "cluster" };
                                 clusterOptions.SplitBrainResolver = new LeaseMajorityOption
                                 {
                                     LeaseImplementation = new KubernetesLeaseOption()
