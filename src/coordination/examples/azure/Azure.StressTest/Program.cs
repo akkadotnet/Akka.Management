@@ -29,11 +29,10 @@ using var host = new HostBuilder()
         {
             // don't shutdown gracefully if SIGTERM is received
             builder.AddHocon(
-                """
+                @"
                 akka.coordinated-shutdown.run-by-clr-shutdown-hook = off
                 akka.coordinated-shutdown.run-by-actor-system-terminate = off
-                """, 
-                HoconAddMode.Prepend);
+                ", HoconAddMode.Prepend);
 
             // Add HOCON configuration from Docker
             builder.BootstrapFromDocker(

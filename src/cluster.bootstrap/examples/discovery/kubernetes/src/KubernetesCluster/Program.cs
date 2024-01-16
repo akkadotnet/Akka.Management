@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Cluster;
@@ -76,22 +77,9 @@ namespace KubernetesCluster
                         builder.WithKubernetesLease();
                         
                         // Add https://cmd.petabridge.com/ for diagnostics
-                        builder.AddHocon("""
-                            petabridge.cmd {
-                                # default IP address used to listen for incoming petabridge.cmd client connections
-                                # should be a safe default as it listens on all network interfaces.
-                                host = "0.0.0.0"
-
-                                # default port number used to listen for incoming petabridge.cmd client connections
-                                port = 9110
-                            }
-                            """, HoconAddMode.Prepend)
-                            .AddPetabridgeCmd(pbm =>
-                            {
-                                pbm.RegisterCommandPalette(ClusterCommands.Instance);
-                                pbm.RegisterCommandPalette(new RemoteCommands());
-                            });
-
+                        // Add https://cmd.petabridge.com/ for diagnostics
+                        builder.WithPetabridgeCmd("0.0.0.0", 9110, ClusterCommands.Instance, new RemoteCommands());
+                        
                         // Add start-up code
                         builder.AddStartup((system, registry) =>
                         {
@@ -119,6 +107,35 @@ namespace KubernetesCluster
                 .Build();
 
             await host.RunAsync();
+        }
+        
+        private static AkkaConfigurationBuilder WithPetabridgeCmd(
+            this AkkaConfigurationBuilder builder,
+            string? hostname = null,
+            int? port = null,
+            params CommandPaletteHandler[] palettes) 
+        {
+            var sb = new StringBuilder();
+            if (!string.IsNullOrWhiteSpace(hostname))
+                sb.AppendFormat("host = {0}\n", hostname);
+            if(port != null)
+                sb.AppendFormat("port = {0}\n", port);
+
+            if (sb.Length > 0)
+            {
+                sb.Insert(0, "petabridge.cmd {\n");
+                sb.Append("}");
+
+                builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+            }
+            
+            return builder.AddPetabridgeCmd(cmd =>
+            {
+                foreach (var palette in palettes)
+                {
+                    cmd.RegisterCommandPalette(palette);
+                }
+            });
         }
     }
 }
