@@ -48,7 +48,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: CLUSTER_IP
+        - name: CLUSTER__IP
           value: "$(POD_NAME).clusterbootstrap.clusterbootstrap.svc.cluster.local"
         - name: AZURITE_HOST
           value: "host.docker.internal"

@@ -10,8 +10,8 @@ services:
       - "8558:8558"
     environment:
       ACTORSYSTEM: "ClusterSystem"
-      CLUSTER_PORT: 4053
-      CLUSTER_IP: "192.168.10.1"
+      CLUSTER__PORT: 4053
+      CLUSTER__IP: "192.168.10.1"
       AKKA__REMOTE__DOT_NETTY__TCP__HOSTNAME: "192.168.10.1"
       AKKA__MANAGEMENT__HTTP__HOSTNAME: "192.168.10.1"
 
@@ -22,8 +22,8 @@ services:
         ipv4_address: 192.168.10.2
     environment:
       ACTORSYSTEM: "ClusterSystem"
-      CLUSTER_PORT: 4053
-      CLUSTER_IP: "192.168.10.2"
+      CLUSTER__PORT: 4053
+      CLUSTER__IP: "192.168.10.2"
       AKKA__REMOTE__DOT_NETTY__TCP__HOSTNAME: "192.168.10.2"
       AKKA__MANAGEMENT__HTTP__HOSTNAME: "192.168.10.2"
 
@@ -34,8 +34,8 @@ services:
         ipv4_address: 192.168.10.3
     environment:
       ACTORSYSTEM: "ClusterSystem"
-      CLUSTER_PORT: 4053
-      CLUSTER_IP: "192.168.10.3"
+      CLUSTER__PORT: 4053
+      CLUSTER__IP: "192.168.10.3"
       AKKA__REMOTE__DOT_NETTY__TCP__HOSTNAME: "192.168.10.3"
       AKKA__MANAGEMENT__HTTP__HOSTNAME: "192.168.10.3"
 

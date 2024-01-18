@@ -1,19 +1,18 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using Akka.Actor;
-using Akka.Bootstrap.Docker;
 using Akka.Cluster;
-using Akka.Cluster.Hosting;
 using Akka.Cluster.Hosting.SBR;
 using Akka.Cluster.Tools.PublishSubscribe;
-using Akka.Configuration;
 using Akka.Coordination.KubernetesApi;
 using Akka.Discovery.KubernetesApi;
 using Akka.Hosting;
 using Akka.Management.Cluster.Bootstrap;
-using Akka.Remote.Hosting;
 using Akka.Util;
 using KubernetesCluster.Actors;
+using KubernetesCluster.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -28,29 +27,36 @@ namespace KubernetesCluster
         public static async Task Main(string[] args)
         {
             var host = new HostBuilder()
+                .ConfigureAppConfiguration(builder =>
+                {
+                    builder.AddCommandLine(args);
+                    builder.AddEnvironmentVariables();
+                })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddLogging();
                     
-                    var systemName = Environment.GetEnvironmentVariable("ACTORSYSTEM")?.Trim() ?? "ClusterSystem";
+                    var systemName = hostContext.Configuration.GetValue<string>("actorsystem")?.Trim() ?? "ClusterSystem"; 
                     services.AddAkka(systemName, (builder, provider) =>
                     {
                         // Add HOCON configuration from Docker
-                        builder.AddHocon(Config.Empty.BootstrapFromDocker(), HoconAddMode.Prepend);
-                        
-                        // Add Akka.Remote support.
-                        // Empty hostname is intentional and necessary to make sure that remoting binds to the public
-                        // IP address
-                        builder.WithRemoting(hostname: "", port: 4053);
-                        
-                        // Add Akka.Cluster support
-                        builder.WithClustering(new ClusterOptions
+                        builder.BootstrapFromDocker(
+                            provider,
+                            // Add Akka.Remote support.
+                            // Empty hostname is intentional and necessary to make sure that remoting binds to the public IP address
+                            remoteOptions =>
                             {
-                                Roles = new[] { "cluster" }, 
-                                SplitBrainResolver = new LeaseMajorityOption
+                                remoteOptions.HostName = "";
+                                remoteOptions.Port = 4053;
+                            },
+                            // Add Akka.Cluster support
+                            clusterOptions =>
+                            {
+                                clusterOptions.Roles = new []{ "cluster" };
+                                clusterOptions.SplitBrainResolver = new LeaseMajorityOption
                                 {
                                     LeaseImplementation = new KubernetesLeaseOption()
-                                }
+                                };
                             });
                         
                         // Add Akka.Management.Cluster.Bootstrap support
@@ -71,21 +77,9 @@ namespace KubernetesCluster
                         builder.WithKubernetesLease();
                         
                         // Add https://cmd.petabridge.com/ for diagnostics
-                        builder.AddHocon(@"
-                            petabridge.cmd {
-	                            # default IP address used to listen for incoming petabridge.cmd client connections
-	                            # should be a safe default as it listens on all network interfaces.
-                                host = ""0.0.0.0""
-
-                                # default port number used to listen for incoming petabridge.cmd client connections
-                                port = 9110
-                            }", HoconAddMode.Prepend)
-                            .AddPetabridgeCmd(pbm =>
-                            {
-                                pbm.RegisterCommandPalette(ClusterCommands.Instance);
-                                pbm.RegisterCommandPalette(new RemoteCommands());
-                            });
-
+                        // Add https://cmd.petabridge.com/ for diagnostics
+                        builder.WithPetabridgeCmd("0.0.0.0", 9110, ClusterCommands.Instance, new RemoteCommands());
+                        
                         // Add start-up code
                         builder.AddStartup((system, registry) =>
                         {
@@ -113,6 +107,35 @@ namespace KubernetesCluster
                 .Build();
 
             await host.RunAsync();
+        }
+        
+        private static AkkaConfigurationBuilder WithPetabridgeCmd(
+            this AkkaConfigurationBuilder builder,
+            string? hostname = null,
+            int? port = null,
+            params CommandPaletteHandler[] palettes) 
+        {
+            var sb = new StringBuilder();
+            if (!string.IsNullOrWhiteSpace(hostname))
+                sb.AppendFormat("host = {0}\n", hostname);
+            if(port != null)
+                sb.AppendFormat("port = {0}\n", port);
+
+            if (sb.Length > 0)
+            {
+                sb.Insert(0, "petabridge.cmd {\n");
+                sb.Append("}");
+
+                builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+            }
+            
+            return builder.AddPetabridgeCmd(cmd =>
+            {
+                foreach (var palette in palettes)
+                {
+                    cmd.RegisterCommandPalette(palette);
+                }
+            });
         }
     }
 }

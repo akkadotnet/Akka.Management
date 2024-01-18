@@ -13,7 +13,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Akka.Bootstrap.Docker" Version="$(BootstrapDockerVersion)" />
       <PackageReference Include="Akka.Cluster.Hosting" Version="$(AkkaHostingVersion)" />
     </ItemGroup>
 

@@ -7,7 +7,6 @@
 
 global using System.Text;
 global using Akka.Actor;
-global using Akka.Bootstrap.Docker;
 global using Akka.Cluster;
 global using Akka.Cluster.Hosting;
 global using Akka.Cluster.Hosting.SBR;
