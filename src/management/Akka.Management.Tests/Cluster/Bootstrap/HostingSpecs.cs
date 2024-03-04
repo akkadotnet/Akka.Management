@@ -93,7 +93,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                 tcs.SetResult(Done.Instance);
             });
 
-            tcs.Task.Wait(30.Seconds()).Should().BeTrue();
+            await tcs.Task.WaitAsync(30.Seconds());
             
             await host.StopAsync();
         }

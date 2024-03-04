@@ -11,9 +11,12 @@ using Akka.Configuration;
 using Akka.Discovery;
 using Akka.Event;
 using Akka.Management.Cluster.Bootstrap;
+using Akka.TestKit.Extensions;
 using FluentAssertions;
+using FluentAssertions.Extensions;
 using Xunit;
 using Xunit.Abstractions;
+using static FluentAssertions.FluentActions;
 
 namespace Akka.Management.Tests.Cluster.Bootstrap
 {
@@ -39,20 +42,12 @@ akka.remote.dot-netty.tcp.port = 0
         {
             var probe = CreateTestProbe();
             Sys.EventStream.Subscribe(probe.Ref, typeof(Error));
-            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(15));
-            var exceptionTask = Record.ExceptionAsync(async () =>
-            {
-                await ClusterBootstrap.Get(Sys).Start();
-            });
 
-            var finishedTask = await Task.WhenAny(timeoutTask, exceptionTask);
-            finishedTask.Should().NotBe(timeoutTask, "ClusterBootstrap failed to stop itself after 10 seconds");
-            exceptionTask.IsCompletedSuccessfully.Should().BeTrue();
-            
-            var exception = exceptionTask.Result;
-            exception.Should().NotBeNull();
-            // ReSharper disable once PossibleNullReferenceException
-            exception.Message.Should().Be("Awaiting ClusterBootstrap.SelfContactPointUri timed out.");
+            await Awaiting(() => ClusterBootstrap.Get(Sys).Start())
+                .Should().ThrowAsync<Exception>()
+                .WithMessage("Awaiting ClusterBootstrap.SelfContactPointUri timed out.")
+                .ShouldCompleteWithin(15.Seconds(), "ClusterBootstrap failed to stop itself after 10 seconds");
+
             await AwaitAssertAsync(() =>
             {
                 probe.ExpectMsg<Error>().Message.ToString().Should()

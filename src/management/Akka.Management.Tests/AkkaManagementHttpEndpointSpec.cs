@@ -155,15 +155,15 @@ namespace Akka.Management.Tests
                 tasks[1].Should().Be(tasks[0]);
                 tasks[2].Should().Be(tasks[0]);
                 
-                await Task.WhenAll(tasks).WithCancellation(cts.Token);
-                
-                tasks[1].Result.Should().Be(tasks[0].Result);
-                tasks[2].Result.Should().Be(tasks[0].Result);
+                var results = await Task.WhenAll(tasks).WithCancellation(cts.Token);
+
+                results[1].Should().Be(results[0]);
+                results[2].Should().Be(results[0]);
 
                 var task = management.Start();
                 task.Should().Be(tasks[0]);
-                await task.WithCancellation(cts.Token);
-                task.Result.Should().Be(tasks[0].Result);
+                var result = await task.WithCancellation(cts.Token);
+                result.Should().Be(results[0]);
             }
 
             var client = new HttpClient

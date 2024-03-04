@@ -11,6 +11,7 @@ using Akka.Configuration;
 using Xunit;
 using Xunit.Abstractions;
 using FluentAssertions;
+using static FluentAssertions.FluentActions;
 
 namespace Akka.Coordination.Azure.Tests;
 
@@ -37,18 +38,13 @@ akka.coordination.lease.azure.connection-string = ""UseDevelopmentStorage=true""
     }
 
     [Fact(DisplayName = "Releasing non-acquired lease should not throw an exception")]
-    public void NonAcquiredReleaseTest()
+    public async Task NonAcquiredReleaseTest()
     {
-        var probe = CreateTestProbe();
-        var _ = _lease.Release().ContinueWith(task =>
+        await Awaiting(async () =>
         {
-            probe.Tell(task);
-        });
-
-        var task = probe.ExpectMsg<Task<bool>>();
-        task.IsFaulted.Should().BeFalse();
-        task.Exception.Should().BeNull();
-        task.Result.Should().BeTrue();
+            var result = await _lease.Release();
+            result.Should().BeTrue();
+        }).Should().NotThrowAsync();
     }
 
     [Fact(DisplayName = "Acquire should be idempotent and returns the same task while acquire is in progress")]
