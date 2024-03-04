@@ -31,14 +31,14 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <TestSdkVersion>17.9.0</TestSdkVersion>
         <WireMockVersion>1.5.48</WireMockVersion>
         
-        <AkkaVersion>1.5.15</AkkaVersion>
-        <AkkaHostingVersion>1.5.15</AkkaHostingVersion>
+        <AkkaVersion>1.5.17.1</AkkaVersion>
+        <AkkaHostingVersion>1.5.17.1</AkkaHostingVersion>
         <PbmVersion>1.4.0</PbmVersion>
         
         <KubernetesClientVersion>4.0.26</KubernetesClientVersion>
         <MicrosoftExtensionsVersion>[6.0.*,)</MicrosoftExtensionsVersion>
         <AzureIdentityVersion>1.10.4</AzureIdentityVersion>
-        <ProtobufVersion>3.25.2</ProtobufVersion>
+        <ProtobufVersion>3.25.3</ProtobufVersion>
         <GrpcToolsVersion>2.62.0</GrpcToolsVersion>
     </PropertyGroup>
     
