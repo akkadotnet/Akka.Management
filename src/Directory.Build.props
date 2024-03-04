@@ -32,7 +32,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <WireMockVersion>1.5.47</WireMockVersion>
         
         <AkkaVersion>1.5.15</AkkaVersion>
-        <AkkaHostingVersion>1.5.15</AkkaHostingVersion>
+        <AkkaHostingVersion>1.5.16</AkkaHostingVersion>
         <PbmVersion>1.4.0</PbmVersion>
         
         <KubernetesClientVersion>4.0.26</KubernetesClientVersion>
