@@ -1,3 +1,17 @@
+#### 1.5.17.1 March 4 2024 ####
+
+* Update to [Akka.NET v1.5.17.1](https://github.com/akkadotnet/akka.net/releases/tag/1.5.17.1)
+* [Modernize sample projects](https://github.com/akkadotnet/Akka.Management/pull/2285)
+* Update dependency NuGet package versions to latest versions
+  * [Bump Akka.Hosting to 1.5.17.1](https://github.com/akkadotnet/Akka.Management/pull/2381)
+  * [Bump Petabridge.Cmd to 1.3.3](https://github.com/akkadotnet/Akka.Management/pull/2279)
+  * [Bump AWSSDK.CludFormation to 3.7.303.10](https://github.com/akkadotnet/Akka.Management/pull/2373)
+  * [Bump AWSSDK.ECS to 3.7.305.16](https://github.com/akkadotnet/Akka.Management/pull/2374)
+  * [Bump AWSSDK.S3 to 3.7.305.30](https://github.com/akkadotnet/Akka.Management/pull/2376)
+  * [Bump AWSSDK.EC2 to 3.7.315.2](https://github.com/akkadotnet/Akka.Management/pull/2377)
+  * [Bump Azure.Data.Tables to 12.8.3](https://github.com/akkadotnet/Akka.Management/pull/2335)
+  * [Bump Grpc.Tools to 2.62.0](https://github.com/akkadotnet/Akka.Management/pull/2366)
+
 #### 1.5.15 January 11 2024 ####
 
 * Update to [Akka.NET v1.5.15](https://github.com/akkadotnet/akka.net/releases/tag/1.5.15)
