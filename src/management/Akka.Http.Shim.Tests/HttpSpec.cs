@@ -40,7 +40,7 @@ namespace Akka.Http.Shim.Tests
             {
                 ("/test/one", new RouteHandler()), 
                 ("/test/two", new RouteHandler())
-            }).ConfigureAwait(false);
+            });
 
             Log.Info($"Bound Akka Management (HTTP) endpoint to: {serverBinding.LocalAddress}");
 

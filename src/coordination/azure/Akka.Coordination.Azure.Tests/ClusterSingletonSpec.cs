@@ -76,12 +76,12 @@ namespace Akka.Coordination.Azure.Tests
             {
                 tcs.SetResult(Done.Instance);
             });
-            tcs.Task.Wait(30.Seconds()).Should().BeTrue();
+            await tcs.Task.WaitAsync(30.Seconds());
             
             var singleton = ActorRegistry.Get<SingletonKey>();
             (await singleton.Ask("test")).Should().Be("test");
 
-            probe.FishForMessage(evt => evt is Info i && (i.Message?.ToString()?.StartsWith("Acquire lease result") ?? false));
+            await probe.FishForMessageAsync(evt => evt is Info i && (i.Message?.ToString()?.StartsWith("Acquire lease result") ?? false));
         }
     }
 }
