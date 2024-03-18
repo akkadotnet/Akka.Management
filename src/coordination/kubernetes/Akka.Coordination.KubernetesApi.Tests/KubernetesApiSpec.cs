@@ -15,7 +15,6 @@ using Akka.Coordination.KubernetesApi.Models;
 using Akka.Util;
 using FluentAssertions;
 using k8s.Models;
-using Microsoft.Rest.Serialization;
 using WireMock;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
@@ -24,6 +23,13 @@ using WireMock.Types;
 using WireMock.Util;
 using Xunit;
 using Xunit.Abstractions;
+using static FluentAssertions.FluentActions;
+
+#if !NET6_0_OR_GREATER
+using Microsoft.Rest.Serialization;
+#else
+using k8s;
+#endif
 
 #nullable enable
 namespace Akka.Coordination.KubernetesApi.Tests
@@ -84,22 +90,31 @@ namespace Akka.Coordination.KubernetesApi.Tests
         public async Task AbleToCreateLeaseResource()
         {
             const string version = "1234";
+            
+            var resource = new LeaseCustomResource(
+                metadata: new V1ObjectMeta
+                {
+                    Name = LeaseName,
+                    NamespaceProperty = "akka-lease-tests",
+                    ResourceVersion = version,
+                    SelfLink = LeaseApiPath,
+                    Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
+                },
+                spec: new LeaseSpec(owner: "", time: 1549439255948));
+            
+#if !NET6_0_OR_GREATER
+            var json = SafeJsonConvert.SerializeObject(resource);
+#else
+            var json = KubernetesJson.Serialize(resource);
+#endif
+                
             try
             {
                 _wireMockServer.Given(Request.Create().UsingPost().WithPath(ApiPath))
                     .RespondWith(Response.Create()
                         .WithStatusCode(201)
                         .WithHeader("Content-Type", "application/json")
-                        .WithBodyAsJson(new LeaseCustomResource(
-                            new V1ObjectMeta
-                            {
-                                Name = LeaseName,
-                                NamespaceProperty = "akka-lease-tests",
-                                ResourceVersion = version,
-                                SelfLink = LeaseApiPath,
-                                Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
-                            },
-                            new LeaseSpec(owner: "", time: 1549439255948))));
+                        .WithBodyAsJson(json));
 
                 (await _underTest.RemoveLease(LeaseName)).Should().Be(Done.Instance);
                 var leaseRecord = await _underTest.ReadOrCreateLeaseResource(LeaseName);
@@ -128,7 +143,11 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithHeader("Content-Type", "application/json")
                         .WithCallback(request =>
                         {
+#if !NET6_0_OR_GREATER
                             var body = SafeJsonConvert.DeserializeObject<LeaseCustomResource>(request.Body);
+#else
+                            var body = KubernetesJson.Deserialize<LeaseCustomResource>(request.Body);
+#endif
                             var response =  new LeaseCustomResource(
                                 new V1ObjectMeta
                                 {
@@ -139,6 +158,11 @@ namespace Akka.Coordination.KubernetesApi.Tests
                                     Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
                                 },
                                 new LeaseSpec(owner: body.Spec.Owner, time: body.Spec.Time));
+#if !NET6_0_OR_GREATER
+                            var responseJson = SafeJsonConvert.SerializeObject(response);
+#else
+                            var responseJson = KubernetesJson.Serialize(response);
+#endif
                             return new ResponseMessage
                             {
                                 BodyDestination = null,
@@ -146,7 +170,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                                 {
                                     Encoding = null,
                                     DetectedBodyType = BodyType.Json,
-                                    BodyAsJson = response,
+                                    BodyAsJson = responseJson,
                                     BodyAsJsonIndented = false
                                 }
                             };
@@ -171,7 +195,25 @@ namespace Akka.Coordination.KubernetesApi.Tests
             const string conflictOwner = "client2";
             const string version = "2";
             const string updatedVersion = "3";
+            
             var timestamp = DateTime.UtcNow;
+            var resource = new LeaseCustomResource(
+                metadata: new V1ObjectMeta
+                {
+                    Name = LeaseName,
+                    NamespaceProperty = "akka-lease-tests",
+                    ResourceVersion = updatedVersion,
+                    SelfLink = LeaseApiPath,
+                    Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
+                },
+                spec: new LeaseSpec(owner: conflictOwner, time: timestamp));
+            
+#if !NET6_0_OR_GREATER
+            var json = SafeJsonConvert.SerializeObject(resource);
+#else
+            var json = KubernetesJson.Serialize(resource);
+#endif
+            
             try
             {
                 // Conflict
@@ -183,15 +225,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                     .RespondWith(Response.Create()
                         .WithStatusCode(HttpStatusCode.OK)
                         .WithHeader("Content-Type", "application/json")
-                        .WithBodyAsJson(new LeaseCustomResource(
-                            new V1ObjectMeta
-                            {
-                                Name = LeaseName,
-                                NamespaceProperty = "akka-lease-tests",
-                                ResourceVersion = updatedVersion,
-                                SelfLink = LeaseApiPath,
-                                Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
-                            }, new LeaseSpec(owner: conflictOwner, time: timestamp))));
+                        .WithBodyAsJson(json));
 
                 var response = await _underTest.UpdateLeaseResource(LeaseName, owner, version, timestamp);
                 response.Should().BeOfType<Left<LeaseResource, LeaseResource>>();
@@ -213,7 +247,9 @@ namespace Akka.Coordination.KubernetesApi.Tests
             try
             {
                 _wireMockServer.Given(Request.Create().UsingDelete().WithPath(LeaseApiPath))
-                    .RespondWith(Response.Create().WithStatusCode(HttpStatusCode.OK));
+                    .RespondWith(Response.Create()
+                        .WithBodyAsJson(new object())
+                        .WithStatusCode(HttpStatusCode.OK));
 
                 var response = await _underTest.RemoveLease(LeaseName);
                 response.Should().Be(Done.Instance);
@@ -229,7 +265,24 @@ namespace Akka.Coordination.KubernetesApi.Tests
         {
             const string owner = "client1";
             const string version = "2";
+            
             var timestamp = DateTime.UtcNow;
+            var resource = new LeaseCustomResource(
+                metadata: new V1ObjectMeta
+                {
+                    Name = LeaseName,
+                    NamespaceProperty = "akka-lease-tests",
+                    ResourceVersion = version,
+                    SelfLink = LeaseApiPath,
+                    Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
+                }, 
+                spec: new LeaseSpec(owner: owner, time: timestamp));
+            
+#if !NET6_0_OR_GREATER
+            var json = SafeJsonConvert.SerializeObject(resource);
+#else
+            var json = KubernetesJson.Serialize(resource);
+#endif
 
             try
             {
@@ -238,21 +291,10 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithDelay((int)(_settings.ApiServiceRequestTimeout.TotalMilliseconds * 2)) // time out
                         .WithStatusCode(HttpStatusCode.OK)
                         .WithHeader("Content-Type", "application/json")
-                        .WithBodyAsJson(new LeaseCustomResource(
-                            new V1ObjectMeta
-                            {
-                                Name = LeaseName,
-                                NamespaceProperty = "akka-lease-tests",
-                                ResourceVersion = version,
-                                SelfLink = LeaseApiPath,
-                                Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
-                            }, new LeaseSpec(owner: owner, time: timestamp))));
-                var exception = await Record.ExceptionAsync( async () =>
-                {
-                    await _underTest.ReadOrCreateLeaseResource(LeaseName);
-                });
-                exception.Should().BeOfType<LeaseTimeoutException>();
-                exception.Message.Should().StartWith($"Timed out reading lease {LeaseName}.");
+                        .WithBodyAsJson(json));
+                await Awaiting(() => _underTest.ReadOrCreateLeaseResource(LeaseName)).Should()
+                    .ThrowAsync<LeaseTimeoutException>()
+                    .WithMessage($"Timed out reading lease {LeaseName}.*");
             }
             finally
             {
@@ -266,6 +308,22 @@ namespace Akka.Coordination.KubernetesApi.Tests
             const string owner = "client1";
             const string version = "2";
             var timestamp = DateTime.UtcNow;
+            var resource = new LeaseCustomResource(
+                metadata: new V1ObjectMeta
+                {
+                    Name = LeaseName,
+                    NamespaceProperty = "akka-lease-tests",
+                    ResourceVersion = version,
+                    SelfLink = LeaseApiPath,
+                    Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
+                }, 
+                spec: new LeaseSpec(owner: owner, time: timestamp));
+            
+#if !NET6_0_OR_GREATER
+            var json = SafeJsonConvert.SerializeObject(resource);
+#else
+            var json = KubernetesJson.Serialize(resource);
+#endif
 
             try
             {
@@ -277,21 +335,10 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithDelay((int)(_settings.ApiServiceRequestTimeout.TotalMilliseconds * 2)) // time out
                         .WithStatusCode(HttpStatusCode.OK)
                         .WithHeader("Content-Type", "application/json")
-                        .WithBodyAsJson(new LeaseCustomResource(
-                            new V1ObjectMeta
-                            {
-                                Name = LeaseName,
-                                NamespaceProperty = "akka-lease-tests",
-                                ResourceVersion = version,
-                                SelfLink = LeaseApiPath,
-                                Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
-                            }, new LeaseSpec(owner: owner, time: timestamp))));
-                var exception = await Record.ExceptionAsync( async () =>
-                {
-                    await _underTest.ReadOrCreateLeaseResource(LeaseName);
-                });
-                exception.Should().BeOfType<LeaseTimeoutException>();
-                exception.Message.Should().StartWith($"Timed out creating lease {LeaseName}.");
+                        .WithBodyAsJson(json));
+                await Awaiting(() => _underTest.ReadOrCreateLeaseResource(LeaseName)).Should()
+                    .ThrowAsync<LeaseTimeoutException>()
+                    .WithMessage($"Timed out creating lease {LeaseName}.*");
             }
             finally
             {
@@ -304,8 +351,25 @@ namespace Akka.Coordination.KubernetesApi.Tests
         {
             const string owner = "client1";
             const string version = "2";
+            
             var timestamp = DateTime.UtcNow;
+            var resource = new LeaseCustomResource(
+                metadata: new V1ObjectMeta
+                {
+                    Name = LeaseName,
+                    NamespaceProperty = "akka-lease-tests",
+                    ResourceVersion = version,
+                    SelfLink = LeaseApiPath,
+                    Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
+                },
+                spec: new LeaseSpec(owner: owner, time: timestamp));
 
+#if !NET6_0_OR_GREATER
+            var json = SafeJsonConvert.SerializeObject(resource);
+#else
+            var json = KubernetesJson.Serialize(resource);
+#endif
+                
             try
             {
                 _wireMockServer.Given(Request.Create().UsingPut().WithPath(LeaseApiPath))
@@ -313,21 +377,10 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithDelay((int)(_settings.ApiServiceRequestTimeout.TotalMilliseconds * 2)) // time out
                         .WithStatusCode(HttpStatusCode.OK)
                         .WithHeader("Content-Type", "application/json")
-                        .WithBodyAsJson(new LeaseCustomResource(
-                            new V1ObjectMeta
-                            {
-                                Name = LeaseName,
-                                NamespaceProperty = "akka-lease-tests",
-                                ResourceVersion = version,
-                                SelfLink = LeaseApiPath,
-                                Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
-                            }, new LeaseSpec(owner: owner, time: timestamp))));
-                var exception = await Record.ExceptionAsync( async () =>
-                {
-                    await _underTest.UpdateLeaseResource(LeaseName, owner, version);
-                });
-                exception.Should().BeOfType<LeaseTimeoutException>();
-                exception.Message.Should().StartWith($"Timed out updating lease {LeaseName} to owner {owner}. It is not known if the update happened.");
+                        .WithBodyAsJson(json));
+                await Awaiting(() => _underTest.UpdateLeaseResource(LeaseName, owner, version)).Should()
+                    .ThrowAsync<LeaseTimeoutException>()
+                    .WithMessage($"Timed out updating lease {LeaseName} to owner {owner}. It is not known if the update happened.*");
             }
             finally
             {
@@ -344,13 +397,10 @@ namespace Akka.Coordination.KubernetesApi.Tests
                     .RespondWith(Response.Create()
                         .WithDelay((int)(_settings.ApiServiceRequestTimeout.TotalMilliseconds * 2)) // time out
                         .WithStatusCode(HttpStatusCode.OK));
-                
-                var exception = await Record.ExceptionAsync( async () =>
-                {
-                    await _underTest.RemoveLease(LeaseName);
-                });
-                exception.Should().BeOfType<LeaseTimeoutException>();
-                exception.Message.Should().StartWith($"Timed out removing lease {LeaseName}. It is not known if the remove happened.");
+
+                await Awaiting(() => _underTest.RemoveLease(LeaseName)).Should()
+                    .ThrowAsync<LeaseTimeoutException>()
+                    .WithMessage($"Timed out removing lease {LeaseName}. It is not known if the remove happened.*");
             }
             finally
             {
