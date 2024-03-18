@@ -17,8 +17,15 @@ using Akka.Event;
 using k8s;
 using k8s.Authentication;
 using k8s.Models;
-using Microsoft.Rest;
 using Newtonsoft.Json;
+
+#if !NET6_0_OR_GREATER
+using Microsoft.Rest;
+#else
+using System.Runtime.Serialization;
+using k8s.Autorest;
+#endif
+
 
 namespace Akka.Discovery.KubernetesApi
 {
@@ -89,12 +96,20 @@ namespace Akka.Discovery.KubernetesApi
             V1PodList podList;
             try
             {
+#if !NET6_0_OR_GREATER
                 var result = await _client.ListNamespacedPodWithHttpMessagesAsync(
                         namespaceParameter: PodNamespace,
                         labelSelector: labelSelector,
                         cancellationToken: cts.Token)
                     .ConfigureAwait(false);
                 podList = result.Body;
+#else
+                var result = await _client.ListNamespacedPodAsync(
+                    namespaceParameter: PodNamespace,
+                    labelSelector: labelSelector,
+                    cancellationToken: cts.Token);
+                podList = result;
+#endif
             }
             catch (SerializationException e)
             {

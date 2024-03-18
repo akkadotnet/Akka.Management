@@ -18,9 +18,14 @@ using Akka.Util;
 using k8s;
 using k8s.Authentication;
 using k8s.Models;
+using Newtonsoft.Json;
+
+#if !NET6_0_OR_GREATER
 using Microsoft.Rest;
 using Microsoft.Rest.Serialization;
-using Newtonsoft.Json;
+#else
+using k8s.Autorest;
+#endif
 
 #nullable enable
 namespace Akka.Coordination.KubernetesApi.Internal
@@ -99,6 +104,7 @@ namespace Akka.Coordination.KubernetesApi.Internal
                     metadata: new V1ObjectMeta(name: leaseName, resourceVersion: version),
                     spec: new LeaseSpec(owner: ownerName, time: time ?? DateTime.UtcNow));
                 _log.Debug("Updating {0} to {1}", leaseName, leaseBody);
+#if !NET6_0_OR_GREATER
                 using var operationResponse = await _client
                     .ReplaceNamespacedCustomObjectWithHttpMessagesAsync(
                         body: leaseBody,
@@ -109,8 +115,20 @@ namespace Akka.Coordination.KubernetesApi.Internal
                         name: leaseName,
                         cancellationToken: cts.Token)
                     .ConfigureAwait(false);
-
                 var newLease = operationResponse.Body;
+#else
+                var operationResponse = await _client.ReplaceNamespacedCustomObjectAsync(
+                    body: leaseBody,
+                    @group: _crd.Group,
+                    version: _crd.Version,
+                    namespaceParameter: _namespace,
+                    plural: _crd.PluralName,
+                    name: leaseName,
+                    cancellationToken: cts.Token
+                );
+                var newLease = operationResponse;
+#endif
+
                 _log.Debug("Lease after update: {0}", JsonConvert.SerializeObject(newLease));
                 return new Right<LeaseResource, LeaseResource>(ToLeaseResource(newLease));
             }
@@ -142,11 +160,15 @@ namespace Akka.Coordination.KubernetesApi.Internal
             }
             catch (OperationCanceledException e)
             {
-                throw new LeaseTimeoutException($"Timed out updating lease {leaseName} to owner {ownerName}. It is not known if the update happened. Is the API server up?", e);
+                throw new LeaseTimeoutException(
+                    $"Timed out updating lease {leaseName} to owner {ownerName}. It is not known if the update happened. Is the API server up?",
+                    e);
             }
             catch (TimeoutException e)
             {
-                throw new LeaseTimeoutException($"Timed out updating lease {leaseName} to owner {ownerName}. It is not known if the update happened. Is the API server up?", e);
+                throw new LeaseTimeoutException(
+                    $"Timed out updating lease {leaseName} to owner {ownerName}. It is not known if the update happened. Is the API server up?",
+                    e);
             }
         }
 
@@ -158,6 +180,7 @@ namespace Akka.Coordination.KubernetesApi.Internal
                 var leaseBody = new LeaseCustomResource(
                     metadata: new V1ObjectMeta(name: name, namespaceProperty: _namespace),
                     spec: new LeaseSpec(owner: "", time: DateTime.UtcNow));
+#if !NET6_0_OR_GREATER
                 using var operationResponse = await _client
                     .CreateNamespacedCustomObjectWithHttpMessagesAsync(
                         leaseBody,
@@ -170,6 +193,19 @@ namespace Akka.Coordination.KubernetesApi.Internal
 
                 _log.Debug("Lease resource created");
                 return ToLeaseResource(operationResponse.Body);
+#else
+                var operationResponse = await _client
+                    .CreateNamespacedCustomObjectAsync(
+                        body: leaseBody,
+                        group: _crd.Group,
+                        version: _crd.Version,
+                        namespaceParameter: _namespace,
+                        plural: _crd.PluralName,
+                        cancellationToken: cts.Token);
+
+                _log.Debug("Lease resource created");
+                return ToLeaseResource(operationResponse);
+#endif
             }
             catch (HttpOperationException e)
             {
@@ -210,6 +246,7 @@ namespace Akka.Coordination.KubernetesApi.Internal
             var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
             try
             {
+#if !NET6_0_OR_GREATER
                 using var operationResponse = await _client
                     .GetNamespacedCustomObjectWithHttpMessagesAsync(
                         @group: _crd.Group,
@@ -223,6 +260,20 @@ namespace Akka.Coordination.KubernetesApi.Internal
                 // it exists, parse it
                 _log.Debug("Resource {0} exists: {1}", name, operationResponse.Response);
                 return ToLeaseResource(operationResponse.Body.ToString());
+#else
+                var operationResponse = await _client
+                    .GetNamespacedCustomObjectAsync(
+                        group: _crd.Group,
+                        version: _crd.Version,
+                        namespaceParameter: _namespace,
+                        plural: _crd.PluralName,
+                        name: name,
+                        cancellationToken: cts.Token);
+                
+                // it exists, parse it
+                _log.Debug("Resource {0} exists: {1}", name, operationResponse);
+                return ToLeaseResource(operationResponse);
+#endif
             }
             catch (HttpOperationException e)
             {
@@ -261,6 +312,7 @@ namespace Akka.Coordination.KubernetesApi.Internal
             var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
             try
             {
+#if !NET6_0_OR_GREATER
                 using var operationResponse = await _client
                     .DeleteNamespacedCustomObjectWithHttpMessagesAsync(
                         @group: _crd.Group,
@@ -270,6 +322,16 @@ namespace Akka.Coordination.KubernetesApi.Internal
                         name: name,
                         cancellationToken: cts.Token)
                     .ConfigureAwait(false);
+#else
+                var operationResponse = await _client
+                    .DeleteNamespacedCustomObjectAsync(
+                        group: _crd.Group,
+                        version: _crd.Version,
+                        namespaceParameter: _namespace,
+                        plural: _crd.PluralName,
+                        name: name,
+                        cancellationToken: cts.Token);
+#endif
                 _log.Debug("Lease deleted: {0}", name);
                 return Done.Instance;
             }
@@ -307,7 +369,11 @@ namespace Akka.Coordination.KubernetesApi.Internal
         
         private LeaseResource ToLeaseResource(object obj)
         {
+#if !NET6_0_OR_GREATER
             var lease = SafeJsonConvert.DeserializeObject<LeaseCustomResource>(obj.ToString());
+#else
+            var lease = KubernetesJson.Deserialize<LeaseCustomResource>(obj.ToString());
+#endif
             _log.Debug("Converting {0}", lease);
             if (lease.Metadata.ResourceVersion == null)
             {

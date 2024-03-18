@@ -35,7 +35,8 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <AkkaHostingVersion>1.5.17.1</AkkaHostingVersion>
         <PbmVersion>1.4.0</PbmVersion>
         
-        <KubernetesClientVersion>4.0.26</KubernetesClientVersion>
+        <KubernetesClientVersionNetStandard>4.0.26</KubernetesClientVersionNetStandard>
+        <KubernetesClientVersionNet>13.0.26</KubernetesClientVersionNet>
         <MicrosoftExtensionsVersion>[6.0.*,)</MicrosoftExtensionsVersion>
         <AzureIdentityVersion>1.10.4</AzureIdentityVersion>
         <ProtobufVersion>3.25.3</ProtobufVersion>

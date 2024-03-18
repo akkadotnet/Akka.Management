@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>$(TestsNet)</TargetFramework>
+        <TargetFrameworks>$(TestsNetCoreFramework);$(TestsNet)</TargetFrameworks>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 

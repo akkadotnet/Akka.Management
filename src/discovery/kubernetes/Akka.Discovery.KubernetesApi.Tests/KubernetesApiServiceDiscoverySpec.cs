@@ -9,14 +9,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Akka.Actor;
 using FluentAssertions;
 using k8s.Models;
-using Microsoft.Rest.Serialization;
 using Xunit;
+
+#if !NET6_0_OR_GREATER
+using Microsoft.Rest.Serialization;
+#else
+using k8s;
+#endif
 
 namespace Akka.Discovery.KubernetesApi.Tests
 {
@@ -246,7 +249,11 @@ namespace Akka.Discovery.KubernetesApi.Tests
         public void IgnoreRunningPodsWhereContainerIsWaiting()
         {
             var json = LoadResource("Akka.Discovery.KubernetesApi.Tests.multi-container-pod.json");
+#if !NET6_0_OR_GREATER
             var podList = SafeJsonConvert.DeserializeObject<V1PodList>(json);
+#else
+            var podList = KubernetesJson.Deserialize<V1PodList>(json);
+#endif
 
             KubernetesApiServiceDiscovery.Targets(
                 podList, 

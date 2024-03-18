@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>$(LibraryFramework)</TargetFramework>
+        <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
         <Description>Akka.NET discovery module for Kubernetes</Description>
         <PackageTags>$(AkkaPackageTags);Kubernetes;</PackageTags>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -11,7 +11,14 @@
     <ItemGroup>
         <PackageReference Include="Akka.Discovery" Version="$(AkkaVersion)" />
         <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
-        <PackageReference Include="KubernetesClient" Version="$(KubernetesClientVersion)" />
+    </ItemGroup>
+    
+    <ItemGroup Condition=" '$(TargetFramework)' == '$(LibraryFramework)' ">
+        <PackageReference Include="KubernetesClient" Version="$(KubernetesClientVersionNetStandard)" />
+    </ItemGroup>
+
+    <ItemGroup Condition=" '$(TargetFramework)' == '$(NetFramework)' ">
+        <PackageReference Include="KubernetesClient" Version="$(KubernetesClientVersionNet)" />
     </ItemGroup>
 
     <ItemGroup>
