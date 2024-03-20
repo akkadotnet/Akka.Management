@@ -1,3 +1,15 @@
+#### 1.5.18-beta1 March 20 2024 ####
+
+* Update to [Akka.NET v1.5.18](https://github.com/akkadotnet/akka.net/releases/tag/1.5.18)
+* Update dependency NuGet package versions to latest versions
+  * [Bump Akka.Hosting to 1.5.18](https://github.com/akkadotnet/Akka.Management/pull/2410)
+  * [Bump KubernetesClient to 13.0.26](https://github.com/akkadotnet/Akka.Management/pull/2405)
+  * [Bump Petabridge.Cmd to 1.4.1](https://github.com/akkadotnet/Akka.Management/pull/2418)
+  * [Bump AWSSDK.S3 to 3.7.307](https://github.com/akkadotnet/Akka.Management/pull/2412)
+  * [Bump AWSSDK.CludFormation to 3.7.305.1](https://github.com/akkadotnet/Akka.Management/pull/2416)
+  * [Bump AWSSDK.ECS to 3.7.305.21](https://github.com/akkadotnet/Akka.Management/pull/2414)
+  * [Bump AWSSDK.EC2 to 3.7.318](https://github.com/akkadotnet/Akka.Management/pull/2417)
+
 #### 1.5.17.1 March 4 2024 ####
 
 * Update to [Akka.NET v1.5.17.1](https://github.com/akkadotnet/akka.net/releases/tag/1.5.17.1)
