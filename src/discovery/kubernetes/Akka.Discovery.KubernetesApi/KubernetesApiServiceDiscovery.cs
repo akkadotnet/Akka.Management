@@ -89,8 +89,8 @@ namespace Akka.Discovery.KubernetesApi
             var labelSelector = _settings.PodLabelSelector(lookup.ServiceName);
             
             if(_log.IsInfoEnabled)
-                _log.Info("Querying for pods with label selector: [{0}]. Namespace: [{1}]. Port: [{2}]",
-                    labelSelector, PodNamespace, lookup.PortName);
+                _log.Info("Querying for pods with label selector: [{0}]. Namespace: [{1}]. AllNamespaces: [{2}]. Port: [{3}]",
+                    labelSelector, PodNamespace, _settings.AllNamespaces, lookup.PortName);
 
             var cts = new CancellationTokenSource(resolveTimeout);
             V1PodList podList;
