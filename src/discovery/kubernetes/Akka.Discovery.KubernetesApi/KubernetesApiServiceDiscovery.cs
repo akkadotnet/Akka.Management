@@ -96,20 +96,10 @@ namespace Akka.Discovery.KubernetesApi
             V1PodList podList;
             try
             {
-#if !NET6_0_OR_GREATER
-                var result = await _client.ListNamespacedPodWithHttpMessagesAsync(
-                        namespaceParameter: PodNamespace,
-                        labelSelector: labelSelector,
-                        cancellationToken: cts.Token)
-                    .ConfigureAwait(false);
-                podList = result.Body;
-#else
-                var result = await _client.ListNamespacedPodAsync(
-                    namespaceParameter: PodNamespace,
-                    labelSelector: labelSelector,
-                    cancellationToken: cts.Token);
-                podList = result;
-#endif
+                if(_settings.AllNamespaces)
+                    podList = await ListPodForAllNamespaces(labelSelector, cts);
+                else
+                    podList = await ListNamespacedPod(labelSelector, cts);
             }
             catch (SerializationException e)
             {
@@ -177,7 +167,45 @@ namespace Akka.Discovery.KubernetesApi
 
             return new Resolved(serviceName: lookup.ServiceName, addresses: addresses);
         }
+
+        private async Task<V1PodList> ListNamespacedPod(string labelSelector, CancellationTokenSource cts)
+        {
+            V1PodList podList;
+#if !NET6_0_OR_GREATER
+            var result = await _client.ListNamespacedPodWithHttpMessagesAsync(
+                namespaceParameter: PodNamespace,
+                labelSelector: labelSelector,
+                cancellationToken: cts.Token)
+                .ConfigureAwait(false);
+            podList = result.Body;
+#else
+            var result = await _client.ListNamespacedPodAsync(
+                namespaceParameter: PodNamespace,
+                labelSelector: labelSelector,
+                cancellationToken: cts.Token);
+            podList = result;
+#endif
+            return podList;
+        }
         
+        private async Task<V1PodList> ListPodForAllNamespaces(string labelSelector, CancellationTokenSource cts)
+        {
+            V1PodList podList;
+#if !NET6_0_OR_GREATER
+            var result = await _client.ListPodForAllNamespacesWithHttpMessagesAsync(
+                labelSelector: labelSelector,
+                cancellationToken: cts.Token)
+                .ConfigureAwait(false);
+            podList = result.Body;
+#else
+            var result = await _client.ListPodForAllNamespacesAsync(
+                labelSelector: labelSelector,
+                cancellationToken: cts.Token);
+            podList = result;
+#endif
+            return podList;
+        }
+
         // This uses blocking IO, and so should only be used to read configuration at startup.
         private string? ReadConfigVarFromFileSystem(string path, string name)
         {
