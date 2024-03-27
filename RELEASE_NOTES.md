@@ -1,3 +1,8 @@
+#### 1.5.18-beta2 March 20 2024 ####
+
+* [Discovery.KubernetesApi: Add option to query pods in all namespaces](https://github.com/akkadotnet/Akka.Management/pull/2421)
+* [Bump AWSSDK.CludFormation to 3.7.305.4](https://github.com/akkadotnet/Akka.Management/pull/2430)
+
 #### 1.5.18-beta1 March 20 2024 ####
 
 * Update to [Akka.NET v1.5.18](https://github.com/akkadotnet/akka.net/releases/tag/1.5.18)
