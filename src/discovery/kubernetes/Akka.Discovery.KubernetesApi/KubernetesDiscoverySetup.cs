@@ -18,6 +18,7 @@ namespace Akka.Discovery.KubernetesApi
         public string? ApiServicePortEnvName { get; set; }
         public string? PodNamespacePath { get; set; }
         public string? PodNamespace { get; set; }
+        public bool? AllNamespaces { get; set; }
         public string? PodDomain { get; set; }
         public string? PodLabelSelector { get; set; }
         public bool? RawIp { get; set; }
@@ -31,6 +32,7 @@ namespace Akka.Discovery.KubernetesApi
                 apiServicePortEnvName: ApiServicePortEnvName,
                 podNamespacePath: PodNamespacePath,
                 podNamespace: PodNamespace,
+                allNamespaces: AllNamespaces,
                 podDomain: PodDomain,
                 podLabelSelector: PodLabelSelector,
                 rawIp: RawIp,

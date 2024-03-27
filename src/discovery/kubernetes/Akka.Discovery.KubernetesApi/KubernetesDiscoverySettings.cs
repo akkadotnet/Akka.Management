@@ -25,6 +25,7 @@ namespace Akka.Discovery.KubernetesApi
                 config.GetString("api-service-port-env-name"),
                 config.GetString("pod-namespace-path"),
                 config.GetStringIfDefined("pod-namespace"),
+                config.GetBoolean("all-namespaces"),
                 config.GetString("pod-domain"),
                 config.GetString("pod-label-selector"),
                 config.GetBoolean("use-raw-ip"),
@@ -40,6 +41,7 @@ namespace Akka.Discovery.KubernetesApi
             string apiServicePortEnvName,
             string podNamespacePath,
             string? podNamespace,
+            bool allNamespaces,
             string podDomain,
             string podLabelSelector,
             bool rawIp,
@@ -51,6 +53,7 @@ namespace Akka.Discovery.KubernetesApi
             ApiServicePortEnvName = apiServicePortEnvName;
             PodNamespacePath = podNamespacePath;
             PodNamespace = podNamespace;
+            AllNamespaces = allNamespaces;
             PodDomain = podDomain;
             _podLabelSelector = podLabelSelector;
             RawIp = rawIp;
@@ -63,6 +66,7 @@ namespace Akka.Discovery.KubernetesApi
         public string ApiServicePortEnvName { get; }
         public string PodNamespacePath { get; }
         public string? PodNamespace { get; }
+        public bool AllNamespaces { get; }
         public string PodDomain { get; }
         public string PodLabelSelector(string name)
             => string.Format(_podLabelSelector, name);
@@ -81,6 +85,8 @@ namespace Akka.Discovery.KubernetesApi
             => Copy(podNamespacePath: podNamespacePath);
         public KubernetesDiscoverySettings WithPodNamespace(string podNamespace)
             => Copy(podNamespace: podNamespace);
+        public KubernetesDiscoverySettings WithAllNamespaces(bool allNamespaces)
+            => Copy(allNamespaces: allNamespaces);
         public KubernetesDiscoverySettings WithPodDomain(string podDomain)
             => Copy(podDomain: podDomain);
         public KubernetesDiscoverySettings WithPodLabelSelector(string podLabelSelector)
@@ -97,6 +103,7 @@ namespace Akka.Discovery.KubernetesApi
             string? apiServicePortEnvName = null,
             string? podNamespacePath = null,
             string? podNamespace = null,
+            bool? allNamespaces = null,
             string? podDomain = null,
             string? podLabelSelector = null,
             bool? rawIp = null,
@@ -108,6 +115,7 @@ namespace Akka.Discovery.KubernetesApi
                 apiServicePortEnvName: apiServicePortEnvName ?? ApiServicePortEnvName,
                 podNamespacePath: podNamespacePath ?? PodNamespacePath,
                 podNamespace: podNamespace ?? PodNamespace,
+                allNamespaces: allNamespaces ?? AllNamespaces,
                 podDomain: podDomain ?? PodDomain,
                 podLabelSelector: podLabelSelector ?? _podLabelSelector,
                 rawIp: rawIp ?? RawIp,

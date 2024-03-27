@@ -28,6 +28,7 @@ namespace Akka.Discovery.KubernetesApi.Tests
             settings.ApiServicePortEnvName.Should().Be("KUBERNETES_SERVICE_PORT");
             settings.PodNamespacePath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/namespace");
             settings.PodNamespace.Should().BeNull();
+            settings.AllNamespaces.Should().BeFalse();
             settings.PodDomain.Should().Be("cluster.local");
             settings.PodLabelSelector("a").Should().Be("app=a");
             settings.RawIp.Should().BeTrue();
@@ -47,6 +48,7 @@ namespace Akka.Discovery.KubernetesApi.Tests
             empty.ApiServicePortEnvName.Should().Be(settings.ApiServicePortEnvName);
             empty.PodNamespacePath.Should().Be(settings.PodNamespacePath);
             empty.PodNamespace.Should().Be(settings.PodNamespace);
+            empty.AllNamespaces.Should().Be(settings.AllNamespaces);
             empty.PodDomain.Should().Be(settings.PodDomain);
             empty.PodLabelSelector("a").Should().Be(settings.PodLabelSelector("a"));
             empty.RawIp.Should().Be(settings.RawIp);
@@ -63,6 +65,7 @@ namespace Akka.Discovery.KubernetesApi.Tests
                 .WithApiServicePortEnvName("d")
                 .WithPodNamespacePath("e")
                 .WithPodNamespace("f")
+                .WithAllNamespaces(true)
                 .WithPodDomain("g")
                 .WithPodLabelSelector("h={0}")
                 .WithRawIp(false)
@@ -74,6 +77,7 @@ namespace Akka.Discovery.KubernetesApi.Tests
             settings.ApiServicePortEnvName.Should().Be("d");
             settings.PodNamespacePath.Should().Be("e");
             settings.PodNamespace.Should().Be("f");
+            settings.AllNamespaces.Should().BeTrue();
             settings.PodDomain.Should().Be("g");
             settings.PodLabelSelector("a").Should().Be("h=a");
             settings.RawIp.Should().BeFalse();
@@ -91,6 +95,7 @@ namespace Akka.Discovery.KubernetesApi.Tests
                 ApiServicePortEnvName  = "d",
                 PodNamespacePath  = "e",
                 PodNamespace  = "f",
+                AllNamespaces = true,
                 PodDomain  = "g",
                 PodLabelSelector  = "h={0}",
                 RawIp  = false,
@@ -104,6 +109,7 @@ namespace Akka.Discovery.KubernetesApi.Tests
             settings.ApiServicePortEnvName.Should().Be("d");
             settings.PodNamespacePath.Should().Be("e");
             settings.PodNamespace.Should().Be("f");
+            settings.AllNamespaces.Should().BeTrue();
             settings.PodDomain.Should().Be("g");
             settings.PodLabelSelector("a").Should().Be("h=a");
             settings.RawIp.Should().BeFalse();
@@ -122,6 +128,7 @@ namespace Akka.Discovery.KubernetesApi.Tests
                     ApiServicePortEnvName = "d",
                     PodNamespacePath = "e",
                     PodNamespace = "f",
+                    AllNamespaces = true,
                     PodDomain = "g",
                     PodLabelSelector = "h={0}",
                     RawIp = false,
@@ -138,6 +145,7 @@ namespace Akka.Discovery.KubernetesApi.Tests
                 settings.ApiServicePortEnvName.Should().Be("d");
                 settings.PodNamespacePath.Should().Be("e");
                 settings.PodNamespace.Should().Be("f");
+                settings.AllNamespaces.Should().BeTrue();
                 settings.PodDomain.Should().Be("g");
                 settings.PodLabelSelector("a").Should().Be("h=a");
                 settings.RawIp.Should().BeFalse();

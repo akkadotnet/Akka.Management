@@ -26,6 +26,7 @@ public class KubernetesDiscoveryOptions: IHoconOption
     public string? ApiServicePortEnvName { get; set; }
     public string? PodNamespacePath { get; set; }
     public string? PodNamespace { get; set; }
+    public bool? AllNamespaces { get; set; }
     public string? PodDomain { get; set; }
     public string? PodLabelSelector { get; set; }
     public bool? RawIp { get; set; }
@@ -49,6 +50,8 @@ public class KubernetesDiscoveryOptions: IHoconOption
             sb.AppendLine($"pod-namespace-path = {PodNamespacePath.ToHocon()}");
         if (PodNamespace is { })
             sb.AppendLine($"pod-namespace = {PodNamespace.ToHocon()}");
+        if (AllNamespaces is { })
+            sb.AppendLine($"all-namespaces = {AllNamespaces.ToHocon()}");
         if (PodDomain is { })
             sb.AppendLine($"pod-domain = {PodDomain.ToHocon()}");
         if (PodLabelSelector is { })

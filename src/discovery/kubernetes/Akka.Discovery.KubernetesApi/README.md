@@ -62,6 +62,11 @@ akka.discovery.kubernetes-api {
     # Set this value to a specific string to override discovering the namespace using pod-namespace-path.
     pod-namespace = "<pod-namespace>"
 
+    # Enable to query pods in all namespaces
+    #
+    # If this is set to true, the pod-namespace configuration is ignored.
+    all-namespaces = true
+
     # Domain of the k8s cluster
     pod-domain = "cluster.local"
 
