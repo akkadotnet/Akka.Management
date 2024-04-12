@@ -670,7 +670,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
         {
             UnderTest.Tell(new LeaseActor.Acquire(callback), Sender);
             LeaseProbe.ExpectMsg(LeaseName);
-            LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTime + 1.Milliseconds()));
+            LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTime.Date + 1.Milliseconds()));
             UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
             IncrementVersion();
             UpdateProbe.Reply(
