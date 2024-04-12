@@ -180,7 +180,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 var right = ((Right<LeaseResource, LeaseResource>)response).Value;
                 right.Owner.Should().Be(owner);
                 right.Version.Should().Be("3");
-                right.Time.Should().Be((long)timestamp.TimeOfDay.TotalMilliseconds);
+                right.Time.Should().Be(timestamp);
             }
             finally
             {
@@ -232,7 +232,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 var left = ((Left<LeaseResource, LeaseResource>)response).Value;
                 left.Owner.Should().Be(conflictOwner);
                 left.Version.Should().Be(updatedVersion);
-                left.Time.Should().Be((long)timestamp.TimeOfDay.TotalMilliseconds);
+                left.Time.Should().Be(timestamp);
             }
             finally
             {

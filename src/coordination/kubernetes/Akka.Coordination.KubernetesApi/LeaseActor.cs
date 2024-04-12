@@ -207,6 +207,8 @@ namespace Akka.Coordination.KubernetesApi
         private readonly string _ownerName;
         private readonly IKubernetesApi _client;
         private readonly ILoggingAdapter _log;
+        private readonly TimeSpan _heartbeatTimeout;
+        private readonly TimeSpan _heartbeatOffset;
         
 #pragma warning disable 8618
         public LeaseActor(IKubernetesApi client, LeaseSettings settings, string leaseName, AtomicBoolean granted)
@@ -219,6 +221,9 @@ namespace Akka.Coordination.KubernetesApi
 
             _log = Context.GetLogger();
             _ownerName = settings.OwnerName;
+
+            _heartbeatTimeout = _settings.TimeoutSettings.HeartbeatTimeout;
+            _heartbeatOffset = TimeSpan.FromTicks(2 * _settings.TimeoutSettings.HeartbeatInterval.Ticks); 
             
             StartWith(Idle.Instance, ReadRequired.Instance);
             
@@ -551,11 +556,8 @@ namespace Akka.Coordination.KubernetesApi
             return GoTo(Granting.Instance).Using(new OperationInProgress(reply, version, leaseLost));
         }
 
-        private bool HasLeaseTimedOut(long leaseTime)
-            => DateTime.UtcNow.TimeOfDay.TotalMilliseconds > 
-               leaseTime + 
-               _settings.TimeoutSettings.HeartbeatTimeout.TotalMilliseconds -
-               2 * _settings.TimeoutSettings.HeartbeatInterval.TotalMilliseconds;
+        private bool HasLeaseTimedOut(DateTime leaseTime)
+            => DateTime.UtcNow > leaseTime + _heartbeatTimeout - _heartbeatOffset;
         
         public ITimerScheduler Timers { get; set; } 
     }
