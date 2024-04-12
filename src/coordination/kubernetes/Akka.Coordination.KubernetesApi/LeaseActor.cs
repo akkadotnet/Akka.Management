@@ -202,6 +202,8 @@ namespace Akka.Coordination.KubernetesApi
             => Actor.Props.Create(() => new LeaseActor(client, leaseSettings, leaseName, granted)); 
         #endregion
 
+        private const long MillisecondsInDay = 24 * 60 * 60 * 1000;
+        
         private readonly LeaseSettings _settings;
         private readonly string _leaseName;
         private readonly string _ownerName;
@@ -556,8 +558,18 @@ namespace Akka.Coordination.KubernetesApi
             return GoTo(Granting.Instance).Using(new OperationInProgress(reply, version, leaseLost));
         }
 
-        private bool HasLeaseTimedOut(DateTime leaseTime)
-            => DateTime.UtcNow > leaseTime + _heartbeatTimeout - _heartbeatOffset;
+        private bool HasLeaseTimedOut(long leaseTime)
+        {
+            // detect if this is the old timout data format
+            if (leaseTime < MillisecondsInDay)
+            {
+                return DateTime.UtcNow.TimeOfDay.TotalMilliseconds > 
+                       leaseTime + _heartbeatTimeout.TotalMilliseconds - _heartbeatOffset.TotalMilliseconds;
+            }
+            
+            var leaseDateTime = DateTime.SpecifyKind(new DateTime(leaseTime), DateTimeKind.Utc);
+            return DateTime.UtcNow > leaseDateTime + _heartbeatTimeout - _heartbeatOffset;
+        }
         
         public ITimerScheduler Timers { get; set; } 
     }
