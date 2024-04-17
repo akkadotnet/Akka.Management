@@ -31,11 +31,10 @@ namespace Akka.Coordination.KubernetesApi.Tests
             builder.WithKubernetesLease();
             
             builder.Configuration.HasValue.Should().BeTrue();
-            var config = builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath);
-            config.Should().NotBeNull();
-            config = config.WithFallback(builder.Configuration.Value.GetConfig("akka.coordination.lease"));
+            builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath).Should().NotBeNull();
             
-            var settings = KubernetesSettings.Create(config);
+            var leaseSettings = GetSettings(builder);
+            var settings = KubernetesSettings.Create(leaseSettings);
             settings.ApiCaPath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt");
             settings.ApiTokenPath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/token");
             settings.ApiServiceHostEnvName.Should().Be("KUBERNETES_SERVICE_HOST");
@@ -46,7 +45,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
             settings.Secure.Should().BeTrue(); 
             settings.BodyReadTimeout.Should().Be(1.Seconds()); 
 
-            var timeSettings = TimeoutSettings.Create(config);
+            var timeSettings = TimeoutSettings.Create(leaseSettings.LeaseConfig);
             timeSettings.HeartbeatInterval.Should().Be(12.Seconds());
             timeSettings.HeartbeatTimeout.Should().Be(120.Seconds());
             timeSettings.OperationTimeout.Should().Be(5.Seconds());
@@ -73,11 +72,10 @@ namespace Akka.Coordination.KubernetesApi.Tests
             });
                         
             builder.Configuration.HasValue.Should().BeTrue();
-            var config = builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath);
-            config.Should().NotBeNull();
-            config = config.WithFallback(builder.Configuration.Value.GetConfig("akka.coordination.lease"));
+            builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath).Should().NotBeNull();
             
-            var settings = KubernetesSettings.Create(config);
+            var leaseSettings = GetSettings(builder);
+            var settings = KubernetesSettings.Create(leaseSettings);
             settings.ApiCaPath.Should().Be("a");
             settings.ApiTokenPath.Should().Be("b");
             settings.ApiServiceHostEnvName.Should().Be("c");
@@ -88,7 +86,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
             settings.Secure.Should().BeFalse(); 
             settings.BodyReadTimeout.Should().Be(1.5.Seconds());
 
-            var timeSettings = TimeoutSettings.Create(config);
+            var timeSettings = TimeoutSettings.Create(leaseSettings.LeaseConfig);
             timeSettings.HeartbeatInterval.Should().Be(4.Seconds());
             timeSettings.HeartbeatTimeout.Should().Be(10.Seconds());
             timeSettings.OperationTimeout.Should().Be(4.Seconds());
@@ -115,9 +113,10 @@ namespace Akka.Coordination.KubernetesApi.Tests
             });
                         
             builder.Configuration.HasValue.Should().BeTrue();
-            var config = builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath);
-            config.Should().NotBeNull();
-            var settings = KubernetesSettings.Create(config);
+            builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath).Should().NotBeNull();
+            
+            var leaseSettings = GetSettings(builder);
+            var settings = KubernetesSettings.Create(leaseSettings);
             settings.ApiCaPath.Should().Be("a");
             settings.ApiTokenPath.Should().Be("b");
             settings.ApiServiceHostEnvName.Should().Be("c");
@@ -128,10 +127,21 @@ namespace Akka.Coordination.KubernetesApi.Tests
             settings.Secure.Should().BeFalse(); 
             settings.BodyReadTimeout.Should().Be(1.5.Seconds());
 
-            var timeSettings = TimeoutSettings.Create(config);
+            var timeSettings = TimeoutSettings.Create(leaseSettings.LeaseConfig);
             timeSettings.HeartbeatInterval.Should().Be(4.Seconds());
             timeSettings.HeartbeatTimeout.Should().Be(10.Seconds());
             timeSettings.OperationTimeout.Should().Be(4.Seconds());
+        }
+
+        private static LeaseSettings GetSettings(AkkaConfigurationBuilder builder)
+        {
+            // NOTE: this is how LeaseSettings is created in Akka.Coordination
+            // https://github.com/akkadotnet/akka.net/blob/f75886921174746cf80244ec18c4e61923725a2d/src/core/Akka.Coordination/LeaseProvider.cs#L127-L131
+            var leaseConfig = builder.Configuration.Value
+                .GetConfig(KubernetesLease.ConfigPath)
+                .WithFallback(builder.Configuration.Value.GetConfig("akka.coordination.lease"));
+
+            return LeaseSettings.Create(leaseConfig, "lease-name", "owner-name");
         }
     }
 }
