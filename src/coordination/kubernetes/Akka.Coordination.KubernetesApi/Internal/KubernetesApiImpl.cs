@@ -37,7 +37,6 @@ namespace Akka.Coordination.KubernetesApi.Internal
         private readonly Kubernetes _client;
         private readonly string _namespace;
         private readonly LeaseCustomResourceDefinition _crd;
-        private readonly bool _useLegacyLeaseTimeout;
 
         private string Namespace =>
             _settings.Namespace
@@ -49,7 +48,6 @@ namespace Akka.Coordination.KubernetesApi.Internal
             _log = Logging.GetLogger(system, GetType());
             _namespace = Namespace;
             _crd = LeaseCustomResourceDefinition.Create(_namespace);
-            _useLegacyLeaseTimeout = settings.UseLegacyTimeOfDayTimeout;
             
             var config = KubernetesClientConfiguration.BuildDefaultConfig();
             if(!string.IsNullOrWhiteSpace(settings.ApiTokenPath))
@@ -102,11 +100,9 @@ namespace Akka.Coordination.KubernetesApi.Internal
             var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
             try
             {
-                var timeValue = time ?? DateTime.UtcNow;
-                var longTime = _useLegacyLeaseTimeout ? (long) timeValue.TimeOfDay.TotalMilliseconds : timeValue.Ticks;
                 var leaseBody = new LeaseCustomResource(
                     metadata: new V1ObjectMeta(name: leaseName, resourceVersion: version),
-                    spec: new LeaseSpec(owner: ownerName, time: longTime));
+                    spec: new LeaseSpec(owner: ownerName, time: time ?? DateTime.UtcNow));
                 _log.Debug("Updating {0} to {1}", leaseName, leaseBody);
 #if !NET6_0_OR_GREATER
                 using var operationResponse = await _client
@@ -181,10 +177,9 @@ namespace Akka.Coordination.KubernetesApi.Internal
             using var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
             try
             {
-                var time = _useLegacyLeaseTimeout ? (long) DateTime.UtcNow.TimeOfDay.TotalMilliseconds : DateTime.UtcNow.Ticks;
                 var leaseBody = new LeaseCustomResource(
                     metadata: new V1ObjectMeta(name: name, namespaceProperty: _namespace),
-                    spec: new LeaseSpec(owner: "", time: time));
+                    spec: new LeaseSpec(owner: "", time: DateTime.UtcNow));
 #if !NET6_0_OR_GREATER
                 using var operationResponse = await _client
                     .CreateNamespacedCustomObjectWithHttpMessagesAsync(
@@ -389,7 +384,7 @@ namespace Akka.Coordination.KubernetesApi.Internal
             return new LeaseResource(
                 string.IsNullOrWhiteSpace(lease.Spec.Owner) ? null : lease.Spec.Owner,
                 lease.Metadata.ResourceVersion,
-                lease.Spec.Time);
+                DateTime.SpecifyKind(new DateTime(lease.Spec.Time), DateTimeKind.Utc));
         }
         
         // This uses blocking IO, and so should only be used to read configuration at startup.

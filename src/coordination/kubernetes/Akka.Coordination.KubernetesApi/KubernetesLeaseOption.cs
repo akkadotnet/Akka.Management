@@ -27,7 +27,6 @@ namespace Akka.Coordination.KubernetesApi
         public TimeSpan? HeartbeatInterval { get; set; }
         public TimeSpan? HeartbeatTimeout { get; set; }
         public TimeSpan? LeaseOperationTimeout { get; set; }
-        public bool? UseLegacyTimeOfDayTimeout { get; set; }
         
         public override string ConfigPath => KubernetesLease.ConfigPath;
         public override Type Class { get; } = typeof(KubernetesLease);
@@ -59,8 +58,6 @@ namespace Akka.Coordination.KubernetesApi
                 sb.AppendLine($"heartbeat-timeout = {HeartbeatTimeout.ToHocon()}");
             if (LeaseOperationTimeout is { })
                 sb.AppendLine($"lease-operation-timeout = {LeaseOperationTimeout.ToHocon()}");
-            if (UseLegacyTimeOfDayTimeout is not null)
-                sb.Append($"use-legacy-day-of-time-timeout = {UseLegacyTimeOfDayTimeout.ToHocon()}");
             sb.AppendLine("}");
 
             //var config = ConfigurationFactory.ParseString(sb.ToString())

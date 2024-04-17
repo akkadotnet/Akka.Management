@@ -56,15 +56,14 @@ namespace Akka.Coordination.KubernetesApi.Tests
             Environment.SetEnvironmentVariable("KUBERNETES_SERVICE_PORT", _wireMockServer.Ports[0].ToString());
             
             _settings = new KubernetesSettings(
-                apiCaPath: "",
-                apiTokenPath: "",
-                apiServiceHostEnvName: "KUBERNETES_SERVICE_HOST",
-                apiServicePortEnvName: "KUBERNETES_SERVICE_PORT",
-                ns: "lease",
-                namespacePath: "",
-                apiServiceRequestTimeout: TimeSpan.FromMilliseconds(800),
-                secure: false,
-                useLegacyTimeOfDayTimeout:false);
+                "",
+                "",
+                "KUBERNETES_SERVICE_HOST",
+                "KUBERNETES_SERVICE_PORT",
+                "lease",
+                "",
+                TimeSpan.FromMilliseconds(800),
+                false);
 
             _underTest = new MockKubernetesApi(Sys, _settings);
         }
@@ -181,7 +180,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 var right = ((Right<LeaseResource, LeaseResource>)response).Value;
                 right.Owner.Should().Be(owner);
                 right.Version.Should().Be("3");
-                right.Time.Should().Be(timestamp.Ticks);
+                right.Time.Should().Be(timestamp);
             }
             finally
             {
@@ -207,7 +206,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                     SelfLink = LeaseApiPath,
                     Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
                 },
-                spec: new LeaseSpec(owner: conflictOwner, time: timestamp.Ticks));
+                spec: new LeaseSpec(owner: conflictOwner, time: timestamp));
             
 #if !NET6_0_OR_GREATER
             var json = SafeJsonConvert.SerializeObject(resource);
@@ -233,7 +232,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 var left = ((Left<LeaseResource, LeaseResource>)response).Value;
                 left.Owner.Should().Be(conflictOwner);
                 left.Version.Should().Be(updatedVersion);
-                left.Time.Should().Be(timestamp.Ticks);
+                left.Time.Should().Be(timestamp);
             }
             finally
             {
@@ -277,7 +276,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                     SelfLink = LeaseApiPath,
                     Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
                 }, 
-                spec: new LeaseSpec(owner: owner, time: timestamp.Ticks));
+                spec: new LeaseSpec(owner: owner, time: timestamp));
             
 #if !NET6_0_OR_GREATER
             var json = SafeJsonConvert.SerializeObject(resource);
@@ -318,7 +317,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                     SelfLink = LeaseApiPath,
                     Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
                 }, 
-                spec: new LeaseSpec(owner: owner, time: timestamp.Ticks));
+                spec: new LeaseSpec(owner: owner, time: timestamp));
             
 #if !NET6_0_OR_GREATER
             var json = SafeJsonConvert.SerializeObject(resource);
@@ -363,7 +362,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                     SelfLink = LeaseApiPath,
                     Uid = "c369949e-296c-11e9-9c62-16f8dd5735ba"
                 },
-                spec: new LeaseSpec(owner: owner, time: timestamp.Ticks));
+                spec: new LeaseSpec(owner: owner, time: timestamp));
 
 #if !NET6_0_OR_GREATER
             var json = SafeJsonConvert.SerializeObject(resource);

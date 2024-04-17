@@ -23,10 +23,8 @@ namespace Akka.Coordination.KubernetesApi
             namespacePath: "/var/run/secrets/kubernetes.io/serviceaccount/namespace",
             apiServiceRequestTimeout: TimeSpan.FromSeconds(2), // 2/5 of 5 seconds
             secure: true,
-            useLegacyTimeOfDayTimeout: false,
             bodyReadTimeout: TimeSpan.FromSeconds(1)); // half of 2 
         
-        [Obsolete("Use constructor that accepts useLegacyTimeOfDayTimeout parameter instead. Deprecated since 1.5.18")]
         public KubernetesSettings(
             string apiCaPath,
             string apiTokenPath,
@@ -36,31 +34,6 @@ namespace Akka.Coordination.KubernetesApi
             string namespacePath,
             TimeSpan apiServiceRequestTimeout,
             bool? secure,
-            TimeSpan? bodyReadTimeout = null)
-            : this(
-                apiCaPath: apiCaPath,
-                apiTokenPath: apiTokenPath,
-                apiServiceHostEnvName: apiServiceHostEnvName,
-                apiServicePortEnvName: apiServicePortEnvName,
-                ns: ns,
-                namespacePath: namespacePath,
-                apiServiceRequestTimeout: apiServiceRequestTimeout,
-                secure: secure,
-                useLegacyTimeOfDayTimeout: false,
-                bodyReadTimeout: bodyReadTimeout)
-        {
-        }
-                
-        public KubernetesSettings(
-            string apiCaPath,
-            string apiTokenPath,
-            string apiServiceHostEnvName,
-            string apiServicePortEnvName,
-            string? ns,
-            string namespacePath,
-            TimeSpan apiServiceRequestTimeout,
-            bool? secure,
-            bool useLegacyTimeOfDayTimeout,
             TimeSpan? bodyReadTimeout = null)
         {
             ApiCaPath = apiCaPath;
@@ -71,7 +44,6 @@ namespace Akka.Coordination.KubernetesApi
             NamespacePath = namespacePath;
             ApiServiceRequestTimeout = apiServiceRequestTimeout;
             Secure = secure ?? true;
-            UseLegacyTimeOfDayTimeout = useLegacyTimeOfDayTimeout;
             BodyReadTimeout = bodyReadTimeout ?? TimeSpan.FromSeconds(1);
         }
 
@@ -102,7 +74,6 @@ namespace Akka.Coordination.KubernetesApi
                 config.GetString("namespace-path"),
                 apiServerRequestTimeout,
                 secure,
-                config.GetBoolean("use-legacy-day-of-time-timeout"),
                 new TimeSpan(apiServerRequestTimeout.Ticks / 2)
             );
         } 
@@ -116,8 +87,7 @@ namespace Akka.Coordination.KubernetesApi
         public TimeSpan ApiServiceRequestTimeout { get; }
         public bool Secure { get; }
         public TimeSpan BodyReadTimeout { get; }
-        public bool UseLegacyTimeOfDayTimeout { get; }
-        
+ 
         public KubernetesSettings WithApiCaPath(string apiCaPath)
             => Copy(apiCaPath: apiCaPath);
         public KubernetesSettings WithApiTokenPath(string apiTokenPath)
@@ -136,8 +106,6 @@ namespace Akka.Coordination.KubernetesApi
             => Copy(secure: secure);
         public KubernetesSettings WithBodyReadTimeout(TimeSpan bodyReadTimeout)
             => Copy(bodyReadTimeout: bodyReadTimeout);
-        public KubernetesSettings WithLegacyTimeOfDayTimeout(bool useLegacyTimeOfDayTimeout)
-            => Copy(useLegacyTimeOfDayTimeout: useLegacyTimeOfDayTimeout);
         
         private KubernetesSettings Copy(
             string? apiCaPath = null,
@@ -148,7 +116,6 @@ namespace Akka.Coordination.KubernetesApi
             string? namespacePath = null,
             TimeSpan? apiServiceRequestTimeout = null,
             bool? secure = null,
-            bool? useLegacyTimeOfDayTimeout = null,
             TimeSpan? bodyReadTimeout = null)
             => new (
                 apiCaPath: apiCaPath ?? ApiCaPath,
@@ -159,7 +126,6 @@ namespace Akka.Coordination.KubernetesApi
                 namespacePath: namespacePath ?? NamespacePath,
                 apiServiceRequestTimeout: apiServiceRequestTimeout ?? ApiServiceRequestTimeout,
                 secure: secure ?? Secure,
-                useLegacyTimeOfDayTimeout: useLegacyTimeOfDayTimeout ?? UseLegacyTimeOfDayTimeout,
                 bodyReadTimeout: bodyReadTimeout ?? BodyReadTimeout);
     }
 }

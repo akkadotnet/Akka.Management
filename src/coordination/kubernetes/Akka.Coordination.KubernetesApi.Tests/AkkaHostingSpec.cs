@@ -43,8 +43,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
             settings.Namespace.Should().BeNull(); 
             settings.NamespacePath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); 
             settings.ApiServiceRequestTimeout.Should().Be(2.Seconds());
-            settings.Secure.Should().BeTrue();
-            settings.UseLegacyTimeOfDayTimeout.Should().BeFalse();
+            settings.Secure.Should().BeTrue(); 
             settings.BodyReadTimeout.Should().Be(1.Seconds()); 
 
             var timeSettings = TimeoutSettings.Create(config);
@@ -71,7 +70,6 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 lease.HeartbeatInterval = 4.Seconds();
                 lease.HeartbeatTimeout = 10.Seconds();
                 lease.LeaseOperationTimeout = 4.Seconds();
-                lease.UseLegacyTimeOfDayTimeout = true;
             });
                         
             builder.Configuration.HasValue.Should().BeTrue();
@@ -88,7 +86,6 @@ namespace Akka.Coordination.KubernetesApi.Tests
             settings.NamespacePath.Should().Be("f"); 
             settings.ApiServiceRequestTimeout.Should().Be(3.Seconds());
             settings.Secure.Should().BeFalse(); 
-            settings.UseLegacyTimeOfDayTimeout.Should().BeTrue();
             settings.BodyReadTimeout.Should().Be(1.5.Seconds());
 
             var timeSettings = TimeoutSettings.Create(config);
@@ -114,8 +111,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 SecureApiServer = false,
                 HeartbeatInterval = 4.Seconds(),
                 HeartbeatTimeout = 10.Seconds(),
-                LeaseOperationTimeout = 4.Seconds(),
-                UseLegacyTimeOfDayTimeout = true,
+                LeaseOperationTimeout = 4.Seconds()
             });
                         
             builder.Configuration.HasValue.Should().BeTrue();
@@ -130,7 +126,6 @@ namespace Akka.Coordination.KubernetesApi.Tests
             settings.NamespacePath.Should().Be("f"); 
             settings.ApiServiceRequestTimeout.Should().Be(3.Seconds());
             settings.Secure.Should().BeFalse(); 
-            settings.UseLegacyTimeOfDayTimeout.Should().BeTrue();
             settings.BodyReadTimeout.Should().Be(1.5.Seconds());
 
             var timeSettings = TimeoutSettings.Create(config);

@@ -32,7 +32,7 @@ namespace Akka.Coordination.KubernetesApi
 
     internal sealed class LeaseResource
     {
-        public LeaseResource(string? owner, string version, long time)
+        public LeaseResource(string? owner, string version, DateTime time)
         {
             Owner = owner;
             Version = version;
@@ -41,7 +41,7 @@ namespace Akka.Coordination.KubernetesApi
 
         public string? Owner { get; }
         public string Version { get; }
-        public long Time { get; }
+        public DateTime Time { get; }
         
         public bool IsTaken => Owner != null;
     }

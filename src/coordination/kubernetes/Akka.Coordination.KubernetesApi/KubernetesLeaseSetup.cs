@@ -21,7 +21,6 @@ namespace Akka.Coordination.KubernetesApi
         public TimeSpan? ApiServiceRequestTimeout { get; set; }
         public bool? Secure { get; set; }
         public TimeSpan? BodyReadTimeout { get; set; }
-        public bool? UseLegacyTimeOfDayTimeout { get; set; }
 
         internal KubernetesSettings Apply(KubernetesSettings settings)
         {
@@ -43,8 +42,6 @@ namespace Akka.Coordination.KubernetesApi
                 settings = settings.WithSecure(Secure.Value);
             if (BodyReadTimeout != null)
                 settings = settings.WithBodyReadTimeout(BodyReadTimeout.Value);
-            if (UseLegacyTimeOfDayTimeout is not null)
-                settings = settings.WithLegacyTimeOfDayTimeout(UseLegacyTimeOfDayTimeout.Value);
             return settings;
         }
         
