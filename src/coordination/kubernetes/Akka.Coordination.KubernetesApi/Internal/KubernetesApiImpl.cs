@@ -174,7 +174,7 @@ namespace Akka.Coordination.KubernetesApi.Internal
 
         private async Task<LeaseResource?> CreateLeaseResource(string name)
         {
-            var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
+            using var cts = new CancellationTokenSource(_settings.BodyReadTimeout);
             try
             {
                 var leaseBody = new LeaseCustomResource(
@@ -384,7 +384,7 @@ namespace Akka.Coordination.KubernetesApi.Internal
             return new LeaseResource(
                 string.IsNullOrWhiteSpace(lease.Spec.Owner) ? null : lease.Spec.Owner,
                 lease.Metadata.ResourceVersion,
-                lease.Spec.Time);
+                DateTime.SpecifyKind(new DateTime(lease.Spec.Time), DateTimeKind.Utc));
         }
         
         // This uses blocking IO, and so should only be used to read configuration at startup.

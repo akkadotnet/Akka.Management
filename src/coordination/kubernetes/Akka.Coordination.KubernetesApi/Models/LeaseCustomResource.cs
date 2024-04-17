@@ -39,7 +39,7 @@ namespace Akka.Coordination.KubernetesApi.Models
         public LeaseSpec(string? owner, DateTime time)
         {
             Owner = owner;
-            Time = (long) time.TimeOfDay.TotalMilliseconds;
+            Time = time.Ticks;
         }
         
         public LeaseSpec(string? owner, long time)

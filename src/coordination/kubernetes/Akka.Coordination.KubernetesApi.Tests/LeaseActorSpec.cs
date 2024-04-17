@@ -12,6 +12,7 @@ using Akka.Configuration;
 using Akka.TestKit;
 using Akka.Util;
 using FluentAssertions;
+using FluentAssertions.Extensions;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -34,14 +35,14 @@ namespace Akka.Coordination.KubernetesApi.Tests
             {
                 UnderTest.Tell(new LeaseActor.Acquire(), Sender);
                 LeaseProbe.ExpectMsg(LeaseName);
-                LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTimeMillis));
+                LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTime));
 
                 // as no one owns the lock get the lock
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Right<LeaseResource, LeaseResource>(
-                        new LeaseResource(OwnerName, CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
                 SenderProbe.ExpectMsg<LeaseActor.LeaseAcquired>();
             });
         }
@@ -87,7 +88,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
             {
                 UnderTest.Tell(new LeaseActor.Acquire(), Sender);
                 LeaseProbe.ExpectMsg(LeaseName);
-                LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTimeMillis));
+                LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTime));
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
             
                 // too slow, could have already timed out
@@ -95,7 +96,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Right<LeaseResource, LeaseResource>(
-                        new LeaseResource(OwnerName, CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
             
                 // not granted
                 SenderProbe.ExpectMsg<Status.Failure>().Cause.Message
@@ -116,7 +117,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
             {
                 UnderTest.Tell(new LeaseActor.Acquire(), Sender);
                 LeaseProbe.ExpectMsg(LeaseName);
-                LeaseProbe.Reply(new LeaseResource("a different client", CurrentVersion, CurrentTimeMillis));
+                LeaseProbe.Reply(new LeaseResource("a different client", CurrentVersion, CurrentTime));
                 SenderProbe.ExpectMsg<LeaseActor.LeaseTaken>();
             });
         }
@@ -132,13 +133,13 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Right<LeaseResource, LeaseResource>(
-                        new LeaseResource(OwnerName, CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
             
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Right<LeaseResource, LeaseResource>(
-                        new LeaseResource(OwnerName, CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
             });
         }
@@ -166,7 +167,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
-                        new LeaseResource(null, CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource(null, CurrentVersion, CurrentTime)));
                 SenderProbe.ExpectMsg<LeaseActor.LeaseReleased>();
             });
         }
@@ -183,7 +184,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
-                        new LeaseResource("another client", CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource("another client", CurrentVersion, CurrentTime)));
                 SenderProbe.ExpectMsg<LeaseActor.LeaseReleased>();
             });
         }
@@ -263,12 +264,12 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 var failedVersion = (CurrentVersionCount + 6).ToString();
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
-                        new LeaseResource(null, failedVersion, CurrentTimeMillis)));
+                        new LeaseResource(null, failedVersion, CurrentTime)));
                 // Try again
                 UpdateProbe.ExpectMsg((OwnerName, failedVersion));
                 UpdateProbe.Reply(
                     new Right<LeaseResource, LeaseResource>(
-                        new LeaseResource(OwnerName, failedVersion, CurrentTimeMillis)));
+                        new LeaseResource(OwnerName, failedVersion, CurrentTime)));
                 SenderProbe.ExpectMsg<LeaseActor.LeaseAcquired>();
             });
         }
@@ -286,7 +287,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
-                        new LeaseResource("I stole your lock", CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource("I stole your lock", CurrentVersion, CurrentTime)));
                 AwaitAssert(() =>
                 {
                     Granted.Value.Should().BeFalse();
@@ -311,7 +312,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
-                        new LeaseResource("I stole your lock", CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource("I stole your lock", CurrentVersion, CurrentTime)));
                 AwaitAssert(() =>
                 {
                     callbackCalled.Should().BeTrue();
@@ -400,12 +401,12 @@ namespace Akka.Coordination.KubernetesApi.Tests
             {
                 UnderTest.Tell(new LeaseActor.Acquire(), Sender);
                 LeaseProbe.ExpectMsg(LeaseName);
-                LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTimeMillis));
+                LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTime));
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
-                        new LeaseResource("I stole your lock", CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource("I stole your lock", CurrentVersion, CurrentTime)));
                 SenderProbe.ExpectMsg<LeaseActor.LeaseTaken>();
             });
         }
@@ -434,14 +435,14 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 LeaseProbe.Reply(new LeaseResource(
                     crashedClient,
                     CurrentVersion,
-                    CurrentTimeMillis - (long)(LeaseSettings.TimeoutSettings.HeartbeatTimeout.TotalMilliseconds * 2)));
+                    CurrentTime - LeaseSettings.TimeoutSettings.HeartbeatTimeout * 2));
                 
                 // try and get the lease
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Right<LeaseResource, LeaseResource>(
-                        new LeaseResource(OwnerName, CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
                 SenderProbe.ExpectMsg<LeaseActor.LeaseAcquired>();
             });
         }
@@ -462,14 +463,14 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 LeaseProbe.Reply(new LeaseResource(
                     crashedClient,
                     CurrentVersion,
-                    CurrentTimeMillis - (long)(LeaseSettings.TimeoutSettings.HeartbeatTimeout.TotalMilliseconds * 2)));
+                    CurrentTime - LeaseSettings.TimeoutSettings.HeartbeatTimeout * 2));
 
                 // try and get the lease
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Right<LeaseResource, LeaseResource>(
-                        new LeaseResource(OwnerName, CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
                 SenderProbe.ExpectMsg<LeaseActor.LeaseAcquired>();
             });
         }
@@ -482,7 +483,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
             {
                 UnderTest.Tell(new LeaseActor.Acquire(), Sender);
                 LeaseProbe.ExpectMsg(LeaseName);
-                LeaseProbe.Reply(new LeaseResource(OwnerName, CurrentVersion, CurrentTimeMillis));
+                LeaseProbe.Reply(new LeaseResource(OwnerName, CurrentVersion, CurrentTime));
                 UpdateProbe.ExpectNoMsg(LeaseSettings.TimeoutSettings.HeartbeatInterval / 2); // no time update required
                 SenderProbe.ExpectMsg<LeaseActor.LeaseAcquired>();
                 ExpectHeartBeat();
@@ -502,13 +503,13 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 LeaseProbe.Reply(new LeaseResource(
                     OwnerName,
                     CurrentVersion,
-                    CurrentTimeMillis - (long)(LeaseSettings.TimeoutSettings.HeartbeatTimeout.TotalMilliseconds * 2)));
+                    CurrentTime - LeaseSettings.TimeoutSettings.HeartbeatTimeout * 2));
                 SenderProbe.ExpectNoMsg(LeaseSettings.TimeoutSettings.HeartbeatTimeout / 3); // not granted yet
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion)); // Update time
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Right<LeaseResource, LeaseResource>(
-                        new LeaseResource(OwnerName, CurrentVersion, CurrentTimeMillis)));
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
                 SenderProbe.ExpectMsg<LeaseActor.LeaseAcquired>();
                 ExpectHeartBeat();
             });
@@ -646,7 +647,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
         protected void IncrementVersion()
             => CurrentVersionCount++;
 
-        protected long CurrentTimeMillis => (long) DateTime.UtcNow.TimeOfDay.TotalMilliseconds;
+        protected DateTime CurrentTime => DateTime.UtcNow;
 
         protected void ExpectHeartBeat()
         {
@@ -654,14 +655,14 @@ namespace Akka.Coordination.KubernetesApi.Tests
             IncrementVersion();
             UpdateProbe.Reply(
                 new Right<LeaseResource, LeaseResource>(
-                    new LeaseResource(OwnerName, CurrentVersion, CurrentTimeMillis)));
+                    new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
         }
 
         protected void FailToGetTakenLease(string leaseOwner)
         {
             UnderTest.Tell(new LeaseActor.Acquire(), Sender);
             LeaseProbe.ExpectMsg(LeaseName);
-            LeaseProbe.Reply(new LeaseResource(leaseOwner, CurrentVersion, CurrentTimeMillis));
+            LeaseProbe.Reply(new LeaseResource(leaseOwner, CurrentVersion, CurrentTime));
             SenderProbe.ExpectMsg<LeaseActor.LeaseTaken>();
         }
 
@@ -669,12 +670,12 @@ namespace Akka.Coordination.KubernetesApi.Tests
         {
             UnderTest.Tell(new LeaseActor.Acquire(callback), Sender);
             LeaseProbe.ExpectMsg(LeaseName);
-            LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, 1));
+            LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTime.Date + 1.Milliseconds()));
             UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
             IncrementVersion();
             UpdateProbe.Reply(
                 new Right<LeaseResource, LeaseResource>(
-                    new LeaseResource(OwnerName, CurrentVersion, CurrentTimeMillis)));
+                    new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
             SenderProbe.ExpectMsg<LeaseActor.LeaseAcquired>();
         }
 
@@ -685,7 +686,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
             IncrementVersion();
             UpdateProbe.Reply(
                 new Right<LeaseResource, LeaseResource>(
-                    new LeaseResource(clientName, CurrentVersion, CurrentTimeMillis)));
+                    new LeaseResource(clientName, CurrentVersion, CurrentTime)));
             SenderProbe.ExpectMsg<LeaseActor.LeaseAcquired>();
         }
 
@@ -696,7 +697,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
             IncrementVersion();
             UpdateProbe.Reply(
                 new Right<LeaseResource, LeaseResource>(
-                    new LeaseResource(null, CurrentVersion, CurrentTimeMillis)));
+                    new LeaseResource(null, CurrentVersion, CurrentTime)));
             SenderProbe.ExpectMsg<LeaseActor.LeaseReleased>();
         }
 
@@ -705,7 +706,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
             UnderTest.Tell(new LeaseActor.Acquire(), Sender);
             IncrementVersion();
             LeaseProbe.ExpectMsg(LeaseName);
-            LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTimeMillis));
+            LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTime));
             UpdateProbe.ExpectMsg((clientName, CurrentVersion));
         }
 
@@ -713,12 +714,12 @@ namespace Akka.Coordination.KubernetesApi.Tests
         {
             UnderTest.Tell(new LeaseActor.Acquire(), Sender);
             LeaseProbe.ExpectMsg(LeaseName);
-            LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTimeMillis));
+            LeaseProbe.Reply(new LeaseResource(null, CurrentVersion, CurrentTime));
             UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
             IncrementVersion();
             UpdateProbe.Reply(
                 new Left<LeaseResource, LeaseResource>(
-                    new LeaseResource("Someone else :(", CurrentVersion, CurrentTimeMillis)));
+                    new LeaseResource("Someone else :(", CurrentVersion, CurrentTime)));
             SenderProbe.ExpectMsg<LeaseActor.LeaseTaken>();
         }
 
@@ -738,7 +739,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
             IncrementVersion();
             UpdateProbe.Reply(
                 new Left<LeaseResource, LeaseResource>(
-                    new LeaseResource("I stole your lock", CurrentVersion, CurrentTimeMillis)));
+                    new LeaseResource("I stole your lock", CurrentVersion, CurrentTime)));
             AwaitAssert(() =>
             {
                 Granted.Value.Should().BeFalse();
