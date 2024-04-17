@@ -57,7 +57,7 @@ namespace Akka.Coordination.KubernetesApi
             _settings = settings;
             
             _log = Logging.GetLogger(system, GetType());
-            var kubernetesSettings = KubernetesSettings.Create(system);
+            var kubernetesSettings = KubernetesSettings.Create(settings);
 
             var setup = system.Settings.Setup.Get<KubernetesLeaseSetup>();
             if (setup.HasValue)
