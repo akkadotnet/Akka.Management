@@ -24,7 +24,15 @@ namespace Akka.Coordination.KubernetesApi.Tests
                     .WithFallback(LeaseProvider.DefaultConfig())
                 : KubernetesLease.DefaultConfiguration
                     .WithFallback(LeaseProvider.DefaultConfig());
-            return KubernetesSettings.Create(config.GetConfig(KubernetesLease.ConfigPath).WithFallback(config.GetConfig("akka.coordination.lease")));
+            
+            // NOTE: this is how LeaseSettings is created in Akka.Coordination
+            // https://github.com/akkadotnet/akka.net/blob/f75886921174746cf80244ec18c4e61923725a2d/src/core/Akka.Coordination/LeaseProvider.cs#L127-L131
+            var leaseConfig = config
+                .GetConfig(KubernetesLease.ConfigPath)
+                .WithFallback(config.GetConfig("akka.coordination.lease"));
+
+            var leaseSettings =  LeaseSettings.Create(leaseConfig, "lease-name", "owner-name");
+            return KubernetesSettings.Create(leaseSettings);
         }
         
         [Fact(DisplayName = "default request-timeout should be 2/5 of the lease-operation-timeout")]
