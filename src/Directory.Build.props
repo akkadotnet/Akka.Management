@@ -24,8 +24,8 @@ Update all AWSSDK versions</PackageReleaseNotes>
         
         <TestsNetCoreFramework>netcoreapp3.1</TestsNetCoreFramework>
         <TestsNet>net6.0</TestsNet>
-        <XUnitRunnerVersion>2.4.3</XUnitRunnerVersion>
         <XunitVersion>2.7.1</XunitVersion>
+        <XUnitRunnerVersion>2.5.8</XUnitRunnerVersion>
         <CoverletVersion>6.0.2</CoverletVersion>
         <FluentAssertionVersion>6.12.0</FluentAssertionVersion>
         <TestSdkVersion>17.9.0</TestSdkVersion>
