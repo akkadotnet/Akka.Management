@@ -147,14 +147,6 @@ spec:
               fieldPath: metadata.name
         - name: CLUSTER__IP
           value: "$(POD_NAME).stress-test"
-        livenessProbe:
-          httpGet:
-            path: /alive
-            port: management
-        startupProbe:
-          httpGet:
-            path: /ready
-            port: management
         ports:
         - containerPort: 8558 
           protocol: TCP
