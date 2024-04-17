@@ -1,3 +1,26 @@
+#### 1.5.19 April 17 2024 ####
+
+* Update to [Akka.NET v1.5.19](https://github.com/akkadotnet/akka.net/releases/tag/1.5.19)
+* [Discovery.KubernetesApi: Add option to query pods in all namespaces](https://github.com/akkadotnet/Akka.Management/pull/2421)
+* [Coordination.KubernetesApi: Change lease expiration calculation to be based on DateTime.Ticks instead of DateTime.TimeOfDay.TotalMilliseconds](https://github.com/akkadotnet/Akka.Management/pull/2474)
+* [Coordination.KubernetesApi: Fix KubernetesSettings configuration bug](https://github.com/akkadotnet/Akka.Management/pull/2475)
+* [Management: Fix host name IPV6 detection](https://github.com/akkadotnet/Akka.Management/pull/2476)
+* Update dependency NuGet package versions to latest versions
+  * [Bump Akka.Hosting to 1.5.19](https://github.com/akkadotnet/Akka.Management/pull/2478)
+  * [Bump Google.Protobuf to 3.26.1](https://github.com/akkadotnet/Akka.Management/pull/2436)
+  * [Bump KubernetesClient to 13.0.26](https://github.com/akkadotnet/Akka.Management/pull/2405)
+  * [Bump Petabridge.Cmd to 1.4.1](https://github.com/akkadotnet/Akka.Management/pull/2418)
+  * [Bump AWSSDK.S3 to 3.7.307](https://github.com/akkadotnet/Akka.Management/pull/2412)
+  * [Bump AWSSDK.CludFormation to 3.7.305.4](https://github.com/akkadotnet/Akka.Management/pull/2430)
+  * [Bump AWSSDK.ECS to 3.7.305.21](https://github.com/akkadotnet/Akka.Management/pull/2414)
+  * [Bump AWSSDK.EC2 to 3.7.318](https://github.com/akkadotnet/Akka.Management/pull/2417)
+
+**Breaking Change Warning**
+
+**This release introduces a breaking change on how `Akka.Coordination.KubernetesApi` calculates lease expiration.**
+
+If you're upgrading `Akka.Coordination.KubernetesApi` from v1.5.18-beta2 or lower to 1.5.19, do not attempt to do a Kubernetes cluster rolling update. Instead, you will have to down the whole Akka.NET cluster (or scale everything to 0) first, then deploy the newly upgraded nodes.
+
 #### 1.5.18-beta2 March 20 2024 ####
 
 * [Discovery.KubernetesApi: Add option to query pods in all namespaces](https://github.com/akkadotnet/Akka.Management/pull/2421)
