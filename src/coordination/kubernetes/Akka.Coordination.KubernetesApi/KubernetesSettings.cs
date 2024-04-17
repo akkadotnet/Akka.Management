@@ -47,12 +47,10 @@ namespace Akka.Coordination.KubernetesApi
             BodyReadTimeout = bodyReadTimeout ?? TimeSpan.FromSeconds(1);
         }
 
-        public static KubernetesSettings Create(ActorSystem system)
-            => Create(system.Settings.Config.GetConfig(KubernetesLease.ConfigPath));
-        
-        public static KubernetesSettings Create(Config config)
+        public static KubernetesSettings Create(LeaseSettings settings)
         {
-            var leaseTimeoutSettings = TimeoutSettings.Create(config);
+            var config = settings.LeaseConfig;
+            var leaseTimeoutSettings = settings.TimeoutSettings;
             var requestTimeoutValue = config.GetStringIfDefined("api-service-request-timeout");
             var apiServerRequestTimeout = !string.IsNullOrWhiteSpace(requestTimeoutValue)
                 ? config.GetTimeSpan("api-service-request-timeout")
