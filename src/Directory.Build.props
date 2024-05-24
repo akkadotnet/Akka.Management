@@ -40,7 +40,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <MicrosoftExtensionsVersion>[6.0.*,)</MicrosoftExtensionsVersion>
         <AzureIdentityVersion>1.10.4</AzureIdentityVersion>
         <ProtobufVersion>3.26.1</ProtobufVersion>
-        <GrpcToolsVersion>2.62.0</GrpcToolsVersion>
+        <GrpcToolsVersion>2.64.0</GrpcToolsVersion>
     </PropertyGroup>
     
     <!-- SourceLink support for all Akka.NET projects -->
