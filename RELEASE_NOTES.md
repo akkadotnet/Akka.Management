@@ -1,3 +1,19 @@
+#### 1.5.24 June 11 2024 ####
+
+* Update to [Akka.NET v1.5.24](https://github.com/akkadotnet/akka.net/releases/tag/1.5.24)
+* [Fix CVE-2024-21319 and CVE-2022-26907](https://github.com/akkadotnet/Akka.Management/pull/2557)
+* [Fix CVE-2018-8292](https://github.com/akkadotnet/Akka.Management/pull/2558)
+* Update dependency NuGet package versions to latest versions
+  * [Bump Akka.Hosting to 1.5.24](https://github.com/akkadotnet/Akka.Management/pull/2556)
+  * [Bump Azure.Storage.Blobs to 12.20.0](https://github.com/akkadotnet/Akka.Management/pull/2501)
+  * [Bump AWSSDK.ECS to 3.7.306](https://github.com/akkadotnet/Akka.Management/pull/2552)
+  * [Bump Azure.Identity to 1.11.4](https://github.com/akkadotnet/Akka.Management/pull/2545)
+  * [Bump AWSSDK.EC2 to 3.7.329.3](https://github.com/akkadotnet/Akka.Management/pull/2553)
+  * [Bump AWSSDK.S3 to 3.7.309.2](https://github.com/akkadotnet/Akka.Management/pull/2554)
+  * [Bump AWSSDK.CludFormation to 3.7.308.9](https://github.com/akkadotnet/Akka.Management/pull/2555)
+  * [Bump Google.Protobuf to 3.27.1](https://github.com/akkadotnet/Akka.Management/pull/2540)
+  * [Bump Petabridge.Cmd to 1.4.2](https://github.com/akkadotnet/Akka.Management/pull/2559)
+
 #### 1.5.19 April 17 2024 ####
 
 * Update to [Akka.NET v1.5.19](https://github.com/akkadotnet/akka.net/releases/tag/1.5.19)
