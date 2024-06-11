@@ -15,6 +15,15 @@
     
     <ItemGroup Condition=" '$(TargetFramework)' == '$(LibraryFramework)' ">
         <PackageReference Include="KubernetesClient" Version="$(KubernetesClientVersionNetStandard)" />
+
+        <!--
+          These reference is added to resolve CVE-2024-21319 because KubernetesClient 4.0.26 references the bad version
+          of this package. This can be removed if KubernetesClient ever release a clean version in the future (not 
+          likely) or if we drop .NET Standard 2.0 support
+        -->
+        <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="5.7.0" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.7.0" />
+        <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.24" />
     </ItemGroup>
 
     <ItemGroup Condition=" '$(TargetFramework)' == '$(NetFramework)' ">
