@@ -502,7 +502,7 @@ from the that Akka node.
       contact points forms a new cluster.
     - Other nodes will start to see the `/bootstrap/seed-nodes` of the node that self-joined and will join its cluster.
 
-Please see the [complete bootstrap process documentation](./docs/BOOTSTRAP_PROCESS.md) for more information.
+Please see the [complete bootstrap process documentation](./../../../docs/articles/BOOTSTRAP_PROCESS.md) for more information.
 
 ## Joining Mechanism Precedence
 [Back To Top](#table-of-contents)
