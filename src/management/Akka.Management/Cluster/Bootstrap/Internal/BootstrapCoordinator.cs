@@ -139,6 +139,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         private readonly ServiceDiscovery _discovery;
         private readonly IJoinDecider _joinDecider;
         private readonly ClusterBootstrapSettings _settings;
+        private readonly TimeSpan _staleContactPointTimeout;
 
         private readonly ILoggingAdapter _log;
         private readonly Akka.Cluster.Cluster _cluster;
@@ -159,6 +160,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             _discovery = discovery;
             _joinDecider = joinDecider;
             _settings = settings;
+            _staleContactPointTimeout = _settings.ContactPoint.ProbeInterval + _settings.ContactPoint.StaleContactPointTimeout;
 
             _log = Context.GetLogger();
             _cluster = Akka.Cluster.Cluster.Get(Context.System);
@@ -484,8 +486,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             
             // filter out old observations, in case the probing failures are not triggered
             bool IsObsolete(SeedNodesObservation obs)
-                => (currentTime - obs.ObservedAt).TotalMilliseconds >
-                   _settings.ContactPoint.ProbingFailureTimeout.TotalMilliseconds;
+                => (currentTime - obs.ObservedAt).TotalMilliseconds > _staleContactPointTimeout.TotalMilliseconds;
 
             var seedObservations = _seedNodesObservations
                 .Select(kvp => kvp.Value)
