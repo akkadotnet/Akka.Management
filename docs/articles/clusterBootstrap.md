@@ -65,7 +65,7 @@ from the that Akka node.
       contact points forms a new cluster.
     - Other nodes will start to see the `/bootstrap/seed-nodes` of the node that self-joined and will join its cluster.
 
-Please see the [complete bootstrap process documentation](./docs/BOOTSTRAP_PROCESS.md) for more information.
+Please see the [complete bootstrap process documentation](./BOOTSTRAP_PROCESS.md) for more information.
 
 ## Joining Mechanism Precedence
 As Akka Cluster allows nodes to join to a cluster using multiple different methods, the precedence of each method is strictly defined and is as follows:
