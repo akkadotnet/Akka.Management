@@ -68,10 +68,11 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
         private readonly CancellationTokenSource _cancellationTokenSource;
         
         private DateTimeOffset _probingKeepFailingDeadline;
+        private readonly TimeSpan _probingFailureTimeout;
         private bool _stopped = false;
 
         private void ResetProbingKeepFailingWithinDeadline()
-            => _probingKeepFailingDeadline = DateTimeOffset.Now + _settings.ContactPoint.ProbingFailureTimeout;
+            => _probingKeepFailingDeadline = DateTimeOffset.Now + _probingFailureTimeout;
 
         public HttpContactPointBootstrap(ClusterBootstrapSettings settings, ResolvedTarget contactPoint, Uri baseUri)
         {
@@ -94,6 +95,8 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             _probeInterval = settings.ContactPoint.ProbeInterval;
             _probeRequest = ClusterBootstrapRequests.BootstrapSeedNodes(baseUri);
             _cancellationTokenSource = new CancellationTokenSource();
+
+            _probingFailureTimeout = _probeInterval + _settings.ContactPoint.ProbingFailureTimeout;
             
             ResetProbingKeepFailingWithinDeadline();
 
