@@ -1,3 +1,9 @@
+#### 1.5.25.1 June 25 2024 ####
+
+* [Add stale-contact-point-timeout settings to ClusterBootstrap](https://github.com/akkadotnet/Akka.Management/pull/2589)
+* [Bump Akka.Hosting to 1.5.25](https://github.com/akkadotnet/Akka.Management/pull/2572)
+* Update dependency NuGet package versions to latest versions 
+
 #### 1.5.25 June 17 2024 ####
 
 * Update to [Akka.NET v1.5.25](https://github.com/akkadotnet/akka.net/releases/tag/1.5.24)
