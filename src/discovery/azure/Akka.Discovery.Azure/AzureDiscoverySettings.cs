@@ -15,6 +15,7 @@ namespace Akka.Discovery.Azure
     public sealed class AzureDiscoverySettings
     {
         public static readonly AzureDiscoverySettings Empty = new AzureDiscoverySettings(
+            readOnly: false,
             serviceName: "default",
             hostName: Dns.GetHostName(),
             port: 8558,
@@ -45,6 +46,7 @@ namespace Akka.Discovery.Azure
             }
             
             return new AzureDiscoverySettings(
+                readOnly: cfg.GetBoolean("read-only"),
                 serviceName: cfg.GetString("service-name"),
                 hostName: host,
                 port: cfg.GetInt("public-port"),
@@ -62,6 +64,7 @@ namespace Akka.Discovery.Azure
         }
         
         private AzureDiscoverySettings(
+            bool readOnly,
             string serviceName,
             string hostName,
             int port,
@@ -106,7 +109,8 @@ namespace Akka.Discovery.Azure
             
             if(maximumRetryBackoff < retryBackoff)
                 throw new ArgumentException($"Must be greater than {nameof(retryBackoff)}", nameof(maximumRetryBackoff));
-            
+
+            ReadOnly = readOnly;
             ServiceName = serviceName;
             HostName = hostName;
             Port = port;
@@ -123,6 +127,7 @@ namespace Akka.Discovery.Azure
             TableClientOptions = tableClientOptions;
         }
 
+        public bool ReadOnly { get; }
         public string ServiceName { get; }
         public string HostName { get; }
         public int Port { get; }
@@ -193,8 +198,12 @@ namespace Akka.Discovery.Azure
                 azureTableEndpoint: azureTableEndpoint,
                 credential: credential,
                 tableClientOptions: tableClientOptions);
+
+        public AzureDiscoverySettings WithReadOnlyMode(bool readOnly)
+            => Copy(readOnly: readOnly);
         
         private AzureDiscoverySettings Copy(
+            bool? readOnly = null,
             string? serviceName = null,
             string? host = null,
             int? port = null,
@@ -210,6 +219,7 @@ namespace Akka.Discovery.Azure
             TokenCredential? credential = null,
             TableClientOptions? tableClientOptions = null)
             => new (
+                readOnly: readOnly ?? ReadOnly,
                 serviceName: serviceName ?? ServiceName,
                 hostName: host ?? HostName,
                 port: port ?? Port,

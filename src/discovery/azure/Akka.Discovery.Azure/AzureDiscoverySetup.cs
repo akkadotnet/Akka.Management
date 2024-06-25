@@ -15,6 +15,7 @@ namespace Akka.Discovery.Azure
 {
     public sealed class AzureDiscoverySetup: Setup
     {
+        public bool? ReadOnly { get; set; }
         public string? ServiceName { get; set; }
         public string? HostName { get; set; }
         public int? Port { get; set; }
@@ -29,6 +30,12 @@ namespace Akka.Discovery.Azure
         public Uri? AzureTableEndpoint { get; set; }
         public TokenCredential? AzureCredential { get; set; }
         public TableClientOptions? TableClientOptions { get; set; }
+        public AzureDiscoverySetup WithReadOnlyMode(bool readOnly)
+        {
+            ReadOnly = readOnly;
+            return this;
+        }
+        
         public AzureDiscoverySetup WithServiceName(string serviceName)
         {
             ServiceName = serviceName;
@@ -104,6 +111,8 @@ namespace Akka.Discovery.Azure
         public override string ToString()
         {
             var props = new List<string>();
+            if(ReadOnly != null)
+                props.Add($"{nameof(ReadOnly)}:{ReadOnly}");
             if(ServiceName != null)
                 props.Add($"{nameof(ServiceName)}:{ServiceName}");
             if(HostName != null)
@@ -138,6 +147,8 @@ namespace Akka.Discovery.Azure
         
         public AzureDiscoverySettings Apply(AzureDiscoverySettings setting)
         {
+            if (ReadOnly != null)
+                setting = setting.WithReadOnlyMode(ReadOnly.Value);
             if (ServiceName != null)
                 setting = setting.WithServiceName(ServiceName);
             if (HostName != null)

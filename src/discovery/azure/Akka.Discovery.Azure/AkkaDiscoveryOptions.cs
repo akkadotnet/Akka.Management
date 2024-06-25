@@ -16,11 +16,14 @@ namespace Akka.Discovery.Azure;
 
 public class AkkaDiscoveryOptions: IHoconOption
 {
-    private const string FullPath = "akka.discovery.azure";
+    private const string DefaultPath = "azure";
+    private string FullPath(string path) => $"akka.discovery.{path}";
     
-    public string ConfigPath { get; } = "azure";
+    public string ConfigPath { get; set; } = "azure";
     public Type Class { get; } = typeof(AzureServiceDiscovery);
-    
+
+    public bool IsDefaultPlugin { get; set; } = true;
+    public bool? ReadOnly { get; set; }
     public string? HostName { get; set; }
     public int? Port { get; set; }
     public string? ServiceName { get; set; }
@@ -39,9 +42,11 @@ public class AkkaDiscoveryOptions: IHoconOption
     public void Apply(AkkaConfigurationBuilder builder, Setup? inputSetup = null)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"{FullPath} {{");
+        sb.AppendLine($"{FullPath(ConfigPath)} {{");
         sb.AppendLine($"class = {Class.AssemblyQualifiedName!.ToHocon()}");
 
+        if (ReadOnly is not null)
+            sb.AppendLine($"read-only = {ReadOnly.ToHocon()}");
         if (HostName is { })
             sb.AppendLine($"public-hostname = {HostName.ToHocon()}");
         if (Port is { })
@@ -67,7 +72,11 @@ public class AkkaDiscoveryOptions: IHoconOption
         sb.AppendLine("}");
         
         builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
-        builder.AddHocon(AzureServiceDiscovery.DefaultConfig, HoconAddMode.Append);
+
+        var fallback = AzureServiceDiscovery.DefaultConfig
+            .GetConfig(FullPath(DefaultPath))
+            .MoveTo(FullPath(ConfigPath));
+        builder.AddHocon(fallback, HoconAddMode.Append);
 
         if (AzureCredential is { })
         {
@@ -81,6 +90,9 @@ public class AkkaDiscoveryOptions: IHoconOption
                 TableClientOptions = TableClientOptions
             });
         }
+        
+        if(IsDefaultPlugin)
+            builder.AddHocon($"akka.discovery.method = {ConfigPath}", HoconAddMode.Prepend);
     }
 
 }
