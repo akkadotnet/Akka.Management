@@ -37,6 +37,16 @@ namespace Akka.Discovery.Azure
         ///     The public port of this node, usually for akka management. It will be used by other nodes to connect
         ///     and query this node. Defaults to 8558
         /// </param>
+        /// <param name="discoveryId">
+        ///     The id name this plugin will use. Defaults to "azure"
+        /// </param>
+        /// <param name="readOnly">
+        ///     When set to true, the plugin will not participate in updating the Azure table and operates in
+        ///     a read-only mode.
+        /// </param>
+        /// <param name="isDefaultPlugin">
+        ///     Mark this plugin as the default plugin to be used by ClusterBootstrap
+        /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
@@ -102,6 +112,16 @@ namespace Akka.Discovery.Azure
         /// <param name="publicPort">
         ///     The public port of this node, usually for akka management. It will be used by other nodes to connect
         ///     and query this node. Defaults to 8558
+        /// </param>
+        /// <param name="discoveryId">
+        ///     The id name this plugin will use. Defaults to "azure"
+        /// </param>
+        /// <param name="readOnly">
+        ///     When set to true, the plugin will not participate in updating the Azure table and operates in
+        ///     a read-only mode.
+        /// </param>
+        /// <param name="isDefaultPlugin">
+        ///     Mark this plugin as the default plugin to be used by ClusterBootstrap
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
