@@ -28,13 +28,19 @@ namespace Akka.Discovery.Azure
 
         private readonly IActorRef _guardianActor;
 
+        // Backward compatibility constructor
         public AzureServiceDiscovery(ExtendedActorSystem system)
+            : this(system, system.Settings.Config.GetConfig("akka.discovery.azure"))
+        {
+        }
+        
+        public AzureServiceDiscovery(ExtendedActorSystem system, Configuration.Config config)
         {
             _system = system;
             _log = Logging.GetLogger(system, typeof(AzureServiceDiscovery));
             
             _system.Settings.InjectTopLevelFallback(DefaultConfig);
-            _settings = AzureDiscoverySettings.Create(system);
+            _settings = AzureDiscoverySettings.Create(system, config);
             
             var setup = _system.Settings.Setup.Get<AzureDiscoverySetup>();
             if (setup.HasValue)
