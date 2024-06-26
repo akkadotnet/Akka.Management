@@ -6,7 +6,7 @@ namespace Akka.Discovery.Azure;
 
 public static class Extensions
 {
-    public static Configuration.Config MoveTo(this Configuration.Config config, string path)
+    internal static Configuration.Config MoveTo(this Configuration.Config config, string path)
     {
         var rootObj = new HoconObject();
         var rootValue = new HoconValue();
