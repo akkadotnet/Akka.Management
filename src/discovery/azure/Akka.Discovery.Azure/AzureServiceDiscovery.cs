@@ -39,8 +39,8 @@ namespace Akka.Discovery.Azure
             _system = system;
             _log = Logging.GetLogger(system, typeof(AzureServiceDiscovery));
             
-            _system.Settings.InjectTopLevelFallback(DefaultConfig);
-            _settings = AzureDiscoverySettings.Create(system, config);
+            var fullConfig = config.WithFallback(DefaultConfig.GetConfig("akka.discovery.azure"));
+            _settings = AzureDiscoverySettings.Create(system, fullConfig);
             
             var setup = _system.Settings.Setup.Get<AzureDiscoverySetup>();
             if (setup.HasValue)
