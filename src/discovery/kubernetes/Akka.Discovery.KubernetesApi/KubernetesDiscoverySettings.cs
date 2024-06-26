@@ -12,10 +12,10 @@ namespace Akka.Discovery.KubernetesApi
     public sealed class KubernetesDiscoverySettings
     {
         public static readonly KubernetesDiscoverySettings Empty =
-            Create(KubernetesDiscovery.DefaultConfiguration().GetConfig("akka.discovery.kubernetes-api"));
+            Create(KubernetesDiscovery.DefaultConfiguration().GetConfig(KubernetesApiServiceDiscovery.DefaultConfigPath));
         
         public static KubernetesDiscoverySettings Create(ActorSystem system)
-            => Create(system.Settings.Config.GetConfig("akka.discovery.kubernetes-api"));
+            => Create(system.Settings.Config.GetConfig(KubernetesApiServiceDiscovery.DefaultConfigPath));
 
         public static KubernetesDiscoverySettings Create(Configuration.Config config)
             => new (

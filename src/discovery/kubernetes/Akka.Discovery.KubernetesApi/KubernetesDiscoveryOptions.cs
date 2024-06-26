@@ -15,11 +15,10 @@ namespace Akka.Discovery.KubernetesApi;
 
 public class KubernetesDiscoveryOptions: IHoconOption
 {
-    private const string FullPath = "akka.discovery.kubernetes-api";
-    
-    public string ConfigPath { get; } = "kubernetes-api";
+    public string ConfigPath { get; set; } = KubernetesApiServiceDiscovery.DefaultPath;
     public Type Class { get; } = typeof(KubernetesApiServiceDiscovery);
     
+    public bool IsDefaultPlugin { get; set; } = true;
     public string? ApiCaPath { get; set; }
     public string? ApiTokenPath { get; set; }
     public string? ApiServiceHostEnvName { get; set; }
@@ -35,7 +34,7 @@ public class KubernetesDiscoveryOptions: IHoconOption
     public void Apply(AkkaConfigurationBuilder builder, Setup? setup = null)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"{FullPath} {{");
+        sb.AppendLine($"{KubernetesApiServiceDiscovery.FullPath(ConfigPath)} {{");
         sb.AppendLine($"class = {Class.AssemblyQualifiedName!.ToHocon()}");
 
         if (ApiCaPath is { })
@@ -62,8 +61,15 @@ public class KubernetesDiscoveryOptions: IHoconOption
             sb.AppendLine($"container-name = {ContainerName.ToHocon()}");
         
         sb.AppendLine("}");
+        
+        if(IsDefaultPlugin)
+            sb.AppendLine($"akka.discovery.method = {ConfigPath}");
 
         builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
-        builder.AddHocon(KubernetesDiscovery.DefaultConfiguration(), HoconAddMode.Append);
+        
+        var fallback = KubernetesDiscovery.DefaultConfiguration()
+            .GetConfig(KubernetesApiServiceDiscovery.FullPath(KubernetesApiServiceDiscovery.DefaultPath))
+            .MoveTo(KubernetesApiServiceDiscovery.FullPath(ConfigPath));
+        builder.AddHocon(fallback, HoconAddMode.Append);
     }
 }

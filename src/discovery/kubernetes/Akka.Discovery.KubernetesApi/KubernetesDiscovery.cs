@@ -5,6 +5,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System;
 using Akka.Actor;
 using Akka.Configuration;
 
@@ -18,8 +19,10 @@ namespace Akka.Discovery.KubernetesApi
         public static KubernetesDiscovery Get(ActorSystem system)
             => system.WithExtension<KubernetesDiscovery, KubernetesDiscoveryProvider>();
 
+        [Obsolete("The Settings property is now deprecated. Since 1.5.26")]
         public readonly KubernetesDiscoverySettings Settings;
 
+#pragma warning disable CS0618 // Type or member is obsolete
         public KubernetesDiscovery(ExtendedActorSystem system)
         {
             system.Settings.InjectTopLevelFallback(DefaultConfiguration());
@@ -29,6 +32,7 @@ namespace Akka.Discovery.KubernetesApi
             if (setup.HasValue)
                 Settings = setup.Value.Apply(Settings);
         }
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     public class KubernetesDiscoveryProvider : ExtensionIdProvider<KubernetesDiscovery>
