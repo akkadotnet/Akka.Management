@@ -40,9 +40,9 @@ namespace Akka.Discovery.Azure
 
         // Backward compatibility constructor
         public static AzureDiscoverySettings Create(Configuration.Config systemConfig)
-            => Create(systemConfig, systemConfig.GetConfig("akka.discovery.azure"));
+            => Create(systemConfig, systemConfig.GetConfig(AzureServiceDiscovery.DefaultConfigPath));
         
-        public static AzureDiscoverySettings Create(Configuration.Config systemConfig, Configuration.Config config)
+        private static AzureDiscoverySettings Create(Configuration.Config systemConfig, Configuration.Config config)
         {
             var host = config.GetString("public-hostname");
             if (string.IsNullOrWhiteSpace(host))

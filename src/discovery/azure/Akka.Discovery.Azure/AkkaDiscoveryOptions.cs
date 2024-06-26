@@ -16,8 +16,6 @@ namespace Akka.Discovery.Azure;
 
 public class AkkaDiscoveryOptions: IHoconOption
 {
-    private const string DefaultPath = "azure";
-    private string FullPath(string path) => $"akka.discovery.{path}";
     
     public string ConfigPath { get; set; } = "azure";
     public Type Class { get; } = typeof(AzureServiceDiscovery);
@@ -42,7 +40,7 @@ public class AkkaDiscoveryOptions: IHoconOption
     public void Apply(AkkaConfigurationBuilder builder, Setup? inputSetup = null)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"{FullPath(ConfigPath)} {{");
+        sb.AppendLine($"{AzureServiceDiscovery.FullPath(ConfigPath)} {{");
         sb.AppendLine($"class = {Class.AssemblyQualifiedName!.ToHocon()}");
 
         if (ReadOnly is not null)
@@ -74,8 +72,8 @@ public class AkkaDiscoveryOptions: IHoconOption
         builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
 
         var fallback = AzureServiceDiscovery.DefaultConfig
-            .GetConfig(FullPath(DefaultPath))
-            .MoveTo(FullPath(ConfigPath));
+            .GetConfig(AzureServiceDiscovery.FullPath(AzureServiceDiscovery.DefaultPath))
+            .MoveTo(AzureServiceDiscovery.FullPath(ConfigPath));
         builder.AddHocon(fallback, HoconAddMode.Append);
 
         if (AzureCredential is { })

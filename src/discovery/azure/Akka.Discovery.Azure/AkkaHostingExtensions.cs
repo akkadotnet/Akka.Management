@@ -68,7 +68,7 @@ namespace Akka.Discovery.Azure
             string? serviceName = null,
             string? publicHostname = null,
             int? publicPort = null,
-            string discoveryId = "azure",
+            string discoveryId = AzureServiceDiscovery.DefaultPath,
             bool? readOnly = null,
             bool isDefaultPlugin = true)
         {
@@ -149,7 +149,7 @@ namespace Akka.Discovery.Azure
             string? serviceName = null,
             string? publicHostname = null,
             int? publicPort = null,
-            string discoveryId = "azure",
+            string discoveryId = AzureServiceDiscovery.DefaultPath,
             bool? readOnly = null,
             bool isDefaultPlugin = true)
         {

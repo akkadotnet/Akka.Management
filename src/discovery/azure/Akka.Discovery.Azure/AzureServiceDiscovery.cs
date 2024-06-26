@@ -19,6 +19,9 @@ namespace Akka.Discovery.Azure
 {
     public class AzureServiceDiscovery : ServiceDiscovery
     {
+        internal const string DefaultPath = "azure";
+        internal const string DefaultConfigPath = "akka.discovery." + DefaultPath;
+        internal static string FullPath(string path) => $"akka.discovery.{path}";
         public static readonly Configuration.Config DefaultConfig = 
             ConfigurationFactory.FromResource<AzureServiceDiscovery>("Akka.Discovery.Azure.reference.conf");
         
@@ -30,7 +33,7 @@ namespace Akka.Discovery.Azure
 
         // Backward compatibility constructor
         public AzureServiceDiscovery(ExtendedActorSystem system)
-            : this(system, system.Settings.Config.GetConfig("akka.discovery.azure"))
+            : this(system, system.Settings.Config.GetConfig(DefaultConfigPath))
         {
         }
         
@@ -39,7 +42,7 @@ namespace Akka.Discovery.Azure
             _system = system;
             _log = Logging.GetLogger(system, typeof(AzureServiceDiscovery));
             
-            var fullConfig = config.WithFallback(DefaultConfig.GetConfig("akka.discovery.azure"));
+            var fullConfig = config.WithFallback(DefaultConfig.GetConfig(DefaultConfigPath));
             _settings = AzureDiscoverySettings.Create(system, fullConfig);
             
             var setup = _system.Settings.Setup.Get<AzureDiscoverySetup>();
