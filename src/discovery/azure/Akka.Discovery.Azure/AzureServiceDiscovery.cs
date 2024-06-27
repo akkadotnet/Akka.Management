@@ -19,6 +19,9 @@ namespace Akka.Discovery.Azure
 {
     public class AzureServiceDiscovery : ServiceDiscovery
     {
+        internal const string DefaultPath = "azure";
+        internal const string DefaultConfigPath = "akka.discovery." + DefaultPath;
+        internal static string FullPath(string path) => $"akka.discovery.{path}";
         public static readonly Configuration.Config DefaultConfig = 
             ConfigurationFactory.FromResource<AzureServiceDiscovery>("Akka.Discovery.Azure.reference.conf");
         
@@ -28,17 +31,34 @@ namespace Akka.Discovery.Azure
 
         private readonly IActorRef _guardianActor;
 
+        // Backward compatibility constructor
         public AzureServiceDiscovery(ExtendedActorSystem system)
+            : this(system, system.Settings.Config.GetConfig(DefaultConfigPath))
+        {
+        }
+        
+        public AzureServiceDiscovery(ExtendedActorSystem system, Configuration.Config config)
         {
             _system = system;
             _log = Logging.GetLogger(system, typeof(AzureServiceDiscovery));
             
-            _system.Settings.InjectTopLevelFallback(DefaultConfig);
-            _settings = AzureDiscoverySettings.Create(system);
+            var fullConfig = config.WithFallback(DefaultConfig.GetConfig(DefaultConfigPath));
+            _settings = AzureDiscoverySettings.Create(system, fullConfig);
             
             var setup = _system.Settings.Setup.Get<AzureDiscoverySetup>();
             if (setup.HasValue)
                 _settings = setup.Value.Apply(_settings);
+
+            // We're cheating here, `discovery-id` setting doesn't officially exist in the official
+            // default HOCON settings, this is a marker we injected from the Akka.Hosting extension
+            // to map HOCON subsection with its related Setup.
+            var id = fullConfig.GetString("discovery-id");
+            if (id is not null)
+            {
+                var multiSetup = _system.Settings.Setup.Get<AzureDiscoveryMultiSetup>();
+                if (multiSetup.HasValue && multiSetup.Value.Setups.TryGetValue(id, out var configSetup))
+                    _settings = configSetup.Apply(_settings);
+            }
 
             _guardianActor = system.SystemActorOf(AzureDiscoveryGuardian.Props(_settings), "azure-discovery-guardian");
 

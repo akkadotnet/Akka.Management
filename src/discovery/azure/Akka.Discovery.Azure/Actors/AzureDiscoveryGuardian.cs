@@ -77,7 +77,8 @@ namespace Akka.Discovery.Azure.Actors
         private IPAddress? _address;
         private readonly int _port;
         private readonly CancellationTokenSource _shutdownCts;
-        
+
+        private readonly bool _readOnly;
         private readonly TimeSpan _backoff;
         private readonly TimeSpan _maxBackoff;
         private int _retryCount;
@@ -108,6 +109,7 @@ namespace Akka.Discovery.Azure.Actors
             
             _port = settings.Port;
             _shutdownCts = new CancellationTokenSource();
+            _readOnly = settings.ReadOnly;
         }
 
         protected override void PreStart()
@@ -145,7 +147,7 @@ namespace Akka.Discovery.Azure.Actors
         {
             switch (message)
             {
-                case Start _:
+                case Start _ when !_readOnly:
                     if (IPAddress.TryParse(_settings.HostName, out _address))
                     {
                         if (_address.Equals(IPAddress.Any) || _address.Equals(IPAddress.IPv6Any))
@@ -163,6 +165,10 @@ namespace Akka.Discovery.Azure.Actors
                     ExecuteOperationWithRetry(async token => 
                             await Client.GetOrCreateAsync(_host, _address, _port, token))
                         .PipeTo(Self);
+                    return true;
+                
+                case Start _:
+                    Become(Running);
                     return true;
                 
                 case Status.Success _:
@@ -244,13 +250,21 @@ namespace Akka.Discovery.Azure.Actors
                 case StopDiscovery _:
                     foreach (var child in Context.GetChildren())
                         Context.Stop(child);
-                    
-                    var sender = Sender;
-                    Client.RemoveSelf(_shutdownCts.Token)
-                        .PipeTo(Self, 
-                            success: () => new DiscoveryStopped(sender), 
-                            failure: e => new DiscoveryStopFailed(sender, e));
-                    Become(Stopping);
+
+                    if (!_readOnly)
+                    {
+                        var sender = Sender;
+                        Client.RemoveSelf(_shutdownCts.Token)
+                            .PipeTo(Self, 
+                                success: () => new DiscoveryStopped(sender), 
+                                failure: e => new DiscoveryStopFailed(sender, e));
+                        Become(Stopping);
+                    }
+                    else
+                    {
+                        Sender.Tell(Done.Instance);
+                        Context.Stop(Self);
+                    }
                     return true;
                 
                 default:

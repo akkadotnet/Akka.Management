@@ -15,6 +15,7 @@ namespace Akka.Discovery.Azure
     public sealed class AzureDiscoverySettings
     {
         public static readonly AzureDiscoverySettings Empty = new AzureDiscoverySettings(
+            readOnly: false,
             serviceName: "default",
             hostName: Dns.GetHostName(),
             port: 8558,
@@ -30,38 +31,47 @@ namespace Akka.Discovery.Azure
             azureCredential: null,
             tableClientOptions: null);
         
+        // Backward compatibility constructor
         public static AzureDiscoverySettings Create(ActorSystem system)
             => Create(system.Settings.Config);
 
-        public static AzureDiscoverySettings Create(Configuration.Config config)
+        public static AzureDiscoverySettings Create(ActorSystem system, Configuration.Config config)
+            => Create(system.Settings.Config, config);
+
+        // Backward compatibility constructor
+        public static AzureDiscoverySettings Create(Configuration.Config systemConfig)
+            => Create(systemConfig, systemConfig.GetConfig(AzureServiceDiscovery.DefaultConfigPath));
+        
+        private static AzureDiscoverySettings Create(Configuration.Config systemConfig, Configuration.Config config)
         {
-            var cfg = config.GetConfig("akka.discovery.azure");
-            var host = cfg.GetString("public-hostname");
+            var host = config.GetString("public-hostname");
             if (string.IsNullOrWhiteSpace(host))
             {
-                host = config.GetString("akka.remote.dot-netty.tcp.public-hostname");
+                host = systemConfig.GetString("akka.remote.dot-netty.tcp.public-hostname");
                 if (string.IsNullOrWhiteSpace(host))
                     host = Dns.GetHostName();
             }
             
             return new AzureDiscoverySettings(
-                serviceName: cfg.GetString("service-name"),
+                readOnly: config.GetBoolean("read-only"),
+                serviceName: config.GetString("service-name"),
                 hostName: host,
-                port: cfg.GetInt("public-port"),
-                connectionString: cfg.GetString("connection-string"),
-                tableName: cfg.GetString("table-name"),
-                ttlHeartbeatInterval: cfg.GetTimeSpan("ttl-heartbeat-interval"),
-                staleTtlThreshold: cfg.GetTimeSpan("stale-ttl-threshold"),
-                pruneInterval: cfg.GetTimeSpan("prune-interval"),
-                operationTimeout: cfg.GetTimeSpan("operation-timeout"),
-                retryBackoff: cfg.GetTimeSpan("retry-backoff"),
-                maximumRetryBackoff: cfg.GetTimeSpan("max-retry-backoff"),
+                port: config.GetInt("public-port"),
+                connectionString: config.GetString("connection-string"),
+                tableName: config.GetString("table-name"),
+                ttlHeartbeatInterval: config.GetTimeSpan("ttl-heartbeat-interval"),
+                staleTtlThreshold: config.GetTimeSpan("stale-ttl-threshold"),
+                pruneInterval: config.GetTimeSpan("prune-interval"),
+                operationTimeout: config.GetTimeSpan("operation-timeout"),
+                retryBackoff: config.GetTimeSpan("retry-backoff"),
+                maximumRetryBackoff: config.GetTimeSpan("max-retry-backoff"),
                 azureTableEndpoint: null,
                 azureCredential: null,
                 tableClientOptions: null);
         }
         
         private AzureDiscoverySettings(
+            bool readOnly,
             string serviceName,
             string hostName,
             int port,
@@ -106,7 +116,8 @@ namespace Akka.Discovery.Azure
             
             if(maximumRetryBackoff < retryBackoff)
                 throw new ArgumentException($"Must be greater than {nameof(retryBackoff)}", nameof(maximumRetryBackoff));
-            
+
+            ReadOnly = readOnly;
             ServiceName = serviceName;
             HostName = hostName;
             Port = port;
@@ -123,6 +134,7 @@ namespace Akka.Discovery.Azure
             TableClientOptions = tableClientOptions;
         }
 
+        public bool ReadOnly { get; }
         public string ServiceName { get; }
         public string HostName { get; }
         public int Port { get; }
@@ -193,8 +205,12 @@ namespace Akka.Discovery.Azure
                 azureTableEndpoint: azureTableEndpoint,
                 credential: credential,
                 tableClientOptions: tableClientOptions);
+
+        public AzureDiscoverySettings WithReadOnlyMode(bool readOnly)
+            => Copy(readOnly: readOnly);
         
         private AzureDiscoverySettings Copy(
+            bool? readOnly = null,
             string? serviceName = null,
             string? host = null,
             int? port = null,
@@ -210,6 +226,7 @@ namespace Akka.Discovery.Azure
             TokenCredential? credential = null,
             TableClientOptions? tableClientOptions = null)
             => new (
+                readOnly: readOnly ?? ReadOnly,
                 serviceName: serviceName ?? ServiceName,
                 hostName: host ?? HostName,
                 port: port ?? Port,

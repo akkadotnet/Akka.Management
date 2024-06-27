@@ -9,7 +9,6 @@ using System.Net;
 using Akka.Actor;
 using Akka.Hosting;
 using Azure.Data.Tables;
-using Azure.Identity;
 using Azure.Core;
 
 namespace Akka.Discovery.Azure
@@ -38,6 +37,16 @@ namespace Akka.Discovery.Azure
         ///     The public port of this node, usually for akka management. It will be used by other nodes to connect
         ///     and query this node. Defaults to 8558
         /// </param>
+        /// <param name="discoveryId">
+        ///     The id name this plugin will use. Defaults to "azure"
+        /// </param>
+        /// <param name="readOnly">
+        ///     When set to true, the plugin will not participate in updating the Azure table and operates in
+        ///     a read-only mode.
+        /// </param>
+        /// <param name="isDefaultPlugin">
+        ///     Mark this plugin as the default plugin to be used by ClusterBootstrap
+        /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
@@ -58,10 +67,16 @@ namespace Akka.Discovery.Azure
             string connectionString,
             string? serviceName = null,
             string? publicHostname = null,
-            int? publicPort = null)
+            int? publicPort = null,
+            string discoveryId = AzureServiceDiscovery.DefaultPath,
+            bool? readOnly = null,
+            bool isDefaultPlugin = true)
         {
             var options = new AkkaDiscoveryOptions
             {
+                IsDefaultPlugin = isDefaultPlugin,
+                ConfigPath = discoveryId,
+                ReadOnly = readOnly,
                 ConnectionString = connectionString,
                 ServiceName = serviceName,
                 HostName = publicHostname,
@@ -98,6 +113,16 @@ namespace Akka.Discovery.Azure
         ///     The public port of this node, usually for akka management. It will be used by other nodes to connect
         ///     and query this node. Defaults to 8558
         /// </param>
+        /// <param name="discoveryId">
+        ///     The id name this plugin will use. Defaults to "azure"
+        /// </param>
+        /// <param name="readOnly">
+        ///     When set to true, the plugin will not participate in updating the Azure table and operates in
+        ///     a read-only mode.
+        /// </param>
+        /// <param name="isDefaultPlugin">
+        ///     Mark this plugin as the default plugin to be used by ClusterBootstrap
+        /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
         /// </returns>
@@ -123,11 +148,17 @@ namespace Akka.Discovery.Azure
             TableClientOptions? tableClientOptions = null,
             string? serviceName = null,
             string? publicHostname = null,
-            int? publicPort = null)
+            int? publicPort = null,
+            string discoveryId = AzureServiceDiscovery.DefaultPath,
+            bool? readOnly = null,
+            bool isDefaultPlugin = true)
         {
             if (azureCredential == null) throw new ArgumentNullException(nameof(azureCredential));
             var options = new AkkaDiscoveryOptions
             {
+                IsDefaultPlugin = isDefaultPlugin,
+                ConfigPath = discoveryId,
+                ReadOnly = readOnly,
                 AzureTableEndpoint = azureTableEndpoint,
                 AzureCredential = azureCredential,
                 TableClientOptions = tableClientOptions,
@@ -208,12 +239,9 @@ namespace Akka.Discovery.Azure
             this AkkaConfigurationBuilder builder,
             AkkaDiscoveryOptions options)
         {
-            builder.AddHocon(
-                ((Configuration.Config)"akka.discovery.method = azure").WithFallback(AzureServiceDiscovery.DefaultConfig), 
-                HoconAddMode.Prepend);
             options.Apply(builder);
-            builder.AddHocon(AzureServiceDiscovery.DefaultConfig, HoconAddMode.Append);
 
+            builder.AddHocon(AzureServiceDiscovery.DefaultConfig, HoconAddMode.Append);
             return builder;
         }
     }
