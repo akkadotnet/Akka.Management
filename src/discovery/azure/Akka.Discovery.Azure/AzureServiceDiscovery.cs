@@ -49,6 +49,17 @@ namespace Akka.Discovery.Azure
             if (setup.HasValue)
                 _settings = setup.Value.Apply(_settings);
 
+            // We're cheating here, `discovery-id` setting doesn't officially exist in the official
+            // default HOCON settings, this is a marker we injected from the Akka.Hosting extension
+            // to map HOCON subsection with its related Setup.
+            var id = fullConfig.GetString("discovery-id");
+            if (id is not null)
+            {
+                var multiSetup = _system.Settings.Setup.Get<AzureDiscoveryMultiSetup>();
+                if (multiSetup.HasValue && multiSetup.Value.Setups.TryGetValue(id, out var configSetup))
+                    _settings = configSetup.Apply(_settings);
+            }
+
             _guardianActor = system.SystemActorOf(AzureDiscoveryGuardian.Props(_settings), "azure-discovery-guardian");
 
             var shutdown = CoordinatedShutdown.Get(system);

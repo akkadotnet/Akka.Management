@@ -241,6 +241,7 @@ namespace Akka.Discovery.Azure
         {
             options.Apply(builder);
 
+            builder.AddHocon(AzureServiceDiscovery.DefaultConfig, HoconAddMode.Append);
             return builder;
         }
     }

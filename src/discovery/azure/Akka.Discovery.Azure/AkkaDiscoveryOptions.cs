@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Linq;
 using System.Text;
 using Akka.Actor.Setup;
 using Akka.Configuration;
@@ -43,6 +44,11 @@ public class AkkaDiscoveryOptions: IHoconOption
         sb.AppendLine($"{AzureServiceDiscovery.FullPath(ConfigPath)} {{");
         sb.AppendLine($"class = {Class.AssemblyQualifiedName!.ToHocon()}");
 
+        // We're going to cheat and embed the config path/discovery id here
+        // because we need to correlate the setup files with the config
+        // during run-time
+        sb.AppendLine($"discovery-id = {ConfigPath}");
+        
         if (ReadOnly is not null)
             sb.AppendLine($"read-only = {ReadOnly.ToHocon()}");
         if (HostName is { })
@@ -69,6 +75,9 @@ public class AkkaDiscoveryOptions: IHoconOption
             sb.AppendLine($"max-retry-backoff = {MaximumRetryBackoff.ToHocon()}");
         sb.AppendLine("}");
         
+        if(IsDefaultPlugin)
+            builder.AddHocon($"akka.discovery.method = {ConfigPath}", HoconAddMode.Prepend);
+        
         builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
 
         var fallback = AzureServiceDiscovery.DefaultConfig
@@ -81,16 +90,21 @@ public class AkkaDiscoveryOptions: IHoconOption
             if(AzureTableEndpoint is null)
                 throw new ConfigurationException($"Both {nameof(AzureCredential)} and {AzureTableEndpoint} has to be populated to use Azure Identity");
 
-            builder.AddSetup(new AzureDiscoverySetup
+            var setup = builder.Setups.OfType<AzureDiscoveryMultiSetup>().FirstOrDefault();
+            if (setup is null)
+            {
+                setup = new AzureDiscoveryMultiSetup();
+                builder.AddSetup(setup);
+            }
+
+            setup.Setups[ConfigPath] = new AzureDiscoverySetup
             {
                 AzureCredential = AzureCredential,
                 AzureTableEndpoint = AzureTableEndpoint,
                 TableClientOptions = TableClientOptions
-            });
+            };
         }
         
-        if(IsDefaultPlugin)
-            builder.AddHocon($"akka.discovery.method = {ConfigPath}", HoconAddMode.Prepend);
     }
 
 }
