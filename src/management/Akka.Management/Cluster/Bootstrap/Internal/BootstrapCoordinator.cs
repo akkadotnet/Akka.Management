@@ -160,7 +160,16 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             _discovery = discovery;
             _joinDecider = joinDecider;
             _settings = settings;
-            _staleContactPointTimeout = _settings.ContactPoint.ProbeInterval + _settings.ContactPoint.StaleContactPointTimeout;
+
+            var cps = _settings.ContactPoint;
+            if(cps.StaleContactPointTimeout is not null)
+            {
+                _staleContactPointTimeout = cps.ProbeInterval + cps.StaleContactPointTimeout.Value;
+            }
+            else
+            {
+                _staleContactPointTimeout = new TimeSpan((cps.ProbeInterval.Ticks + cps.ProbingFailureTimeout.Ticks) * 2);
+            }
 
             _log = Context.GetLogger();
             _cluster = Akka.Cluster.Cluster.Get(Context.System);

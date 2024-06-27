@@ -152,21 +152,23 @@ namespace Akka.Management.Cluster.Bootstrap
                 var fallback = contactPointConfig.GetString("fallback-port");
                 var fallbackPort = string.IsNullOrWhiteSpace(fallback) || fallback == "<fallback-port>"
                     ? (int?) null : int.Parse(fallback);
-                var probeFailureTimeout = contactPointConfig.GetTimeSpan("probing-failure-timeout", null, false);
+                
+                var probeInterval = contactPointConfig.GetTimeSpan("probe-interval", TimeSpan.FromSeconds(5), false);
+                var probeFailureTimeout = contactPointConfig.GetTimeSpan("probing-failure-timeout", TimeSpan.FromSeconds(3), false);
+                
                 var staleEntryTimeoutStr = contactPointConfig.GetString("stale-contact-point-timeout");
                 var staleEntryTimeout = string.IsNullOrWhiteSpace(staleEntryTimeoutStr)
                                         || staleEntryTimeoutStr is "off"
                                         || staleEntryTimeoutStr is "false"
                                         || staleEntryTimeoutStr is "no"
-                        ? probeFailureTimeout
+                        ? (TimeSpan?) null 
                         : contactPointConfig.GetTimeSpan("stale-contact-point-timeout");
-                                        
                 
                 return new ContactPointSettings(
                     fallbackPort: fallbackPort,
                     filterOnFallbackPort: contactPointConfig.GetBoolean("filter-on-fallback-port"),
                     probingFailureTimeout: probeFailureTimeout,
-                    probeInterval: contactPointConfig.GetTimeSpan("probe-interval", null, false),
+                    probeInterval: probeInterval,
                     probeIntervalJitter: contactPointConfig.GetDouble("probe-interval-jitter"),
                     staleContactPointTimeout: staleEntryTimeout);
             }
@@ -177,7 +179,7 @@ namespace Akka.Management.Cluster.Bootstrap
                 TimeSpan probingFailureTimeout,
                 TimeSpan probeInterval,
                 double probeIntervalJitter,
-                TimeSpan staleContactPointTimeout)
+                TimeSpan? staleContactPointTimeout)
             {
                 FallbackPort = fallbackPort;
                 FilterOnFallbackPort = filterOnFallbackPort;
@@ -193,7 +195,7 @@ namespace Akka.Management.Cluster.Bootstrap
             public TimeSpan ProbeInterval { get; }
             public double ProbeIntervalJitter { get; }
             public int MaxSeedNodesToExpose { get; } = 5;
-            public TimeSpan StaleContactPointTimeout { get; }
+            public TimeSpan? StaleContactPointTimeout { get; }
 
             internal ContactPointSettings Copy(
                 int? fallbackPort,

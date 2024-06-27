@@ -42,8 +42,8 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             settings.ContactPoint.FallbackPort.Should().BeNull();
             settings.ContactPoint.FilterOnFallbackPort.Should().BeTrue();
             settings.ContactPoint.ProbingFailureTimeout.Should().Be(TimeSpan.FromSeconds(3));
-            settings.ContactPoint.StaleContactPointTimeout.Should().Be(3.Seconds());
-            settings.ContactPoint.ProbeInterval.Should().Be(TimeSpan.FromSeconds(1));
+            settings.ContactPoint.StaleContactPointTimeout.Should().BeNull();
+            settings.ContactPoint.ProbeInterval.Should().Be(TimeSpan.FromSeconds(5));
             settings.ContactPoint.ProbeIntervalJitter.Should().Be(0.2);
             settings.JoinDecider.ImplClass.Should()
                 .Be("Akka.Management.Cluster.Bootstrap.LowestAddressJoinDecider, Akka.Management");
@@ -80,7 +80,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                     FilterOnFallbackPort = false,
                     StaleContactPointTimeout = 1.Seconds(),
                     ProbeInterval = 2.Seconds(),
-                    ProbingFailureTimeout = 3.Seconds(),
+                    ProbingFailureTimeout = 4.Seconds(),
                     ProbeIntervalJitter = 1.0
                 },
                 JoinDecider = new JoinDeciderSetup
@@ -108,7 +108,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             settings.ContactPoint.FilterOnFallbackPort.Should().BeFalse();
             settings.ContactPoint.StaleContactPointTimeout.Should().Be(1.Seconds());
             settings.ContactPoint.ProbeInterval.Should().Be(2.Seconds());
-            settings.ContactPoint.ProbingFailureTimeout.Should().Be(3.Seconds());
+            settings.ContactPoint.ProbingFailureTimeout.Should().Be(4.Seconds());
             settings.ContactPoint.ProbeIntervalJitter.Should().Be(1.0);
             
             settings.JoinDecider.ImplClass.Should()
