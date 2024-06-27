@@ -1,3 +1,9 @@
+#### 1.5.26-beta1 June 27 2024 ####
+
+* Update to [Akka.NET v1.5.26](https://github.com/akkadotnet/akka.net/releases/tag/1.5.26)
+* [Discovery.KubernetesApi: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2596)
+* [Discovery.Azure: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2595)
+
 #### 1.5.25.1 June 25 2024 ####
 
 * [Add stale-contact-point-timeout settings to ClusterBootstrap](https://github.com/akkadotnet/Akka.Management/pull/2589)
