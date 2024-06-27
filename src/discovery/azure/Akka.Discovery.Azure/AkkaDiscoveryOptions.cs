@@ -97,12 +97,12 @@ public class AkkaDiscoveryOptions: IHoconOption
                 builder.AddSetup(setup);
             }
 
-            setup.Setups[ConfigPath] = new AzureDiscoverySetup
+            setup.Add(ConfigPath, new AzureDiscoverySetup
             {
                 AzureCredential = AzureCredential,
                 AzureTableEndpoint = AzureTableEndpoint,
                 TableClientOptions = TableClientOptions
-            };
+            });
         }
         
     }
