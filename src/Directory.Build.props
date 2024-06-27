@@ -31,7 +31,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <TestSdkVersion>17.10.0</TestSdkVersion>
         <WireMockVersion>1.5.59</WireMockVersion>
         
-        <AkkaVersion>1.5.25</AkkaVersion>
+        <AkkaVersion>1.5.26</AkkaVersion>
         <AkkaHostingVersion>1.5.25</AkkaHostingVersion>
         <PbmVersion>1.4.3</PbmVersion>
         
