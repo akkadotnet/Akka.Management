@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Linq;
 using System.Text;
 using Akka.Actor.Setup;
 using Akka.Configuration;
@@ -16,11 +17,12 @@ namespace Akka.Discovery.Azure;
 
 public class AkkaDiscoveryOptions: IHoconOption
 {
-    private const string FullPath = "akka.discovery.azure";
     
-    public string ConfigPath { get; } = "azure";
+    public string ConfigPath { get; set; } = "azure";
     public Type Class { get; } = typeof(AzureServiceDiscovery);
-    
+
+    public bool IsDefaultPlugin { get; set; } = true;
+    public bool? ReadOnly { get; set; }
     public string? HostName { get; set; }
     public int? Port { get; set; }
     public string? ServiceName { get; set; }
@@ -39,9 +41,16 @@ public class AkkaDiscoveryOptions: IHoconOption
     public void Apply(AkkaConfigurationBuilder builder, Setup? inputSetup = null)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"{FullPath} {{");
+        sb.AppendLine($"{AzureServiceDiscovery.FullPath(ConfigPath)} {{");
         sb.AppendLine($"class = {Class.AssemblyQualifiedName!.ToHocon()}");
 
+        // We're going to cheat and embed the config path/discovery id here
+        // because we need to correlate the setup files with the config
+        // during run-time
+        sb.AppendLine($"discovery-id = {ConfigPath}");
+        
+        if (ReadOnly is not null)
+            sb.AppendLine($"read-only = {ReadOnly.ToHocon()}");
         if (HostName is { })
             sb.AppendLine($"public-hostname = {HostName.ToHocon()}");
         if (Port is { })
@@ -66,21 +75,36 @@ public class AkkaDiscoveryOptions: IHoconOption
             sb.AppendLine($"max-retry-backoff = {MaximumRetryBackoff.ToHocon()}");
         sb.AppendLine("}");
         
+        if(IsDefaultPlugin)
+            builder.AddHocon($"akka.discovery.method = {ConfigPath}", HoconAddMode.Prepend);
+        
         builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
-        builder.AddHocon(AzureServiceDiscovery.DefaultConfig, HoconAddMode.Append);
+
+        var fallback = AzureServiceDiscovery.DefaultConfig
+            .GetConfig(AzureServiceDiscovery.FullPath(AzureServiceDiscovery.DefaultPath))
+            .MoveTo(AzureServiceDiscovery.FullPath(ConfigPath));
+        builder.AddHocon(fallback, HoconAddMode.Append);
 
         if (AzureCredential is { })
         {
             if(AzureTableEndpoint is null)
                 throw new ConfigurationException($"Both {nameof(AzureCredential)} and {AzureTableEndpoint} has to be populated to use Azure Identity");
 
-            builder.AddSetup(new AzureDiscoverySetup
+            var setup = builder.Setups.OfType<AzureDiscoveryMultiSetup>().FirstOrDefault();
+            if (setup is null)
+            {
+                setup = new AzureDiscoveryMultiSetup();
+                builder.AddSetup(setup);
+            }
+
+            setup.Add(ConfigPath, new AzureDiscoverySetup
             {
                 AzureCredential = AzureCredential,
                 AzureTableEndpoint = AzureTableEndpoint,
                 TableClientOptions = TableClientOptions
             });
         }
+        
     }
 
 }

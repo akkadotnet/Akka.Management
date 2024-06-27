@@ -25,7 +25,8 @@ namespace Akka.Discovery.Azure.Tests
             var assemblyName = typeof(AzureServiceDiscovery).Assembly.FullName!.Split(',')[0].Trim();
             var config = AzureServiceDiscovery.DefaultConfig.GetConfig("akka.discovery.azure");
             config.GetString("class").Should().Be($"{typeof(AzureServiceDiscovery).Namespace}.{nameof(AzureServiceDiscovery)}, {assemblyName}");
-            
+
+            settings.ReadOnly.Should().BeFalse();
             settings.ServiceName.Should().Be("default");
             settings.HostName.Should().Be(Dns.GetHostName());
             settings.Port.Should().Be(8558);
@@ -46,6 +47,7 @@ namespace Akka.Discovery.Azure.Tests
             var settings = AzureDiscoverySettings.Create(AzureServiceDiscovery.DefaultConfig);
             var empty = AzureDiscoverySettings.Empty;
 
+            empty.ReadOnly.Should().Be(settings.ReadOnly);
             empty.ServiceName.Should().Be(settings.ServiceName);
             empty.HostName.Should().Be(settings.HostName);
             empty.Port.Should().Be(settings.Port);
@@ -66,6 +68,7 @@ namespace Akka.Discovery.Azure.Tests
             var uri = new Uri("https://whatever.com");
             var credential = new DefaultAzureCredential();
             var settings = AzureDiscoverySettings.Empty
+                .WithReadOnlyMode(true)
                 .WithServiceName("a")
                 .WithPublicHostName("host")
                 .WithPublicPort(1234)
@@ -76,7 +79,8 @@ namespace Akka.Discovery.Azure.Tests
                 .WithPruneInterval(3.Seconds())
                 .WithOperationTimeout(4.Seconds())
                 .WithAzureCredential(uri, credential);
-            
+
+            settings.ReadOnly.Should().BeTrue();
             settings.ServiceName.Should().Be("a");
             settings.HostName.Should().Be("host");
             settings.Port.Should().Be(1234);
@@ -97,6 +101,7 @@ namespace Akka.Discovery.Azure.Tests
             var uri = new Uri("https://whatever.com");
             var credential = new DefaultAzureCredential();
             var setup = new AzureDiscoverySetup()
+                .WithReadOnlyMode(true)
                 .WithServiceName("a")
                 .WithPublicHostName("host")
                 .WithPublicPort(1234)
@@ -109,7 +114,8 @@ namespace Akka.Discovery.Azure.Tests
                 .WithAzureCredential(uri, credential);
             
             var settings = setup.Apply(AzureDiscoverySettings.Empty);
-            
+
+            settings.ReadOnly.Should().BeTrue();
             settings.ServiceName.Should().Be("a");
             settings.HostName.Should().Be("host");
             settings.Port.Should().Be(1234);

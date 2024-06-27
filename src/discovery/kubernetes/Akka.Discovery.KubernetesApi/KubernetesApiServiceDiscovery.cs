@@ -18,6 +18,7 @@ using k8s;
 using k8s.Authentication;
 using k8s.Models;
 using Newtonsoft.Json;
+using Debug = System.Diagnostics.Debug;
 
 #if !NET6_0_OR_GREATER
 using Microsoft.Rest;
@@ -40,6 +41,10 @@ namespace Akka.Discovery.KubernetesApi
             { }
         }
 
+        internal const string DefaultPath = "kubernetes-api";
+        internal const string DefaultConfigPath = "akka.discovery." + DefaultPath;
+        internal static string FullPath(string path) => $"akka.discovery.{path}";
+        
         private readonly ILoggingAdapter _log;
         private readonly KubernetesDiscoverySettings _settings;
         private readonly Kubernetes? _client;
@@ -50,10 +55,16 @@ namespace Akka.Discovery.KubernetesApi
                 .DefaultIfNullOrWhitespace(ReadConfigVarFromFileSystem(_settings.PodNamespacePath, "pod-namespace"))
                 .DefaultIfNullOrWhitespace("default")!;
         
+        // Backward compatible constructor
         public KubernetesApiServiceDiscovery(ExtendedActorSystem system)
+            : this(system, system.Settings.Config.GetConfig(FullPath(DefaultPath)))
+        {
+        }
+            
+        public KubernetesApiServiceDiscovery(ExtendedActorSystem system, Configuration.Config config)
         {
             _log = Logging.GetLogger(system, this);
-            _settings = KubernetesDiscovery.Get(system).Settings;
+            _settings = KubernetesDiscoverySettings.Create(config);
             
             if(_log.IsDebugEnabled)
                 _log.Debug("Settings {0}", _settings);
@@ -69,12 +80,12 @@ namespace Akka.Discovery.KubernetesApi
             }
             else
             {
-                var config = KubernetesClientConfiguration.BuildDefaultConfig();
-                config.TokenProvider = new TokenFileAuth(_settings.ApiTokenPath);
-                config.ClientCertificateFilePath = _settings.ApiCaPath;
-                config.Namespace = PodNamespace;
-                _host = config.Host = $"https://{host}:{port}";
-                _client = new Kubernetes(config);
+                var clientConfig = KubernetesClientConfiguration.BuildDefaultConfig();
+                clientConfig.TokenProvider = new TokenFileAuth(_settings.ApiTokenPath);
+                clientConfig.ClientCertificateFilePath = _settings.ApiCaPath;
+                clientConfig.Namespace = PodNamespace;
+                _host = clientConfig.Host = $"https://{host}:{port}";
+                _client = new Kubernetes(clientConfig);
             }
         }
         
@@ -172,7 +183,8 @@ namespace Akka.Discovery.KubernetesApi
         {
             V1PodList podList;
 #if !NET6_0_OR_GREATER
-            var result = await _client.ListNamespacedPodWithHttpMessagesAsync(
+            Debug.Assert(_client != null, nameof(_client) + " != null");
+            var result = await _client!.ListNamespacedPodWithHttpMessagesAsync(
                 namespaceParameter: PodNamespace,
                 labelSelector: labelSelector,
                 cancellationToken: cts.Token)
@@ -192,7 +204,8 @@ namespace Akka.Discovery.KubernetesApi
         {
             V1PodList podList;
 #if !NET6_0_OR_GREATER
-            var result = await _client.ListPodForAllNamespacesWithHttpMessagesAsync(
+            Debug.Assert(_client != null, nameof(_client) + " != null");
+            var result = await _client!.ListPodForAllNamespacesWithHttpMessagesAsync(
                 labelSelector: labelSelector,
                 cancellationToken: cts.Token)
                 .ConfigureAwait(false);
