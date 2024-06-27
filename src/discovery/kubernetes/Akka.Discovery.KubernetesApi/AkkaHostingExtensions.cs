@@ -130,8 +130,6 @@ namespace Akka.Discovery.KubernetesApi
             KubernetesDiscoveryOptions options)
         {
             options.Apply(builder);
-            builder.AddHocon($"akka.discovery.method = {options.ConfigPath}", HoconAddMode.Prepend);
-            builder.AddHocon(KubernetesDiscovery.DefaultConfiguration(), HoconAddMode.Append);
             
             // Force start the module
             builder.AddStartup((system, _) =>
