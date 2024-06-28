@@ -1,3 +1,7 @@
+#### 1.5.26-beta2 June 28 2024 ####
+
+* [Discovery.Config: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2604)
+
 #### 1.5.26-beta1 June 27 2024 ####
 
 * Update to [Akka.NET v1.5.26](https://github.com/akkadotnet/akka.net/releases/tag/1.5.26)
