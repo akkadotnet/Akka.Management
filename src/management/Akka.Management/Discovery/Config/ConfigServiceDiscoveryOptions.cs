@@ -16,8 +16,8 @@ namespace Akka.Discovery.Config.Hosting;
 
 public class ConfigServiceDiscoveryOptions: IHoconOption
 {
-    private const string DefaultPath = "config";
-    private const string DefaultConfigPath = "akka.discovery." + DefaultPath;
+    internal const string DefaultPath = "config";
+    internal const string DefaultConfigPath = "akka.discovery." + DefaultPath;
     public static string FullPath(string path) => $"akka.discovery.{path}";
     
     public string ConfigPath { get; set; } = DefaultPath;
