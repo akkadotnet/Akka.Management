@@ -16,20 +16,23 @@ namespace Akka.Discovery.Config.Hosting;
 
 public class ConfigServiceDiscoveryOptions: IHoconOption
 {
-    public const string FullPath = "akka.discovery.config";
+    private const string DefaultPath = "config";
+    private const string DefaultConfigPath = "akka.discovery." + DefaultPath;
+    public static string FullPath(string path) => $"akka.discovery.{path}";
     
-    public string ConfigPath { get; } = "config";
+    public string ConfigPath { get; set; } = DefaultPath;
     
     public Type Class { get; } = typeof(ConfigServiceDiscovery);
     
     public List<Service> Services { get; set; } = new (); 
+    public bool IsDefaultPlugin { get; set; } = true;
 
     public void Apply(AkkaConfigurationBuilder builder, Setup? inputSetup = null)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"{FullPath} {{");
+        sb.AppendLine($"{FullPath(ConfigPath)} {{");
         sb.AppendLine($"class = {Class.AssemblyQualifiedName!.ToHocon()}");
-        sb.AppendLine($"services-path = {FullPath}.services");
+        sb.AppendLine($"services-path = {FullPath(ConfigPath)}.services");
 
         if (Services.Count == 0)
             throw new ConfigurationException("There has to be at least one service declared.");
@@ -43,7 +46,15 @@ public class ConfigServiceDiscoveryOptions: IHoconOption
         
         sb.AppendLine("}");
         
+        if(IsDefaultPlugin)
+            sb.AppendLine($"akka.discovery.method = {ConfigPath}");
+
         builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+        
+        var fallback = DiscoveryProvider.DefaultConfiguration()
+            .GetConfig(DefaultConfigPath)
+            .MoveTo(FullPath(ConfigPath));
+        builder.AddHocon(fallback, HoconAddMode.Append);
     }
 
 }

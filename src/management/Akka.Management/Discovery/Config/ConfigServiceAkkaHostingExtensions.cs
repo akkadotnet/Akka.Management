@@ -105,9 +105,7 @@ public static class ConfigServiceAkkaHostingExtensions
         this AkkaConfigurationBuilder builder,
         ConfigServiceDiscoveryOptions options)
     {
-        builder.AddHocon($"akka.discovery.method = {options.ConfigPath}", HoconAddMode.Prepend);
         options.Apply(builder);
-        builder.AddHocon(DiscoveryProvider.DefaultConfiguration(), HoconAddMode.Append);
         return builder;
     }
 }
