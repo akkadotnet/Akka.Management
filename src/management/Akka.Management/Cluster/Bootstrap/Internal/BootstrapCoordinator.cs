@@ -162,14 +162,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             _settings = settings;
 
             var cps = _settings.ContactPoint;
-            if(cps.StaleContactPointTimeout is not null)
-            {
-                _staleContactPointTimeout = cps.ProbeInterval + cps.StaleContactPointTimeout.Value;
-            }
-            else
-            {
-                _staleContactPointTimeout = new TimeSpan((cps.ProbeInterval.Ticks + cps.ProbingFailureTimeout.Ticks) * 2);
-            }
+            _staleContactPointTimeout = cps.ProbeInterval + cps.ProbingFailureTimeout;
 
             _log = Context.GetLogger();
             _cluster = Akka.Cluster.Cluster.Get(Context.System);
