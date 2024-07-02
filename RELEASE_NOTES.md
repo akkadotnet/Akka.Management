@@ -1,3 +1,9 @@
+#### 1.5.26-beta3 July 2 2024 ####
+
+* [ClusterBootstrap: Update probe-interval and stale contact point timeout calculation](https://github.com/akkadotnet/Akka.Management/pull/2601)
+* [Management: Add Remote address and ClusterClientReceptionist actor path endpoint](https://github.com/akkadotnet/Akka.Management/pull/2614)
+* [Management: Harden ClusterClientReceptionist actor path endpoint](https://github.com/akkadotnet/Akka.Management/pull/2615)
+
 #### 1.5.26-beta2 June 28 2024 ####
 
 * [Discovery.Config: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2604)
