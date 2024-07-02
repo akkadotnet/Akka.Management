@@ -39,9 +39,17 @@ namespace Akka.Management.Tests
             http.EffectiveBindHostname.Should().Be(defaultHostname);
             http.EffectiveBindPort.Should().Be(8558);
             http.BasePath.Should().BeEmpty();
-            http.RouteProviders.Count.Should().Be(1);
+            http.RouteProviders.Count.Should().Be(3);
+            
             http.RouteProviders[0].Name.Should().Be("cluster-bootstrap");
             http.RouteProviders[0].FullyQualifiedClassName.Should().Be("Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management");
+            
+            http.RouteProviders[1].Name.Should().Be("remote-address");
+            http.RouteProviders[1].FullyQualifiedClassName.Should().Be("Akka.Management.Routes.AddressRouteProvider, Akka.Management");
+            
+            http.RouteProviders[2].Name.Should().Be("cluster-client-receptionist");
+            http.RouteProviders[2].FullyQualifiedClassName.Should().Be("Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management");
+            
             http.RouteProvidersReadOnly.Should().BeTrue();
         }
 
@@ -64,9 +72,17 @@ namespace Akka.Management.Tests
             http.EffectiveBindHostname.Should().Be(defaultHostname);
             http.EffectiveBindPort.Should().Be(8558);
             http.BasePath.Should().BeEmpty();
-            http.RouteProviders.Count.Should().Be(1);
+            http.RouteProviders.Count.Should().Be(3);
+            
             http.RouteProviders[0].Name.Should().Be("cluster-bootstrap");
             http.RouteProviders[0].FullyQualifiedClassName.Should().Be("Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management");
+            
+            http.RouteProviders[1].Name.Should().Be("remote-address");
+            http.RouteProviders[1].FullyQualifiedClassName.Should().Be("Akka.Management.Routes.AddressRouteProvider, Akka.Management");
+            
+            http.RouteProviders[2].Name.Should().Be("cluster-client-receptionist");
+            http.RouteProviders[2].FullyQualifiedClassName.Should().Be("Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management");
+            
             http.RouteProvidersReadOnly.Should().BeTrue();
         }
         
@@ -91,10 +107,14 @@ namespace Akka.Management.Tests
             http.EffectiveBindHostname.Should().Be("b");
             http.EffectiveBindPort.Should().Be(1235);
             http.BasePath.Should().Be("c");
-            http.RouteProviders.Count.Should().Be(2);
+            http.RouteProviders.Count.Should().Be(4);
             http.RouteProviders[0].Should()
                 .BeEquivalentTo(new NamedRouteProvider("cluster-bootstrap", "Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management"));
             http.RouteProviders[1].Should()
+                .BeEquivalentTo(new NamedRouteProvider("remote-address", "Akka.Management.Routes.AddressRouteProvider, Akka.Management"));
+            http.RouteProviders[2].Should()
+                .BeEquivalentTo(new NamedRouteProvider("cluster-client-receptionist", "Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management"));
+            http.RouteProviders[3].Should()
                 .BeEquivalentTo(new NamedRouteProvider("test", typeof(FakeRouteProvider).AssemblyQualifiedName));
             http.RouteProvidersReadOnly.Should().BeFalse();
         }
@@ -124,10 +144,14 @@ namespace Akka.Management.Tests
             http.EffectiveBindHostname.Should().Be("b");
             http.EffectiveBindPort.Should().Be(1235);
             http.BasePath.Should().Be("c");
-            http.RouteProviders.Count.Should().Be(2);
+            http.RouteProviders.Count.Should().Be(4);
             http.RouteProviders[0].Should()
                 .BeEquivalentTo(new NamedRouteProvider("cluster-bootstrap", "Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management"));
             http.RouteProviders[1].Should()
+                .BeEquivalentTo(new NamedRouteProvider("remote-address", "Akka.Management.Routes.AddressRouteProvider, Akka.Management"));
+            http.RouteProviders[2].Should()
+                .BeEquivalentTo(new NamedRouteProvider("cluster-client-receptionist", "Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management"));
+            http.RouteProviders[3].Should()
                 .BeEquivalentTo(new NamedRouteProvider("test", typeof(FakeRouteProvider).AssemblyQualifiedName));
             http.RouteProvidersReadOnly.Should().BeFalse();
         }
