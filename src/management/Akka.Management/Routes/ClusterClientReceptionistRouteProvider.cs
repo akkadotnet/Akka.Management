@@ -81,8 +81,27 @@ internal class HttpClusterClientReceptionistRoutes : HttpModuleBase
             await context.HttpContext.Response.WriteAllJsonAsync(response);
             return true;
         }
+
+        // Check that ClusterClientReceptionist name is valid
+        var name = config.GetString("name");
+        if (string.IsNullOrWhiteSpace(name) || !ActorPath.IsValidPathElement(name))
+        {
+            context.HttpContext.Response.StatusCode = HttpStatusCode.InternalServerError;
+            var response = JsonConvert.SerializeObject(new
+            {
+                error = new
+                {
+                    reason = "not available",
+                    message = "ClusterClientReceptionist name is invalid"
+                },
+                code = (int)HttpStatusCode.InternalServerError,
+                message = "ClusterClientReceptionist name is invalid"
+            });
+            await context.HttpContext.Response.WriteAllJsonAsync(response);
+            return true;
+        }
         
-        var actorPath = new RootActorPath(actorProvider.DefaultAddress) / "system" / config.GetString("name"); 
+        var actorPath = new RootActorPath(actorProvider.DefaultAddress) / "system" / name; 
         var json = JsonConvert.SerializeObject(new { ReceptionistPath = actorPath.ToString() });
         await context.HttpContext.Response.WriteAllJsonAsync(json);
         
