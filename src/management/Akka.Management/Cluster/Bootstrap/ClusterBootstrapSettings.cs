@@ -152,23 +152,13 @@ namespace Akka.Management.Cluster.Bootstrap
                 var fallback = contactPointConfig.GetString("fallback-port");
                 var fallbackPort = string.IsNullOrWhiteSpace(fallback) || fallback == "<fallback-port>"
                     ? (int?) null : int.Parse(fallback);
-                var probeFailureTimeout = contactPointConfig.GetTimeSpan("probing-failure-timeout", null, false);
-                var staleEntryTimeoutStr = contactPointConfig.GetString("stale-contact-point-timeout");
-                var staleEntryTimeout = string.IsNullOrWhiteSpace(staleEntryTimeoutStr)
-                                        || staleEntryTimeoutStr is "off"
-                                        || staleEntryTimeoutStr is "false"
-                                        || staleEntryTimeoutStr is "no"
-                        ? probeFailureTimeout
-                        : contactPointConfig.GetTimeSpan("stale-contact-point-timeout");
-                                        
                 
                 return new ContactPointSettings(
                     fallbackPort: fallbackPort,
                     filterOnFallbackPort: contactPointConfig.GetBoolean("filter-on-fallback-port"),
-                    probingFailureTimeout: probeFailureTimeout,
-                    probeInterval: contactPointConfig.GetTimeSpan("probe-interval", null, false),
-                    probeIntervalJitter: contactPointConfig.GetDouble("probe-interval-jitter"),
-                    staleContactPointTimeout: staleEntryTimeout);
+                    probingFailureTimeout: contactPointConfig.GetTimeSpan("probing-failure-timeout", TimeSpan.FromSeconds(3), false),
+                    probeInterval: contactPointConfig.GetTimeSpan("probe-interval", TimeSpan.FromSeconds(5), false),
+                    probeIntervalJitter: contactPointConfig.GetDouble("probe-interval-jitter"));
             }
             
             private ContactPointSettings(
@@ -176,15 +166,13 @@ namespace Akka.Management.Cluster.Bootstrap
                 bool filterOnFallbackPort,
                 TimeSpan probingFailureTimeout,
                 TimeSpan probeInterval,
-                double probeIntervalJitter,
-                TimeSpan staleContactPointTimeout)
+                double probeIntervalJitter)
             {
                 FallbackPort = fallbackPort;
                 FilterOnFallbackPort = filterOnFallbackPort;
                 ProbingFailureTimeout = probingFailureTimeout;
                 ProbeInterval = probeInterval;
                 ProbeIntervalJitter = probeIntervalJitter;
-                StaleContactPointTimeout = staleContactPointTimeout;
             }
             
             public int? FallbackPort { get; }
@@ -193,22 +181,19 @@ namespace Akka.Management.Cluster.Bootstrap
             public TimeSpan ProbeInterval { get; }
             public double ProbeIntervalJitter { get; }
             public int MaxSeedNodesToExpose { get; } = 5;
-            public TimeSpan StaleContactPointTimeout { get; }
 
             internal ContactPointSettings Copy(
                 int? fallbackPort,
                 bool? filterOnFallbackPort,
                 TimeSpan? probingFailureTimeout,
                 TimeSpan? probeInterval,
-                double? probeIntervalJitter,
-                TimeSpan? staleContactPointTimeout)
+                double? probeIntervalJitter)
                 => new ContactPointSettings(
                     fallbackPort: fallbackPort ?? FallbackPort,
                     filterOnFallbackPort: filterOnFallbackPort ?? FilterOnFallbackPort,
                     probingFailureTimeout: probingFailureTimeout ?? ProbingFailureTimeout,
                     probeInterval: probeInterval ?? ProbeInterval,
-                    probeIntervalJitter: probeIntervalJitter ?? ProbeIntervalJitter,
-                    staleContactPointTimeout: staleContactPointTimeout ?? StaleContactPointTimeout);
+                    probeIntervalJitter: probeIntervalJitter ?? ProbeIntervalJitter);
         }
         
         public sealed class JoinDeciderSettings

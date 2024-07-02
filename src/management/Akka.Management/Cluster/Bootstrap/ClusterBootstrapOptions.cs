@@ -233,12 +233,6 @@ public sealed class ContactPointOptions
     /// </summary>
     public double? ProbeIntervalJitter { get; set; }
     
-    /// <summary>
-    /// Set the time for bootstrap coordinator to consider that previously discovered contact point
-    /// were considered to be stale and needs to be re-discovered by the HTTP probes.
-    /// </summary>
-    public TimeSpan? StaleContactPointTimeout { get; set; }
-
     internal void Apply(StringBuilder sb)
     {
         sb.AppendLine("contact-point {");
@@ -253,8 +247,6 @@ public sealed class ContactPointOptions
             sb.AppendLine($"probe-interval = {ProbeInterval.ToHocon()}");
         if (ProbeIntervalJitter is { })
             sb.AppendLine($"probe-interval-jitter = {ProbeIntervalJitter.ToHocon()}");
-        if (StaleContactPointTimeout is not null)
-            sb.AppendLine($"stale-contact-point-timeout = {StaleContactPointTimeout.ToHocon()}");
         
         sb.AppendLine("}");
     }

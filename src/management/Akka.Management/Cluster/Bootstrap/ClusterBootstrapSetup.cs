@@ -201,8 +201,6 @@ namespace Akka.Management.Cluster.Bootstrap
         /// Max amount of jitter to be added on retries
         /// </summary>
         public double? ProbeIntervalJitter { get; set; }
-        
-        public TimeSpan? StaleContactPointTimeout { get; set; }
 
         internal ClusterBootstrapSettings.ContactPointSettings Apply(ClusterBootstrapSettings.ContactPointSettings settings)
             => settings.Copy(
@@ -210,8 +208,7 @@ namespace Akka.Management.Cluster.Bootstrap
                 filterOnFallbackPort: FilterOnFallbackPort,
                 probingFailureTimeout: ProbingFailureTimeout,
                 probeInterval: ProbeInterval,
-                probeIntervalJitter: ProbeIntervalJitter,
-                staleContactPointTimeout: StaleContactPointTimeout);
+                probeIntervalJitter: ProbeIntervalJitter);
     }
     
     public sealed class JoinDeciderSetup
