@@ -90,6 +90,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Coordination.Azure.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.StressTest", "src\coordination\examples\azure\Azure.StressTest\Azure.StressTest.csproj", "{296A0309-2370-4153-B3B0-A4105622CC9A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HoconKubernetesCluster", "src\cluster.bootstrap\examples\discovery\hocon-kubernetes\src\HoconKubernetesCluster\HoconKubernetesCluster.csproj", "{7015572E-6225-4F32-A00C-4D52280E6C94}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -180,6 +182,10 @@ Global
 		{296A0309-2370-4153-B3B0-A4105622CC9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{296A0309-2370-4153-B3B0-A4105622CC9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{296A0309-2370-4153-B3B0-A4105622CC9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7015572E-6225-4F32-A00C-4D52280E6C94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7015572E-6225-4F32-A00C-4D52280E6C94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7015572E-6225-4F32-A00C-4D52280E6C94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7015572E-6225-4F32-A00C-4D52280E6C94}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -214,6 +220,7 @@ Global
 		{55BB0B68-1364-41EB-A9AA-AB054FB39329} = {00CE6BBE-BFAD-452A-82A5-826F7B99F5FB}
 		{296A0309-2370-4153-B3B0-A4105622CC9A} = {C4C8BE03-A7C0-4F2E-8922-92854FE7A5BF}
 		{24FEBA95-1FC2-4AC2-8386-6AB13AE87056} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
+		{7015572E-6225-4F32-A00C-4D52280E6C94} = {24FEBA95-1FC2-4AC2-8386-6AB13AE87056}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
