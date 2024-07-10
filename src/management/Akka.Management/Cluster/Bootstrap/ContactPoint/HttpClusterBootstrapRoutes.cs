@@ -63,7 +63,9 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
                 or MemberStatus.Leaving
                 or MemberStatus.Removed)
             {
-                context.HttpContext.Response.StatusCode = HttpStatusCode.ServiceUnavailable;
+                var body = JsonConvert.SerializeObject(
+                    new SeedNodes(cluster.SelfMember.UniqueAddress.Address, ImmutableList<ClusterMember>.Empty));
+                await context.HttpContext.Response.WriteAllJsonAsync(body);
                 return true;
             }
             
