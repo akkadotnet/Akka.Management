@@ -1,0 +1,151 @@
+# namespace declaration
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hocon-cluster-bootstrap
+---
+
+
+# RBAC declaration
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: pod-reader
+  namespace: hocon-cluster-bootstrap
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: lease-access
+  namespace: hocon-cluster-bootstrap
+rules:
+  - apiGroups: ["akka.io"]
+    resources: ["leases"]
+    verbs: ["get", "create", "update", "list"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: read-pods
+  namespace: hocon-cluster-bootstrap
+subjects:
+  - kind: ServiceAccount
+    name: cluster-bootstrap
+    namespace: hocon-cluster-bootstrap
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: lease-access
+  namespace: hocon-cluster-bootstrap
+subjects:
+  - kind: ServiceAccount
+    name: cluster-bootstrap
+    namespace: hocon-cluster-bootstrap
+roleRef:
+  kind: Role
+  name: lease-access
+  apiGroup: rbac.authorization.k8s.io
+---
+
+
+# Service declaration
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cluster-bootstrap
+  namespace: hocon-cluster-bootstrap
+  labels:
+    app: cluster-bootstrap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cluster-bootstrap
+  namespace: hocon-cluster-bootstrap
+  labels:
+    app: cluster-bootstrap
+spec:
+  publishNotReadyAddresses: true
+  clusterIP: None
+  ports:
+    - port: 8558
+      name: management
+    - port: 8081
+      name: akka-remote
+    - port: 5000
+      name: http
+  selector:
+    app: cluster-bootstrap
+---
+
+# Stateful set declaration
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: cluster-bootstrap
+  namespace: hocon-cluster-bootstrap
+  labels:
+    app: cluster-bootstrap
+spec:
+  serviceName: cluster-bootstrap
+  replicas: 10
+  selector:
+    matchLabels:
+      app: cluster-bootstrap
+  template:
+    metadata:
+      labels:
+        app: cluster-bootstrap
+    spec:
+      serviceAccountName: cluster-bootstrap
+      terminationGracePeriodSeconds: 35
+      containers:
+        - name: cluster-bootstrap-app
+          image: hocon-cluster-bootstrap:latest
+          imagePullPolicy: Never
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: STATEFULSET_NAME
+              value: "cluster-bootstrap" # Manually setting it, as there's no direct way to fetch it via downward API
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: AKKA_REMOTE_HOSTNAME
+              value: "$(POD_NAME).$(STATEFULSET_NAME).$(NAMESPACE)"
+            - name: AKKA_REMOTE_PORT
+              value: "8081"
+            - name: AKKA_MANAGEMENT_PORT
+              value: "8558"
+            - name: AKKA_BOOTSTRAP_SERVICE_NAME
+              value: "cluster-bootstrap"
+            - name: AKKA_BOOTSTRAP_PORT_NAME
+              value: "management"
+          readinessProbe:
+            tcpSocket:
+              port: 8558
+          ports:
+            - containerPort: 8558
+              protocol: TCP
+              name: management
+            - containerPort: 8081
+              protocol: TCP
+              name: akka-remote
