@@ -22,8 +22,6 @@ namespace Akka.Discovery.Azure
         internal const string DefaultPath = "azure";
         internal const string DefaultConfigPath = "akka.discovery." + DefaultPath;
         internal static string FullPath(string path) => $"akka.discovery.{path}";
-        public static readonly Configuration.Config DefaultConfig = 
-            ConfigurationFactory.FromResource<AzureServiceDiscovery>("Akka.Discovery.Azure.reference.conf");
         
         private readonly ILoggingAdapter _log;
         private readonly ExtendedActorSystem _system;
@@ -42,7 +40,7 @@ namespace Akka.Discovery.Azure
             _system = system;
             _log = Logging.GetLogger(system, typeof(AzureServiceDiscovery));
             
-            var fullConfig = config.WithFallback(DefaultConfig.GetConfig(DefaultConfigPath));
+            var fullConfig = config.WithFallback(AzureDiscovery.DefaultConfiguration().GetConfig(DefaultConfigPath));
             _settings = AzureDiscoverySettings.Create(system, fullConfig);
             
             var setup = _system.Settings.Setup.Get<AzureDiscoverySetup>();
