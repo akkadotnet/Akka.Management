@@ -115,9 +115,7 @@ namespace Akka.Discovery.AwsApi.Ec2
             this AkkaConfigurationBuilder builder,
             Ec2ServiceDiscoveryOptions options)
         {
-            builder.AddHocon($"akka.discovery.method = {options.ConfigPath}", HoconAddMode.Prepend);
             options.Apply(builder);
-            builder.AddHocon(AwsEc2Discovery.DefaultConfiguration(), HoconAddMode.Append);
             
             // force start the module
             builder.AddStartup((system, registry) =>

@@ -20,10 +20,14 @@ namespace Akka.Discovery.AwsApi.Ec2;
 
 public class Ec2ServiceDiscoveryOptions: IHoconOption
 {
-    private const string FullPath = "akka.discovery.aws-api-ec2-tag-based";
-    
-    public string ConfigPath { get; } = "aws-api-ec2-tag-based";
+    public string ConfigPath { get; set; } = AwsEc2Discovery.DefaultPath;
+    internal static string FullPath(string path) => $"akka.discovery.{path}";
     public Type Class { get; } = typeof(Ec2TagBasedServiceDiscovery);
+    
+    /// <summary>
+    ///     Mark this plugin as the default plugin to be used by ClusterBootstrap
+    /// </summary>
+    public bool IsDefaultPlugin { get; set; } = true;
     
     /// <summary>
     ///     A class <see cref="Type"/> that extends <see cref="AmazonEC2Config"/> with either 
@@ -88,7 +92,7 @@ public class Ec2ServiceDiscoveryOptions: IHoconOption
     public void Apply(AkkaConfigurationBuilder builder, Setup? setup = null)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"{FullPath} {{");
+        sb.AppendLine($"{FullPath(ConfigPath)} {{");
         sb.AppendLine($"class = {Class.AssemblyQualifiedName!.ToHocon()}");
         
         if(ClientConfig is { })
@@ -126,5 +130,13 @@ public class Ec2ServiceDiscoveryOptions: IHoconOption
         sb.AppendLine("}");
 
         builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+        
+        if(IsDefaultPlugin)
+            builder.AddHocon($"akka.discovery.method = {ConfigPath}", HoconAddMode.Prepend);
+
+        var fallback = AwsEc2Discovery.DefaultConfiguration()
+            .GetConfig(AwsEc2Discovery.DefaultConfigPath)
+            .MoveTo(FullPath(ConfigPath));
+        builder.AddHocon(fallback, HoconAddMode.Append);
     }
 }
