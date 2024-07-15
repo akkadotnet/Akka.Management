@@ -72,7 +72,7 @@ namespace Akka.Discovery.Azure
             bool? readOnly = null,
             bool isDefaultPlugin = true)
         {
-            var options = new AkkaDiscoveryOptions
+            var options = new AzureDiscoveryOptions
             {
                 IsDefaultPlugin = isDefaultPlugin,
                 ConfigPath = discoveryId,
@@ -154,7 +154,7 @@ namespace Akka.Discovery.Azure
             bool isDefaultPlugin = true)
         {
             if (azureCredential == null) throw new ArgumentNullException(nameof(azureCredential));
-            var options = new AkkaDiscoveryOptions
+            var options = new AzureDiscoveryOptions
             {
                 IsDefaultPlugin = isDefaultPlugin,
                 ConfigPath = discoveryId,
@@ -198,11 +198,50 @@ namespace Akka.Discovery.Azure
         ///     }
         ///   </code>
         /// </example>
+        [Obsolete("Use AzureDiscoveryOptions instead. Since 1.5.26")]
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
             Action<AkkaDiscoveryOptions> configure)
         {
             var setup = new AkkaDiscoveryOptions();
+            configure(setup);
+            return builder.WithAzureDiscovery(setup);
+        }
+
+        /// <summary>
+        ///     Adds Akka.Discovery.Azure support to the <see cref="ActorSystem"/>.
+        ///     Note that this only adds the discovery plugin, you will still need to add ClusterBootstrap for
+        ///     a complete solution.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="configure">
+        ///     An action that modifies an <see cref="AzureDiscoveryOptions"/> instance, used
+        ///     to configure Akka.Discovery.Azure.
+        /// </param>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        /// <example>
+        ///   <code>
+        ///     services.AddAkka("mySystem", builder => {
+        ///         builder.WithClusterBootstrap(options =>
+        ///         {
+        ///             options.ContactPointDiscovery.ServiceName = "testService";
+        ///             options.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///         }, autoStart: true)
+        ///         builder.WithAzureDiscovery( options => {
+        ///             options.ConnectionString = "UseDevelopmentStorage=true"
+        ///         });
+        ///     }
+        ///   </code>
+        /// </example>
+        public static AkkaConfigurationBuilder WithAzureDiscovery(
+            this AkkaConfigurationBuilder builder,
+            Action<AzureDiscoveryOptions> configure)
+        {
+            var setup = new AzureDiscoveryOptions();
             configure(setup);
             return builder.WithAzureDiscovery(setup);
         }
@@ -235,9 +274,48 @@ namespace Akka.Discovery.Azure
         ///     }
         ///   </code>
         /// </example>
+        [Obsolete("Use AzureDiscoveryOptions instead. Since 1.5.26")]
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
             AkkaDiscoveryOptions options)
+        {
+            options.Apply(builder);
+
+            builder.AddHocon(AzureServiceDiscovery.DefaultConfig, HoconAddMode.Append);
+            return builder;
+        }
+
+        /// <summary>
+        ///     Adds Akka.Discovery.Azure support to the <see cref="ActorSystem"/>.
+        ///     Note that this only adds the discovery plugin, you will still need to add ClusterBootstrap for
+        ///     a complete solution.
+        /// </summary>
+        /// <param name="builder">
+        ///     The builder instance being configured.
+        /// </param>
+        /// <param name="options">
+        ///     The <see cref="AzureDiscoveryOptions"/> instance used to configure Akka.Discovery.Azure.
+        /// </param>
+        /// <returns>
+        ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
+        /// </returns>
+        /// <example>
+        ///   <code>
+        ///     services.AddAkka("mySystem", builder => {
+        ///         builder.WithClusterBootstrap(options =>
+        ///         {
+        ///             options.ContactPointDiscovery.ServiceName = "testService";
+        ///             options.ContactPointDiscovery.RequiredContactPointsNr = 1;
+        ///         }, autoStart: true)
+        ///         builder.WithAzureDiscovery( new AkkaDiscoveryOptions {
+        ///             ConnectionString = "UseDevelopmentStorage=true"
+        ///         });
+        ///     }
+        ///   </code>
+        /// </example>
+        public static AkkaConfigurationBuilder WithAzureDiscovery(
+            this AkkaConfigurationBuilder builder,
+            AzureDiscoveryOptions options)
         {
             options.Apply(builder);
 
