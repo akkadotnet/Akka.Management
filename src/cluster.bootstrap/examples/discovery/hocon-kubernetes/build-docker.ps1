@@ -1,0 +1,1 @@
+dotnet publish --os linux --arch x64 -c Release /t:PublishContainer ./src/HoconKubernetesCluster/HoconKubernetesCluster.csproj

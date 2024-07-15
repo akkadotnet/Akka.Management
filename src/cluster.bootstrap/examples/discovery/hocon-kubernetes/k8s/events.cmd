@@ -1,0 +1,1 @@
+kubectl get event -n hocon-cluster-bootstrap
