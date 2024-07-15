@@ -99,13 +99,19 @@ namespace Akka.Discovery.AwsApi.Ec2
             }
         }
         
+        // Backward compatibility constructor
         public Ec2TagBasedServiceDiscovery(ExtendedActorSystem system)
+            : this(system, system.Settings.Config.GetConfig(AwsEc2Discovery.DefaultConfigPath))
+        {
+        }
+        
+        public Ec2TagBasedServiceDiscovery(ExtendedActorSystem system, Configuration.Config config)
         {
             _system = system;
-            _config = _system.Settings.Config.GetConfig("akka.discovery.aws-api-ec2-tag-based");
+            _config = config;
             _log = Logging.GetLogger(system, typeof(Ec2TagBasedServiceDiscovery));
-            
-            _settings = AwsEc2Discovery.Get(system).Settings;
+
+            _settings = Ec2ServiceDiscoverySettings.Create(_config);
             
             _runningInstancesFilter = new Filter("instance-state-name", new List<string> {"running"});
         }
