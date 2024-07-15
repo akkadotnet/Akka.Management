@@ -164,7 +164,7 @@ public class AkkaDiscoveryOptions: IHoconOption
         
         builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
 
-        var fallback = AzureServiceDiscovery.DefaultConfig
+        var fallback = AzureDiscovery.DefaultConfiguration()
             .GetConfig(AzureServiceDiscovery.FullPath(AzureServiceDiscovery.DefaultPath))
             .MoveTo(AzureServiceDiscovery.FullPath(ConfigPath));
         builder.AddHocon(fallback, HoconAddMode.Append);

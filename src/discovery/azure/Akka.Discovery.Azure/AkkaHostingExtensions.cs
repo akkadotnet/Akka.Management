@@ -240,8 +240,12 @@ namespace Akka.Discovery.Azure
             AkkaDiscoveryOptions options)
         {
             options.Apply(builder);
-
-            builder.AddHocon(AzureServiceDiscovery.DefaultConfig, HoconAddMode.Append);
+            
+            // force start the module
+            builder.AddStartup((system, registry) =>
+            {
+                AzureDiscovery.Get(system);
+            });
             return builder;
         }
     }
