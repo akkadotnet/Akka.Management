@@ -39,7 +39,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <KubernetesClientVersionNet>13.0.26</KubernetesClientVersionNet>
         <MicrosoftExtensionsVersion>[6.0.*,)</MicrosoftExtensionsVersion>
         <AzureIdentityVersion>1.12.0</AzureIdentityVersion>
-        <ProtobufVersion>3.27.1</ProtobufVersion>
+        <ProtobufVersion>3.27.2</ProtobufVersion>
         <GrpcToolsVersion>2.64.0</GrpcToolsVersion>
     </PropertyGroup>
     
