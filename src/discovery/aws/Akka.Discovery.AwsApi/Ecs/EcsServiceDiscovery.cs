@@ -41,9 +41,15 @@ namespace Akka.Discovery.AwsApi.Ecs
             }
         }
         
-        public EcsServiceDiscovery(ActorSystem system)
+        // Backward compatibility constructor
+        public EcsServiceDiscovery(ExtendedActorSystem system)
+            : this(system, system.Settings.Config.GetConfig(AwsEcsDiscovery.DefaultConfigPath))
         {
-            _settings = AwsEcsDiscovery.Get(system).Settings;
+        }
+        
+        public EcsServiceDiscovery(ExtendedActorSystem system, Configuration.Config config)
+        {
+            _settings = EcsServiceDiscoverySettings.Create(config);
         }
         
         public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)

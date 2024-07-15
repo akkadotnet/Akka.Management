@@ -12,6 +12,9 @@ namespace Akka.Discovery.AwsApi.Ec2
 {
     public class AwsEc2Discovery : IExtension
     {
+        internal const string DefaultPath = "aws-api-ec2-tag-based";
+        internal const string DefaultConfigPath = "akka.discovery." + DefaultPath;
+        
         public static Configuration.Config DefaultConfiguration()
             => ConfigurationFactory.FromResource<AwsEc2Discovery>("Akka.Discovery.AwsApi.reference.conf");
         

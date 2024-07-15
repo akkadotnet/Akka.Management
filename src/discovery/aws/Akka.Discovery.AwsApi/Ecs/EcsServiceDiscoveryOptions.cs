@@ -16,9 +16,14 @@ namespace Akka.Discovery.AwsApi.Ecs;
 
 public class EcsServiceDiscoveryOptions: IHoconOption
 {
-    private const string FullPath = "akka.discovery.aws-api-ecs";
-    public string ConfigPath { get; } = "aws-api-ecs";
+    public string ConfigPath { get; } = AwsEcsDiscovery.DefaultPath;
+    internal static string FullPath(string path) => $"akka.discovery.{path}";
     public Type Class { get; } = typeof(EcsServiceDiscovery);
+    
+    /// <summary>
+    ///     Mark this plugin as the default plugin to be used by ClusterBootstrap
+    /// </summary>
+    public bool IsDefaultPlugin { get; set; } = true;
     
     /// <summary>
     ///     Optional. The name of the AWS ECS cluster.
@@ -35,7 +40,7 @@ public class EcsServiceDiscoveryOptions: IHoconOption
     public void Apply(AkkaConfigurationBuilder builder, Setup? setup = null)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"{FullPath} {{");
+        sb.AppendLine($"{FullPath(ConfigPath)} {{");
         sb.AppendLine($"class = {Class.AssemblyQualifiedName!.ToHocon()}");
 
         if (Cluster is { })
@@ -50,5 +55,13 @@ public class EcsServiceDiscoveryOptions: IHoconOption
         sb.AppendLine("}");
 
         builder.AddHocon(sb.ToString(), HoconAddMode.Prepend);
+        
+        if(IsDefaultPlugin)
+            builder.AddHocon($"akka.discovery.method = {ConfigPath}", HoconAddMode.Prepend);
+
+        var fallback = AwsEcsDiscovery.DefaultConfiguration()
+            .GetConfig(AwsEcsDiscovery.DefaultConfigPath)
+            .MoveTo(FullPath(ConfigPath));
+        builder.AddHocon(fallback, HoconAddMode.Append);
     }
 }

@@ -16,6 +16,9 @@ namespace Akka.Discovery.AwsApi.Ecs
 {
     public class AwsEcsDiscovery: IExtension
     {
+        internal const string DefaultPath = "aws-api-ecs";
+        internal const string DefaultConfigPath = "akka.discovery." + DefaultPath;
+        
         public static Either<string, IPAddress> GetContainerAddress()
         {
             var addresses = NetworkInterface.GetAllNetworkInterfaces()
