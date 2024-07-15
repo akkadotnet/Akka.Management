@@ -20,10 +20,10 @@ namespace Akka.Discovery.Azure.Tests
         [Fact(DisplayName = "Default settings should contain default values")]
         public void DefaultSettingsTest()
         {
-            var settings = AzureDiscoverySettings.Create(AzureServiceDiscovery.DefaultConfig);
+            var settings = AzureDiscoverySettings.Create(AzureDiscovery.DefaultConfiguration());
 
             var assemblyName = typeof(AzureServiceDiscovery).Assembly.FullName!.Split(',')[0].Trim();
-            var config = AzureServiceDiscovery.DefaultConfig.GetConfig("akka.discovery.azure");
+            var config = AzureDiscovery.DefaultConfiguration().GetConfig(AzureServiceDiscovery.DefaultConfigPath);
             config.GetString("class").Should().Be($"{typeof(AzureServiceDiscovery).Namespace}.{nameof(AzureServiceDiscovery)}, {assemblyName}");
 
             settings.ReadOnly.Should().BeFalse();
@@ -44,7 +44,7 @@ namespace Akka.Discovery.Azure.Tests
         [Fact(DisplayName = "Empty settings variable and default settings should match")]
         public void EmptySettingsTest()
         {
-            var settings = AzureDiscoverySettings.Create(AzureServiceDiscovery.DefaultConfig);
+            var settings = AzureDiscoverySettings.Create(AzureDiscovery.DefaultConfiguration());
             var empty = AzureDiscoverySettings.Empty;
 
             empty.ReadOnly.Should().Be(settings.ReadOnly);
