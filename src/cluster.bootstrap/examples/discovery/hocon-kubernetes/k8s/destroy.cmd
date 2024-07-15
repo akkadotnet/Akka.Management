@@ -1,0 +1,1 @@
+kubectl delete ns hocon-cluster-bootstrap
