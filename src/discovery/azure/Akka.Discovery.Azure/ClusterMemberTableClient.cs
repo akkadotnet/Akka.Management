@@ -36,7 +36,7 @@ namespace Akka.Discovery.Azure
             _serviceName = settings.ServiceName;
             _client = (settings.AzureAzureCredential != null && settings.AzureTableEndpoint != null)
                 ? new TableClient(settings.AzureTableEndpoint, settings.TableName, settings.AzureAzureCredential, settings.TableClientOptions)
-                : new TableClient(settings.ConnectionString, settings.TableName);
+                : new TableClient(settings.ConnectionString, settings.TableName, settings.TableClientOptions);
         }
 
         /// <summary>
