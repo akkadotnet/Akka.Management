@@ -57,9 +57,18 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
             
             var cluster = Akka.Cluster.Cluster.Get(context.ActorSystem);
 
-            ClusterMember MemberToClusterMember(Member m) =>
-                new (m.UniqueAddress.Address, m.UniqueAddress.Uid, m.Status, m.Roles);
-
+            if (cluster.SelfMember.Status
+                is MemberStatus.Down
+                or MemberStatus.Exiting
+                or MemberStatus.Leaving
+                or MemberStatus.Removed)
+            {
+                var body = JsonConvert.SerializeObject(
+                    new SeedNodes(cluster.SelfMember.UniqueAddress.Address, ImmutableList<ClusterMember>.Empty));
+                await context.HttpContext.Response.WriteAllJsonAsync(body);
+                return true;
+            }
+            
             var state = cluster.State;
 
             var members = state.Members
@@ -74,6 +83,9 @@ namespace Akka.Management.Cluster.Bootstrap.ContactPoint
             await context.HttpContext.Response.WriteAllJsonAsync(json);
 
             return true;
+
+            ClusterMember MemberToClusterMember(Member m) =>
+                new (m.UniqueAddress.Address, m.UniqueAddress.Uid, m.Status, m.Roles);
         }
     }
 
