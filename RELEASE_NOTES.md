@@ -1,3 +1,23 @@
+#### 1.5.26 July 16 2024 ####
+
+* Update to [Akka.NET v1.5.26](https://github.com/akkadotnet/akka.net/releases/tag/1.5.26)
+* [Discovery.KubernetesApi: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2596)
+* [Discovery.Azure: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2595)
+* [Discovery.Azure: Always apply TableClientOptions to TableClient](https://github.com/akkadotnet/Akka.Management/pull/2650)
+* [Discovery.Azure: Implement missing IExtension implementation](https://github.com/akkadotnet/Akka.Management/pull/2653)
+* [Discovery.Azure: Refactor `AkkaDiscoveryOptions` to `AzureDiscoveryOptions`](https://github.com/akkadotnet/Akka.Management/pull/2653)
+* [Discovery.Config: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2604)
+* [Discovery.AwsApi: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2651)
+* [ClusterBootstrap: Update probe-interval and stale contact point timeout calculation](https://github.com/akkadotnet/Akka.Management/pull/2601)
+* [Management: Cluster bootstrap endpoint returns empty seed if it is not part of a cluster](https://github.com/akkadotnet/Akka.Management/pull/2636)
+* [Management: Add Remote address and ClusterClientReceptionist actor path endpoint](https://github.com/akkadotnet/Akka.Management/pull/2614)
+* [Management: Harden ClusterClientReceptionist actor path endpoint](https://github.com/akkadotnet/Akka.Management/pull/2615)
+* Update dependency NuGet package versions to latest versions
+
+**Akka.Discovery.Azure AkkaDiscoveryOptions is not obsolete**
+
+`AkkaDiscoveryOptions` class has been made obsolete because the name was a typo, the correct class to use from now on is `AzureDiscoveryOptions`. The old `AkkaDiscoveryOptions` class is marked with the `Obsolete` attribute so users can migrate to the correct option class in the future.
+
 #### 1.5.26-beta3 July 2 2024 ####
 
 * [ClusterBootstrap: Update probe-interval and stale contact point timeout calculation](https://github.com/akkadotnet/Akka.Management/pull/2601)
