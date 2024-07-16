@@ -15,7 +15,6 @@ using Azure.Data.Tables;
 
 namespace Akka.Discovery.Azure;
 
-[Obsolete("Please use AzureDiscoveryOptions instead. Since 1.5.26")]
 public class AkkaDiscoveryOptions: IHoconOption
 {
     
