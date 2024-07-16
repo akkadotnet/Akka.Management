@@ -1,11 +1,15 @@
-#### 1.5.26 July 16 2024 ####
+#### 1.5.26.1 July 16 2024 ####
+
+* [Discovery.Azure: Revert `AkkaDiscoveryOptions` refactor](https://github.com/akkadotnet/Akka.Management/pull/2656)
+
+#### 1.5.26 July 15 2024 ####
 
 * Update to [Akka.NET v1.5.26](https://github.com/akkadotnet/akka.net/releases/tag/1.5.26)
 * [Discovery.KubernetesApi: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2596)
 * [Discovery.Azure: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2595)
 * [Discovery.Azure: Always apply TableClientOptions to TableClient](https://github.com/akkadotnet/Akka.Management/pull/2650)
 * [Discovery.Azure: Implement missing IExtension implementation](https://github.com/akkadotnet/Akka.Management/pull/2653)
-* [Discovery.Azure: Refactor `AkkaDiscoveryOptions` to `AzureDiscoveryOptions`](https://github.com/akkadotnet/Akka.Management/pull/2653)
+* [Discovery.Azure: Refactor `AkkaDiscoveryOptions` to `AzureDiscoveryOptions`](https://github.com/akkadotnet/Akka.Management/pull/2654)
 * [Discovery.Config: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2604)
 * [Discovery.AwsApi: Add multi-config support](https://github.com/akkadotnet/Akka.Management/pull/2651)
 * [ClusterBootstrap: Update probe-interval and stale contact point timeout calculation](https://github.com/akkadotnet/Akka.Management/pull/2601)
