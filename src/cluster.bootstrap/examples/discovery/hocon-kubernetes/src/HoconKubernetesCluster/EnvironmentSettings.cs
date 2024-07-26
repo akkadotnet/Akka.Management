@@ -6,14 +6,12 @@ namespace HoconKubernetesCluster;
 public record EnvironmentSettings(
     string? RemotingHostName,
     string? RemotingPort,
-    string? ManagementHostName,
     string? ManagementPort,
     string? BootstrapServiceName,
     string? BootstrapPortName)
 {
     private const string RemoteHostNameKey = "AKKA_REMOTE_HOSTNAME";
     private const string RemotePortKey = "AKKA_REMOTE_PORT";
-    private const string ManagementHostNameKey = "AKKA_MANAGEMENT_HOSTNAME";
     private const string ManagementPortKey = "AKKA_MANAGEMENT_PORT";
     private const string BootstrapServiceNameKey = "AKKA_BOOTSTRAP_SERVICE_NAME";
     private const string BootstrapPortNameKey = "AKKA_BOOTSTRAP_PORT_NAME";
@@ -27,11 +25,8 @@ public record EnvironmentSettings(
         if(RemotingPort is not null)
             sb.AppendLine($"akka.remote.dot-netty.tcp.port = {RemotingPort}");
 
-        if (ManagementHostName is not null)
-            sb.AppendLine($"akka.management.hostname = {ManagementHostName}");
-
         if (ManagementPort is not null)
-            sb.AppendLine($"akka.management.port = {ManagementPort}");
+            sb.AppendLine($"akka.management.http.port = {ManagementPort}");
 
         if (BootstrapServiceName is not null)
             sb.AppendLine($"akka.management.cluster.bootstrap.contact-point-discovery.service-name = {BootstrapServiceName}");
@@ -46,7 +41,6 @@ public record EnvironmentSettings(
         => new (
             RemotingHostName: Environment.GetEnvironmentVariable(RemoteHostNameKey),
             RemotingPort: Environment.GetEnvironmentVariable(RemotePortKey),
-            ManagementHostName: Environment.GetEnvironmentVariable(ManagementHostNameKey),
             ManagementPort: Environment.GetEnvironmentVariable(ManagementPortKey),
             BootstrapServiceName: Environment.GetEnvironmentVariable(BootstrapServiceNameKey),
             BootstrapPortName: Environment.GetEnvironmentVariable(BootstrapPortNameKey)
