@@ -14,7 +14,7 @@ using Amazon.ECS.Model;
 
 namespace Akka.Discovery.AwsApi.Ecs;
 
-public class EcsServiceDiscoveryOptions: IHoconOption
+public class EcsServiceDiscoveryOptions: IDiscoveryOptions
 {
     public string ConfigPath { get; } = AwsEcsDiscovery.DefaultPath;
     internal static string FullPath(string path) => $"akka.discovery.{path}";

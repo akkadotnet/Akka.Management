@@ -13,7 +13,7 @@ using Akka.Hosting;
 
 namespace Akka.Discovery.KubernetesApi;
 
-public class KubernetesDiscoveryOptions: IHoconOption
+public class KubernetesDiscoveryOptions: IDiscoveryOptions
 {
     public string ConfigPath { get; set; } = KubernetesApiServiceDiscovery.DefaultPath;
     public Type Class { get; } = typeof(KubernetesApiServiceDiscovery);
