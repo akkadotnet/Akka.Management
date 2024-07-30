@@ -1,3 +1,11 @@
+#### 1.5.27 July 30 2024 ####
+
+* Update to [Akka.NET v1.5.27.1](https://github.com/akkadotnet/akka.net/releases/tag/1.5.27.1)
+* Update to [Akka.Hosting v1.5.27](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.27)
+* [Discovery: Refactor IHoconOptions to IDiscoveryOptions](https://github.com/akkadotnet/Akka.Management/pull/2678)
+
+All discovery module option classes now implements `IDiscoveryOptions` interface and can be used as an argument of the new `Akka.Cluster.Hosting` `WithClusterClientDiscovery()` method.
+
 #### 1.5.26.1 July 16 2024 ####
 
 * [Discovery.Azure: Revert `AkkaDiscoveryOptions` refactor](https://github.com/akkadotnet/Akka.Management/pull/2656)
@@ -18,9 +26,9 @@
 * [Management: Harden ClusterClientReceptionist actor path endpoint](https://github.com/akkadotnet/Akka.Management/pull/2615)
 * Update dependency NuGet package versions to latest versions
 
-**Akka.Discovery.Azure AkkaDiscoveryOptions is not obsolete**
+~~**Akka.Discovery.Azure AkkaDiscoveryOptions is not obsolete**~~
 
-`AkkaDiscoveryOptions` class has been made obsolete because the name was a typo, the correct class to use from now on is `AzureDiscoveryOptions`. The old `AkkaDiscoveryOptions` class is marked with the `Obsolete` attribute so users can migrate to the correct option class in the future.
+~~`AkkaDiscoveryOptions` class has been made obsolete because the name was a typo, the correct class to use from now on is `AzureDiscoveryOptions`. The old `AkkaDiscoveryOptions` class is marked with the `Obsolete` attribute so users can migrate to the correct option class in the future.~~
 
 #### 1.5.26-beta3 July 2 2024 ####
 
