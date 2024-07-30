@@ -15,7 +15,7 @@ using Azure.Data.Tables;
 
 namespace Akka.Discovery.Azure;
 
-public class AkkaDiscoveryOptions: IHoconOption
+public class AkkaDiscoveryOptions: IDiscoveryOptions
 {
     
     public string ConfigPath { get; set; } = "azure";

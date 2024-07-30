@@ -14,7 +14,7 @@ using Akka.Hosting;
 // ReSharper disable once CheckNamespace
 namespace Akka.Discovery.Config.Hosting;
 
-public class ConfigServiceDiscoveryOptions: IHoconOption
+public class ConfigServiceDiscoveryOptions: IDiscoveryOptions
 {
     internal const string DefaultPath = "config";
     internal const string DefaultConfigPath = "akka.discovery." + DefaultPath;

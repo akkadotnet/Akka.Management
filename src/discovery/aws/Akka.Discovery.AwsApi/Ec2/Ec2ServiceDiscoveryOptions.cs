@@ -18,7 +18,7 @@ using Amazon.EC2.Model;
 
 namespace Akka.Discovery.AwsApi.Ec2;
 
-public class Ec2ServiceDiscoveryOptions: IHoconOption
+public class Ec2ServiceDiscoveryOptions: IDiscoveryOptions
 {
     public string ConfigPath { get; set; } = AwsEc2Discovery.DefaultPath;
     internal static string FullPath(string path) => $"akka.discovery.{path}";
