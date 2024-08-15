@@ -49,7 +49,7 @@ akka {{
         [SkippableFact]
         public async Task DiscoveryShouldBeAbleToLookupAwsEc2Instances()
         {
-            Skip.If(_fixture.IsWindows, "LocalStack docker image only available for Linux OS");
+            Skip.If(_fixture.IsWindows, "LocalStack docker image only available for Linux containers");
             
             var discovery = new Ec2TagBasedServiceDiscovery((ExtendedActorSystem)Sys);
             var lookup = new Lookup("fake-api");
@@ -57,6 +57,5 @@ akka {{
             resolved.Addresses.Count.Should().Be(4);
             resolved.Addresses.Select(a => a.Address.ToString()).Should().BeEquivalentTo(_fixture.IpAddresses);
         }
-
     }
 }

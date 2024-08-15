@@ -24,6 +24,7 @@ namespace Akka.Discovery.AwsApi.Ecs
         public static readonly EcsTagComparer TagComparer = new ();
         
         private readonly EcsServiceDiscoverySettings _settings;
+        private readonly ImmutableList<AwsTag> _tags;
 
         private AmazonECSClient? _clientDoNotUseDirectly;
 
@@ -50,6 +51,7 @@ namespace Akka.Discovery.AwsApi.Ecs
         public EcsServiceDiscovery(ExtendedActorSystem system, Configuration.Config config)
         {
             _settings = EcsServiceDiscoverySettings.Create(config);
+            _tags = _settings.Tags.Select(t => new AwsTag(t.Key, t.Value)).ToImmutableList();
         }
         
         public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
@@ -59,7 +61,7 @@ namespace Akka.Discovery.AwsApi.Ecs
                 ecsClient: EcsClient,
                 cluster: _settings.Cluster,
                 serviceName: lookup.ServiceName,
-                tags: _settings.Tags,
+                tags: _tags,
                 token: cts.Token);
 
             var addresses = new List<ResolvedTarget>();
@@ -82,13 +84,13 @@ namespace Akka.Discovery.AwsApi.Ecs
             AmazonECSClient ecsClient,
             string cluster,
             string serviceName,
-            ImmutableList<Tag> tags,
+            ImmutableList<AwsTag> tags,
             CancellationToken token)
         {
             var taskArns = await ListTaskArns(ecsClient, cluster, serviceName, token);
             var tasks = await DescribeTasks(ecsClient, cluster, taskArns, token);
             // only return tasks with the exact same tags as the filter
-            var tasksWithTags = tasks.Where(task => task.Tags.IsSame(tags, TagComparer)).ToList();
+            var tasksWithTags = tasks.Where(task => task.Tags.Select(t => new AwsTag(t.Key, t.Value)).Diff(tags).Count == 0).ToList();
             return tasksWithTags;
         }
 
@@ -144,6 +146,37 @@ namespace Akka.Discovery.AwsApi.Ecs
 
             return accumulator;
         }
+    }
 
+    public sealed class AwsTag : IEquatable<AwsTag>
+    {
+        public bool Equals(AwsTag? other)
+        {
+            if (other is null) return false;
+            if (ReferenceEquals(this, other)) return true;
+            return Key == other.Key && Value == other.Value;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return ReferenceEquals(this, obj) || obj is AwsTag other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (Key.GetHashCode() * 397) ^ Value.GetHashCode();
+            }
+        }
+
+        public AwsTag(string key, string value)
+        {
+            Key = key;
+            Value = value;
+        }
+
+        public string Key { get; }
+        public string Value { get; }
     }
 }
