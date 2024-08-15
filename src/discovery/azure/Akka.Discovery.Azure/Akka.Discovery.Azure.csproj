@@ -16,7 +16,7 @@
       <PackageReference Include="Akka.Discovery" Version="$(AkkaVersion)" />
       <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
       <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
-      <PackageReference Include="Azure.Data.Tables" Version="12.8.3" />
+      <PackageReference Include="Azure.Data.Tables" Version="12.9.0" />
       <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
       <PackageReference Include="Google.Protobuf" Version="$(ProtobufVersion)" />
       <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsVersion)">
