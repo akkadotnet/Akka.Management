@@ -37,11 +37,11 @@ namespace Akka.Discovery.AwsApi.Tests
             chunked[2].Should().BeEquivalentTo(Enumerable.Range(40, 10).Select(i => i.ToString()));
         }
         
-        [Theory(DisplayName = "Diff should return appropriate HashSet")]
-        [MemberData(nameof(TagDataSource))]
-        public void DiffTest(List<Tag> listA, List<Tag> listB, List<Tag> listDiff)
+        [Theory(DisplayName = "Diff should return appropriate List emulating Scala list.diff()")]
+        [ClassData(typeof(TagTheoryData))]
+        public void DiffTest(List<AwsTag> listA, List<AwsTag> listB, List<AwsTag> listDiff)
         {
-            var result = listA.Diff(listB, EcsServiceDiscovery.TagComparer);
+            var result = listA.Diff(listB);
             result.Count.Should().Be(listDiff.Count);
             foreach (var tag in listDiff)
             {
@@ -49,11 +49,96 @@ namespace Akka.Discovery.AwsApi.Tests
             }
         }
         
-        [Theory(DisplayName = "IsSame should return appropriate result")]
-        [MemberData(nameof(TagDataSource))]
-        public void IsSameTest(List<Tag> listA, List<Tag> listB, List<Tag> listDiff)
+        public class TagTheoryData: TheoryData<List<AwsTag>, List<AwsTag>, List<AwsTag>>
         {
-            listA.IsSame(listB, EcsServiceDiscovery.TagComparer).Should().Be(listDiff.Count == 0);
+            public TagTheoryData()
+            {
+                // Exact same list should cancel each other out
+                Add(new List<AwsTag>
+                    {
+                        new ("a", "b"),
+                        new ("b", "c"),
+                        new ("c", "d"),
+                    }, 
+                    new List<AwsTag>
+                    {
+                        new ("a", "b"),
+                        new ("b", "c"),
+                        new ("c", "d"),
+                    },
+                    new List<AwsTag>()
+                );
+                // Empty list returns empty
+                Add(new List<AwsTag>(), 
+                    new List<AwsTag>(),
+                    new List<AwsTag>());
+                // Only returns members of left that does not appear on right, preserving order
+                Add(new List<AwsTag>
+                    {
+                        new("a", "b"),
+                        new("b", "c"),
+                        new("c", "d"),
+                    }, 
+                    new List<AwsTag>
+                    {
+                        new("b", "c"),
+                        new("d", "e"),
+                    },
+                    new List<AwsTag>
+                    {
+                        new("a", "b"),
+                        new("c", "d"),
+                    });
+                // Only returns members of left that does not appear on right, disregard any non-matching member of right
+                Add(new List<AwsTag>
+                    {
+                        new("a", "b"),
+                        new("b", "c"),
+                    }, 
+                    new List<AwsTag>
+                    {
+                        new("a", "b"),
+                        new("b", "c"),
+                        new("d", "e"),
+                    },
+                    new List<AwsTag>());
+                // Only returns members of left that does not appear on right, preserving order
+                Add(new List<AwsTag>
+                    {
+                        new("a", "b"),
+                        new("b", "c"),
+                        new("c", "d"),
+                    }, 
+                    new List<AwsTag>
+                    {
+                        new("a", "b"),
+                        new("b", "c"),
+                    },
+                    new List<AwsTag>
+                    {
+                        new("c", "d"),
+                    });
+                // Only returns members of left that does not appear on right, does not remove duplicates, preserving order
+                Add(new List<AwsTag>
+                    {
+                        new("a", "b"),
+                        new("a", "b"),
+                        new("b", "c"),
+                        new("b", "c"),
+                        new("c", "d"),
+                    }, 
+                    new List<AwsTag>
+                    {
+                        new("a", "b"),
+                        new("b", "c"),
+                    },
+                    new List<AwsTag>
+                    {
+                        new("a", "b"),
+                        new("b", "c"),
+                        new("c", "d"),
+                    });
+            }
         }
         
         public static IEnumerable<object[]> TagDataSource()
@@ -99,7 +184,6 @@ namespace Akka.Discovery.AwsApi.Tests
                     new List<Tag>
                     {
                         new Tag{Key = "c", Value = "d"},
-                        new Tag{Key = "d", Value = "e"},
                     }
                 },
                 new object[]
@@ -115,10 +199,7 @@ namespace Akka.Discovery.AwsApi.Tests
                         new Tag{Key = "b", Value = "c"},
                         new Tag{Key = "d", Value = "e"},
                     },
-                    new List<Tag>
-                    {
-                        new Tag{Key = "d", Value = "e"},
-                    }
+                    new List<Tag>()
                 },
                 new object[]
                 {
@@ -135,6 +216,26 @@ namespace Akka.Discovery.AwsApi.Tests
                     },
                     new List<Tag>
                     {
+                        new Tag{Key = "c", Value = "d"},
+                    }
+                },
+                new object[]
+                {
+                    new List<Tag>
+                    {
+                        new Tag{Key = "a", Value = "b"},
+                        new Tag{Key = "b", Value = "c"},
+                        new Tag{Key = "b", Value = "c"},
+                        new Tag{Key = "c", Value = "d"},
+                    }, 
+                    new List<Tag>
+                    {
+                        new Tag{Key = "a", Value = "b"},
+                        new Tag{Key = "b", Value = "c"},
+                    },
+                    new List<Tag>
+                    {
+                        new Tag{Key = "b", Value = "c"},
                         new Tag{Key = "c", Value = "d"},
                     }
                 },

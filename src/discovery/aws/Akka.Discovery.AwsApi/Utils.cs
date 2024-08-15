@@ -5,6 +5,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -58,31 +59,34 @@ namespace Akka.Discovery.AwsApi
                 .GroupBy(x => x.index / chunk)
                 .Select(x => x.Select(v => v.value));
 
-        public static bool IsSame<T>(this IEnumerable<T> left, IEnumerable<T> right, IEqualityComparer<T> comparer)
+        /// <summary>
+        /// Emulates Scala `list.diff()`
+        /// 
+        /// * Removes members of left that matches a member of right once.
+        /// * Does not remove duplicates.
+        /// * Preserving order
+        /// </summary>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
+        /// <typeparam name="T">Generic parameter type, must implement <see cref="IEquatable{T}"/></typeparam>
+        /// <returns>
+        /// A <see cref="List{T}"/> that is a subset of <paramref name="left"/> with members that matches
+        /// <paramref name="right"/> once.
+        /// </returns>
+        /// <example>
+        /// [1, 2, 2, 3, 4, 5, 5].Diff([2, 3, 4, 6]) == [1, 2, 5, 5]; // duplicate 2 and 5, 2 matches only once
+        /// </example>
+        internal static List<T> Diff<T>(this IEnumerable<T> left, IEnumerable<T> right) where T : IEquatable<T>
         {
-            var l = new HashSet<T>(left, comparer);
-            var r = new HashSet<T>(right, comparer);
-            if (l.Count != r.Count)
-                return false;
-            var same = l.Where(tag => r.Contains(tag)).ToList();
-            return same.Count == l.Count;
-        }
-        
-        public static HashSet<T> Diff<T>(this IEnumerable<T> left, IEnumerable<T> right, IEqualityComparer<T> comparer)
-        {
-            var l = new HashSet<T>(left, comparer);
-            var r = new HashSet<T>(right, comparer);
-            var removed = l.Where(tag => r.Contains(tag)).ToList();
-
-            foreach (var remove in removed)
+            var l = new List<T>(left);
+            foreach (var v in right)
             {
-                l.Remove(remove);
-                r.Remove(remove);
+                var index = l.IndexOf(v);
+                if(index != -1)
+                    l.RemoveAt(index);
             }
             
-            var result = new HashSet<T>(l, comparer);
-            result.UnionWith(r);
-            return result;
+            return l;
         }
     }
 
