@@ -1,3 +1,8 @@
+#### 1.5.27.1-beta1 August 16th 2024 ####
+
+* [Discovery.AWS.ECS: Fix tag matching logic](https://github.com/akkadotnet/Akka.Management/pull/2706)
+* [Bump Google.Protobuf from 3.27.1 to 3.27.3](https://github.com/akkadotnet/Akka.Management/pull/2687)
+
 #### 1.5.27 July 30 2024 ####
 
 * Update to [Akka.NET v1.5.27.1](https://github.com/akkadotnet/akka.net/releases/tag/1.5.27.1)
