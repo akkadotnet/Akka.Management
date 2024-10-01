@@ -1,3 +1,9 @@
+#### 1.5.29 October 1st 2024 ####
+
+* Update to [Akka.NET v1.5.29](https://github.com/akkadotnet/akka.net/releases/tag/1.5.29)
+* Update to [Akka.Hosting v1.5.29](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.29)
+* [Bump Grpc/Tools from 2.64.0 to 2.66.0](https://github.com/akkadotnet/Akka.Management/pull/2734)
+
 #### 1.5.27.1-beta1 August 16th 2024 ####
 
 * [Discovery.AWS.ECS: Fix tag matching logic](https://github.com/akkadotnet/Akka.Management/pull/2706)
