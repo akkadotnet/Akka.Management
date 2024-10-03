@@ -1,4 +1,4 @@
-#### 1.5.30 October 1st 2024 ####
+#### 1.5.30 October 3rd 2024 ####
 
 * Update to [Akka.NET v1.5.30](https://github.com/akkadotnet/akka.net/releases/tag/1.5.30)
 * Update to [Akka.Hosting v1.5.30](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.30)
