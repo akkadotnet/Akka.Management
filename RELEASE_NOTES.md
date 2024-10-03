@@ -1,4 +1,16 @@
+#### 1.5.30 October 1st 2024 ####
+
+* Update to [Akka.NET v1.5.30](https://github.com/akkadotnet/akka.net/releases/tag/1.5.30)
+* Update to [Akka.Hosting v1.5.30](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.30)
+* [Bump Grpc/Tools from 2.64.0 to 2.66.0](https://github.com/akkadotnet/Akka.Management/pull/2734)
+
 #### 1.5.29 October 1st 2024 ####
+
+> [!NOTE]
+>
+> **Deprecated**
+>
+> Deprecated due to Akka.NET 1.5.29 deprecation. Please use 1.5.30 instead.
 
 * Update to [Akka.NET v1.5.29](https://github.com/akkadotnet/akka.net/releases/tag/1.5.29)
 * Update to [Akka.Hosting v1.5.29](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.29)
