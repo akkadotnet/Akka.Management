@@ -14,7 +14,7 @@
         <PackageReference Include="Docker.DotNet" Version="3.125.15" />
         <PackageReference Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
-        <PackageReference Include="Testcontainers.LocalStack" Version="3.9.0" />
+        <PackageReference Include="Testcontainers.LocalStack" Version="4.0.0" />
         <PackageReference Include="xunit" Version="$(XunitVersion)" />
         <PackageReference Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVersion)">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
