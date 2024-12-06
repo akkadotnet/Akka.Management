@@ -29,7 +29,7 @@ Update all AWSSDK versions</PackageReleaseNotes>
         <CoverletVersion>6.0.2</CoverletVersion>
         <FluentAssertionVersion>7.0.0</FluentAssertionVersion>
         <TestSdkVersion>17.12.0</TestSdkVersion>
-        <WireMockVersion>1.6.8</WireMockVersion>
+        <WireMockVersion>1.6.9</WireMockVersion>
         
         <AkkaVersion>1.5.32</AkkaVersion>
         <AkkaHostingVersion>1.5.31.1</AkkaHostingVersion>
