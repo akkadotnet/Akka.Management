@@ -173,8 +173,8 @@ namespace Akka.Discovery.Azure.Actors
                 
                 case Status.Success _:
                     _startRetryCount = 0;
-                    Context.System.ActorOf(HeartbeatActor.Props(_settings, Client));
-                    Context.System.ActorOf(PruneActor.Props(_settings, Client));
+                    Context.ActorOf(HeartbeatActor.Props(_settings, Client));
+                    Context.ActorOf(PruneActor.Props(_settings, Client));
                 
                     Become(Running);
                 
