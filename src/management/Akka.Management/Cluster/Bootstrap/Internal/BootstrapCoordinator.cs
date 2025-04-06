@@ -310,7 +310,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
                             var contacts = _lastContactObservation;
                             if (contacts.ObservedContactPoints.Contains(contactPoint))
                             {
-                                _log.Info("Contact point [{0}] returned [{1}] seed-nodes [{0}]",
+                                _log.Info("Contact point [{0}] returned [{1}] seed-nodes [{2}]",
                                     infoFromAddress,
                                     observedSeedNodes.Count,
                                     string.Join(", ", observedSeedNodes)
