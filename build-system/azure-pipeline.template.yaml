@@ -57,7 +57,7 @@ jobs:
         displayName: 'Run tests'
         continueOnError: true # Allow continuation even if tests fail
 
-       - task: PublishTestResults@2
+      - task: PublishTestResults@2
         inputs:
           testResultsFormat: VSTest
           testResultsFiles: '**/*.trx' #TestResults folder usually
