@@ -28,7 +28,7 @@ public class AzureLeaseSpec: TestKit.Xunit2.TestKit, IAsyncLifetime
                                             akka.stdout-loglevel=DEBUG
                                             akka.actor.debug.fsm=true
                                             akka.remote.dot-netty.tcp.port = 0
-                                            akka.coordination.lease.azure.connection-string = "{connectionString}")
+                                            akka.coordination.lease.azure.connection-string = "{connectionString}"
                                             """)
             .WithFallback(AzureLease.DefaultConfiguration);
 
