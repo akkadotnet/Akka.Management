@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+    <Import Project="..\..\..\xunitSettings.props" />
     <PropertyGroup>
         <TargetFramework>$(TestsNet)</TargetFramework>
         <IsPackable>false</IsPackable>
@@ -22,12 +22,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Akka.Http.Shim\Akka.Http.Shim.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Update="xunit.runner.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
 
 </Project>

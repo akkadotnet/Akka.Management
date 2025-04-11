@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+    <Import Project="..\..\..\..\xunitSettings.props" />
     <PropertyGroup>
         <TargetFramework>$(TestsNet)</TargetFramework>
         <IsPackable>false</IsPackable>
@@ -26,12 +26,6 @@
     <ItemGroup>
       <ProjectReference Include="..\..\..\discovery\azure\Akka.Discovery.Azure\Akka.Discovery.Azure.csproj" />
       <ProjectReference Include="..\Akka.Coordination.Azure\Akka.Coordination.Azure.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Update="xunit.runner.json">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
 
 </Project>

@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+    <Import Project="..\..\..\..\xunitSettings.props" />
     <PropertyGroup>
         <TargetFrameworks>$(TestsNetCoreFramework);$(TestsNet)</TargetFrameworks>
         <IsPackable>false</IsPackable>
@@ -26,11 +26,4 @@
       <ProjectReference Include="..\..\..\discovery\kubernetes\Akka.Discovery.KubernetesApi\Akka.Discovery.KubernetesApi.csproj" />
       <ProjectReference Include="..\Akka.Coordination.KubernetesApi\Akka.Coordination.KubernetesApi.csproj" />
     </ItemGroup>
-
-    <ItemGroup>
-      <None Update="xunit.runner.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
 </Project>

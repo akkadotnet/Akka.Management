@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+    <Import Project="..\..\..\..\xunitSettings.props" />
     <PropertyGroup>
         <TargetFramework>$(TestsNet)</TargetFramework>
         <IsPackable>false</IsPackable>
@@ -34,9 +34,5 @@
     <ItemGroup>
       <None Remove="akka-cluster.json" />
       <EmbeddedResource Include="akka-cluster.json" />
-      <None Update="xunit.runner.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
-
 </Project>
