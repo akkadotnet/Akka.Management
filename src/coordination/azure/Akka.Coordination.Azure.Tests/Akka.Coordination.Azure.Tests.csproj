@@ -11,6 +11,7 @@
         <PackageReference Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
         <PackageReference Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
+        <PackageReference Include="Testcontainers.Azurite" Version="4.3.0" />
         <PackageReference Include="WireMock.Net" Version="$(WireMockVersion)" />
         <PackageReference Include="xunit" Version="$(XunitVersion)" />
         <PackageReference Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVersion)">
@@ -26,6 +27,12 @@
     <ItemGroup>
       <ProjectReference Include="..\..\..\discovery\azure\Akka.Discovery.Azure\Akka.Discovery.Azure.csproj" />
       <ProjectReference Include="..\Akka.Coordination.Azure\Akka.Coordination.Azure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Include="..\..\..\discovery\azure\Akka.Discovery.Azure.Tests\AzuriteFixture.cs">
+        <Link>AzuriteFixture.cs</Link>
+      </Compile>
     </ItemGroup>
 
 </Project>
