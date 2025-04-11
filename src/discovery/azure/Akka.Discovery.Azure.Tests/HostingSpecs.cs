@@ -24,10 +24,9 @@ using Xunit.Abstractions;
 
 namespace Akka.Discovery.Azure.Tests
 {
+    [Collection(nameof(AzuriteSpecs))]
     public class HostingSpecs
     {
-        private const string ConnectionString = "UseDevelopmentStorage=true";
-        
         private async Task<IHost> StartHost(
             Action<AkkaConfigurationBuilder> testSetup,
             LogLevel minimumLogLevel = LogLevel.Debug)
@@ -65,78 +64,63 @@ namespace Akka.Discovery.Azure.Tests
                         testSetup(builder);
                     });
                 }).Build();
-        
+
             await host.StartAsync();
             return host;
         }
 
         private readonly ITestOutputHelper _output;
+        private readonly AzuriteFixture _azuriteFixture;
+        private readonly string _connectionString;
         
-        public HostingSpecs(ITestOutputHelper output)
+        public HostingSpecs(ITestOutputHelper output, AzuriteFixture azuriteFixture)
         {
             _output = output;
+            _azuriteFixture = azuriteFixture;
+            _connectionString = azuriteFixture.ConnectionString;
         }
 
         [Theory(DisplayName = "WithAzureDiscovery should work")]
-        [MemberData(nameof(StartupFactory))]
+        [MemberData(nameof(Startups))]
         public async Task WithAzureDiscoveryTest(
-            Action<AkkaConfigurationBuilder> startupAction)
+            Func<string, AkkaConfigurationBuilder, AkkaConfigurationBuilder> startupAction)
         {
-            await DbUtils.Cleanup(ConnectionString);
-            
+            await DbUtils.Cleanup(_connectionString);
+
             var tcs = new TaskCompletionSource<Done>();
-            using var host = await StartHost(startupAction);
+            using var host = await StartHost(builder => startupAction(_connectionString, builder));
 
             var system = host.Services.GetRequiredService<ActorSystem>();
             var cluster = Cluster.Cluster.Get(system);
-            cluster.RegisterOnMemberUp(() =>
-            {
-                tcs.SetResult(Done.Instance);
-            });
+            cluster.RegisterOnMemberUp(() => { tcs.SetResult(Done.Instance); });
 
             await tcs.Task.WaitAsync(30.Seconds());
         }
 
-        public static IEnumerable<object[]> StartupFactory()
-        {
-            var startups = new Action<AkkaConfigurationBuilder>[]
+        public static readonly TheoryData<Func<string, AkkaConfigurationBuilder, AkkaConfigurationBuilder>> Startups =
+            new()
             {
-                builder =>
+                (conn, builder) => builder.WithAzureDiscovery(conn, "testService", "localhost", 18558),
+                (conn, builder) => builder.WithAzureDiscovery(setup =>
                 {
-                    builder.WithAzureDiscovery(ConnectionString, "testService", "localhost", 18558);
-                },
-                builder =>
-                {
-                    builder.WithAzureDiscovery(setup =>
-                    {
-                        setup.ConnectionString = ConnectionString;
-                        setup.ServiceName = "testService";
-                        setup.HostName = "localhost";
-                        setup.Port = 18558;
-                    });
-                },
-                builder =>
+                    setup.ConnectionString = conn;
+                    setup.ServiceName = "testService";
+                    setup.HostName = "localhost";
+                    setup.Port = 18558;
+                }),
+                (conn, builder) =>
                 {
                     var setup = new AkkaDiscoveryOptions
                     {
-                        ConnectionString = ConnectionString,
+                        ConnectionString = conn,
                         ServiceName = "testService",
                         HostName = "localhost",
                         Port = 18558
                     };
-                    builder.WithAzureDiscovery(setup);
+                    return builder.WithAzureDiscovery(setup);
                 }
                 // Could not test DefaultAzureCredential because that requires HTTPS and bearer token,
                 // and azurite does not support that
             };
-            
-            foreach (var startup in startups)
-            {
-                yield return new object[]
-                {
-                    startup
-                };
-            }
-        }
     }
 }
