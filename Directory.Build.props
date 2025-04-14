@@ -3,8 +3,11 @@
     <Copyright>Copyright © 2013-$([System.DateTime]::Now.Year) Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
     <VersionPrefix>1.5.37</VersionPrefix>
-    <PackageReleaseNotes>
-    </PackageReleaseNotes>
+    <PackageReleaseNotes>* Update to [Akka.NET v1.5.37](https://github.com/akkadotnet/akka.net/releases/tag/1.5.35)
+* Update to [Akka.Hosting v1.5.37](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.35)
+* [Revert: Bump all Microsoft.Extensions.* dependency to 8.0.x](https://github.com/akkadotnet/Akka.Management/pull/3105)
+* [Bump Azure.Identity to 1.13.2](https://github.com/akkadotnet/Akka.Management/pull/3076)
+* [Bump Grpc.Tools to 2.69.0](https://github.com/akkadotnet/Akka.Management/pull/3050)</PackageReleaseNotes>
     <PackageIconUrl>https://getakka.net/images/akkalogo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/akkadotnet/Akka.Management</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
