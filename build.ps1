@@ -45,6 +45,19 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Determine Incrementalist Config Path based on OS
+function Get-IncrementalistConfigPath {
+    # Check OS platform for broader compatibility
+    $isWindowsOS = [System.Environment]::OSVersion.Platform -eq 'Win32NT'
+    
+    if ($isWindowsOS) {
+        return Join-Path $PSScriptRoot ".incrementalist/windowsDevOpsBuilds.json"
+    }
+    else {
+        return Join-Path $PSScriptRoot ".incrementalist/incrementalist.json"
+    }
+}
+
 # Define paths
 $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
 $ReleaseNotesPath = Join-Path $PSScriptRoot "RELEASE_NOTES.md"
@@ -219,7 +232,9 @@ function Build-Solution {
         # Use Incrementalist to build affected projects
         Write-Host "Using Incrementalist to build affected projects" -ForegroundColor Cyan
         
-        dotnet tool run incrementalist -- -b $TargetBranch -r -- build -c $Configuration --no-restore
+        $configPath = Get-IncrementalistConfigPath
+        Write-Host "Using Incrementalist config: $configPath" -ForegroundColor Yellow
+        dotnet incrementalist --config $configPath -- -b $TargetBranch -r -- build -c $Configuration --no-restore
         
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to build affected projects."
@@ -265,7 +280,10 @@ function Run-Tests {
             if ($LastExitCode -ne 0) { throw "Unit tests failed" }
         }
     } else {
-        $affectedProjects = & dotnet tool run incrementalist -- -b $TargetBranch -r --
+        $configPath = Get-IncrementalistConfigPath
+        Write-Host "Using Incrementalist config: $configPath" -ForegroundColor Yellow
+        # Use incrementalist just to *find* affected projects
+        $affectedProjects = & dotnet incrementalist --config $configPath -- -b $TargetBranch -r --
         if ($LastExitCode -ne 0) { throw "Failed to find affected projects" }
         
         $testProjects = $affectedProjects | Where-Object { $_ -like "*Tests.csproj" }
@@ -393,7 +411,9 @@ function Create-NuGet {
         $packCommand = $packArgs -join " "
         Write-Host "Running Incrementalist with: $packCommand" -ForegroundColor Yellow
         
-        dotnet tool run incrementalist -- -b $TargetBranch -r -- $packCommand
+        $configPath = Get-IncrementalistConfigPath
+        Write-Host "Using Incrementalist config: $configPath" -ForegroundColor Yellow
+        dotnet tool run incrementalist --config $configPath -- -b $TargetBranch -r -- $packCommand
         
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to create NuGet packages for affected projects."
