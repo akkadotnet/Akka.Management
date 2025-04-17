@@ -1,0 +1,14 @@
+{
+  "listFolders": false,
+  "gitBranch": "dev",
+  "verbose": false,
+  "timeoutMinutes": 10,
+  "continueOnError": true,
+  "runInParallel": false,
+  "failOnNoProjects": false,
+  "noCache": false,
+  "skip": [
+    "**/*.Azure.Tests.csproj"
+  ],
+  "target": []
+}

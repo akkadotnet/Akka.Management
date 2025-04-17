@@ -12,6 +12,7 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Coordination.KubernetesApi.Internal;
 using Akka.Coordination.KubernetesApi.Models;
+using Akka.Event;
 using Akka.Util;
 using FluentAssertions;
 using k8s.Models;
@@ -143,6 +144,8 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithHeader("Content-Type", "application/json")
                         .WithCallback(request =>
                         {
+                            Sys.Log.Info($"[WireMock]: Lease resource updated: {request.Body}");
+                            
 #if !NET6_0_OR_GREATER
                             var body = SafeJsonConvert.DeserializeObject<LeaseCustomResource>(request.Body);
 #else
@@ -163,6 +166,8 @@ namespace Akka.Coordination.KubernetesApi.Tests
 #else
                             var responseJson = KubernetesJson.Serialize(response);
 #endif
+                            Sys.Log.Info("[WireMock]: Sending response: {0}", responseJson);
+                            
                             return new ResponseMessage
                             {
                                 BodyDestination = null,

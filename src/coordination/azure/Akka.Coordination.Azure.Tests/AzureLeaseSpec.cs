@@ -8,6 +8,7 @@ using System;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
+using Akka.Discovery.Azure.Tests;
 using Xunit;
 using Xunit.Abstractions;
 using FluentAssertions;
@@ -15,25 +16,28 @@ using static FluentAssertions.FluentActions;
 
 namespace Akka.Coordination.Azure.Tests;
 
+[Collection(nameof(AzuriteSpecs))]
 public class AzureLeaseSpec: TestKit.Xunit2.TestKit, IAsyncLifetime
 {
     private const string LeaseName = "lease";
     private const string OwnerName = "owner1";
     
-    private static Config Config()
-        => ConfigurationFactory.ParseString(@"
-akka.loglevel=DEBUG
-akka.stdout-loglevel=DEBUG
-akka.actor.debug.fsm=true
-akka.remote.dot-netty.tcp.port = 0
-akka.coordination.lease.azure.connection-string = ""UseDevelopmentStorage=true""
-")
+    private static Config Config(string connectionString)
+        => ConfigurationFactory.ParseString($"""
+                                            akka.loglevel=DEBUG
+                                            akka.stdout-loglevel=DEBUG
+                                            akka.actor.debug.fsm=true
+                                            akka.remote.dot-netty.tcp.port = 0
+                                            akka.coordination.lease.azure.connection-string = "{connectionString}"
+                                            """)
             .WithFallback(AzureLease.DefaultConfiguration);
 
     private readonly Lease _lease;
+    private readonly AzuriteFixture _fixture;
 
-    public AzureLeaseSpec(ITestOutputHelper helper): base(Config(), nameof(AzureLeaseSpec), helper)
+    public AzureLeaseSpec(ITestOutputHelper helper, AzuriteFixture fixture): base(Config(fixture.ConnectionString), nameof(AzureLeaseSpec), helper)
     {
+        _fixture = fixture;
         _lease = LeaseProvider.Get(Sys).GetLease(LeaseName, "akka.coordination.lease.azure", OwnerName);
     }
 
@@ -60,7 +64,7 @@ akka.coordination.lease.azure.connection-string = ""UseDevelopmentStorage=true""
 
     public async Task InitializeAsync()
     {
-        await Util.Cleanup("UseDevelopmentStorage=true");
+        await Util.Cleanup(_fixture.ConnectionString);
     }
 
     public Task DisposeAsync()

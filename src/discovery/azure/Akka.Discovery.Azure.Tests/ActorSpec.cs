@@ -23,6 +23,7 @@ using Xunit.Abstractions;
 
 namespace Akka.Discovery.Azure.Tests
 {
+    [Collection(nameof(AzuriteSpecs))]
     public class ActorSpec: TestKit.Xunit2.TestKit, IAsyncLifetime
     {
         private static readonly Configuration.Config Config = ConfigurationFactory.ParseString(@"
@@ -30,8 +31,9 @@ akka.loglevel = DEBUG
 akka.actor.provider = cluster
 akka.remote.dot-netty.tcp.port = 0
 ");
-        
-        private const string ConnectionString = "UseDevelopmentStorage=true";
+
+        private readonly AzuriteFixture _fixture;
+        private readonly string _connectionString;
         private const string ServiceName = nameof(ServiceName);
         private const string TableName = "AkkaDiscoveryClusterMembers";
         private const string Host = "fake.com";
@@ -43,22 +45,24 @@ akka.remote.dot-netty.tcp.port = 0
 
         private int _lastPort = FirstPort;
         
-        public ActorSpec(ITestOutputHelper helper)
+        public ActorSpec(ITestOutputHelper helper, AzuriteFixture fixture)
             : base(Config, nameof(ClusterMemberTableClientSpec), helper)
         {
+            _fixture = fixture;
+            _connectionString = _fixture.ConnectionString;
             var logger = Logging.GetLogger(Sys, nameof(ClusterMemberTableClient));
             var settings = AzureDiscoverySettings.Empty
                 .WithServiceName(ServiceName)
-                .WithConnectionString(ConnectionString)
+                .WithConnectionString(_connectionString)
                 .WithTableName(TableName);
             _client = new ClusterMemberTableClient(settings, logger);
-            _rawClient = new TableClient(ConnectionString, TableName);
+            _rawClient = new TableClient(_connectionString, TableName);
         }
         
         public async Task InitializeAsync()
         {
             // Tables are wiped out at every test start
-            await DbUtils.Cleanup(ConnectionString);
+            await DbUtils.Cleanup(_connectionString);
         }
 
         public Task DisposeAsync()
@@ -70,7 +74,7 @@ akka.remote.dot-netty.tcp.port = 0
         public async Task HeartbeatActorShouldUpdate()
         {
             var settings = AzureDiscoverySettings.Empty
-                .WithConnectionString(ConnectionString)
+                .WithConnectionString(_connectionString)
                 .WithServiceName(ServiceName)
                 .WithTableName(TableName);
 
@@ -101,7 +105,7 @@ akka.remote.dot-netty.tcp.port = 0
             var selfAddress = cluster.SelfAddress;
             
             var settings = AzureDiscoverySettings.Empty
-                .WithConnectionString(ConnectionString)
+                .WithConnectionString(_connectionString)
                 .WithServiceName(ServiceName)
                 .WithTableName(TableName);
 

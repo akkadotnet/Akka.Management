@@ -8,6 +8,7 @@ using System;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Cluster.Hosting;
+using Akka.Discovery.Azure.Tests;
 using Akka.Event;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
@@ -18,6 +19,7 @@ using Xunit.Abstractions;
 
 namespace Akka.Coordination.Azure.Tests
 {
+    [Collection(nameof(AzuriteSpecs))]
     public class ClusterSingletonSpec: Hosting.TestKit.TestKit
     {
         private class EchoActor : ActorBase
@@ -32,18 +34,21 @@ namespace Akka.Coordination.Azure.Tests
         private enum SingletonKey
         { }
         
-        private const string ConnectionString = "UseDevelopmentStorage=true";
+        private readonly string _connectionString;
+        private readonly AzuriteFixture _fixture;
         
-        public ClusterSingletonSpec(ITestOutputHelper output): base("TestCluster", output)
+        public ClusterSingletonSpec(ITestOutputHelper output, AzuriteFixture fixture): base("TestCluster", output)
         {
-            Util.Cleanup(ConnectionString).GetAwaiter().GetResult();
+            _fixture = fixture;
+            _connectionString = _fixture.ConnectionString;
+            Util.Cleanup(_connectionString).GetAwaiter().GetResult();
         }
 
         protected override void ConfigureAkka(AkkaConfigurationBuilder builder, IServiceProvider provider)
         {
             var options = new AzureLeaseOption
             {
-                ConnectionString = ConnectionString,
+                ConnectionString = _connectionString,
                 ContainerName = "akka-coordination-lease"
             };
             builder

@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+    <Import Project="..\..\..\..\xunitSettings.props" />
     <PropertyGroup>
         <TargetFrameworks>$(TestsNetCoreFramework);$(TestsNet)</TargetFrameworks>
         <IsPackable>false</IsPackable>
@@ -28,9 +28,6 @@
       <None Remove="multi-container-pod.json" />
       <EmbeddedResource Include="multi-container-pod.json" />
       <None Remove="pods.json" />
-      <None Update="xunit.runner.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
     </ItemGroup>
 
 </Project>

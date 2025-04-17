@@ -21,9 +21,10 @@ using static FluentAssertions.FluentActions;
 
 namespace Akka.Discovery.Azure.Tests
 {
+    [Collection(nameof(AzuriteSpecs))]
     public class ClusterMemberTableClientSpec: TestKit.Xunit2.TestKit, IAsyncLifetime
     {
-        private const string ConnectionString = "UseDevelopmentStorage=true";
+        private readonly string ConnectionString;
         private const string ServiceName = nameof(ServiceName);
         private const string WrongService = nameof(WrongService);
         private const string TableName = "AkkaDiscoveryClusterMembers";
@@ -33,12 +34,15 @@ namespace Akka.Discovery.Azure.Tests
 
         private readonly ClusterMemberTableClient _client;
         private readonly TableClient _rawClient;
+        private readonly AzuriteFixture _azuriteFixture;
 
         private int _lastPort = FirstPort;
 
-        public ClusterMemberTableClientSpec(ITestOutputHelper helper)
+        public ClusterMemberTableClientSpec(ITestOutputHelper helper, AzuriteFixture azuriteFixture)
             : base("akka.loglevel = DEBUG", nameof(ClusterMemberTableClientSpec), helper)
         {
+            _azuriteFixture = azuriteFixture;
+            ConnectionString = azuriteFixture.ConnectionString;
             var logger = Logging.GetLogger(Sys, nameof(ClusterMemberTableClient));
             var settings = AzureDiscoverySettings.Empty
                 .WithServiceName(ServiceName)

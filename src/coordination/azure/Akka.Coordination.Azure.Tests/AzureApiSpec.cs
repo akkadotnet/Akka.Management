@@ -9,6 +9,7 @@ using System;
 using System.Threading.Tasks;
 using Akka.Configuration;
 using Akka.Coordination.Azure.Internal;
+using Akka.Discovery.Azure.Tests;
 using Akka.Util;
 using FluentAssertions;
 using FluentAssertions.Extensions;
@@ -17,21 +18,26 @@ using Xunit.Abstractions;
 
 namespace Akka.Coordination.Azure.Tests
 {
+    [Collection(nameof(AzuriteSpecs))]
     public class AzureApiSpec : TestKit.Xunit2.TestKit, IAsyncLifetime
     {
         private readonly AzureLeaseSettings _settings;
         private readonly AzureApiImpl _underTest;
         private const string LeaseName = "lease-1";
+        private readonly AzuriteFixture _fixture;
+        private readonly string _connectionString;
         
         private static readonly Config BaseConfig = 
             ConfigurationFactory.ParseString(@"
                 akka.loglevel=DEBUG
                 akka.remote.dot-netty.tcp.port = 0");
         
-        public AzureApiSpec(ITestOutputHelper output) : base(BaseConfig, nameof(AzureApiSpec), output)
+        public AzureApiSpec(ITestOutputHelper output, AzuriteFixture fixture) : base(BaseConfig, nameof(AzureApiSpec), output)
         {
+            _fixture = fixture;
+            _connectionString = _fixture.ConnectionString;
             _settings = AzureLeaseSettings.Empty
-                .WithConnectionString("UseDevelopmentStorage=true")
+                .WithConnectionString(_connectionString)
                 .WithApiServiceRequestTimeout(800.Milliseconds());
                 
             _underTest = new AzureApiImpl(Sys, _settings);
@@ -39,7 +45,7 @@ namespace Akka.Coordination.Azure.Tests
         
         public async Task InitializeAsync()
         {
-            await Util.Cleanup("UseDevelopmentStorage=true");
+            await Util.Cleanup(_connectionString);
         }
 
         public Task DisposeAsync()
