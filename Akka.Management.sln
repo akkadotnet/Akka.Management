@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{79D71264
 		RELEASE_NOTES.md = RELEASE_NOTES.md
 		Directory.Build.props = Directory.Build.props
 		global.json = global.json
+		xunit.runner.json = xunit.runner.json
+		xunitSettings.props = xunitSettings.props
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "management", "management", "{9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}"
