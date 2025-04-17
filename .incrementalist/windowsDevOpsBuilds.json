@@ -8,8 +8,7 @@
   "failOnNoProjects": false,
   "noCache": false,
   "skip": [
-    "src/discovery/azure/Akka.Discovery.Azure.Tests/Akka.Discovery.Azure.Tests.csproj",
-    "src/coordination/azure/Akka.Coordination.Azure.Tests/Akka.Coordination.Azure.Tests.csproj"
+    "**/*.Azure.Tests.csproj"
   ],
   "target": []
 }
