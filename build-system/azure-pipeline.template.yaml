@@ -50,7 +50,7 @@ jobs:
 
       - task: reportgenerator@5
         displayName: ReportGenerator
-        condition: always() # Run this step regardless of previous step outcomes
+        condition: and(always(), eq(variables['Build.Reason'], 'PullRequest')) # Only run on PRs
         continueOnError: true
         inputs:
           reports: '$(Build.SourcesDirectory)/TestResults/**/*.cobertura.xml'
@@ -61,9 +61,9 @@ jobs:
 
       - publish: $(Build.SourcesDirectory)/coveragereport
         displayName: 'Publish Coverage Report'
-        condition: and(always(), eq(variables['Agent.OS'], 'Windows_NT'))
+        condition: and(always(), eq(variables['Build.Reason'], 'PullRequest')) # Only run on PRs
         continueOnError: true
-        artifact: 'CoverageReports-$(Build.BuildId)'
+        artifact: 'CoverageReports-$(Agent.OS)-$(Build.BuildId)'
           
       - script: dotnet pack -c Release --no-build -o $(Build.ArtifactStagingDirectory)/nuget
         displayName: 'Create packages'
