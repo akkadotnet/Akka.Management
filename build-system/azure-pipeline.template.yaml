@@ -48,9 +48,18 @@ jobs:
           failTaskOnFailedTests: false
           publishRunAttachments: true
 
+      - pwsh: |
+          $coverageFiles = Get-ChildItem -Path "$(Build.SourcesDirectory)/TestResults" -Filter "*.cobertura.xml" -Recurse
+          $hasCoverageFiles = $coverageFiles.Count -gt 0
+          Write-Host "##vso[task.setvariable variable=HasCoverageFiles]$hasCoverageFiles"
+        displayName: 'Check for Coverage Files'
+        condition: always()
+        continueOnError: true
+
       - task: reportgenerator@5
         displayName: ReportGenerator
-        condition: always() # Run this step regardless of previous step outcomes
+        # Only run if coverage files exist
+        condition: and(always(), eq(variables['HasCoverageFiles'], 'True'))
         continueOnError: true
         inputs:
           reports: '$(Build.SourcesDirectory)/TestResults/**/*.cobertura.xml'
@@ -61,9 +70,10 @@ jobs:
 
       - publish: $(Build.SourcesDirectory)/coveragereport
         displayName: 'Publish Coverage Report'
-        condition: and(always(), eq(variables['Agent.OS'], 'Windows_NT'))
+        # Only run if coverage files exist
+        condition: and(always(), eq(variables['HasCoverageFiles'], 'True'))
         continueOnError: true
-        artifact: 'CoverageReports-$(Build.BuildId)'
+        artifact: 'CoverageReports-$(Agent.OS)-$(Build.BuildId)'
           
       - script: dotnet pack -c Release --no-build -o $(Build.ArtifactStagingDirectory)/nuget
         displayName: 'Create packages'
