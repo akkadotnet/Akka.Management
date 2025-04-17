@@ -48,9 +48,9 @@ jobs:
           failTaskOnFailedTests: false
           publishRunAttachments: true
 
+      # Only run if coverage files exist
       - task: reportgenerator@5
         displayName: ReportGenerator
-        # Only run if coverage files exist
         condition: >-
           and(
             always(),
@@ -64,9 +64,9 @@ jobs:
           assemblyfilters: '-xunit*'
           publishCodeCoverageResults: true
 
+       # Only run if coverage files exist
       - publish: $(Build.SourcesDirectory)/coveragereport
         displayName: 'Publish Coverage Report'
-        # Only run if coverage files exist
         condition: >-
           and(
             always(),
