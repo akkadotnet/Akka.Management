@@ -48,14 +48,18 @@ jobs:
           failTaskOnFailedTests: false
           publishRunAttachments: true
 
-      # Only run if coverage files exist
+      - pwsh: |
+          $coverageFiles = Get-ChildItem -Path "$(Build.SourcesDirectory)/TestResults" -Filter "*.cobertura.xml" -Recurse
+          $hasCoverageFiles = $coverageFiles.Count -gt 0
+          Write-Host "##vso[task.setvariable variable=HasCoverageFiles]$hasCoverageFiles"
+        displayName: 'Check for Coverage Files'
+        condition: always()
+        continueOnError: true
+
       - task: reportgenerator@5
         displayName: ReportGenerator
-        condition: >-
-          and(
-            always(),
-            gt(countFiles('$(Build.SourcesDirectory)/TestResults/**/*.cobertura.xml'), 0)
-          )
+        # Only run if coverage files exist
+        condition: and(always(), eq(variables['HasCoverageFiles'], 'True'))
         continueOnError: true
         inputs:
           reports: '$(Build.SourcesDirectory)/TestResults/**/*.cobertura.xml'
@@ -64,14 +68,10 @@ jobs:
           assemblyfilters: '-xunit*'
           publishCodeCoverageResults: true
 
-       # Only run if coverage files exist
       - publish: $(Build.SourcesDirectory)/coveragereport
         displayName: 'Publish Coverage Report'
-        condition: >-
-          and(
-            always(),
-            gt(countFiles('$(Build.SourcesDirectory)/TestResults/**/*.cobertura.xml'), 0)
-          )
+        # Only run if coverage files exist
+        condition: and(always(), eq(variables['HasCoverageFiles'], 'True'))
         continueOnError: true
         artifact: 'CoverageReports-$(Agent.OS)-$(Build.BuildId)'
           
