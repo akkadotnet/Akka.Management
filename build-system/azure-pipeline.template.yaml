@@ -50,11 +50,12 @@ jobs:
 
       - task: reportgenerator@5
         displayName: ReportGenerator
+        # Only run if coverage files exist
         condition: >-
           and(
             always(),
             gt(countFiles('$(Build.SourcesDirectory)/TestResults/**/*.cobertura.xml'), 0)
-          ) # Only run on PRs and if coverage files exist
+          )
         continueOnError: true
         inputs:
           reports: '$(Build.SourcesDirectory)/TestResults/**/*.cobertura.xml'
@@ -65,11 +66,12 @@ jobs:
 
       - publish: $(Build.SourcesDirectory)/coveragereport
         displayName: 'Publish Coverage Report'
+        # Only run if coverage files exist
         condition: >-
           and(
             always(),
             gt(countFiles('$(Build.SourcesDirectory)/TestResults/**/*.cobertura.xml'), 0)
-          ) # Only run on PRs and if coverage files exist
+          )
         continueOnError: true
         artifact: 'CoverageReports-$(Agent.OS)-$(Build.BuildId)'
           
