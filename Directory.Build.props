@@ -23,7 +23,7 @@
     <NetFramework>net6.0</NetFramework>
     <TestsNet>net9.0</TestsNet>
     <XunitVersion>2.8.1</XunitVersion>
-    <XUnitRunnerVersion>3.0.2</XUnitRunnerVersion>
+    <XUnitRunnerVersion>3.1.0</XUnitRunnerVersion>
     <CoverletVersion>6.0.4</CoverletVersion>
     <FluentAssertionVersion>7.0.0</FluentAssertionVersion>
     <TestSdkVersion>17.13.0</TestSdkVersion>
