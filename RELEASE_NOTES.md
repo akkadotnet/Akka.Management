@@ -1,3 +1,15 @@
+#### 1.5.42 June 3rd 2025 ####
+
+* Update to [Akka.NET v1.5.42](https://github.com/akkadotnet/akka.net/releases/tag/1.5.42)
+* Update to [Akka.Hosting v1.5.42](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.42)
+* [Bump Azure.Data.Tables to 12.10.0](https://github.com/akkadotnet/Akka.Management/pull/3078)
+* [Bump Grpc.Tools to 2.71.0](https://github.com/akkadotnet/Akka.Management/pull/3227)
+* [Bump AWSSDK.ECS to 3.7.409](https://github.com/akkadotnet/Akka.Management/pull/3322)
+* [Bump AWSSDK.CloudFormation to 3.7.403.18](https://github.com/akkadotnet/Akka.Management/pull/3337)
+* [Bump AWSSDK.EC2 to 3.7.437.12](https://github.com/akkadotnet/Akka.Management/pull/3325)
+* [Bump AWSSDK.S3 to 3.7.416.12](https://github.com/akkadotnet/Akka.Management/pull/3323)
+* [Bump Google.Protobuf to 3.30.2](https://github.com/akkadotnet/Akka.Management/pull/3278)
+
 #### 1.5.37 January 23rd 2025 ####
 
 * Update to [Akka.NET v1.5.37](https://github.com/akkadotnet/akka.net/releases/tag/1.5.35)
