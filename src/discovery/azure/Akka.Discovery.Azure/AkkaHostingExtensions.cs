@@ -72,7 +72,7 @@ namespace Akka.Discovery.Azure
             bool? readOnly = null,
             bool isDefaultPlugin = true)
         {
-            var options = new AkkaDiscoveryOptions
+            var options = new AzureDiscoveryOptions
             {
                 IsDefaultPlugin = isDefaultPlugin,
                 ConfigPath = discoveryId,
@@ -154,7 +154,7 @@ namespace Akka.Discovery.Azure
             bool isDefaultPlugin = true)
         {
             if (azureCredential == null) throw new ArgumentNullException(nameof(azureCredential));
-            var options = new AkkaDiscoveryOptions
+            var options = new AzureDiscoveryOptions
             {
                 IsDefaultPlugin = isDefaultPlugin,
                 ConfigPath = discoveryId,
@@ -178,7 +178,7 @@ namespace Akka.Discovery.Azure
         ///     The builder instance being configured.
         /// </param>
         /// <param name="configure">
-        ///     An action that modifies an <see cref="AkkaDiscoveryOptions"/> instance, used
+        ///     An action that modifies an <see cref="AzureDiscoveryOptions"/> instance, used
         ///     to configure Akka.Discovery.Azure.
         /// </param>
         /// <returns>
@@ -200,9 +200,9 @@ namespace Akka.Discovery.Azure
         /// </example>
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
-            Action<AkkaDiscoveryOptions> configure)
+            Action<AzureDiscoveryOptions> configure)
         {
-            var setup = new AkkaDiscoveryOptions();
+            var setup = new AzureDiscoveryOptions();
             configure(setup);
             return builder.WithAzureDiscovery(setup);
         }
@@ -216,7 +216,7 @@ namespace Akka.Discovery.Azure
         ///     The builder instance being configured.
         /// </param>
         /// <param name="options">
-        ///     The <see cref="AkkaDiscoveryOptions"/> instance used to configure Akka.Discovery.Azure.
+        ///     The <see cref="AzureDiscoveryOptions"/> instance used to configure Akka.Discovery.Azure.
         /// </param>
         /// <returns>
         ///     The same <see cref="AkkaConfigurationBuilder"/> instance originally passed in.
@@ -237,7 +237,7 @@ namespace Akka.Discovery.Azure
         /// </example>
         public static AkkaConfigurationBuilder WithAzureDiscovery(
             this AkkaConfigurationBuilder builder,
-            AkkaDiscoveryOptions options)
+            AzureDiscoveryOptions options)
         {
             options.Apply(builder);
             
