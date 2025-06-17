@@ -14,11 +14,14 @@ using Akka.Discovery.Azure.Actors;
 using Akka.Discovery.Azure.Model;
 using Akka.Event;
 using Akka.Util;
+using Akka.Util.Internal;
 
 namespace Akka.Discovery.Azure
 {
     public class AzureServiceDiscovery : ServiceDiscovery
     {
+        private static readonly AtomicCounter NextGuardianId = new(1); 
+        
         internal const string DefaultPath = "azure";
         internal const string DefaultConfigPath = "akka.discovery." + DefaultPath;
         internal static string FullPath(string path) => $"akka.discovery.{path}";
@@ -58,10 +61,11 @@ namespace Akka.Discovery.Azure
                     _settings = configSetup.Apply(_settings);
             }
 
-            _guardianActor = system.SystemActorOf(AzureDiscoveryGuardian.Props(_settings), "azure-discovery-guardian");
+            var guardianId = NextGuardianId.GetAndIncrement();
+            _guardianActor = system.SystemActorOf(AzureDiscoveryGuardian.Props(_settings), $"azure-discovery-guardian-{guardianId}");
 
             var shutdown = CoordinatedShutdown.Get(system);
-            shutdown.AddTask(CoordinatedShutdown.PhaseClusterExiting, "stop-azure-discovery", async () =>
+            shutdown.AddTask(CoordinatedShutdown.PhaseClusterExiting, $"stop-azure-discovery-{guardianId}", async () =>
             {
                 try
                 {
