@@ -58,7 +58,7 @@ namespace Akka.Discovery.Azure
                     _settings = configSetup.Apply(_settings);
             }
 
-            _guardianActor = system.SystemActorOf(AzureDiscoveryGuardian.Props(_settings), "azure-discovery-guardian");
+            _guardianActor = system.SystemActorOf(AzureDiscoveryGuardian.Props(_settings), $"azure-discovery-guardian-{_settings.ServiceName}");
 
             var shutdown = CoordinatedShutdown.Get(system);
             shutdown.AddTask(CoordinatedShutdown.PhaseClusterExiting, "stop-azure-discovery", async () =>
