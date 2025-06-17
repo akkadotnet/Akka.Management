@@ -15,7 +15,10 @@ using Azure.Data.Tables;
 
 namespace Akka.Discovery.Azure;
 
-public class AkkaDiscoveryOptions: IDiscoveryOptions
+[Obsolete("Class name typo, use AzureDiscoveryOptions class instead. Since 1.5.44, will be removed in v1.6")]
+public class AkkaDiscoveryOptions : AzureDiscoveryOptions;
+
+public class AzureDiscoveryOptions: IDiscoveryOptions
 {
     
     public string ConfigPath { get; set; } = "azure";
