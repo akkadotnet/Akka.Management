@@ -426,6 +426,41 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             (await decider.Decide(_seedNodes)).Should().Be(KeepProbing.Instance);
         }
 
+        [Fact(DisplayName = "SelfAwareJoinDecider should match hostnames with different case")]
+        public void ShouldMatchHostnamesWithDifferentCase()
+        {
+            ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://host123:{ManagementPort}/test"));
+            var decider = new LowestAddressJoinDecider(System!, _settings!);
+            var selfContactPoint = decider.SelfContactPoint();
+            
+            // Create a target with uppercase hostname while self has lowercase
+            var targetWithUppercaseHost = new ResolvedTarget(
+                host: "HOST123", 
+                port: ManagementPort, 
+                address: null);
+            
+            // Should match despite case difference
+            decider.MatchesSelf(targetWithUppercaseHost, selfContactPoint).Should().BeTrue();
+            
+            // Create a target with mixed case hostname
+            var targetWithMixedCaseHost = new ResolvedTarget(
+                host: "Host123", 
+                port: ManagementPort, 
+                address: null);
+            
+            // Should match despite case difference
+            decider.MatchesSelf(targetWithMixedCaseHost, selfContactPoint).Should().BeTrue();
+            
+            // Create a target with completely different hostname
+            var targetWithDifferentHost = new ResolvedTarget(
+                host: "different-host", 
+                port: ManagementPort, 
+                address: null);
+            
+            // Should not match
+            decider.MatchesSelf(targetWithDifferentHost, selfContactPoint).Should().BeFalse();
+        }
+
         protected override Task Start()
         {
             _settings = ClusterBootstrapSettings.Create(System!.Settings.Config, Log!);
@@ -502,6 +537,41 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
             var decider = new LowestAddressJoinDecider(System!, _settings);
             (await decider.Decide(_seedNodes)).Should().Be(KeepProbing.Instance);
+        }
+
+        [Fact(DisplayName = "SelfAwareJoinDecider should match hostnames with different case")]
+        public void ShouldMatchHostnamesWithDifferentCase()
+        {
+            ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://host123:{ManagementPort}/test"));
+            var decider = new LowestAddressJoinDecider(System!, _settings!);
+            var selfContactPoint = decider.SelfContactPoint();
+            
+            // Create a target with uppercase hostname while self has lowercase
+            var targetWithUppercaseHost = new ResolvedTarget(
+                host: "HOST123", 
+                port: ManagementPort, 
+                address: null);
+            
+            // Should match despite case difference
+            decider.MatchesSelf(targetWithUppercaseHost, selfContactPoint).Should().BeTrue();
+            
+            // Create a target with mixed case hostname
+            var targetWithMixedCaseHost = new ResolvedTarget(
+                host: "Host123", 
+                port: ManagementPort, 
+                address: null);
+            
+            // Should match despite case difference
+            decider.MatchesSelf(targetWithMixedCaseHost, selfContactPoint).Should().BeTrue();
+            
+            // Create a target with completely different hostname
+            var targetWithDifferentHost = new ResolvedTarget(
+                host: "different-host", 
+                port: ManagementPort, 
+                address: null);
+            
+            // Should not match
+            decider.MatchesSelf(targetWithDifferentHost, selfContactPoint).Should().BeFalse();
         }
 
         protected override Task Start()
