@@ -80,6 +80,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Azure.StressTest", "src\coo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HoconKubernetesCluster", "src\cluster.bootstrap\examples\discovery\hocon-kubernetes\src\HoconKubernetesCluster\HoconKubernetesCluster.csproj", "{7015572E-6225-4F32-A00C-4D52280E6C94}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dns", "dns", "{CF2BA83A-4CF9-4E29-9128-A7A3D3ADBB35}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.Dns", "src\discovery\dns\Akka.Discovery.Dns\Akka.Discovery.Dns.csproj", "{5C5403F4-F496-4246-8BEC-E125E1A2BC94}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Discovery.Dns.Tests", "src\discovery\dns\Akka.Discovery.Dns.Tests\Akka.Discovery.Dns.Tests.csproj", "{2E13DE8F-0001-4008-A066-B66B4B640915}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -174,6 +180,14 @@ Global
 		{7015572E-6225-4F32-A00C-4D52280E6C94}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7015572E-6225-4F32-A00C-4D52280E6C94}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7015572E-6225-4F32-A00C-4D52280E6C94}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C5403F4-F496-4246-8BEC-E125E1A2BC94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C5403F4-F496-4246-8BEC-E125E1A2BC94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C5403F4-F496-4246-8BEC-E125E1A2BC94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C5403F4-F496-4246-8BEC-E125E1A2BC94}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E13DE8F-0001-4008-A066-B66B4B640915}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E13DE8F-0001-4008-A066-B66B4B640915}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E13DE8F-0001-4008-A066-B66B4B640915}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E13DE8F-0001-4008-A066-B66B4B640915}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -209,6 +223,9 @@ Global
 		{296A0309-2370-4153-B3B0-A4105622CC9A} = {C4C8BE03-A7C0-4F2E-8922-92854FE7A5BF}
 		{24FEBA95-1FC2-4AC2-8386-6AB13AE87056} = {9B10ADF5-60D1-4EED-9E98-9CB2E1E84E98}
 		{7015572E-6225-4F32-A00C-4D52280E6C94} = {24FEBA95-1FC2-4AC2-8386-6AB13AE87056}
+		{CF2BA83A-4CF9-4E29-9128-A7A3D3ADBB35} = {52ACBC5B-D5F0-4FEA-A27B-0A8577204E64}
+		{5C5403F4-F496-4246-8BEC-E125E1A2BC94} = {CF2BA83A-4CF9-4E29-9128-A7A3D3ADBB35}
+		{2E13DE8F-0001-4008-A066-B66B4B640915} = {CF2BA83A-4CF9-4E29-9128-A7A3D3ADBB35}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B99E6BB8-642A-4A68-86DF-69567CBA700A}
