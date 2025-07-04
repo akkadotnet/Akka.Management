@@ -22,7 +22,7 @@ public class DnsServiceDiscovery : ServiceDiscovery
     public DnsServiceDiscovery(ExtendedActorSystem system)
     {
         _system = system;
-        _log = Logging.GetLogger(system, typeof(DnsServiceDiscovery));
+        _log = Logging.GetLogger(system, this);
 
         var dnsResolver = _system.Settings.Config.GetString("akka.io.dns.resolver");
         switch (dnsResolver)
@@ -83,8 +83,14 @@ public class DnsServiceDiscovery : ServiceDiscovery
 
             if (result is IO.Dns.Resolved resolved)
             {
-                _log.Debug("lookup result: {0}", resolved);
-                return IpRecordsToResolved(serviceName, resolved);
+                if (resolved.IsSuccess)
+                {
+                    _log.Debug("lookup result: {0}", resolved);
+                    return IpRecordsToResolved(serviceName, resolved);
+                }
+                
+                _log.Error(resolved.Exception, "Failed to resolve serviceName: {0}", serviceName);
+                return new Resolved(serviceName, ImmutableList<ResolvedTarget>.Empty);
             }
 
             _log.Warning("Resolved UNEXPECTED (resolving to Nil): {0}", result.GetType());
@@ -132,9 +138,9 @@ public class DnsServiceDiscovery : ServiceDiscovery
     /// </summary>
     private Resolved SrvRecordsToResolved(string srvRequest, Akka.IO.Dns.Resolved resolved)
     {
-        // var ips = new Dictionary<string, IList<IPAddress>>();
+        var ips = new Dictionary<string, IList<IPAddress>>();
 
-        // Build a map of hostname to IP addresses from additional records
+        //Build a map of hostname to IP addresses from additional records
         // foreach (var aRecord in resolved.Ipv4)
         // {
         //     if (!ips.TryGetValue(aRecord.Name, out var aIps))

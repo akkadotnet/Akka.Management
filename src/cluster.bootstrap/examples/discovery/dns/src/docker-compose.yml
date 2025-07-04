@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  node1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: akka-dns-cluster:latest
+    hostname: node1.akkacluster
+    environment:
+      - CLUSTER__PORT=4053
+      - CLUSTER__IP=0.0.0.0
+      - ACTORSYSTEM=DnsCluster
+      - MANAGEMENT__PORT=8558
+      - PBM__PORT=9110
+      - SERVICENAME=akkacluster.dns.podman
+    ports:
+      - "4053:4053"
+      - "8558:8558" 
+      - "9110:9110"
+    networks:
+      akkanet:
+        aliases:
+          - akkacluster
+
+  node2:
+    image: akka-dns-cluster:latest
+    hostname: node2.akkacluster
+    environment:
+      - CLUSTER__PORT=4053
+      - CLUSTER__IP=0.0.0.0
+      - ACTORSYSTEM=DnsCluster
+      - MANAGEMENT__PORT=8558
+      - PBM__PORT=9110
+      - SERVICENAME=akkacluster.dns.podman
+    ports:
+      - "4054:4053" 
+      - "8559:8558"
+      - "9111:9110"
+    networks:
+      akkanet:
+        aliases:
+          - akkacluster
+    depends_on:
+      - node1
+
+  node3:
+    image: akka-dns-cluster:latest
+    hostname: node3.akkacluster
+    environment:
+      - CLUSTER__PORT=4053
+      - CLUSTER__IP=0.0.0.0
+      - ACTORSYSTEM=DnsCluster
+      - MANAGEMENT__PORT=8558
+      - PBM__PORT=9110
+      - SERVICENAME=akkacluster.dns.podman
+    ports:
+      - "4055:4053"
+      - "8560:8558"
+      - "9112:9110"
+    networks:
+      akkanet:
+        aliases:
+          - akkacluster
+    depends_on:
+      - node1
+
+networks:
+  akkanet:
+    driver: bridge
