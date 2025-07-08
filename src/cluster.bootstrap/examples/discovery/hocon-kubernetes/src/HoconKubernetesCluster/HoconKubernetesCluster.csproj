@@ -10,6 +10,7 @@
         <ContainerRepository>hocon-cluster-bootstrap</ContainerRepository>
         <ContainerTitle>hocon-cluster-bootstrap</ContainerTitle>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
