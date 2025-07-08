@@ -1,3 +1,11 @@
+#### 1.5.45 July 8th 2025 ####
+
+* Update to [Akka.NET v1.5.45](https://github.com/akkadotnet/akka.net/releases/tag/1.5.45)
+* Update to [Akka.Hosting v1.5.45](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.45)
+* [Refactor AkkaDiscoveryOptions to AzureDiscoveryOptions](https://github.com/akkadotnet/Akka.Management/pull/3360)
+* [Update AzureServiceDiscovery to include service name in guardian actor name](https://github.com/akkadotnet/Akka.Management/pull/3359)
+* [Fix hostname case sensitivity issue in cluster bootstrap self-join](https://github.com/akkadotnet/Akka.Management/pull/3367)
+
 #### 1.5.42 June 3rd 2025 ####
 
 * Update to [Akka.NET v1.5.42](https://github.com/akkadotnet/akka.net/releases/tag/1.5.42)
