@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Akka.Actor;
+using Akka.Discovery.Dns.Internal;
 using Akka.Event;
 using Akka.IO;
 
@@ -16,7 +17,8 @@ namespace Akka.Discovery.Dns;
 public class DnsServiceDiscovery : ServiceDiscovery
 {
     private readonly ILoggingAdapter _log;
-    private readonly DnsExt _dns;
+    // private readonly DnsExt _dns;
+    private readonly IActorRef _dns;
     private readonly ExtendedActorSystem _system;
 
     public DnsServiceDiscovery(ExtendedActorSystem system)
@@ -27,12 +29,21 @@ public class DnsServiceDiscovery : ServiceDiscovery
         var dnsResolver = _system.Settings.Config.GetString("akka.io.dns.resolver");
         switch (dnsResolver)
         {
-            case "inet-address": 
-                _dns = Akka.IO.Dns.Instance.CreateExtension(_system);
+            case "inet-address":
+            {
+                var dns = Akka.IO.Dns.Instance.CreateExtension(_system);
+                _dns = dns.Manager;
                 break;
+            }
+            case "async-dns":
+            {
+                var dns = new AsyncDnsExt(_system);
+                _dns = dns.Manager;
+                break;
+            }
             default:
                 throw new NotImplementedException();
-
+        
         }
     }
 
@@ -46,40 +57,58 @@ public class DnsServiceDiscovery : ServiceDiscovery
     public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
     {
         if (!string.IsNullOrWhiteSpace(lookup.PortName) && !string.IsNullOrWhiteSpace(lookup.Protocol))
+        {
             return await LookupSrv(lookup, resolveTimeout);
-        else
-            return await LookupIp(lookup, resolveTimeout);
+        }
+
+        return await LookupIp(lookup, resolveTimeout);
     }
 
     private async Task<Resolved> LookupSrv(Lookup lookup, TimeSpan resolveTimeout)
     {
         var srvRequest = $"_{lookup.PortName}._{lookup.Protocol}.{lookup.ServiceName}";
         _log.Debug("Lookup [{0}] translated to SRV query [{1}] as contains portName and protocol", lookup, srvRequest);
-        var resolved = _dns.Cache.Cached(srvRequest);
-        if (resolved == null)
+        
+        try
         {
-            return await AskResolve(srvRequest, resolveTimeout);
+            // Generate a random query ID
+            short queryId = (short)new Random().Next(0, 65535);
+            
+            // Send SRV question and await response
+            var result = await _dns.Ask<object>(new Internal.DnsClient.SrvQuestion(queryId, srvRequest), resolveTimeout);
+            
+            if (result is Internal.DnsClient.Answer answer)
+            {
+                return SrvRecordsToResolved(srvRequest, answer);
+            }
+            else if (result is Status.Failure failure)
+            {
+                throw failure.Cause;
+            }
+            
+            _log.Warning("Unexpected response type from DNS resolver: {0}", result.GetType());
+            return new Resolved(srvRequest, ImmutableList<ResolvedTarget>.Empty);
         }
-        return SrvRecordsToResolved(srvRequest, resolved);
+        catch (Exception ex)
+        {
+            _log.Error(ex, "SRV lookup failed for {0}", srvRequest);
+            throw;
+        }
     }
 
     private async Task<Resolved> LookupIp(Lookup lookup, TimeSpan resolveTimeout)
     {
         _log.Debug("Lookup[{0}] translated to A/AAAA lookup as does not have portName and protocol", lookup);
         
-        var resolved = _dns.Cache.Cached(lookup.ServiceName);
-        if (resolved == null)
-        {
-            return await AskResolveIp(lookup.ServiceName, resolveTimeout);
-        }
-        return IpRecordsToResolved(lookup.ServiceName, resolved);
+        // For standard IP lookups, continue to use the built-in Akka.IO.Dns resolver
+        return await AskResolveIp(lookup.ServiceName, resolveTimeout);
     }
 
     private async Task<Resolved> AskResolveIp(string serviceName, TimeSpan timeout)
     {
         try
         {
-            var result = await _dns.Manager.Ask<object>(new Akka.IO.Dns.Resolve(serviceName), timeout);
+            var result = await _dns.Ask<object>(new Akka.IO.Dns.Resolve(serviceName), timeout);
 
             if (result is IO.Dns.Resolved resolved)
             {
@@ -107,76 +136,90 @@ public class DnsServiceDiscovery : ServiceDiscovery
         }
     }
 
-    private async Task<Resolved> AskResolve(string srvRequest, TimeSpan timeout)
-    {
-        try
-        {
-            var result = await _dns.Manager.Ask<object>(new IO.Dns.Resolve(srvRequest), timeout);
-
-            if (result is IO.Dns.Resolved resolved)
-            {
-                _log.Debug("Lookup result: {0}", resolved);
-                return SrvRecordsToResolved(srvRequest, resolved);
-            }
-
-            _log.Warning("Resolved UNEXPECTED (resolving to Nil): {0}", result.GetType());
-            return new Resolved(srvRequest, ImmutableList<ResolvedTarget>.Empty);
-        }
-        catch (AskTimeoutException)
-        {
-            throw new TimeoutException($"Dns resolve did not respond within {timeout}");
-        }
-        catch (Exception ex)
-        {
-            _log.Error(ex, "Error during DNS resolution");
-            throw;
-        }
-    }
+    // private async Task<Resolved> AskResolve(string srvRequest, TimeSpan timeout)
+    // {
+    //     try
+    //     {
+    //         var result = await _dns.Ask<object>(new IO.Dns.Resolve(srvRequest), timeout);
+    //
+    //         if (result is IO.Dns.Resolved resolved)
+    //         {
+    //             _log.Debug("Lookup result: {0}", resolved);
+    //             return SrvRecordsToResolved(srvRequest, resolved);
+    //         }
+    //
+    //         _log.Warning("Resolved UNEXPECTED (resolving to Nil): {0}", result.GetType());
+    //         return new Resolved(srvRequest, ImmutableList<ResolvedTarget>.Empty);
+    //     }
+    //     catch (AskTimeoutException)
+    //     {
+    //         throw new TimeoutException($"Dns resolve did not respond within {timeout}");
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         _log.Error(ex, "Error during DNS resolution");
+    //         throw;
+    //     }
+    // }
 
     /// <summary>
-    /// Converts SRV records to a Resolved object.
+    /// Converts SRV records to a Resolved object from our custom DNS client response.
     /// </summary>
-    private Resolved SrvRecordsToResolved(string srvRequest, Akka.IO.Dns.Resolved resolved)
+    private Resolved SrvRecordsToResolved(string srvRequest, Internal.DnsClient.Answer resolved)
     {
         var ips = new Dictionary<string, IList<IPAddress>>();
+        
+        // Process SRV records
+        var srvRecords = resolved.Records.OfType<Internal.SrvRecord>().ToList();
+        
+        // Process additional A/AAAA records for hostname resolution
+        foreach (var aRecord in resolved.AdditionalRecords.OfType<Internal.ARecord>())
+        {
+            if (!ips.TryGetValue(aRecord.Name, out var aIps))
+            {
+                aIps = new List<IPAddress>();
+                ips[aRecord.Name] = aIps;
+            }
+            
+            aIps.Add(aRecord.Ip);
+        }
+        
+        foreach (var aaaaRecord in resolved.AdditionalRecords.OfType<Internal.AaaaRecord>())
+        {
+            if (!ips.TryGetValue(aaaaRecord.Name, out var aaaaIps))
+            {
+                aaaaIps = new List<IPAddress>();
+                ips[aaaaRecord.Name] = aaaaIps;
+            }
+            
+            aaaaIps.Add(aaaaRecord.Ip);
+        }
 
-        //Build a map of hostname to IP addresses from additional records
-        // foreach (var aRecord in resolved.Ipv4)
-        // {
-        //     if (!ips.TryGetValue(aRecord.Name, out var aIps))
-        //     {
-        //         aIps = new List<IPAddress>();
-        //         ips[aRecord.Name] = aIps;
-        //     }
-        //
-        //     aIps.Add(aRecord.Ip);
-        // }
-        // foreach (var record in resolved.Ipv6) {
-        //             if (!ips.TryGetValue(aaaaRecord.Name, out var aaaaIps))
-        //             {
-        //                 aaaaIps = new List<IPAddress>();
-        //                 ips[aaaaRecord.Name] = aaaaIps;
-        //             }
-        //
-        //             aaaaIps.Add(aaaaRecord.Ip);
-        //             break;
-        // }
-        //
-        // var addresses = resolved.Records.OfType<SrvRecord>()
-        //     .SelectMany(srv =>
-        //     {
-        //         if (ips.TryGetValue(srv.Target, out var ipList) && ipList.Count > 0)
-        //         {
-        //             return ipList.Select(ip => new ResolvedTarget(srv.Target, srv.Port, ip));
-        //         }
-        //         else
-        //         {
-        //             return new[] { new ResolvedTarget(srv.Target, srv.Port, null) };
-        //         }
-        //     })
-        //     .ToImmutableList();
-
-        return new Resolved(srvRequest, []);
+        // Build the list of resolved targets from SRV records
+        var targets = new List<ResolvedTarget>();
+        
+        foreach (var record in srvRecords)
+        {
+            // Remove trailing dot if present
+            string targetHost = record.Target.EndsWith(".") 
+                ? record.Target.Substring(0, record.Target.Length - 1) 
+                : record.Target;
+                
+            // Try to get IP from additional records
+            if (ips.TryGetValue(targetHost, out var hostIps) || ips.TryGetValue(targetHost + ".", out hostIps))
+            {
+                foreach (var ip in hostIps)
+                {
+                    targets.Add(new ResolvedTarget(targetHost, record.Port, ip));
+                }
+            }
+            else
+            {
+                // If we don't have the IP, just use the hostname
+                targets.Add(new ResolvedTarget(targetHost, record.Port));
+            }
+        }
+        return new Resolved(srvRequest, targets.ToImmutableList());
     }
 
     /// <summary>

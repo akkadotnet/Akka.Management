@@ -18,26 +18,16 @@ namespace Akka.Discovery.Dns
         /// <returns>The same builder instance.</returns>
         public static AkkaConfigurationBuilder WithDnsDiscovery(
             this AkkaConfigurationBuilder builder,
-            Action<DnsDiscoveryOptions> configure)
+            Action<DnsDiscoveryOptions>? configure = null)
         {
             var options = new DnsDiscoveryOptions();
-            configure(options);
+            configure?.Invoke(options);
             options.Apply(builder);
             builder.AddSetup(new DnsDiscoverySetup { DiscoveryId = options.ConfigPath });
             
             return builder;
         }
         
-        /// <summary>
-        /// Adds DNS service discovery to the <see cref="AkkaConfigurationBuilder"/> with default options.
-        /// </summary>
-        /// <param name="builder">The builder instance.</param>
-        /// <returns>The same builder instance.</returns>
-        public static AkkaConfigurationBuilder WithDnsDiscovery(
-            this AkkaConfigurationBuilder builder)
-        {
-            return builder.WithDnsDiscovery(_ => { });
-        }
         
         /// <summary>
         /// Adds DNS service discovery to the <see cref="AkkaConfigurationBuilder"/> with the specified options.
@@ -66,6 +56,26 @@ namespace Akka.Discovery.Dns
             string discoveryId = DnsDiscoveryOptions.DefaultPath)
         {
             builder.AddHocon("akka.discovery.method = " + discoveryId, HoconAddMode.Prepend);
+            return builder;
+        }
+        
+        
+        public static AkkaConfigurationBuilder WithDnsResolver(
+            this AkkaConfigurationBuilder builder,
+            string resolverId = "inet-address")
+        {
+            builder.AddHocon($"akka.io.dns.resolver = {resolverId}", HoconAddMode.Prepend);
+            return builder;
+        }
+        
+        public static AkkaConfigurationBuilder WithAsyncDnsResolver(
+            this AkkaConfigurationBuilder builder, Action<AsyncDnsResolerOptions>? configure = null)
+        {
+            builder.WithDnsResolver(AsyncDnsResolerOptions.DefaultPath);
+            // builder.AddHocon($"akka.io.dns.provider-object = {AsyncDnsResolerOptions.ProviderName}", HoconAddMode.Prepend);
+            var opt = new AsyncDnsResolerOptions();
+            configure?.Invoke(opt);
+            opt.Apply(builder);
             return builder;
         }
     }

@@ -76,6 +76,21 @@ public static class Extensions
 }
 public static class Program
 {
+    // Get container IP address for self-identification
+    static string GetContainerIp()
+    {
+        try
+        {
+            // Get IP of the container's network interface (typically eth0 in Docker)
+            var addresses = System.Net.Dns.GetHostAddresses(System.Net.Dns.GetHostName());
+            var ipv4 = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
+            return ipv4?.ToString() ?? "127.0.0.1";
+        }
+        catch
+        {
+            return "127.0.0.1";
+        }
+    }
     public static async Task Main(string[] args)
     {
         var host = new HostBuilder()
@@ -87,14 +102,22 @@ public static class Program
             .ConfigureServices((hostContext, services) =>
             {
                 services.AddLogging();
-                    
+
+                // if portName is set resolver uses SRV records, otherwise A/AAAA records
+                string? portName = hostContext.Configuration.GetValue<string>("portname")?.Trim();
                 var systemName = hostContext.Configuration.GetValue<string>("actorsystem")?.Trim() ?? "ClusterSystem"; 
                 var serviceName = hostContext.Configuration.GetValue<string>("servicename")?.Trim() ?? "akkacluster"; 
-                var pbmPort = hostContext.Configuration.GetValue<int>("pbm.port", 9110);
-                var managementPort = hostContext.Configuration.GetValue<int>("management.port", 8558);
+                var pbmPort = hostContext.Configuration.GetValue<int>("pbm:port", 9110);
+                var managementPort = hostContext.Configuration.GetValue<int>("management:port", 8558);
+                
+                
                 services.AddAkka(systemName, (builder, provider) =>
                 {
-                    builder.ConfigureLoggers(a => a.LogLevel = LogLevel.DebugLevel);
+                    builder.ConfigureLoggers(a =>
+                    {
+                        a.LogLevel = LogLevel.DebugLevel;
+                        a.LogConfigOnStart = true;
+                    });
                     // Add HOCON configuration from Docker
                     builder.BootstrapFromDocker(
                         provider,
@@ -119,41 +142,28 @@ public static class Program
                         // Docker will automatically resolve this to all nodes with this DNS name
                         setup.ContactPointDiscovery.ServiceName = serviceName;
                         setup.ContactPoint.FallbackPort = managementPort; // Use management port (8558), not Akka.Remote port
-                        // setup.ContactPointDiscovery.PortName = "management";
+                        setup.ContactPointDiscovery.PortName = portName;
                     }, autoStart: true);
                     
-                    // Get container IP address for self-identification
-                    string GetContainerIp()
-                    {
-                        try
-                        {
-                            // Get IP of the container's network interface (typically eth0 in Docker)
-                            var addresses = System.Net.Dns.GetHostAddresses(System.Net.Dns.GetHostName());
-                            var ipv4 = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
-                            return ipv4?.ToString() ?? "127.0.0.1";
-                        }
-                        catch
-                        {
-                            return "127.0.0.1";
-                        }
-                    }
+                    
                     
                     // Configure Akka.Management HTTP endpoint
-                    builder.WithAkkaManagement(setup => {
-                        // Listen on all interfaces (0.0.0.0) but advertise using the container IP
-                        // This is critical for proper self-identification during bootstrap
-                        setup.Http.BindHostName = "0.0.0.0";
-                        setup.Http.HostName = GetContainerIp(); // Use IP address instead of hostname
-                        setup.Http.Port = managementPort;
-                    });
+                    builder.WithAkkaManagement(hostName:  GetContainerIp(), port: managementPort, bindHostname : "0.0.0.0");
+                    //     setup.Http.HostName = GetContainerIp(); // Use IP address instead of hostname
+                    //     setup.Http.Port = managementPort;
+                    //     setup.Port = managementPort;
+                    // });
                         
                     // Add Akka.Discovery.Dns support
                     // Configure DNS discovery for Docker environment
-                    builder.WithDnsDiscovery(options => {
-                        // For Docker Compose DNS discovery, use default settings
-                        // The service name is set in the bootstrap configuration
-                        // and DNS discovery will use it automatically
-                    });
+                    builder.WithDnsDiscovery();
+                    if (portName != null)
+                    {
+                        // use SRV record resolver if portName was specified 
+                        var ns =  hostContext.Configuration.GetValue<string>("nameserver")?.Trim() ?? "127.0.0.1:53";
+                        builder.WithAsyncDnsResolver(opt => opt.Nameserver =  ns );
+                    }
+
                     // and set it as the default discovery mechanism
                     builder.WithDnsDiscoveryDefault();
                         
@@ -163,6 +173,7 @@ public static class Program
                     // Add start-up code
                     builder.AddStartup((system, registry) =>
                     {
+                        system.Log.Info($"Management port ENV = [{managementPort}]");
                         var cluster = Cluster.Get(system);
                         cluster.RegisterOnMemberUp(() =>
                         {

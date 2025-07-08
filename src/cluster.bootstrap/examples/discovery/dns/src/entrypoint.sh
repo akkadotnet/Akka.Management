@@ -11,15 +11,18 @@ echo "  CLUSTER__IP: $CLUSTER__IP"
 echo "  MANAGEMENT__PORT: $MANAGEMENT__PORT"
 echo "  ACTORSYSTEM: $ACTORSYSTEM"
 echo "  SERVICENAME: $SERVICENAME"
+echo "  PORTNAME: $PORTNAME"
+echo "  DNS_PORT: $DNS_PORT"
+echo "  DNS_NAMESERVER: $DNS_NAMESERVER"
 echo "==================================="
-
-# Check DNS resolution
+DNS_PORT=${DNS_PORT:-53}
+# Check A/AAAA records
 echo "\nPerforming DNS resolution test for '$SERVICENAME'..."
-dig $SERVICENAME
+dig -p $DNS_PORT $SERVICENAME
+# check SRV record
+dig -p $DNS_PORT -t srv "_${PORTNAME}._tcp.$SERVICENAME"
 
-# Also try another DNS tool for verification
-echo "\nNslookup verification:"
-nslookup $SERVICENAME
 
+export NAMESERVER="${DNS_NAMESERVER:-127.0.0.1}:$DNS_PORT"
 echo "\nStarting DnsCluster with DNS discovery..."
 exec dotnet /app/DnsCluster.dll "$@"
