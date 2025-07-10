@@ -19,6 +19,7 @@
       <PackageReference Include="Azure.Data.Tables" Version="12.10.0" />
       <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
       <PackageReference Include="Google.Protobuf" Version="$(ProtobufVersion)" />
+      <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityVersion)" />
       <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsVersion)">
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         <PrivateAssets>all</PrivateAssets>
