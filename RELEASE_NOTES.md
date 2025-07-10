@@ -1,3 +1,7 @@
+#### 1.5.45.1 July 11th 2025 ####
+
+* [Fix Microsoft.Identity.Client security vulnerability bug](https://github.com/akkadotnet/Akka.Management/pull/3370)
+
 #### 1.5.45 July 8th 2025 ####
 
 * Update to [Akka.NET v1.5.45](https://github.com/akkadotnet/akka.net/releases/tag/1.5.45)
