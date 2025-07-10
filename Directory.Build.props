@@ -37,6 +37,8 @@
     <AzureIdentityVersion>1.13.2</AzureIdentityVersion>
     <ProtobufVersion>3.30.2</ProtobufVersion>
     <GrpcToolsVersion>2.71.0</GrpcToolsVersion>
+    <!-- Needed to fix Microsoft.Identity.Client typosquatting phishing link bug (https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/pull/5278) -->
+    <MicrosoftIdentityVersion>4.73.1</MicrosoftIdentityVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
   <ItemGroup>
