@@ -17,18 +17,13 @@ public class DnsDiscoveryOptions : IDiscoveryOptions
     /// Default configuration path for DNS service discovery
     /// </summary>
     public const string DefaultPath = "akka-dns";
-        
-    /// <summary>
-    /// The default configuration path for DNS service discovery
-    /// </summary>
-    public const string DefaultConfigPath = "akka.discovery." + DefaultPath;
-
+    
     /// <summary>
     /// Gets the full configuration path for the specified path.
     /// </summary>
     /// <param name="path">The path.</param>
     /// <returns>The full configuration path.</returns>
-    public static string FullPath(string path) => $"akka.discovery.{path}";
+    private static string FullPath(string path) => $"akka.discovery.{path}";
 
     /// <summary>
     /// Gets the type of service discovery class.
@@ -113,27 +108,6 @@ public class DnsDiscoverySettings
         return new DnsDiscoverySettings();
     }
 }
-
-/// <summary>
-/// Multi-setup class for configuring multiple DNS discovery instances.
-/// </summary>
-public class DnsDiscoveryMultiSetup : Setup
-{
-    /// <summary>
-    /// Gets the setups.
-    /// </summary>
-    public IReadOnlyDictionary<string, DnsDiscoverySetup> Setups { get; }
-
-    /// <summary>
-    /// Creates a new instance of the <see cref="DnsDiscoveryMultiSetup"/> class.
-    /// </summary>
-    /// <param name="setups">The setups.</param>
-    public DnsDiscoveryMultiSetup(IReadOnlyDictionary<string, DnsDiscoverySetup> setups)
-    {
-        Setups = setups ?? throw new ArgumentNullException(nameof(setups));
-    }
-}
-
 
 public class AsyncDnsResolverOptions : IHoconOption
 {

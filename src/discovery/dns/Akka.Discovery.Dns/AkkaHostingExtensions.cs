@@ -10,38 +10,27 @@ namespace Akka.Discovery.Dns
     /// </summary>
     public static class AkkaHostingExtensions
     {
-        /// <summary>
-        /// Adds DNS service discovery to the <see cref="AkkaConfigurationBuilder"/>.
-        /// </summary>
-        /// <param name="builder">The builder instance.</param>
-        /// <param name="configure">Action that configures the <see cref="DnsDiscoveryOptions"/>.</param>
-        /// <returns>The same builder instance.</returns>
+        // /// <summary>
+        // /// Adds DNS service discovery to the <see cref="AkkaConfigurationBuilder"/>.
+        // /// </summary>
+        // /// <param name="builder">The builder instance.</param>
+        // /// <param name="configure">Action that configures the <see cref="DnsDiscoveryOptions"/>.</param>
+        // /// <returns>The same builder instance.</returns>
         public static AkkaConfigurationBuilder WithDnsDiscovery(
             this AkkaConfigurationBuilder builder,
-            Action<DnsDiscoveryOptions>? configure = null)
+            Action<DnsDiscoveryOptions>? configure = null,
+            string discoveryId = DnsDiscoveryOptions.DefaultPath,
+            bool makeDefault = true)
         {
             var options = new DnsDiscoveryOptions();
             configure?.Invoke(options);
             options.Apply(builder);
             builder.AddSetup(new DnsDiscoverySetup { DiscoveryId = options.ConfigPath });
-            
-            return builder;
-        }
-        
-        
-        /// <summary>
-        /// Adds DNS service discovery to the <see cref="AkkaConfigurationBuilder"/> with the specified options.
-        /// </summary>
-        /// <param name="builder">The builder instance.</param>
-        /// <param name="options">The options.</param>
-        /// <returns>The same builder instance.</returns>
-        public static AkkaConfigurationBuilder WithDnsDiscovery(
-            this AkkaConfigurationBuilder builder,
-            DnsDiscoveryOptions options)
-        {
-            options.Apply(builder);
-            builder.AddSetup(new DnsDiscoverySetup { DiscoveryId = options.ConfigPath });
-            
+            if (makeDefault)
+            {
+                builder.SetDiscoveryMethod(discoveryId);
+
+            }
             return builder;
         }
         
@@ -51,9 +40,9 @@ namespace Akka.Discovery.Dns
         /// <param name="builder">The builder instance.</param>
         /// <param name="discoveryId">The discovery ID.</param>
         /// <returns>The same builder instance.</returns>
-        public static AkkaConfigurationBuilder WithDnsDiscoveryDefault(
+        public static AkkaConfigurationBuilder SetDiscoveryMethod(
             this AkkaConfigurationBuilder builder,
-            string discoveryId = DnsDiscoveryOptions.DefaultPath)
+            string discoveryId)
         {
             builder.AddHocon("akka.discovery.method = " + discoveryId, HoconAddMode.Prepend);
             return builder;

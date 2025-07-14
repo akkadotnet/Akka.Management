@@ -38,7 +38,7 @@ public class ClusterConfigOptions
 }
 public static class Extensions
 {
-    public static AkkaConfigurationBuilder BootstrapFromDocker(
+    public static AkkaConfigurationBuilder ClusterSetup(
         this AkkaConfigurationBuilder builder,
         IServiceProvider provider,
         Action<RemoteOptions>? remoteConfiguration = null,
@@ -159,7 +159,7 @@ public static class Program
                         a.LogConfigOnStart = true;
                     });
                     // Add HOCON configuration from Docker
-                    builder.BootstrapFromDocker(
+                    builder.ClusterSetup(
                         provider,
                         // Add Akka.Remote support.
                         // Empty hostname is intentional and necessary to make sure that remoting binds to the public IP address
@@ -197,7 +197,7 @@ public static class Program
                     builder.WithAkkaManagement(hostName: hostname, port: managementPort, bindHostname: bindAddress);
                         
                     // Add Akka.Discovery.Dns support
-                    // Configure DNS discovery for Docker environment
+                    // Configure DNS discovery and make it default resolver mechanism 
                     builder.WithDnsDiscovery();
                     if (portName != null)
                     {
@@ -205,9 +205,6 @@ public static class Program
                         var ns =  hostContext.Configuration.GetValue<string>("nameserver")?.Trim() ?? "127.0.0.1:53";
                         builder.WithAsyncDnsResolver(opt => opt.Nameserver =  ns );
                     }
-
-                    // and set it as the default discovery mechanism
-                    builder.WithDnsDiscoveryDefault();
                         
                     // Add https://cmd.petabridge.com/ for diagnostics
                     builder.WithPetabridgeCmd("0.0.0.0", pbmPort, ClusterCommands.Instance, new RemoteCommands());
