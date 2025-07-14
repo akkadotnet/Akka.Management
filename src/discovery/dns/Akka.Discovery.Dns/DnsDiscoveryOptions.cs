@@ -135,7 +135,7 @@ public class DnsDiscoveryMultiSetup : Setup
 }
 
 
-public class AsyncDnsResolerOptions : IHoconOption
+public class AsyncDnsResolverOptions : IHoconOption
 {
 
 
@@ -155,12 +155,6 @@ public class AsyncDnsResolerOptions : IHoconOption
         sb.AppendLine($"{FullPath(ConfigPath)} {{");
         sb.AppendLine($"  class = \"{Class.FullName}, {Class.Assembly.GetName().Name}\",");
         sb.AppendLine($"  provider-object = \"{Provider.FullName}, {Provider.Assembly.GetName().Name}\",");
-        // sb.Append($"  {NameserversPath} = [");
-        // foreach (var name in Nameservers)
-        // {
-        //     sb.Append($"\"{name}\",");
-        // }
-        // sb.AppendLine("]");
         sb.Append($"  {NameserversPath} = \"{Nameserver}\",");
         sb.AppendLine("}");
             
@@ -177,5 +171,4 @@ public class AsyncDnsResolerOptions : IHoconOption
     public string ConfigPath => DefaultPath;
     public Type Class => typeof(DnsClient);
     public Type Provider => typeof(AsyncDnsProvider);
-    // static string ProviderName => $"{Provider.FullName}, {Provider.Assembly.GetName().Name}";
 }

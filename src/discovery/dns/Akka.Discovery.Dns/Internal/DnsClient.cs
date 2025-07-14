@@ -175,7 +175,7 @@ internal class DnsClient : UntypedActorWithStash
     public DnsClient(AsyncDnsExt ext)
     {
         _log = Context.GetLogger();
-        var ns  = ext.Settings.ResolverConfig.GetString(AsyncDnsResolerOptions.NameserversPath) ?? throw new ConfigurationException("nameservers config was empty");
+        var ns  = ext.Settings.ResolverConfig.GetString(AsyncDnsResolverOptions.NameserversPath) ?? throw new ConfigurationException("nameservers config was empty");
         _nameserver = ParseEndPoint(ns);
         _udpManager = Akka.IO.Udp.Instance.Apply(Context.System).Manager;
         _tcpManager = Akka.IO.Tcp.Manager(Context.System);

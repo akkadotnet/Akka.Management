@@ -85,18 +85,6 @@ public sealed record CnameRecord (
     string CanonicalName) 
     : ResourceRecord(Name, DnsProtocol.RecordType.Cname, Class, TimeToLive)
 {
-//     public string CanonicalName { get; }
-//
-//     public CnameRecord(
-//         string name,
-//         DnsProtocol.RecordClass @class,
-//         uint timeToLive,
-//         string canonicalName) 
-//         : base(name, DnsProtocol.RecordType.Cname, @class, timeToLive)
-//     {
-//         CanonicalName = canonicalName;
-//     }
-//
      public override byte[] WriteData()
      {
          using (var ms = new MemoryStream())
@@ -106,12 +94,6 @@ public sealed record CnameRecord (
              return ms.ToArray();
          }
      }
-
-//
-//     public override string ToString()
-//     {
-//         return $"CnameRecord({Name}, {CanonicalName}, ttl={TimeToLive})";
-//     }
 }
 
 /// <summary>
@@ -127,13 +109,6 @@ public sealed record SrvRecord(
     string Target)
     : ResourceRecord(Name, DnsProtocol.RecordType.Srv, Class, TimeToLive)
 {
-    // {
-    //     Priority = priority;
-    //     Weight = weight;
-    //     Port = port;
-    //     Target = target;
-    // }
-
      public override byte[] WriteData()
      {
          using (var ms = new MemoryStream())
@@ -146,35 +121,6 @@ public sealed record SrvRecord(
              return ms.ToArray();
          }
      }
-//
-//     private void WriteDomainName(BinaryWriter writer, string name)
-//     {
-//         if (string.IsNullOrEmpty(name) || name == ".")
-//         {
-//             writer.Write((byte)0);
-//             return;
-//         }
-//
-//         string normalizedName = name.EndsWith(".") ? name : name + ".";
-//         string[] labels = normalizedName.Split('.');
-//
-//         foreach (string label in labels)
-//         {
-//             if (!string.IsNullOrEmpty(label))
-//             {
-//                 byte[] labelBytes = Encoding.ASCII.GetBytes(label);
-//                 writer.Write((byte)labelBytes.Length);
-//                 writer.Write(labelBytes);
-//             }
-//         }
-//
-//         writer.Write((byte)0);
-//     }
-//
-//     public override string ToString()
-//     {
-//         return $"SrvRecord({Name}, priority={Priority}, weight={Weight}, port={Port}, target={Target}, ttl={TimeToLive})";
-//     }
 }
 
 /// <summary>

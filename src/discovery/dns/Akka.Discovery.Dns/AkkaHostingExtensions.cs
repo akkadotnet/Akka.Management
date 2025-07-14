@@ -69,11 +69,10 @@ namespace Akka.Discovery.Dns
         }
         
         public static AkkaConfigurationBuilder WithAsyncDnsResolver(
-            this AkkaConfigurationBuilder builder, Action<AsyncDnsResolerOptions>? configure = null)
+            this AkkaConfigurationBuilder builder, Action<AsyncDnsResolverOptions>? configure = null)
         {
-            builder.WithDnsResolver(AsyncDnsResolerOptions.DefaultPath);
-            // builder.AddHocon($"akka.io.dns.provider-object = {AsyncDnsResolerOptions.ProviderName}", HoconAddMode.Prepend);
-            var opt = new AsyncDnsResolerOptions();
+            builder.WithDnsResolver(AsyncDnsResolverOptions.DefaultPath);
+            var opt = new AsyncDnsResolverOptions();
             configure?.Invoke(opt);
             opt.Apply(builder);
             return builder;
