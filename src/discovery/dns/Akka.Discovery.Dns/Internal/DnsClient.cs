@@ -139,23 +139,11 @@ internal class DnsClient : UntypedActorWithStash
         }
     }
 
-    static EndPoint ParseEndPoint(string endpoint)
-    {
-        var parts = endpoint.Split(':');
-        var ip = IPAddress.Parse(parts[0]);
-        var port = 0;
-        if (parts.Length > 1)
-        {
-            port = int.Parse(parts[1]);
-        }
-
-        return new IPEndPoint(ip, port);
-    }
     
     public DnsClient(DnsExt ext)
     {
         _log = Context.GetLogger();
-        var ns  = ext.Settings.ResolverConfig.GetString(AsyncDnsResolverOptions.NameserversPath) ?? throw new ConfigurationException("nameservers config was empty");
+        var ns  = ext.Settings.ResolverConfig.GetString(AsyncDnsResolverOptions.NameserverPath) ?? throw new ConfigurationException("nameserver config was empty");
         _nameserver = ParseEndPoint(ns);
         _udpManager = Akka.IO.Udp.Instance.Apply(Context.System).Manager;
         _tcpManager = Akka.IO.Tcp.Manager(Context.System);
@@ -239,12 +227,15 @@ internal class DnsClient : UntypedActorWithStash
                     }
                     else
                     {
-                        var records = msg.Flags.ResponseCode == DnsProtocol.ResponseCode.Success
-                            ? msg.AnswerRecords : ImmutableList<ResourceRecord>.Empty;
-                        var additionalRecs = msg.Flags.ResponseCode == DnsProtocol.ResponseCode.Success
-                            ? msg.AdditionalRecords : ImmutableList<ResourceRecord>.Empty;
-                            
-                        Self.Tell(new UdpAnswer(msg.Questions, new Answer(msg.Id, records, additionalRecs)));
+                        if (msg.Flags.ResponseCode != DnsProtocol.ResponseCode.Success)
+                        {
+                            _log.Warning("DNS response failed: [{0}]", msg);
+                            Self.Tell(new UdpAnswer(msg.Questions, new Answer(msg.Id, ImmutableList<ResourceRecord>.Empty, ImmutableList<ResourceRecord>.Empty)));
+                        }
+                        else
+                        {
+                            Self.Tell(new UdpAnswer(msg.Questions, new Answer(msg.Id, msg.AnswerRecords, msg.AdditionalRecords)));
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -431,5 +422,89 @@ internal class DnsClient : UntypedActorWithStash
         return Context.ActorOf(
             BackoffSupervisor.Props(backoffOptions),
             "tcpDnsClientSupervisor");
+    }
+    
+    /// <summary>
+    /// Parse a string endpoint into an IPEndPoint
+    /// Handles IPv4 addresses, IPv6 addresses, and hostnames with optional port
+    /// </summary>
+    /// <param name="endpoint">String in format "address:port" where address can be IPv4, IPv6, or hostname</param>
+    /// <returns>IPEndPoint representing the parsed endpoint</returns>
+    internal static EndPoint ParseEndPoint(string endpoint)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+            throw new ArgumentException("Endpoint cannot be null or empty", nameof(endpoint));
+            
+        // Default port if not specified
+        int port = 53; 
+        string host;
+        
+        // Check if we have an IPv6 address with brackets
+        if (endpoint.StartsWith("["))
+        {
+            // Format is [IPv6]:port
+            int closeBracketIndex = endpoint.IndexOf(']');
+            if (closeBracketIndex == -1)
+                throw new FormatException($"Invalid IPv6 endpoint format: {endpoint}. Expected [IPv6]:port");
+                
+            host = endpoint.Substring(1, closeBracketIndex - 1); // Extract IPv6 without brackets
+            
+            // Check if there's a port after the IPv6 address
+            if (closeBracketIndex + 1 < endpoint.Length && endpoint[closeBracketIndex + 1] == ':')
+            {
+                string portStr = endpoint.Substring(closeBracketIndex + 2);
+                if (!int.TryParse(portStr, out port))
+                    throw new FormatException($"Invalid port in endpoint: {portStr}");
+            }
+        }
+        else if (endpoint.Contains(":"))
+        {
+            // Could be IPv4:port or IPv6 without brackets
+            if (endpoint.Count(c => c == ':') > 1)
+            {
+                // This is likely an IPv6 address without port
+                host = endpoint;
+            }
+            else
+            {
+                // This is likely IPv4:port
+                var parts = endpoint.Split(':');
+                host = parts[0];
+                if (parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1]))
+                {
+                    if (!int.TryParse(parts[1], out port))
+                        throw new FormatException($"Invalid port in endpoint: {parts[1]}");
+                }
+            }
+        }
+        else
+        {
+            // Just a hostname or IP without port
+            host = endpoint;
+        }
+        
+        // Try to parse as IP address
+        if (IPAddress.TryParse(host, out var ipAddress))
+        {
+            return new IPEndPoint(ipAddress, port);
+        }
+        
+        // If not an IP, try to resolve hostname
+        try
+        {
+            var addresses = System.Net.Dns.GetHostAddresses(host);
+            if (addresses.Length == 0)
+                throw new FormatException($"Could not resolve hostname: {host}");
+                
+            // Prefer IPv4 address if available
+            var preferredAddress = addresses.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) 
+                ?? addresses[0]; // Fall back to first address if no IPv4
+                
+            return new IPEndPoint(preferredAddress, port);
+        }
+        catch (Exception ex) when (!(ex is FormatException))
+        {
+            throw new FormatException($"Failed to resolve hostname: {host}", ex);
+        }
     }
 }

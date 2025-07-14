@@ -115,7 +115,7 @@ public class AsyncDnsResolverOptions : IHoconOption
 
     public const string DefaultPath = "async-dns";
 
-    public const string NameserversPath = "nameserver";
+    public const string NameserverPath = "nameserver";
     public string Nameserver { get; set; } = "127.0.0.1:53";
     /// <summary>
     /// Renders HOCON configuration based on current settings.
@@ -129,7 +129,7 @@ public class AsyncDnsResolverOptions : IHoconOption
         sb.AppendLine($"{FullPath(ConfigPath)} {{");
         sb.AppendLine($"  class = \"{Class.FullName}, {Class.Assembly.GetName().Name}\",");
         sb.AppendLine($"  provider-object = \"{Provider.FullName}, {Provider.Assembly.GetName().Name}\",");
-        sb.Append($"  {NameserversPath} = \"{Nameserver}\",");
+        sb.Append($"  {NameserverPath} = \"{Nameserver}\",");
         sb.AppendLine("}");
             
         return sb.ToString();
