@@ -29,7 +29,7 @@ services:
       - ACTORSYSTEM=DnsCluster
       - MANAGEMENT__PORT=18558
       - PBM__PORT=9110
-      - SERVICENAME=akkacluster.dns.podman
+      - SERVICENAME=akkacluster.dns.oci
       - PORTNAME=management
       - DNS_PORT=1053
       - DNS_NAMESERVER=172.28.0.2
@@ -54,7 +54,7 @@ services:
       - ACTORSYSTEM=DnsCluster
       - MANAGEMENT__PORT=28558
       - PBM__PORT=9110
-      - SERVICENAME=akkacluster.dns.podman
+      - SERVICENAME=akkacluster.dns.oci
       - PORTNAME=management
       - DNS_PORT=1053
       - DNS_NAMESERVER=172.28.0.2
@@ -79,7 +79,7 @@ services:
       - ACTORSYSTEM=DnsCluster
       - MANAGEMENT__PORT=38558
       - PBM__PORT=9110
-      - SERVICENAME=akkacluster.dns.podman
+      - SERVICENAME=akkacluster.dns.oci
       - PORTNAME=management
       - DNS_PORT=1053
       - DNS_NAMESERVER=172.28.0.2

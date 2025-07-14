@@ -1,5 +1,5 @@
-$ORIGIN akkacluster.dns.podman.
-@	3600 IN	SOA dns-server.akkacluster.dns.podman. admin.akkacluster.dns.podman. (
+$ORIGIN akkacluster.dns.oci.
+@	3600 IN	SOA dns-server.akkacluster.dns.oci. admin.akkacluster.dns.oci. (
 		2023121001 ; serial
 		7200       ; refresh
 		3600       ; retry
@@ -8,7 +8,7 @@ $ORIGIN akkacluster.dns.podman.
 )
 
 ; Name servers
-@	3600 IN NS dns-server.akkacluster.dns.podman.
+@	3600 IN NS dns-server.akkacluster.dns.oci.
 
 ; AAAA records for the domain itself
 @	IN AAAA 2001:db8:1::10

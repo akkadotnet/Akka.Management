@@ -7,13 +7,15 @@ services:
       dockerfile: Dockerfile
     image: akka-dns-cluster:latest
     hostname: node1.akkacluster
+    volumes:
+      - ./a/resolv.conf:/etc/resolv.conf
     environment:
       - CLUSTER__PORT=4053
       - CLUSTER__IP=0.0.0.0
       - ACTORSYSTEM=DnsCluster
       - MANAGEMENT__PORT=8558
       - PBM__PORT=9110
-      - SERVICENAME=akkacluster.dns.podman
+      - SERVICENAME=akkacluster.dns.oci
     ports:
       - "4053:4053"
       - "8558:8558" 
@@ -22,18 +24,21 @@ services:
       akkanet:
         ipv6: false
         aliases:
+          - akkacluster.dns.oci
           - akkacluster
 
   node2:
     image: akka-dns-cluster:latest
     hostname: node2.akkacluster
+    volumes:
+      - ./a/resolv.conf:/etc/resolv.conf
     environment:
       - CLUSTER__PORT=4053
       - CLUSTER__IP=0.0.0.0
       - ACTORSYSTEM=DnsCluster
       - MANAGEMENT__PORT=8558
       - PBM__PORT=9110
-      - SERVICENAME=akkacluster.dns.podman
+      - SERVICENAME=akkacluster.dns.oci
     ports:
       - "4054:4053" 
       - "8559:8558"
@@ -42,6 +47,7 @@ services:
       akkanet:
         ipv6: false
         aliases:
+          - akkacluster.dns.oci
           - akkacluster
     depends_on:
       - node1
@@ -49,13 +55,15 @@ services:
   node3:
     image: akka-dns-cluster:latest
     hostname: node3.akkacluster
+    volumes:
+      - ./a/resolv.conf:/etc/resolv.conf
     environment:
       - CLUSTER__PORT=4053
       - CLUSTER__IP=0.0.0.0
       - ACTORSYSTEM=DnsCluster
       - MANAGEMENT__PORT=8558
       - PBM__PORT=9110
-      - SERVICENAME=akkacluster.dns.podman
+      - SERVICENAME=akkacluster.dns.oci
     ports:
       - "4055:4053"
       - "8560:8558"
@@ -64,6 +72,7 @@ services:
       akkanet:
         ipv6: false
         aliases:
+          - akkacluster.dns.oci
           - akkacluster
     depends_on:
       - node1
@@ -76,3 +85,4 @@ networks:
       config:
         - subnet: 172.28.0.0/16
           gateway: 172.28.0.1
+          

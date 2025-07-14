@@ -1,0 +1,21 @@
+$ORIGIN akkacluster.dns.oci.
+@	3600 IN	SOA dns-server.akkacluster.dns.oci. admin.akkacluster.dns.oci. (
+		2023121001 ; serial
+		7200       ; refresh
+		3600       ; retry
+		1209600    ; expire
+		3600       ; minimum
+)
+
+; Name servers
+@	3600 IN NS dns-server.akkacluster.dns.oci.
+
+; A records for each node
+node1	IN A 172.28.0.10
+node2	IN A 172.28.0.20
+node3	IN A 172.28.0.30
+
+; SRV records - _service._proto.name. TTL class SRV priority weight port target
+_management._tcp	IN SRV 10 10 18558 node1.akkacluster.dns.oci.
+_management._tcp	IN SRV 10 10 28558 node2.akkacluster.dns.oci.
+_management._tcp	IN SRV 10 10 38558 node3.akkacluster.dns.oci.
