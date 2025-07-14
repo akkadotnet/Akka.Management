@@ -13,26 +13,6 @@ using Akka.Pattern;
 
 namespace Akka.Discovery.Dns.Internal;
 
-public class AsyncDnsExt : DnsExt
-{
-    public AsyncDnsExt(ExtendedActorSystem system) : base(system)
-    {
-        _system = system;
-    }
-    private readonly ExtendedActorSystem _system;
-    private IActorRef? _manager; 
-    public override IActorRef Manager 
-    {
-        get
-        {
-            // base implementation doesn't respect custom provider/manager settings, perhpaps on purpouse 
-            return _manager = _manager ??  _system.SystemActorOf(Props.Create(Provider.ManagerClass, this).WithDeploy(Deploy.Local).WithDispatcher(Settings.Dispatcher)
-                .WithDeploy(Deploy.Local)
-                .WithDispatcher(Settings.Dispatcher));
-        }
-    }
-}
-
 public class AsyncDnsProvider : IDnsProvider
 {
     private readonly DnsBase _cache = new SimpleDnsCache();
@@ -172,7 +152,7 @@ internal class DnsClient : UntypedActorWithStash
         return new IPEndPoint(ip, port);
     }
     
-    public DnsClient(AsyncDnsExt ext)
+    public DnsClient(DnsExt ext)
     {
         _log = Context.GetLogger();
         var ns  = ext.Settings.ResolverConfig.GetString(AsyncDnsResolverOptions.NameserversPath) ?? throw new ConfigurationException("nameservers config was empty");

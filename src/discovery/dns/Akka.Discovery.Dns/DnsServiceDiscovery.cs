@@ -24,25 +24,7 @@ public class DnsServiceDiscovery : ServiceDiscovery
     {
         _system = system;
         _log = Logging.GetLogger(system, this);
-        var dnsResolver = _system.Settings.Config.GetString("akka.io.dns.resolver");
-        switch (dnsResolver)
-        {
-            case "inet-address": // default akka setting 
-            {
-                var dns = Akka.IO.Dns.Instance.CreateExtension(_system);
-                _dns = dns.Manager;
-                break;
-            }
-            case AsyncDnsResolverOptions.DefaultPath:
-            {
-                var dns = new AsyncDnsExt(_system);
-                _dns = dns.Manager;
-                break;
-            }
-            default:
-                throw new NotImplementedException($"Following configuration is not supported by this plugin: akka.io.dns.resolver = '{dnsResolver}'");
-        
-        }
+        _dns = Akka.IO.Dns.Instance.CreateExtension(_system).Manager;
     }
 
 
