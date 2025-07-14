@@ -94,8 +94,9 @@ public class DnsServiceDiscovery : ServiceDiscovery
             {
                 if (resolved.IsSuccess)
                 {
-                    _log.Debug("lookup result: {0}", resolved);
-                    return IpRecordsToResolved(serviceName, resolved);
+                    var parsed = IpRecordsToResolved(serviceName, resolved);
+                    _log.Debug("lookup result: {0}", parsed);
+                    return parsed;
                 }
                 
                 _log.Error(resolved.Exception, "Failed to resolve serviceName: {0}", serviceName);
