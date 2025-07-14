@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="BootstrapCoordinator.cs" company="Akka.NET Project">
 //     Copyright (C) 2009-2021 Lightbend Inc. <http://www.lightbend.com>
 //     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
@@ -429,6 +429,12 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             }
         }
 
+        private static string ResolvedTargetHost(ResolvedTarget contactPoint) => 
+            contactPoint.Address == null 
+                ? contactPoint.Host 
+                : contactPoint.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6  
+                    ? $"[{contactPoint.Address}]" // enclose IPv6 addresses into square brackets for proper URI formating
+                    : contactPoint.Address.ToString();
         protected virtual IActorRef? EnsureProbing(string selfContactPointScheme, ResolvedTarget contactPoint)
         {
             if (contactPoint.Address is null && contactPoint.Host is null)
@@ -438,7 +444,7 @@ namespace Akka.Management.Cluster.Bootstrap.Internal
             }
             
             var targetPort = contactPoint.Port ?? _settings.ContactPoint.FallbackPort;
-            var rawBaseUri = $"{selfContactPointScheme}://{contactPoint.Address?.ToString() ?? contactPoint.Host}:{targetPort}";
+            var rawBaseUri = $"{selfContactPointScheme}://{ResolvedTargetHost(contactPoint)}:{targetPort}";
             if (!string.IsNullOrEmpty(_settings.ManagementBasePath))
                 rawBaseUri += $"/{_settings.ManagementBasePath}";
             var baseUri = new Uri(rawBaseUri);
