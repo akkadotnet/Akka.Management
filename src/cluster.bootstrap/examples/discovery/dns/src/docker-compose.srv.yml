@@ -6,7 +6,7 @@ services:
     image: coredns/coredns:1.10.1
     hostname: dns-server
     volumes:
-      - ./coredns:/etc/coredns
+      - ./srv/coredns:/etc/coredns
     command: ["-conf", "/etc/coredns/Corefile"]
     ports:
       - "1053:1053/udp"

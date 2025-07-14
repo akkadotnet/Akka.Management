@@ -9,17 +9,13 @@ if ($recordType -ne "srv" -and $recordType -ne "a" -and $recordType -ne "aaaa") 
     Write-Error "Invalid record type. Must be 'srv' or 'a' or 'aaaa'."
     exit 1
 }
-
-if ($recordType -eq "a") {
-    $recordType = "aaaa"
-}
-
-# Clean up previous containers first
+Write-Output "Cleaning up previous containers (ignore errors if containers do not exist)...."
 podman-compose -f "$(pwd)/src/docker-compose.srv.yml" down
 podman-compose -f "$(pwd)/src/docker-compose.aaaa.yml" down
+podman-compose -f "$(pwd)/src/docker-compose.a.yml" down
 
-# Build and publish the container
+Write-Output "Building and publishing example..."
 dotnet publish --os linux --arch x64 -c Release /t:PublishContainer ./src/DnsCluster.csproj
 
-# Start with replace flag to handle container conflicts
+Write-Output "Start $recordType example"
 podman-compose -f "$(pwd)/src/docker-compose.$recordType.yml" up --build 

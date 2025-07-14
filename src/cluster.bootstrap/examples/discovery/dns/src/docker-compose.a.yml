@@ -1,35 +1,12 @@
 version: '3.8'
 
 services:
-  # CoreDNS server for AAAA-only record resolution
-  coredns:
-    image: coredns/coredns:1.10.1
-    hostname: dns-server
-    volumes:
-      - ./aaaa/coredns:/etc/coredns
-    command: ["-conf", "/etc/coredns/Corefile"]
-    # No external ports exposed
-    # CoreDNS will listen on port 53 within the Docker network only
-    expose:
-      - "53/udp"
-      - "53/tcp"
-    networks:
-      akkanet:
-        ipv6: true  
-        ipv6_address: 2001:db8:1::2
-        aliases:
-          - dns-server
   node1:
     build:
       context: .
       dockerfile: Dockerfile
     image: akka-dns-cluster:latest
     hostname: node1.akkacluster
-    dns:
-      - 2001:db8:1::2
-    # dotnet uses /etc/resolv.conf instead of above setting
-    volumes:
-      - ./aaaa/resolv.conf:/etc/resolv.conf
     environment:
       - CLUSTER__PORT=4053
       - CLUSTER__IP=0.0.0.0
@@ -37,27 +14,19 @@ services:
       - MANAGEMENT__PORT=8558
       - PBM__PORT=9110
       - SERVICENAME=akkacluster.dns.podman
-      - PREFER_IPV6=true
     ports:
       - "4053:4053"
       - "8558:8558" 
       - "9110:9110"
     networks:
       akkanet:
-        ipv6: true
-        ipv6_address: 2001:db8:1::10
+        ipv6: false
         aliases:
           - akkacluster
-    depends_on:
-      - coredns
 
   node2:
     image: akka-dns-cluster:latest
     hostname: node2.akkacluster
-    dns:
-      - 2001:db8:1::2
-    volumes:
-      - ./aaaa/resolv.conf:/etc/resolv.conf
     environment:
       - CLUSTER__PORT=4053
       - CLUSTER__IP=0.0.0.0
@@ -65,28 +34,21 @@ services:
       - MANAGEMENT__PORT=8558
       - PBM__PORT=9110
       - SERVICENAME=akkacluster.dns.podman
-      - PREFER_IPV6=true
     ports:
       - "4054:4053" 
       - "8559:8558"
       - "9111:9110"
     networks:
       akkanet:
-        ipv6: true
-        ipv6_address: 2001:db8:1::20
+        ipv6: false
         aliases:
           - akkacluster
     depends_on:
       - node1
-      - coredns
 
   node3:
     image: akka-dns-cluster:latest
     hostname: node3.akkacluster
-    dns:
-      - 2001:db8:1::2
-    volumes:
-      - ./aaaa/resolv.conf:/etc/resolv.conf
     environment:
       - CLUSTER__PORT=4053
       - CLUSTER__IP=0.0.0.0
@@ -94,26 +56,23 @@ services:
       - MANAGEMENT__PORT=8558
       - PBM__PORT=9110
       - SERVICENAME=akkacluster.dns.podman
-      - PREFER_IPV6=true
     ports:
       - "4055:4053"
       - "8560:8558"
       - "9112:9110"
     networks:
       akkanet:
-        ipv6: true
-        ipv6_address: 2001:db8:1::30
+        ipv6: false
         aliases:
           - akkacluster
     depends_on:
       - node1
-      - coredns
 
 networks:
   akkanet:
     driver: bridge
-    enable_ipv6: true
+    enable_ipv6: false
     ipam:
       config:
-        - subnet: 2001:db8:1::/64
-          gateway: 2001:db8:1::1
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1

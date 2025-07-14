@@ -77,18 +77,58 @@ public static class Extensions
 public static class Program
 {
     // Get container IP address for self-identification
-    static string GetContainerIp()
+    static (bool, string) GetContainerIp()
     {
         try
         {
+            // Check if we should prefer IPv6 (default to false)
+            var preferIpv6Env = Environment.GetEnvironmentVariable("PREFER_IPV6");
+            var preferIpv6 = !string.IsNullOrEmpty(preferIpv6Env) && 
+                            (preferIpv6Env.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+                             preferIpv6Env == "1");
+                             
+            // Log the preference
+            Console.WriteLine($"IP Protocol Preference: {(preferIpv6 ? "IPv6" : "IPv4")}");
+            
             // Get IP of the container's network interface (typically eth0 in Docker)
             var addresses = System.Net.Dns.GetHostAddresses(System.Net.Dns.GetHostName());
-            var ipv4 = addresses.FirstOrDefault(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
-            return ipv4?.ToString() ?? "127.0.0.1";
+            
+            // Check if we have non-loopback IPv6 addresses
+            var ipv6 = addresses.FirstOrDefault(ip => 
+                ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 && 
+                !System.Net.IPAddress.IsLoopback(ip));
+                
+            // Get IPv4 addresses
+            var ipv4 = addresses.FirstOrDefault(ip => 
+                ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && 
+                !System.Net.IPAddress.IsLoopback(ip));
+                
+            
+            // Choose based on preference and availability
+            if (preferIpv6 && ipv6 != null)
+            {
+                Console.WriteLine($"Using IPv6 address: {ipv6}");
+                return (true, ipv6.ToString());
+            }
+            else if (ipv4 != null)
+            {
+                Console.WriteLine($"Using IPv4 address: {ipv4}");
+                return (false, ipv4.ToString());
+            }
+            else if (ipv6 != null) // Fallback to IPv6 if IPv4 not available
+            {
+                Console.WriteLine($"Falling back to IPv6 address: {ipv6}");
+                return (true, ipv6.ToString());
+            }
+            
+            // Last resort fallback
+            Console.WriteLine("No suitable network interfaces found, using loopback");
+            return (false, "127.0.0.1");
         }
-        catch
+        catch (Exception ex)
         {
-            return "127.0.0.1";
+            Console.WriteLine($"Error getting container IP: {ex.Message}");
+            return (false, "127.0.0.1");
         }
     }
     public static async Task Main(string[] args)
@@ -148,11 +188,13 @@ public static class Program
                     
                     
                     // Configure Akka.Management HTTP endpoint
-                    builder.WithAkkaManagement(hostName:  GetContainerIp(), port: managementPort, bindHostname : "0.0.0.0");
-                    //     setup.Http.HostName = GetContainerIp(); // Use IP address instead of hostname
-                    //     setup.Http.Port = managementPort;
-                    //     setup.Port = managementPort;
-                    // });
+                    // Detect if we're using IPv6 in the container
+                    var (isIPv6, hostname) = GetContainerIp();
+                    
+                    var bindAddress = isIPv6 ? "::" : "0.0.0.0";
+                    Console.WriteLine($"Binding Akka.Management to [{hostname}][{bindAddress}:{managementPort}]");
+                    
+                    builder.WithAkkaManagement(hostName: hostname, port: managementPort, bindHostname: bindAddress);
                         
                     // Add Akka.Discovery.Dns support
                     // Configure DNS discovery for Docker environment

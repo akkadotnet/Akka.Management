@@ -1,0 +1,17 @@
+.:53 {
+    log {
+        class all
+    }
+    errors
+    auto
+    reload
+    hosts {
+        fallthrough
+    }
+    file /etc/coredns/zones/akkacluster.dns.podman akkacluster.dns.podman
+    prometheus
+    cache
+    template ANY A akkacluster.dns.podman {
+        rcode REFUSED
+    }
+}
