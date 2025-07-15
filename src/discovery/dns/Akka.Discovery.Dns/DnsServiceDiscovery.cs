@@ -51,11 +51,8 @@ public class DnsServiceDiscovery : ServiceDiscovery
         
         try
         {
-            // Generate a random query ID
-            short queryId = (short)new Random().Next(0, 65535);
-            
             // Send SRV question and await response
-            var result = await _dns.Ask<object>(new Internal.DnsClient.SrvQuestion(queryId, srvRequest), resolveTimeout);
+            var result = await _dns.Ask<object>(new Internal.DnsClient.DnsQuestion(DnsClient.NewQueryId(), srvRequest, DnsProtocol.RecordType.Srv), resolveTimeout);
             
             if (result is Internal.DnsClient.Answer answer)
             {

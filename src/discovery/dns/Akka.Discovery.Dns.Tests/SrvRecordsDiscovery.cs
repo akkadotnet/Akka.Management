@@ -27,7 +27,9 @@ public class SrvRecordsDiscovery(ITestOutputHelper output) : TestKit.Xunit2.Test
                 akka.io.dns.async-dns {
                     class = ""Akka.Discovery.Dns.Internal.DnsClient, Akka.Discovery.Dns""
                     provider-object = ""Akka.Discovery.Dns.Internal.AsyncDnsProvider, Akka.Discovery.Dns""
-                    nameserver = ""1.0.0.1:53""
+                    nameservers = [ 
+                        ""1dot1dot1dot1.cloudflare-dns.com"", 
+                        ""1.1.1.1"" ]
                     
                 }
             "), "dns-discovery", output)

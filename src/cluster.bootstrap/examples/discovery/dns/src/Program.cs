@@ -203,7 +203,7 @@ public static class Program
                     {
                         // use SRV record resolver if portName was specified 
                         var ns =  hostContext.Configuration.GetValue<string>("nameserver")?.Trim() ?? "127.0.0.1:53";
-                        builder.WithAsyncDnsResolver(opt => opt.Nameserver =  ns );
+                        builder.WithAsyncDnsResolver(opt => opt.Nameservers = [ ns ] );
                     }
                         
                     // Add https://cmd.petabridge.com/ for diagnostics

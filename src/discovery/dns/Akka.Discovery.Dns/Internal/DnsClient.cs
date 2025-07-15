@@ -30,7 +30,7 @@ public class AsyncDnsProvider : IDnsProvider
     /// <summary>
     /// TBD
     /// </summary>
-    public Type ManagerClass => typeof (DnsClient);
+    public Type ManagerClass => typeof (AsyncDnsManager);
 }
 
 /// <summary>
@@ -44,23 +44,26 @@ internal class DnsClient : UntypedActorWithStash
     /// <summary>
     /// Base class for DNS questions
     /// </summary>
-    public abstract record DnsQuestion(short Id);
+    public record DnsQuestion(short Id, string Name, DnsProtocol.RecordType RecordType);
 
     /// <summary>
     /// Question for SRV records
     /// </summary>
-    public sealed record SrvQuestion(short Id, string Name) : DnsQuestion(Id);
-
-    /// <summary>
-    /// Question for A records (IPv4)
-    /// </summary>
-    public sealed record Question4(short Id, string Name) : DnsQuestion(Id);
-
-    /// <summary>
-    /// Question for AAAA records (IPv6)
-    /// </summary>
-    public sealed record Question6(short Id, string Name) : DnsQuestion(Id);
-
+    // public sealed record SrvQuestion(short Id, string Name) : DnsQuestion(Id);
+    //
+    // /// <summary>
+    // /// Question for A records (IPv4)
+    // /// </summary>
+    // public sealed record Question4(short Id, string Name) : DnsQuestion(Id);
+    //
+    // /// <summary>
+    // /// Question for AAAA records (IPv6)
+    // /// </summary>
+    // public sealed record Question6(short Id, string Name) : DnsQuestion(Id);
+    //
+    //
+    // public sealed record QuestionAny(short Id, string Name) : DnsQuestion(Id);
+    
     /// <summary>
     /// DNS answer containing resource records
     /// </summary>
@@ -77,7 +80,9 @@ internal class DnsClient : UntypedActorWithStash
             AdditionalRecords = additionalRecords?.ToImmutableArray() ?? ImmutableArray<ResourceRecord>.Empty;
         }
     }
-
+    private static readonly Random _random = new();
+    //TODO: Maybe this should be more resilient, what if we have a lot of requests at the same time?  
+    internal static short NewQueryId() => (short)_random.Next(0, 65535);
     /// <summary>
     /// Request to drop a pending DNS question
     /// </summary>
@@ -140,11 +145,13 @@ internal class DnsClient : UntypedActorWithStash
     }
 
     
-    public DnsClient(DnsExt ext)
+    // public DnsClient(DnsExt ext)
+    public DnsClient(EndPoint nameserver)
     {
         _log = Context.GetLogger();
-        var ns  = ext.Settings.ResolverConfig.GetString(AsyncDnsResolverOptions.NameserverPath) ?? throw new ConfigurationException("nameserver config was empty");
-        _nameserver = ParseEndPoint(ns);
+        // var ns  = ext.Settings.ResolverConfig.GetString(AsyncDnsResolverOptions.NameserverPath) ?? throw new ConfigurationException("nameserver config was empty");
+        // _nameserver = ParseEndPoint(ns);
+        _nameserver = nameserver;
         _udpManager = Akka.IO.Udp.Instance.Apply(Context.System).Manager;
         _tcpManager = Akka.IO.Tcp.Manager(Context.System);
         _stash = Context.CreateStash(typeof(DnsClient));
@@ -177,9 +184,7 @@ internal class DnsClient : UntypedActorWithStash
                 Context.Become(Ready);
                 _stash.UnstashAll();
                 break;
-            case Question4 _:
-            case Question6 _:
-            case SrvQuestion _:
+            case DnsQuestion _:
                 _stash.Stash();
                 break;
         }
@@ -187,23 +192,14 @@ internal class DnsClient : UntypedActorWithStash
 
     private void Ready(object message)
     {
-        _log.Debug("Received message:[{0}]", message.GetType());
         switch (message)
         {
             case DropRequest dropRequest:
                 HandleDropRequest(dropRequest);
                 break;
-                
-            case Question4 question:
-                HandleQuestion(question.Id, question.Name, DnsProtocol.RecordType.A, Sender);
-                break;
-                
-            case Question6 question:
-                HandleQuestion(question.Id, question.Name, DnsProtocol.RecordType.Aaaa, Sender);
-                break;
-                
-            case SrvQuestion question:
-                HandleQuestion(question.Id, question.Name, DnsProtocol.RecordType.Srv, Sender);
+            
+            case DnsQuestion question:
+                HandleQuestion(question.Id, question.Name, question.RecordType, Sender);
                 break;
                 
             case Udp.Received received:
@@ -350,25 +346,9 @@ internal class DnsClient : UntypedActorWithStash
         {
             var sentQuestions = inFlight.Message.Questions.Select(q => new { q.Name, q.Type }).ToList();
                 
-            string expectedName = null;
-            DnsProtocol.RecordType expectedType = DnsProtocol.RecordType.A;
-                
-            switch (dropRequest.Question)
-            {
-                case Question4 q4:
-                    expectedName = q4.Name;
-                    expectedType = DnsProtocol.RecordType.A;
-                    break;
-                case Question6 q6:
-                    expectedName = q6.Name;
-                    expectedType = DnsProtocol.RecordType.Aaaa;
-                    break;
-                case SrvQuestion srv:
-                    expectedName = srv.Name;
-                    expectedType = DnsProtocol.RecordType.Srv;
-                    break;
-            }
-                
+            string expectedName = dropRequest.Question.Name;
+            DnsProtocol.RecordType expectedType = dropRequest.Question.RecordType;
+            
             if (sentQuestions.Any(q => q.Name == expectedName && q.Type == expectedType))
             {
                 _log.Debug("Dropping request [{0}]", id);
@@ -424,87 +404,5 @@ internal class DnsClient : UntypedActorWithStash
             "tcpDnsClientSupervisor");
     }
     
-    /// <summary>
-    /// Parse a string endpoint into an IPEndPoint
-    /// Handles IPv4 addresses, IPv6 addresses, and hostnames with optional port
-    /// </summary>
-    /// <param name="endpoint">String in format "address:port" where address can be IPv4, IPv6, or hostname</param>
-    /// <returns>IPEndPoint representing the parsed endpoint</returns>
-    internal static EndPoint ParseEndPoint(string endpoint)
-    {
-        if (string.IsNullOrWhiteSpace(endpoint))
-            throw new ArgumentException("Endpoint cannot be null or empty", nameof(endpoint));
-            
-        // Default port if not specified
-        int port = 53; 
-        string host;
-        
-        // Check if we have an IPv6 address with brackets
-        if (endpoint.StartsWith("["))
-        {
-            // Format is [IPv6]:port
-            int closeBracketIndex = endpoint.IndexOf(']');
-            if (closeBracketIndex == -1)
-                throw new FormatException($"Invalid IPv6 endpoint format: {endpoint}. Expected [IPv6]:port");
-                
-            host = endpoint.Substring(1, closeBracketIndex - 1); // Extract IPv6 without brackets
-            
-            // Check if there's a port after the IPv6 address
-            if (closeBracketIndex + 1 < endpoint.Length && endpoint[closeBracketIndex + 1] == ':')
-            {
-                string portStr = endpoint.Substring(closeBracketIndex + 2);
-                if (!int.TryParse(portStr, out port))
-                    throw new FormatException($"Invalid port in endpoint: {portStr}");
-            }
-        }
-        else if (endpoint.Contains(":"))
-        {
-            // Could be IPv4:port or IPv6 without brackets
-            if (endpoint.Count(c => c == ':') > 1)
-            {
-                // This is likely an IPv6 address without port
-                host = endpoint;
-            }
-            else
-            {
-                // This is likely IPv4:port
-                var parts = endpoint.Split(':');
-                host = parts[0];
-                if (parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1]))
-                {
-                    if (!int.TryParse(parts[1], out port))
-                        throw new FormatException($"Invalid port in endpoint: {parts[1]}");
-                }
-            }
-        }
-        else
-        {
-            // Just a hostname or IP without port
-            host = endpoint;
-        }
-        
-        // Try to parse as IP address
-        if (IPAddress.TryParse(host, out var ipAddress))
-        {
-            return new IPEndPoint(ipAddress, port);
-        }
-        
-        // If not an IP, try to resolve hostname
-        try
-        {
-            var addresses = System.Net.Dns.GetHostAddresses(host);
-            if (addresses.Length == 0)
-                throw new FormatException($"Could not resolve hostname: {host}");
-                
-            // Prefer IPv4 address if available
-            var preferredAddress = addresses.FirstOrDefault(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) 
-                ?? addresses[0]; // Fall back to first address if no IPv4
-                
-            return new IPEndPoint(preferredAddress, port);
-        }
-        catch (Exception ex) when (!(ex is FormatException))
-        {
-            throw new FormatException($"Failed to resolve hostname: {host}", ex);
-        }
-    }
+    
 }
