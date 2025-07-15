@@ -212,6 +212,16 @@ public static class DnsProtocol
             }
         }
 
+        public string FirstQuestionName
+        {
+            get
+            {
+                if (Questions.IsEmpty)
+                    return string.Empty;
+                return Questions[0].Name;
+            }
+        }
+
         /// <summary>
         /// Parse a DNS message from a byte array
         /// </summary>

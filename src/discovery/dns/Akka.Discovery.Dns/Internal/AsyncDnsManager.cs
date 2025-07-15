@@ -15,14 +15,9 @@ namespace Akka.Discovery.Dns.Internal;
 internal class AsyncDnsManager : ActorBase, IRequiresMessageQueue<IUnboundedMessageQueueSemantics>
 {
     private readonly ILoggingAdapter _log = Context.GetLogger();
-
-    // private readonly IActorRef _resolver;
-    // private IPeriodicCacheCleanup _cacheCleanup;
-    // private ICancelable _cleanupTimer;
-
-    // private IReadOnlyList<string> _nameservers;
-    private IActorRef[] _resolvers;
-    private IActorRef _resolver;
+    private readonly IPeriodicCacheCleanup? _cacheCleanup;
+    private readonly ICancelable? _cleanupTimer;
+    private readonly IActorRef _resolver;
 
     /// <summary>
     /// Creates a new instance of the AsyncDnsManager.
@@ -36,12 +31,20 @@ internal class AsyncDnsManager : ActorBase, IRequiresMessageQueue<IUnboundedMess
         {
             throw NoNameServerConfigured.Instance;
         }
-        _resolvers = SpawnClients(ext, nameservers);
-        _resolver = Context.ActorOf(Props.Empty.WithRouter(new RoundRobinGroup(_resolvers.Select(x => x.Path.ToString()))), "dns-router");
+        var resolvers = SpawnClients(ext, nameservers);
+        _resolver = Context.ActorOf(Props.Empty.WithRouter(new RoundRobinGroup(resolvers.Select(x => x.Path.ToString()))), "dns-router");
+        _cacheCleanup = ext.Cache as IPeriodicCacheCleanup;
+        
+        if (_cacheCleanup != null)
+        {
+            var interval = ext.Settings.ResolverConfig.GetTimeSpan("cache-cleanup-interval", TimeSpan.FromSeconds(120));
+            _cleanupTimer = Context.System.Scheduler.ScheduleTellRepeatedlyCancelable(interval, interval, Self, CacheCleanup.Instance, Self);
+        }
+
     }
     IActorRef[] SpawnClients(DnsExt ext, IReadOnlyList<string> nameservers) => 
         nameservers
-            .Select(ns =>
+            .Select(ns => //string -> Option<(string name, EndPoint endpoint)>
             {
                 try
                 {
@@ -57,7 +60,7 @@ internal class AsyncDnsManager : ActorBase, IRequiresMessageQueue<IUnboundedMess
             .Where(x => x.HasValue)
             .Select(opt =>
                 Context.ActorOf(
-                    Props.Create(typeof(DnsClient), opt.Value.endpoint)
+                    Props.Create(typeof(DnsClient), ext.Cache, ext.Settings.ResolverConfig, opt.Value.endpoint)
                         .WithDeploy(Deploy.Local)
                         .WithDispatcher(ext.Settings.Dispatcher)
                     , opt.Value.name)
@@ -73,12 +76,6 @@ internal class AsyncDnsManager : ActorBase, IRequiresMessageQueue<IUnboundedMess
     {
         _resolver.Forward(message);
         return true;
-        // foreach (var resolver in _resolvers)
-        // {
-        //     resolver.Forward(message);
-        // }
-        //
-        // return true;
     }
 
     /// <summary>
@@ -98,11 +95,12 @@ internal class AsyncDnsManager : ActorBase, IRequiresMessageQueue<IUnboundedMess
         switch (message)
         {
             case IO.Dns.Resolve r:
-            {
                 return HandleRequest(Convert(r));
-            }
             case DnsClient.DnsQuestion question:
                 return HandleRequest(question);
+            case CacheCleanup _:
+                _cacheCleanup?.CleanUp();
+                return true;
             default:
                 Unhandled(message);
                 return false;
@@ -114,20 +112,20 @@ internal class AsyncDnsManager : ActorBase, IRequiresMessageQueue<IUnboundedMess
     /// </summary>
     protected override void PostStop()
     {
-        // if (_cleanupTimer != null)
-        //     _cleanupTimer.Cancel();
+        if (_cleanupTimer != null)
+            _cleanupTimer.Cancel();
     }
 
     /// <summary>
     /// Message sent to trigger DNS cache cleanup.
     /// </summary>
-    // internal class CacheCleanup
-    // {
-    //     /// <summary>
-    //     /// Singleton instance of the cache cleanup message.
-    //     /// </summary>
-    //     public static readonly CacheCleanup Instance = new();
-    // }
+    internal class CacheCleanup
+    {
+        /// <summary>
+        /// Singleton instance of the cache cleanup message.
+        /// </summary>
+        public static readonly CacheCleanup Instance = new();
+    }
 
     /// <summary>
     /// Parse a string endpoint into an IPEndPoint

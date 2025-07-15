@@ -161,8 +161,8 @@ internal class TcpDnsClient : UntypedActor
                         ? dnsMessage.AdditionalRecords : Array.Empty<ResourceRecord>().ToImmutableList();
                         
                     // Forward the answer to the parent
-                    _parent.Tell(new DnsClient.Answer(dnsMessage.Id, records, additionalRecs));
-                        
+                    _parent.Tell(new DnsClient.Answer(dnsMessage.Id, dnsMessage.FirstQuestionName, records, additionalRecs));
+                    
                     // Remove the processed message from the buffer
                     var remaining = _currentPosition - (_expectedLength + 2);
                     if (remaining > 0)

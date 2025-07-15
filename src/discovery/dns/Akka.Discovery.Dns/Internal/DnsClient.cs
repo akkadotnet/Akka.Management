@@ -10,28 +10,9 @@ using Akka.Configuration;
 using Akka.Event;
 using Akka.IO;
 using Akka.Pattern;
+using Akka.Util;
 
 namespace Akka.Discovery.Dns.Internal;
-
-public class AsyncDnsProvider : IDnsProvider
-{
-    private readonly DnsBase _cache = new SimpleDnsCache();
-
-    /// <summary>
-    /// TBD
-    /// </summary>
-    public DnsBase Cache => _cache;
-
-    /// <summary>
-    /// TBD
-    /// </summary>
-    public Type ActorClass => typeof (DnsClient);
-
-    /// <summary>
-    /// TBD
-    /// </summary>
-    public Type ManagerClass => typeof (AsyncDnsManager);
-}
 
 /// <summary>
 /// DNS client actor for resolving DNS queries, including SRV records.
@@ -70,15 +51,47 @@ internal class DnsClient : UntypedActorWithStash
     public sealed record Answer
     {
         public short Id { get; }
+        public string Name { get; }
         public ImmutableArray<ResourceRecord> Records { get; }
         public ImmutableArray<ResourceRecord> AdditionalRecords { get; }
 
-        public Answer(short id, IEnumerable<ResourceRecord>? records = null, IEnumerable<ResourceRecord>? additionalRecords = null)
+        public Answer(short id, string name = "", IEnumerable<ResourceRecord>? records = null, IEnumerable<ResourceRecord>? additionalRecords = null)
         {
             Id = id;
+            Name = name;
             Records = records?.ToImmutableArray() ?? ImmutableArray<ResourceRecord>.Empty;
             AdditionalRecords = additionalRecords?.ToImmutableArray() ?? ImmutableArray<ResourceRecord>.Empty;
         }
+
+        public static uint MinTtl(Answer answer)
+        {
+
+            uint rm = UInt32.MaxValue;
+            uint arm = UInt32.MaxValue;
+            if(answer.Records.IsEmpty == false) 
+                rm = answer.Records.Select(x => x.TimeToLive).Min();
+            if(answer.AdditionalRecords.IsEmpty == false) 
+                arm = answer.AdditionalRecords.Select(x => x.TimeToLive).Min();
+            if (rm == UInt32.MaxValue && arm == UInt32.MaxValue)
+                return 0;
+            return rm < arm ? rm : arm;
+        }
+
+        public static IEnumerable<ResourceRecord> RecordsOfType(Answer answer, DnsProtocol.RecordType recordType) =>
+            new[]
+            {
+                answer.Records.Where(x => x.Type == recordType),
+                answer.AdditionalRecords.Where(x => x.Type == recordType)
+            }
+                .SelectMany(x => x);
+
+        public static IEnumerable<IPAddress> ToIpAddresses(Answer answer, DnsProtocol.RecordType recordType)  =>
+            RecordsOfType(answer, recordType)
+                .Select(x => IPAddress.TryParse(x.Name, out var ip) 
+                    ? Option<IPAddress>.Create(ip) : Option<IPAddress>.None) //this might lose data if answer is hostname 
+                .Where(x => x.HasValue)
+                .Select(x => x.Value);
+        
     }
     private static readonly Random _random = new();
     //TODO: Maybe this should be more resilient, what if we have a lot of requests at the same time?  
@@ -115,6 +128,7 @@ internal class DnsClient : UntypedActorWithStash
 
     #endregion
 
+    private readonly AsyncDnsCache _cache;
     private readonly EndPoint _nameserver;
     private readonly ILoggingAdapter _log;
     private readonly IActorRef _tcpManager;
@@ -125,6 +139,46 @@ internal class DnsClient : UntypedActorWithStash
     private Dictionary<short, InFlightRequest> _inflightRequests = new Dictionary<short, InFlightRequest>();
     private IActorRef _tcpDnsClient;
     private IActorRef? _udpSocket;
+    private readonly PositiveTtl _positiveTtl;
+
+    abstract record PositiveTtl;
+
+    record Forever : PositiveTtl
+    {
+        public static readonly Forever Instance = new Forever();
+    }
+
+    record Never : PositiveTtl
+    {
+        public static readonly Never Instance = new Never();
+    }
+
+    record TtlTimeSpan(TimeSpan TimeSpan) : PositiveTtl;
+
+    static PositiveTtl ParseTTl(Configuration.Config config) =>
+        config.GetString("positive-ttl", "forever").ToLowerInvariant() switch
+        {
+            "forever" => Forever.Instance,
+            "never" => Never.Instance,
+            _ => new TtlTimeSpan(config.GetTimeSpan("positive-ttl")), 
+        };
+
+    bool UseTtl(Answer answer, out long ttl)
+    {
+        switch (_positiveTtl)
+        {
+            case Never:
+                ttl = long.MinValue;
+                return false;
+            case TtlTimeSpan ts:
+                ttl = (long)ts.TimeSpan.TotalMilliseconds;
+                return true;
+            default:
+                ttl = Answer.MinTtl(answer);
+                return true;
+
+        }
+    }
 
 
     /// <summary>
@@ -143,19 +197,16 @@ internal class DnsClient : UntypedActorWithStash
             TcpRequest = tcpRequest;
         }
     }
-
-    
-    // public DnsClient(DnsExt ext)
-    public DnsClient(EndPoint nameserver)
+    public DnsClient(AsyncDnsCache cache, Configuration.Config config, EndPoint nameserver)
     {
         _log = Context.GetLogger();
-        // var ns  = ext.Settings.ResolverConfig.GetString(AsyncDnsResolverOptions.NameserverPath) ?? throw new ConfigurationException("nameserver config was empty");
-        // _nameserver = ParseEndPoint(ns);
+        _cache = cache;
         _nameserver = nameserver;
+        _positiveTtl = ParseTTl(config);
+
         _udpManager = Akka.IO.Udp.Instance.Apply(Context.System).Manager;
         _tcpManager = Akka.IO.Tcp.Manager(Context.System);
         _stash = Context.CreateStash(typeof(DnsClient));
-        _log.Log(LogLevel.DebugLevel, "Constructed!");
     }
 
     protected override void PreStart()
@@ -226,11 +277,11 @@ internal class DnsClient : UntypedActorWithStash
                         if (msg.Flags.ResponseCode != DnsProtocol.ResponseCode.Success)
                         {
                             _log.Warning("DNS response failed: [{0}]", msg);
-                            Self.Tell(new UdpAnswer(msg.Questions, new Answer(msg.Id, ImmutableList<ResourceRecord>.Empty, ImmutableList<ResourceRecord>.Empty)));
+                            Self.Tell(new UdpAnswer(msg.Questions, new Answer(msg.Id, msg.FirstQuestionName, ImmutableList<ResourceRecord>.Empty, ImmutableList<ResourceRecord>.Empty)));
                         }
                         else
                         {
-                            Self.Tell(new UdpAnswer(msg.Questions, new Answer(msg.Id, msg.AnswerRecords, msg.AdditionalRecords)));
+                            Self.Tell(new UdpAnswer(msg.Questions, new Answer(msg.Id, msg.FirstQuestionName, msg.AnswerRecords, msg.AdditionalRecords)));
                         }
                     }
                 }
@@ -250,6 +301,8 @@ internal class DnsClient : UntypedActorWithStash
                     {
                         request.ReplyTo.Tell(udpAnswer.Content);
                         _inflightRequests.Remove(udpAnswer.Content.Id);
+                        if(UseTtl(udpAnswer.Content, out var ttl))
+                            _cache.Put(udpAnswer.Content, ttl);
                     }
                     else
                     {
@@ -270,6 +323,7 @@ internal class DnsClient : UntypedActorWithStash
                 if (_inflightRequests.TryGetValue(answer.Id, out var inFlight))
                 {
                     inFlight.ReplyTo.Tell(answer);
+                    
                     _inflightRequests.Remove(answer.Id);
                 }
                 else
@@ -324,6 +378,13 @@ internal class DnsClient : UntypedActorWithStash
         {
             _log.Warning("DNS transaction ID collision encountered for ID [{0}], ignoring. This likely indicates a bug.",
                 id);
+            return;
+        }
+        
+        var answer = _cache.GetCached(name);
+        if (answer != null)
+        {
+            sender.Tell(answer);
             return;
         }
 
