@@ -5,6 +5,7 @@
 // -----------------------------------------------------------------------
 
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
@@ -14,7 +15,7 @@ using Xunit.Abstractions;
 
 namespace Akka.Discovery.Dns.Tests;
 
-public class SrvRecordsDiscovery(ITestOutputHelper output) : TestKit.Xunit2.TestKit(
+public class SrvRecordsDiscovery(ITestOutputHelper output) : BaseSrvRecordsDiscovery(
     ConfigurationFactory.ParseString(@"
                 akka.loglevel = DEBUG
                 akka.discovery {
@@ -32,7 +33,61 @@ public class SrvRecordsDiscovery(ITestOutputHelper output) : TestKit.Xunit2.Test
                         ""1.1.1.1"" ]
                     
                 }
-            "), "dns-discovery", output)
+            "), output)
+{
+    
+}
+
+
+public class SrvNoCacheRecordsDiscovery(ITestOutputHelper output) : BaseSrvRecordsDiscovery(
+    ConfigurationFactory.ParseString(@"
+                akka.loglevel = DEBUG
+                akka.discovery {
+                    method = akka-dns
+                    akka-dns {
+                        class = ""Akka.Discovery.Dns.DnsServiceDiscovery, Akka.Discovery.Dns""
+                    }
+                }
+                akka.io.dns.resolver = async-dns
+                akka.io.dns.async-dns {
+                    class = ""Akka.Discovery.Dns.Internal.DnsClient, Akka.Discovery.Dns""
+                    provider-object = ""Akka.Discovery.Dns.Internal.AsyncDnsProvider, Akka.Discovery.Dns""
+                    nameservers = [ 
+                        ""1dot1dot1dot1.cloudflare-dns.com"", 
+                        ""1.1.1.1"" ]
+                    positive-ttl = never
+                    
+                }
+            "), output)
+{
+    
+}
+
+
+public class SrvTimeRecordsDiscovery(ITestOutputHelper output) : BaseSrvRecordsDiscovery(
+    ConfigurationFactory.ParseString(@"
+                akka.loglevel = DEBUG
+                akka.discovery {
+                    method = akka-dns
+                    akka-dns {
+                        class = ""Akka.Discovery.Dns.DnsServiceDiscovery, Akka.Discovery.Dns""
+                    }
+                }
+                akka.io.dns.resolver = async-dns
+                akka.io.dns.async-dns {
+                    class = ""Akka.Discovery.Dns.Internal.DnsClient, Akka.Discovery.Dns""
+                    provider-object = ""Akka.Discovery.Dns.Internal.AsyncDnsProvider, Akka.Discovery.Dns""
+                    nameservers = [ 
+                        ""1dot1dot1dot1.cloudflare-dns.com"", 
+                        ""1.1.1.1"" ]
+                    positive-ttl = 10s
+                    
+                }
+            "), output)
+{
+    
+}
+public abstract class BaseSrvRecordsDiscovery(Configuration.Config config , ITestOutputHelper output) : TestKit.Xunit2.TestKit(config, "dns-discovery", output)
 {
     [Fact(DisplayName = "DnsServiceDiscovery should be loadable via config")]
     public void DnsServiceDiscoveryShouldBeLoadableViaConfig()
@@ -54,15 +109,7 @@ public class SrvRecordsDiscovery(ITestOutputHelper output) : TestKit.Xunit2.Test
         var lookup = new Lookup(serviceName, portName, protocol);
         var resolved = await serviceDiscovery.Lookup(lookup, TimeSpan.FromSeconds(60));
 
-        // Skip assertion if no records found (some services might not have SRV records)
-        if (resolved.Addresses.Count == 0)
-        {
-            Output.WriteLine($"No SRV records found for {description}. Skipping assertions.");
-            return;
-        }
-
-        Output.WriteLine($"Found {resolved.Addresses.Count} records for {description}");
-
+        resolved.Addresses.Count.Should().BeGreaterThan(0, $"No SRV records found for {description}.");
         // Log information for diagnostic purposes
         Output.WriteLine($"Resolved targets: {resolved.Addresses.Count}");
         foreach (var addr in resolved.Addresses)
@@ -75,6 +122,46 @@ public class SrvRecordsDiscovery(ITestOutputHelper output) : TestKit.Xunit2.Test
         {
             address.Host.Should().NotBeNullOrEmpty("Host should not be empty");
             address.Port.Should().BeGreaterThan(0, "Port should be specified for SRV lookup");
+        }
+    }
+    
+    
+    [Theory(DisplayName = "DnsServiceDiscovery should handle A/AAAA lookup with real DNS")]
+    [InlineData("jabber.org",  "XMPP server")]
+    [InlineData("matrix.org",  "Matrix server")]
+    [InlineData("gmail.com",  "Gmail IMAPS")]
+    public async Task DnsServiceDiscoveryShouldHandleLookupOfA(string serviceName,
+        string description)
+    {
+        Output.WriteLine($"Testing A/AAAA lookup for {description}: {serviceName}");
+        var serviceDiscovery = new Dns.DnsServiceDiscovery((ExtendedActorSystem)Sys);
+
+        var lookup = new Lookup(serviceName);
+        var resolved = await serviceDiscovery.Lookup(lookup, TimeSpan.FromSeconds(60));
+
+        resolved.Addresses.Count.Should().BeGreaterThan(0, $"No A/AAAA records found for {description}.");
+
+        // Log information for diagnostic purposes
+        Output.WriteLine($"Resolved targets: {resolved.Addresses.Count}");
+        foreach (var addr in resolved.Addresses)
+        {
+            Output.WriteLine($"  Host: {addr.Host}, Address: {addr.Address}, Port: {addr.Port}");
+        }
+
+        resolved.Addresses
+            .Sum(x => x.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 ? 1 : 0)
+            .Should().BeGreaterThan(0, "At least one IPv6 record should be found");
+        
+        resolved.Addresses
+            .Sum(x => x.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? 1 : 0)
+            .Should().BeGreaterThan(0, "At least one IPv4 record should be found");
+
+        
+        resolved.Addresses.Count.Should().BeGreaterThan(0, "At least one SRV record should be found");
+        foreach (var address in resolved.Addresses)
+        {
+            address.Host.Should().NotBeNullOrEmpty("Host should not be empty");
+            address.Port.Should().BeNull( "Port should be specified for SRV lookup");
         }
     }
 }

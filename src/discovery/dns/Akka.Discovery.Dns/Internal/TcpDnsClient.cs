@@ -60,7 +60,7 @@ internal class TcpDnsClient : UntypedActor
                 
             case Tcp.CommandFailed failed when failed.Cmd is Tcp.Connect:
                 _log.Warning("Failed to connect to DNS server: {0}", failed);
-                _parent.Tell(DnsClient.TcpDropped);
+                _parent.Tell(AsyncDnsClient.TcpDropped);
                 Context.Stop(Self);
                 break;
                 
@@ -70,7 +70,7 @@ internal class TcpDnsClient : UntypedActor
                 
             case Tcp.ConnectionClosed _:
                 _log.Debug("Connection to DNS server closed");
-                _parent.Tell(DnsClient.TcpDropped);
+                _parent.Tell(AsyncDnsClient.TcpDropped);
                 Context.Stop(Self);
                 break;
                 
@@ -88,7 +88,7 @@ internal class TcpDnsClient : UntypedActor
                 
             case Status.Failure failure:
                 _log.Error(failure.Cause, "TCP DNS client failure");
-                _parent.Tell(DnsClient.TcpDropped);
+                _parent.Tell(AsyncDnsClient.TcpDropped);
                 Context.Stop(Self);
                 break;
         }
@@ -155,13 +155,15 @@ internal class TcpDnsClient : UntypedActor
                     _log.Debug("Received DNS response over TCP: {0}", dnsMessage);
                         
                     // Get resource records based on the response code
-                    var records = dnsMessage.Flags.ResponseCode == DnsProtocol.ResponseCode.Success 
-                        ? dnsMessage.AnswerRecords : Array.Empty<ResourceRecord>().ToImmutableList();
-                    var additionalRecs = dnsMessage.Flags.ResponseCode == DnsProtocol.ResponseCode.Success 
-                        ? dnsMessage.AdditionalRecords : Array.Empty<ResourceRecord>().ToImmutableList();
+                    // var records = dnsMessage.Flags.ResponseCode == DnsProtocol.ResponseCode.Success 
+                    //     ? dnsMessage.AnswerRecords : Array.Empty<ResourceRecord>().ToImmutableList();
+                    // var additionalRecs = dnsMessage.Flags.ResponseCode == DnsProtocol.ResponseCode.Success 
+                    //     ? dnsMessage.AdditionalRecords : Array.Empty<ResourceRecord>().ToImmutableList();
                         
                     // Forward the answer to the parent
-                    _parent.Tell(new DnsClient.Answer(dnsMessage.Id, dnsMessage.FirstQuestionName, records, additionalRecs));
+                    // _parent.Tell(new DnsClient.Answer(dnsMessage.Id, dnsMessage.FirstQuestionName, records, additionalRecs));
+                    // _parent.Tell(new DnsClient.Answer(dnsMessage.Id, dnsMessage.FirstQuestionName, records, additionalRecs));
+                    _parent.Tell(dnsMessage);
                     
                     // Remove the processed message from the buffer
                     var remaining = _currentPosition - (_expectedLength + 2);

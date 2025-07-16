@@ -31,7 +31,7 @@ public class DnsServiceDiscovery : ServiceDiscovery
     /// <summary>
     /// Cleans an IP string by removing leading '/' if present.
     /// </summary>
-    private string CleanIpString(string ipString) =>
+    private static string CleanIpString(string ipString) =>
         ipString.StartsWith("/") ? ipString.Substring(1) : ipString;
 
     public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
@@ -52,9 +52,9 @@ public class DnsServiceDiscovery : ServiceDiscovery
         try
         {
             // Send SRV question and await response
-            var result = await _dns.Ask<object>(new Internal.DnsClient.DnsQuestion(DnsClient.NewQueryId(), srvRequest, DnsProtocol.RecordType.Srv), resolveTimeout);
+            var result = await _dns.Ask<object>(new Internal.AsyncDnsClient.DnsQuestion(AsyncDnsClient.NewQueryId(), srvRequest, DnsProtocol.RecordType.Srv), resolveTimeout);
             
-            if (result is Internal.DnsClient.Answer answer)
+            if (result is DnsProtocol.Message answer)
             {
                 return SrvRecordsToResolved(srvRequest, answer);
             }
@@ -72,36 +72,44 @@ public class DnsServiceDiscovery : ServiceDiscovery
             throw;
         }
     }
-
-    private async Task<Resolved> LookupIp(Lookup lookup, TimeSpan resolveTimeout)
-    {
-        _log.Debug("Lookup[{0}] translated to A/AAAA lookup as does not have portName and protocol", lookup);
-        
-        // For standard IP lookups, continue to use the built-in Akka.IO.Dns resolver
-        return await AskResolveIp(lookup.ServiceName, resolveTimeout);
-    }
-
-    private async Task<Resolved> AskResolveIp(string serviceName, TimeSpan timeout)
+    
+    private async Task<Resolved> LookupIp(Lookup lookup, TimeSpan timeout)
     {
         try
         {
-            var result = await _dns.Ask<object>(new Akka.IO.Dns.Resolve(serviceName), timeout);
+            _log.Debug("Lookup[{0}] translated to A/AAAA lookup as does not have portName and protocol", lookup.ServiceName);
+            
+            // use IO.Dns.Resolve for compatibility with both InetAddressResolver and AsyncDnsClient
+            var result = await _dns.Ask<object>(new Akka.IO.Dns.Resolve(lookup.ServiceName), timeout);
 
+            //inet-address response
             if (result is IO.Dns.Resolved resolved)
             {
                 if (resolved.IsSuccess)
                 {
-                    var parsed = IpRecordsToResolved(serviceName, resolved);
+                    var parsed = IoDnsMessageToResolved(lookup.ServiceName, resolved);
                     _log.Debug("lookup result: {0}", parsed);
                     return parsed;
                 }
                 
-                _log.Error(resolved.Exception, "Failed to resolve serviceName: {0}", serviceName);
-                return new Resolved(serviceName, ImmutableList<ResolvedTarget>.Empty);
+                _log.Error(resolved.Exception, "Failed to resolve serviceName: {0}", lookup.ServiceName);
+                return new Resolved(lookup.ServiceName, ImmutableList<ResolvedTarget>.Empty);
+            }
+            //async-dns response
+            if (result is DnsProtocol.Message answer)
+            {
+                if (answer.Flags.ResponseCode == DnsProtocol.ResponseCode.Success)
+                {
+                    var parsed = DnsMessageToResolved(lookup.ServiceName, answer);
+                    _log.Debug("lookup result: {0}", parsed);
+                    return parsed;
+                }
+                _log.Error("Failed to resolve serviceName=[{0}], answer=[{1}]", lookup.ServiceName, answer);
+                return new Resolved(lookup.ServiceName, ImmutableList<ResolvedTarget>.Empty);
             }
 
             _log.Warning("Resolved UNEXPECTED (resolving to Nil): {0}", result.GetType());
-            return new Resolved(serviceName, ImmutableList<ResolvedTarget>.Empty);
+            return new Resolved(lookup.ServiceName, ImmutableList<ResolvedTarget>.Empty);
         }
         catch (AskTimeoutException)
         {
@@ -114,41 +122,15 @@ public class DnsServiceDiscovery : ServiceDiscovery
         }
     }
 
-    // private async Task<Resolved> AskResolve(string srvRequest, TimeSpan timeout)
-    // {
-    //     try
-    //     {
-    //         var result = await _dns.Ask<object>(new IO.Dns.Resolve(srvRequest), timeout);
-    //
-    //         if (result is IO.Dns.Resolved resolved)
-    //         {
-    //             _log.Debug("Lookup result: {0}", resolved);
-    //             return SrvRecordsToResolved(srvRequest, resolved);
-    //         }
-    //
-    //         _log.Warning("Resolved UNEXPECTED (resolving to Nil): {0}", result.GetType());
-    //         return new Resolved(srvRequest, ImmutableList<ResolvedTarget>.Empty);
-    //     }
-    //     catch (AskTimeoutException)
-    //     {
-    //         throw new TimeoutException($"Dns resolve did not respond within {timeout}");
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         _log.Error(ex, "Error during DNS resolution");
-    //         throw;
-    //     }
-    // }
-
     /// <summary>
     /// Converts SRV records to a Resolved object from our custom DNS client response.
     /// </summary>
-    private Resolved SrvRecordsToResolved(string srvRequest, Internal.DnsClient.Answer resolved)
+    private static Resolved SrvRecordsToResolved(string srvRequest, Internal.DnsProtocol.Message resolved)
     {
         var ips = new Dictionary<string, IList<IPAddress>>();
         
         // Process SRV records
-        var srvRecords = resolved.Records.OfType<Internal.SrvRecord>().ToList();
+        var srvRecords = resolved.AnswerRecords.OfType<Internal.SrvRecord>().ToList();
         
         // Process additional A/AAAA records for hostname resolution
         foreach (var aRecord in resolved.AdditionalRecords.OfType<Internal.ARecord>())
@@ -203,19 +185,29 @@ public class DnsServiceDiscovery : ServiceDiscovery
     /// <summary>
     /// Converts IP records to a Resolved object.
     /// </summary>
-    private Resolved IpRecordsToResolved(string serviceName, Akka.IO.Dns.Resolved resolved)
-    {
-        var addresses =
+    
+    private static  Resolved IpsToResolved(string serviceName, IEnumerable<IPAddress>resolved) =>
+        new(
+            serviceName, 
+            resolved.Select(ipAddress =>
+                    new ResolvedTarget(CleanIpString(ipAddress.ToString()), null, ipAddress))
+                .ToImmutableList()
+        );
+    
+    private static Resolved IoDnsMessageToResolved(string serviceName, Akka.IO.Dns.Resolved resolved) =>
+        IpsToResolved(serviceName, 
             new[]
             {
-                resolved.Ipv4.Select(aRecord => 
-                    new ResolvedTarget(CleanIpString(aRecord.ToString()), null, aRecord)),
-                resolved.Ipv6.Select(aaaaRecord =>
-                    new ResolvedTarget(CleanIpString(aaaaRecord.ToString()), null, aaaaRecord))
-            }
-                .SelectMany(x => x)
-                .ToImmutableList();
-
-        return new Resolved(serviceName, addresses);
-    }
+                resolved.Ipv4, 
+                resolved.Ipv6
+            }.SelectMany(x => x));
+    
+    private static Resolved DnsMessageToResolved(string serviceName, DnsProtocol.Message resolved) =>
+        IpsToResolved(serviceName,
+            new[]
+                {
+                    DnsProtocol.Message.ToIpAddresses(resolved, DnsProtocol.RecordType.A),
+                    DnsProtocol.Message.ToIpAddresses(resolved, DnsProtocol.RecordType.Aaaa)
+                }
+                .SelectMany(x => x));
 }

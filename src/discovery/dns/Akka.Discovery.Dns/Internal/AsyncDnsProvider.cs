@@ -13,7 +13,7 @@ public class AsyncDnsProvider : IDnsProvider
     /// <summary>
     /// TBD
     /// </summary>
-    public Type ActorClass => typeof (DnsClient);
+    public Type ActorClass => typeof (AsyncDnsClient);
 
     /// <summary>
     /// TBD

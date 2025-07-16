@@ -151,6 +151,6 @@ public class AsyncDnsResolverOptions : IHoconOption
         builder.AddHocon(ToHocon(), HoconAddMode.Prepend);
     }
     public string ConfigPath => DefaultPath;
-    public Type Class => typeof(DnsClient);
+    public Type Class => typeof(AsyncDnsClient);
     public Type Provider => typeof(AsyncDnsProvider);
 }

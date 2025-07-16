@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text;
+using Akka.Util;
 
 namespace Akka.Discovery.Dns.Internal;
 
@@ -146,7 +148,7 @@ public static class DnsProtocol
     /// <summary>
     /// DNS message
     /// </summary>
-    public class Message
+    public record Message
     {
         public short Id { get; }
         public MessageFlags Flags { get; }
@@ -159,9 +161,9 @@ public static class DnsProtocol
             short id,
             MessageFlags flags,
             ImmutableList<Question> questions,
-            ImmutableList<ResourceRecord> answerRecords = null,
-            ImmutableList<ResourceRecord> authorityRecords = null,
-            ImmutableList<ResourceRecord> additionalRecords = null)
+            ImmutableList<ResourceRecord>? answerRecords = null,
+            ImmutableList<ResourceRecord>? authorityRecords = null,
+            ImmutableList<ResourceRecord>? additionalRecords = null)
         {
             Id = id;
             Flags = flags ?? new MessageFlags();
@@ -427,5 +429,57 @@ public static class DnsProtocol
                 return new SrvRecord(name, @class, ttl, priority, weight, port, target);
             }
         }
+        
+        /// <summary>
+        /// Find minimal TTL value
+        /// </summary>
+        /// <param name="answer"></param>
+        /// <returns></returns>
+        public static uint MinTtl(Message answer)
+        {
+            uint rm = UInt32.MaxValue;
+            uint arm = UInt32.MaxValue;
+            if(answer.AnswerRecords.IsEmpty == false) 
+                rm = answer.AnswerRecords.Select(x => x.TimeToLive).Min();
+            if(answer.AdditionalRecords.IsEmpty == false) 
+                arm = answer.AdditionalRecords.Select(x => x.TimeToLive).Min();
+            if (rm == UInt32.MaxValue && arm == UInt32.MaxValue)
+                return 0;
+            return rm < arm ? rm : arm;
+        }
+        
+        public static IEnumerable<ResourceRecord> RecordsOfType(Message answer, DnsProtocol.RecordType recordType) =>
+            new[]
+            {
+                answer.AnswerRecords.Where(x => x.Type == recordType),
+                answer.AdditionalRecords.Where(x => x.Type == recordType)
+            }
+                .SelectMany(x => x);
+        
+        public static IEnumerable<IPAddress> ToIpAddresses(Message answer, DnsProtocol.RecordType recordType)  =>
+            RecordsOfType(answer, recordType)
+                .Select(x => 
+                    x switch { 
+                        AaaaRecord aaaa => aaaa.Ip, 
+                        ARecord a => a.Ip,
+                        
+                        _ => 
+                        IPAddress.TryParse(x.Name, out var ip) 
+                        ? Option<IPAddress>.Create(ip) 
+                        : Option<IPAddress>.None }) //this might lose data if answer is hostname 
+                .Where(x => x.HasValue)
+                .Select(x => x.Value);
+        
+        /// <summary>
+        /// Combine two DNS messages (typically one with A records and one with AAAA records)
+        /// </summary>
+        public static Message CombineResponses(Message message1, Message message2) =>
+            new(
+                message1.Id,
+                message1.Flags,
+                message1.Questions.AddRange(message2.Questions),
+                message1.AnswerRecords.AddRange(message2.AnswerRecords),
+                message1.AuthorityRecords.AddRange(message2.AuthorityRecords),
+                message1.AdditionalRecords.AddRange(message2.AdditionalRecords));
     }
 }

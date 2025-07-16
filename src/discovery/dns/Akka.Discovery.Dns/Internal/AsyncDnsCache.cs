@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Akka.IO;
 using Akka.Util;
-using TResolved = Akka.Discovery.Dns.Internal.DnsClient.Answer;
+using TResolved = Akka.Discovery.Dns.Internal.DnsProtocol.Message;
 namespace Akka.Discovery.Dns.Internal;
 
 /// <summary>
@@ -52,7 +52,7 @@ public class AsyncDnsCache : DnsBase, IPeriodicCacheCleanup
 
     internal static IO.Dns.Resolved? Convert(TResolved? answer) =>
         answer == null ? null : 
-        new(answer.Name, 
+        new(answer.FirstQuestionName, 
             TResolved.ToIpAddresses(answer, DnsProtocol.RecordType.A), 
             TResolved.ToIpAddresses(answer, DnsProtocol.RecordType.Aaaa)
             );
@@ -126,10 +126,10 @@ public class AsyncDnsCache : DnsBase, IPeriodicCacheCleanup
 
             var cache = new Dictionary<string, CacheEntry>(_cache);
 
-            cache[answer.Name] = new CacheEntry(answer, until);
+            cache[answer.FirstQuestionName] = new CacheEntry(answer, until);
 
             return new Cache(
-                queue: new SortedSet<ExpiryEntry>(_queue, new ExpiryEntryComparer()) { new(answer.Name, until) },
+                queue: new SortedSet<ExpiryEntry>(_queue, new ExpiryEntryComparer()) { new(answer.FirstQuestionName, until) },
                 cache: cache,
                 clock: _clock); 
         }

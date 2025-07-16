@@ -60,7 +60,7 @@ internal class AsyncDnsManager : ActorBase, IRequiresMessageQueue<IUnboundedMess
             .Where(x => x.HasValue)
             .Select(opt =>
                 Context.ActorOf(
-                    Props.Create(typeof(DnsClient), ext.Cache, ext.Settings.ResolverConfig, opt.Value.endpoint)
+                    Props.Create(typeof(AsyncDnsClient), ext.Cache, ext.Settings.ResolverConfig, opt.Value.endpoint)
                         .WithDeploy(Deploy.Local)
                         .WithDispatcher(ext.Settings.Dispatcher)
                     , opt.Value.name)
@@ -77,13 +77,6 @@ internal class AsyncDnsManager : ActorBase, IRequiresMessageQueue<IUnboundedMess
         _resolver.Forward(message);
         return true;
     }
-
-    /// <summary>
-    /// Translate SimpleDnsManager resolve request into DnsClient.DnsQuestion
-    /// </summary>
-    /// <param name="r"></param>
-    /// <returns></returns>
-    DnsClient.DnsQuestion Convert(IO.Dns.Resolve r) => new(DnsClient.NewQueryId(), r.Name, DnsProtocol.RecordType.Any);
     
     /// <summary>
     /// Handles DNS resolution requests and cache cleanup messages.
@@ -94,9 +87,10 @@ internal class AsyncDnsManager : ActorBase, IRequiresMessageQueue<IUnboundedMess
     {
         switch (message)
         {
+            // Handle standard DNS resolve requests by forwarding both A and AAAA requests
             case IO.Dns.Resolve r:
-                return HandleRequest(Convert(r));
-            case DnsClient.DnsQuestion question:
+                return HandleRequest(r);
+            case AsyncDnsClient.DnsQuestion question:
                 return HandleRequest(question);
             case CacheCleanup _:
                 _cacheCleanup?.CleanUp();
