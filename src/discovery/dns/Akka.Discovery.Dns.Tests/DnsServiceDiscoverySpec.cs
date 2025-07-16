@@ -15,7 +15,21 @@ using Xunit.Abstractions;
 
 namespace Akka.Discovery.Dns.Tests;
 
-public class SrvRecordsDiscovery(ITestOutputHelper output) : BaseSrvRecordsDiscovery(
+
+public class DnsDiscoveryWithDefaultResolver(ITestOutputHelper output) : DnsServiceDiscoveryBaseSpec(
+    ConfigurationFactory.ParseString(@"
+                akka.loglevel = DEBUG
+                akka.discovery {
+                    method = akka-dns
+                    akka-dns {
+                        class = ""Akka.Discovery.Dns.DnsServiceDiscovery, Akka.Discovery.Dns""
+                    }
+                }
+            "), output)
+{
+    
+}
+public class DnsServiceDiscoveryWithDefaultCache(ITestOutputHelper output) : DnsServiceDiscoveryBaseSpec(
     ConfigurationFactory.ParseString(@"
                 akka.loglevel = DEBUG
                 akka.discovery {
@@ -39,7 +53,7 @@ public class SrvRecordsDiscovery(ITestOutputHelper output) : BaseSrvRecordsDisco
 }
 
 
-public class SrvNoCacheRecordsDiscovery(ITestOutputHelper output) : BaseSrvRecordsDiscovery(
+public class DnsServiceDiscoveryWithoutCache(ITestOutputHelper output) : DnsServiceDiscoveryBaseSpec(
     ConfigurationFactory.ParseString(@"
                 akka.loglevel = DEBUG
                 akka.discovery {
@@ -63,8 +77,7 @@ public class SrvNoCacheRecordsDiscovery(ITestOutputHelper output) : BaseSrvRecor
     
 }
 
-
-public class SrvTimeRecordsDiscovery(ITestOutputHelper output) : BaseSrvRecordsDiscovery(
+public class DnsServiceDiscoveryWithFixedCacheTime(ITestOutputHelper output) : DnsServiceDiscoveryBaseSpec(
     ConfigurationFactory.ParseString(@"
                 akka.loglevel = DEBUG
                 akka.discovery {
@@ -87,7 +100,7 @@ public class SrvTimeRecordsDiscovery(ITestOutputHelper output) : BaseSrvRecordsD
 {
     
 }
-public abstract class BaseSrvRecordsDiscovery(Configuration.Config config , ITestOutputHelper output) : TestKit.Xunit2.TestKit(config, "dns-discovery", output)
+public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , ITestOutputHelper output) : TestKit.Xunit2.TestKit(config, "dns-discovery", output)
 {
     [Fact(DisplayName = "DnsServiceDiscovery should be loadable via config")]
     public void DnsServiceDiscoveryShouldBeLoadableViaConfig()
@@ -121,7 +134,14 @@ public abstract class BaseSrvRecordsDiscovery(Configuration.Config config , ITes
         foreach (var address in resolved.Addresses)
         {
             address.Host.Should().NotBeNullOrEmpty("Host should not be empty");
-            address.Port.Should().BeGreaterThan(0, "Port should be specified for SRV lookup");
+            if (serviceDiscovery.CanLookupSrv)
+            {
+                address.Port.Should().BeGreaterThan(0, "Port should be specified for SRV lookup");
+            }
+            else
+            {
+                address.Port.Should().BeNull( "Port should not be specified if resolver doesn't support SRV lookup");
+            }
         }
     }
     

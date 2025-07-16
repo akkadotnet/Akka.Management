@@ -18,16 +18,17 @@ public class DnsServiceDiscovery : ServiceDiscovery
 {
     private readonly ILoggingAdapter _log;
     private readonly IActorRef _dns;
-    private readonly ExtendedActorSystem _system;
+    internal bool CanLookupSrv { get;  }
 
     public DnsServiceDiscovery(ExtendedActorSystem system)
     {
-        _system = system;
         _log = Logging.GetLogger(system, this);
-        _dns = Akka.IO.Dns.Instance.CreateExtension(_system).Manager;
+        var dns = Akka.IO.Dns.Instance.CreateExtension(system);
+        _dns = dns.Manager;
+        CanLookupSrv = dns.Provider is IDnsProviderWithSrvLookup;
     }
 
-
+    
     /// <summary>
     /// Cleans an IP string by removing leading '/' if present.
     /// </summary>
@@ -36,7 +37,7 @@ public class DnsServiceDiscovery : ServiceDiscovery
 
     public override async Task<Resolved> Lookup(Lookup lookup, TimeSpan resolveTimeout)
     {
-        if (!string.IsNullOrWhiteSpace(lookup.PortName) && !string.IsNullOrWhiteSpace(lookup.Protocol))
+        if (CanLookupSrv && !string.IsNullOrWhiteSpace(lookup.PortName) && !string.IsNullOrWhiteSpace(lookup.Protocol))
         {
             return await LookupSrv(lookup, resolveTimeout);
         }

@@ -3,7 +3,14 @@ using Akka.IO;
 
 namespace Akka.Discovery.Dns.Internal;
 
-public class AsyncDnsProvider : IDnsProvider
+/// <summary>
+/// 
+/// </summary>
+public interface IDnsProviderWithSrvLookup : IDnsProvider
+{
+    
+}
+public class AsyncDnsProvider : IDnsProviderWithSrvLookup
 {
     /// <summary>
     /// TBD
