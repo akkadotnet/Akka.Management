@@ -20,10 +20,10 @@ public class AsyncDnsProvider : IDnsProviderWithSrvLookup
     /// <summary>
     /// TBD
     /// </summary>
-    public Type ActorClass => typeof (AsyncDnsClient);
+    public virtual Type ActorClass => typeof (AsyncDnsClient);
 
     /// <summary>
     /// TBD
     /// </summary>
-    public Type ManagerClass => typeof (AsyncDnsManager);
+    public virtual Type ManagerClass => typeof (AsyncDnsManager);
 }

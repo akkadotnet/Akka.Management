@@ -6,9 +6,12 @@
 
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
+using Akka.Discovery.Dns.Internal;
+using Akka.IO;
 using FluentAssertions;
 using Xunit;
 using Xunit.Abstractions;
@@ -40,7 +43,6 @@ public class DnsServiceDiscoveryWithDefaultCache(ITestOutputHelper output) : Dns
                 }
                 akka.io.dns.resolver = async-dns
                 akka.io.dns.async-dns {
-                    class = ""Akka.Discovery.Dns.Internal.DnsClient, Akka.Discovery.Dns""
                     provider-object = ""Akka.Discovery.Dns.Internal.AsyncDnsProvider, Akka.Discovery.Dns""
                     nameservers = [ 
                         ""1dot1dot1dot1.cloudflare-dns.com"", 
@@ -64,7 +66,6 @@ public class DnsServiceDiscoveryWithoutCache(ITestOutputHelper output) : DnsServ
                 }
                 akka.io.dns.resolver = async-dns
                 akka.io.dns.async-dns {
-                    class = ""Akka.Discovery.Dns.Internal.DnsClient, Akka.Discovery.Dns""
                     provider-object = ""Akka.Discovery.Dns.Internal.AsyncDnsProvider, Akka.Discovery.Dns""
                     nameservers = [ 
                         ""1dot1dot1dot1.cloudflare-dns.com"", 
@@ -88,7 +89,6 @@ public class DnsServiceDiscoveryWithFixedCacheTime(ITestOutputHelper output) : D
                 }
                 akka.io.dns.resolver = async-dns
                 akka.io.dns.async-dns {
-                    class = ""Akka.Discovery.Dns.Internal.DnsClient, Akka.Discovery.Dns""
                     provider-object = ""Akka.Discovery.Dns.Internal.AsyncDnsProvider, Akka.Discovery.Dns""
                     nameservers = [ 
                         ""1dot1dot1dot1.cloudflare-dns.com"", 
@@ -100,6 +100,68 @@ public class DnsServiceDiscoveryWithFixedCacheTime(ITestOutputHelper output) : D
 {
     
 }
+
+
+public class DnsServiceDiscoveryWithTcpFallback(ITestOutputHelper output) : DnsServiceDiscoveryBaseSpec(
+    ConfigurationFactory.ParseString($$"""
+                {
+                     akka.loglevel = DEBUG
+                     akka.discovery {
+                         method = akka-dns
+                         akka-dns {
+                            class = "Akka.Discovery.Dns.DnsServiceDiscovery, Akka.Discovery.Dns"
+                         }
+                     }
+                     akka.io.dns.resolver = async-dns
+                     akka.io.dns.async-dns {
+                         provider-object = "{{typeof(ForceTcpDnsProvider).FullName }}, {{typeof(ForceTcpDnsProvider).Assembly.GetName().Name}}"
+                         nameservers = [ 
+                             "1dot1dot1dot1.cloudflare-dns.com", 
+                             "1.1.1.1" ]
+                     }
+                 }
+     """), output)
+{
+     public class ForceTcpDnsProvider : AsyncDnsProvider
+     {
+         public override Type ActorClass { get; } = typeof(ForceTcpDnsClient);
+     }
+     internal class ForceTcpDnsClient(AsyncDnsCache cache, Configuration.Config config, EndPoint nameserver) : AsyncDnsClient(cache, config, nameserver)
+    {
+        // Override to force TCP mode by simulating truncation
+        protected override void Ready(object message)
+        {
+            if (message is Udp.Received received)
+            {
+                // Get the data as a byte array
+                var data = received.Data.ToArray();
+
+                // DNS header: bytes 2-3 contain the flags field
+                // TC flag is bit 9 (0-based, counting from the right) or 0x0200
+                // We need to set this bit to indicate truncation
+                if (data.Length >= 4) // Make sure we have at least the header
+                {
+                    // Set the TC bit in the flags field (network byte order)
+                    data[2] |= 0x02; // Set bit 1 in byte 2 (the TC flag)
+
+                    // Create a new received message with the modified data
+                    var modifiedReceived = new Udp.Received(
+                        ByteString.FromBytes(data),
+                        received.Sender);
+
+                    // Process with the modified data
+                    base.Ready(modifiedReceived);
+                    return;
+                }
+            }
+
+            // For all other messages, use normal behavior
+            base.Ready(message);
+
+        }
+    }
+}
+
 public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , ITestOutputHelper output) : TestKit.Xunit2.TestKit(config, "dns-discovery", output)
 {
     [Fact(DisplayName = "DnsServiceDiscovery should be loadable via config")]

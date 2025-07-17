@@ -60,7 +60,7 @@ internal class AsyncDnsManager : ActorBase, IRequiresMessageQueue<IUnboundedMess
             .Where(x => x.HasValue)
             .Select(opt =>
                 Context.ActorOf(
-                    Props.Create(typeof(AsyncDnsClient), ext.Cache, ext.Settings.ResolverConfig, opt.Value.endpoint)
+                    Props.Create(ext.Provider.ActorClass, ext.Cache, ext.Settings.ResolverConfig, opt.Value.endpoint)
                         .WithDeploy(Deploy.Local)
                         .WithDispatcher(ext.Settings.Dispatcher)
                     , opt.Value.name)

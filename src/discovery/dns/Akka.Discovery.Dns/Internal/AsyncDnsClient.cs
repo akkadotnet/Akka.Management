@@ -139,7 +139,7 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
         }
     }
 
-    private void Ready(object message)
+    protected virtual void Ready(object message)
     {
         switch (message)
         {
@@ -172,75 +172,7 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
                     }
                     else
                     {
-                        if (msg.Flags.ResponseCode != DnsProtocol.ResponseCode.Success)
-                        {
-                            _log.Warning("DNS response failed: [{0}]", msg);
-                        }
-                        if (_inflightRequests.TryGetValue(msg.Id, out var request))
-                        {
-                            var sentQuestions = request.Message.Questions.SelectMany(WithAndWithoutTrailingDots).ToArray().ToImmutableArray();
-                            var answeredQuestions = msg.Questions.SelectMany(WithAndWithoutTrailingDots).ToImmutableArray();
-
-                            if (answeredQuestions.Length == 0 || sentQuestions.Intersect(answeredQuestions).Any())
-                            {
-                                // Check if this is part of a linked request that needs both A and AAAA records
-                                if (request.LinkedRequestId.HasValue)
-                                {
-                                    var linkedId = request.LinkedRequestId.Value;
-                                    if (_inflightRequests.TryGetValue(linkedId, out var linkedReq))
-                                    {
-
-                                        if (linkedReq.Response != null)
-                                        {
-                                            // We have both responses now, combine them
-                                            var combinedMessage =
-                                                DnsProtocol.Message.CombineResponses(linkedReq.Response, msg);
-                                            request.ReplyTo.Tell(combinedMessage);
-
-                                            // Clean up
-                                            _inflightRequests.Remove(msg.Id);
-                                            _inflightRequests.Remove(linkedId);
-
-                                            // Cache the combined results
-                                            if (GetCacheTtl(combinedMessage, out long combinedTtl))
-                                                cache.Put(combinedMessage, combinedTtl);
-                                        }
-                                        else
-                                        {
-                                            request.Response = msg;
-                                            // Cache first result
-                                            if (GetCacheTtl(msg, out long combinedTtl))
-                                                cache.Put(msg, combinedTtl);
-                                        }
-
-                                    }
-                                    // We're waiting for the other response
-                                }
-                                else
-                                {
-                                    // This is a regular request, not part of a resolve context
-                                    request.ReplyTo.Tell(msg);
-                                    _inflightRequests.Remove(msg.Id);
-                                
-                                    if (GetCacheTtl(msg, out long ttl))
-                                        cache.Put(msg, ttl);
-                                }
-                            }
-                            else
-                            {
-                                _log.Warning("Martian DNS response for id [{0}]. Expected names [{1}], received names [{2}]. Discarding response",
-                                    msg.Id,
-                                    string.Join(", ", sentQuestions),
-                                    string.Join(", ", answeredQuestions));
-                            }
-                        }
-                        else
-                        {
-                            _log.Warning("Client for id [{0}] not found. Discarding response.", msg.Id);
-                        }
-                     
-                        
-                        
+                        Self.Tell(msg);   
                     }
                 }
                 catch (Exception ex)
@@ -248,21 +180,79 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
                     _log.Error(ex, "Error processing DNS response");
                 }
                 break;
-                
 
-            case DnsProtocol.Message answer:
+
+            case DnsProtocol.Message msg:
             {
-                if (_inflightRequests.TryGetValue(answer.Id, out var inFlight))
+                if (msg.Flags.ResponseCode != DnsProtocol.ResponseCode.Success)
                 {
-                    inFlight.ReplyTo.Tell(answer);
-                    
-                    _inflightRequests.Remove(answer.Id);
+                    _log.Warning("DNS response failed: [{0}]", msg);
+                }
+
+                if (_inflightRequests.TryGetValue(msg.Id, out var request))
+                {
+                    var sentQuestions = request.Message.Questions.SelectMany(WithAndWithoutTrailingDots).ToArray()
+                        .ToImmutableArray();
+                    var answeredQuestions = msg.Questions.SelectMany(WithAndWithoutTrailingDots).ToImmutableArray();
+
+                    if (answeredQuestions.Length == 0 || sentQuestions.Intersect(answeredQuestions).Any())
+                    {
+                        // Check if this is part of a linked request that needs both A and AAAA records
+                        if (request.LinkedRequestId.HasValue)
+                        {
+                            var linkedId = request.LinkedRequestId.Value;
+                            if (_inflightRequests.TryGetValue(linkedId, out var linkedReq))
+                            {
+
+                                if (linkedReq.Response != null)
+                                {
+                                    // We have both responses now, combine them
+                                    var combinedMessage =
+                                        DnsProtocol.Message.CombineResponses(linkedReq.Response, msg);
+                                    request.ReplyTo.Tell(combinedMessage);
+
+                                    // Clean up
+                                    _inflightRequests.Remove(msg.Id);
+                                    _inflightRequests.Remove(linkedId);
+
+                                    // Cache the combined results
+                                    if (GetCacheTtl(combinedMessage, out long combinedTtl))
+                                        cache.Put(combinedMessage, combinedTtl);
+                                }
+                                else
+                                {
+                                    request.Response = msg;
+                                    // Cache first result
+                                    if (GetCacheTtl(msg, out long combinedTtl))
+                                        cache.Put(msg, combinedTtl);
+                                }
+
+                            }
+                            // We're waiting for the other response
+                        }
+                        else
+                        {
+                            // This is a regular request, not part of a resolve context
+                            request.ReplyTo.Tell(msg);
+                            _inflightRequests.Remove(msg.Id);
+
+                            if (GetCacheTtl(msg, out long ttl))
+                                cache.Put(msg, ttl);
+                        }
+                    }
+                    else
+                    {
+                        _log.Warning(
+                            "Martian DNS response for id [{0}]. Expected names [{1}], received names [{2}]. Discarding response",
+                            msg.Id,
+                            string.Join(", ", sentQuestions),
+                            string.Join(", ", answeredQuestions));
+                    }
                 }
                 else
                 {
-                    _log.Debug("Client for id [{0}] not found. Discarding response.", answer.Id);
+                    _log.Warning("Client for id [{0}] not found. Discarding response.", msg.Id);
                 }
-
                 break;
             }
 
@@ -398,7 +388,7 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
         }
     }
 
-    private DnsProtocol.Message CreateMessage(string name, short id, DnsProtocol.RecordType recordType)
+    internal virtual DnsProtocol.Message CreateMessage(string name, short id, DnsProtocol.RecordType recordType)
     {
         var question = new DnsProtocol.Question(name, recordType, DnsProtocol.RecordClass.In);
         return new DnsProtocol.Message(

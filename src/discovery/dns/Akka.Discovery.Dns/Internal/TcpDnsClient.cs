@@ -13,14 +13,12 @@ namespace Akka.Discovery.Dns.Internal;
 /// TCP DNS client actor for handling DNS requests over TCP.
 /// Used as a fallback when UDP responses are truncated.
 /// </summary>
-internal class TcpDnsClient : UntypedActor
+internal class TcpDnsClient(IActorRef tcpManager, EndPoint nameserver, IActorRef parent)
+    : UntypedActor
 {
-    private readonly EndPoint _nameserver;
-    private readonly IActorRef _parent;
-    private readonly ILoggingAdapter _log;
-    private readonly IActorRef _tcpManager;
+    private readonly ILoggingAdapter _log = Context.GetLogger();
 
-    private IActorRef _connection;
+    private IActorRef? _connection;
     private byte[] _readBuffer = new byte[2048]; // Buffer for reading DNS responses
     private int _expectedLength = -1; // Expected length of current DNS response
     private int _currentPosition = 0; // Current position in the buffer
@@ -28,18 +26,10 @@ internal class TcpDnsClient : UntypedActor
     // Pending requests that need to be sent once connection is established
     private Queue<DnsProtocol.Message> _pendingRequests = new Queue<DnsProtocol.Message>();
 
-    public TcpDnsClient(IActorRef tcpManager, EndPoint nameserver, IActorRef parent)
-    {
-        _tcpManager = tcpManager;
-        _nameserver = nameserver;
-        _parent = parent;
-        _log = Context.GetLogger();
-    }
-
     protected override void PreStart()
     {
         // Connect to the DNS server over TCP
-        _tcpManager.Tell(new Tcp.Connect(_nameserver));
+        tcpManager.Tell(new Tcp.Connect(nameserver));
     }
 
     protected override void OnReceive(object message)
@@ -60,7 +50,7 @@ internal class TcpDnsClient : UntypedActor
                 
             case Tcp.CommandFailed failed when failed.Cmd is Tcp.Connect:
                 _log.Warning("Failed to connect to DNS server: {0}", failed);
-                _parent.Tell(AsyncDnsClient.TcpDropped);
+                parent.Tell(AsyncDnsClient.TcpDropped);
                 Context.Stop(Self);
                 break;
                 
@@ -70,7 +60,7 @@ internal class TcpDnsClient : UntypedActor
                 
             case Tcp.ConnectionClosed _:
                 _log.Debug("Connection to DNS server closed");
-                _parent.Tell(AsyncDnsClient.TcpDropped);
+                parent.Tell(AsyncDnsClient.TcpDropped);
                 Context.Stop(Self);
                 break;
                 
@@ -88,7 +78,7 @@ internal class TcpDnsClient : UntypedActor
                 
             case Status.Failure failure:
                 _log.Error(failure.Cause, "TCP DNS client failure");
-                _parent.Tell(AsyncDnsClient.TcpDropped);
+                parent.Tell(AsyncDnsClient.TcpDropped);
                 Context.Stop(Self);
                 break;
         }
@@ -115,7 +105,7 @@ internal class TcpDnsClient : UntypedActor
         catch (Exception ex)
         {
             _log.Error(ex, "Failed to send DNS message over TCP");
-            _parent.Tell(new Status.Failure(ex));
+            parent.Tell(new Status.Failure(ex));
         }
     }
 
@@ -153,17 +143,8 @@ internal class TcpDnsClient : UntypedActor
                     // Parse and process the message
                     var dnsMessage = DnsProtocol.Message.Parse(messageData);
                     _log.Debug("Received DNS response over TCP: {0}", dnsMessage);
-                        
-                    // Get resource records based on the response code
-                    // var records = dnsMessage.Flags.ResponseCode == DnsProtocol.ResponseCode.Success 
-                    //     ? dnsMessage.AnswerRecords : Array.Empty<ResourceRecord>().ToImmutableList();
-                    // var additionalRecs = dnsMessage.Flags.ResponseCode == DnsProtocol.ResponseCode.Success 
-                    //     ? dnsMessage.AdditionalRecords : Array.Empty<ResourceRecord>().ToImmutableList();
-                        
-                    // Forward the answer to the parent
-                    // _parent.Tell(new DnsClient.Answer(dnsMessage.Id, dnsMessage.FirstQuestionName, records, additionalRecs));
-                    // _parent.Tell(new DnsClient.Answer(dnsMessage.Id, dnsMessage.FirstQuestionName, records, additionalRecs));
-                    _parent.Tell(dnsMessage);
+                    
+                    parent.Tell(dnsMessage);
                     
                     // Remove the processed message from the buffer
                     var remaining = _currentPosition - (_expectedLength + 2);
