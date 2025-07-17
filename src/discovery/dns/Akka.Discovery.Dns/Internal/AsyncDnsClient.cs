@@ -73,19 +73,6 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
         public short? LinkedRequestId { get; set; } = linkedRequestId;
     }
     
-    abstract record PositiveTtl;
-
-    record Forever : PositiveTtl
-    {
-        public static readonly Forever Instance = new Forever();
-    }
-
-    record Never : PositiveTtl
-    {
-        public static readonly Never Instance = new Never();
-    }
-
-    record TtlTimeSpan(TimeSpan TimeSpan) : PositiveTtl;
 
     #endregion
 
@@ -98,7 +85,7 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
     private Dictionary<short, InFlightRequest> _inflightRequests = new();
     private IActorRef? _tcpDnsClient;
     private IActorRef? _udpSocket;
-    private readonly PositiveTtl _positiveTtl = ParsePositiveTTl(config);
+    private readonly PositiveTtl _positiveTtl = PositiveTtl.ParseFromConfig(config);
     private static readonly Random Random = new();
     
     protected override void PreStart()
@@ -423,14 +410,6 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
     }   
     //TODO: Maybe this should be more resilient, what if we have a lot of requests at the same time?  
     internal static short NewQueryId() => (short)Random.Next(0, 65535);
-
-    static PositiveTtl ParsePositiveTTl(Configuration.Config config) =>
-        config.GetString("positive-ttl", "forever").ToLowerInvariant() switch
-        {
-            "forever" => Forever.Instance,
-            "never" => Never.Instance,
-            _ => new TtlTimeSpan(config.GetTimeSpan("positive-ttl")), 
-        };
     
     /// <summary>
     /// Determine if need to cache DNS response and for how long
@@ -442,10 +421,10 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
     {
         switch (_positiveTtl)
         {
-            case Never:
+            case PositiveTtl.Never:
                 ttl = long.MinValue;
                 return false;
-            case TtlTimeSpan ts:
+            case PositiveTtl.TtlTimeSpan ts:
                 ttl = (long)ts.TimeSpan.TotalMilliseconds;
                 return true;
             default:

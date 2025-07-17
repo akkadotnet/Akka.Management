@@ -109,6 +109,35 @@ public class DnsDiscoverySettings
     }
 }
 
+public abstract record PositiveTtl
+{
+    
+    public static PositiveTtl ParseFromConfig(Configuration.Config config) =>
+        config.GetString("positive-ttl", "forever").ToLowerInvariant() switch
+        {
+            "forever" => Forever.Instance,
+            "never" => Never.Instance,
+            _ => new TtlTimeSpan(config.GetTimeSpan("positive-ttl")), 
+        };
+    public record Forever : PositiveTtl
+    {
+        public static readonly Forever Instance = new();
+        public override string ToString() => "forever";
+    }
+
+    public record Never : PositiveTtl
+    {
+        public static readonly Never Instance = new();
+        public override string ToString() => "never";
+        
+    }
+
+    public record TtlTimeSpan(TimeSpan TimeSpan) : PositiveTtl
+    {
+        public override string ToString() => $"{TimeSpan.TotalSeconds}s";
+    }
+}
+
 public class AsyncDnsResolverOptions : IHoconOption
 {
 
@@ -117,6 +146,9 @@ public class AsyncDnsResolverOptions : IHoconOption
 
     public const string NameserversPath = "nameservers";
     public List<string> Nameservers { get; set; } = [ "127.0.0.1:53" ];
+    public TimeSpan CacheCleanupInterval { get; set; } = TimeSpan.FromSeconds(120);
+    public PositiveTtl PositiveTTl { get; set; } = PositiveTtl.Forever.Instance;
+    
     /// <summary>
     /// Renders HOCON configuration based on current settings.
     /// </summary>
@@ -127,8 +159,7 @@ public class AsyncDnsResolverOptions : IHoconOption
     {
         var sb = new StringBuilder();
         sb.AppendLine($"{FullPath(ConfigPath)} {{");
-        sb.AppendLine($"  class = \"{Class.FullName}, {Class.Assembly.GetName().Name}\",");
-        sb.AppendLine($"  provider-object = \"{Provider.FullName}, {Provider.Assembly.GetName().Name}\",");
+        sb.AppendLine($"  provider-object = \"{Class.FullName}, {Class.Assembly.GetName().Name}\",");
         sb.Append($"  {NameserversPath} = [");
         var c = Nameservers.Count;  
         for (int i = 0; i < c; i++)
@@ -137,7 +168,10 @@ public class AsyncDnsResolverOptions : IHoconOption
             if (i < c - 1)
                 sb.Append(", ");
         }
-        sb.AppendLine("]");
+        sb.AppendLine("],");
+        sb.AppendLine($"  cache-cleanup-interval = {CacheCleanupInterval.TotalSeconds}s,");
+        sb.AppendLine($"  positive-ttl  = {PositiveTTl.ToString()},");
+        
         sb.AppendLine("}");
             
         return sb.ToString();
@@ -151,6 +185,5 @@ public class AsyncDnsResolverOptions : IHoconOption
         builder.AddHocon(ToHocon(), HoconAddMode.Prepend);
     }
     public string ConfigPath => DefaultPath;
-    public Type Class => typeof(AsyncDnsClient);
-    public Type Provider => typeof(AsyncDnsProvider);
+    public Type Class => typeof(AsyncDnsProvider);
 }
