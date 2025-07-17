@@ -28,9 +28,11 @@ public class DnsDiscoveryWithDefaultResolver(ITestOutputHelper output) : DnsServ
                         class = ""Akka.Discovery.Dns.DnsServiceDiscovery, Akka.Discovery.Dns""
                     }
                 }
-            "), output)
+            "), "DnsDiscoveryWithDefaultResolver", output)
 {
-    
+    // skip check of AAAA records on Windows with default resolver
+    internal override bool DoNotExpectAAAARecordsFromInetResolver { get; }
+        = Environment.OSVersion.Platform != PlatformID.Unix;
 }
 public class DnsServiceDiscoveryWithDefaultCache(ITestOutputHelper output) : DnsServiceDiscoveryBaseSpec(
     ConfigurationFactory.ParseString(@"
@@ -49,7 +51,7 @@ public class DnsServiceDiscoveryWithDefaultCache(ITestOutputHelper output) : Dns
                         ""1.1.1.1"" ]
                     
                 }
-            "), output)
+            "), "DnsServiceDiscoveryWithDefaultCache", output)
 {
     
 }
@@ -73,7 +75,7 @@ public class DnsServiceDiscoveryWithoutCache(ITestOutputHelper output) : DnsServ
                     positive-ttl = never
                     
                 }
-            "), output)
+            "), "DnsServiceDiscoveryWithoutCache", output)
 {
     
 }
@@ -96,7 +98,7 @@ public class DnsServiceDiscoveryWithFixedCacheTime(ITestOutputHelper output) : D
                     positive-ttl = 10s
                     
                 }
-            "), output)
+            "), "DnsServiceDiscoveryWithFixedCacheTime", output)
 {
     
 }
@@ -120,7 +122,7 @@ public class DnsServiceDiscoveryWithTcpFallback(ITestOutputHelper output) : DnsS
                              "1.1.1.1" ]
                      }
                  }
-     """), output)
+     """), "DnsServiceDiscoveryWithTcpFallback", output)
 {
      public class ForceTcpDnsProvider : AsyncDnsProvider
      {
@@ -162,8 +164,10 @@ public class DnsServiceDiscoveryWithTcpFallback(ITestOutputHelper output) : DnsS
     }
 }
 
-public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , ITestOutputHelper output) : TestKit.Xunit2.TestKit(config, "dns-discovery", output)
+public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , string actorSystemName, ITestOutputHelper output) : TestKit.Xunit2.TestKit(config, actorSystemName, output)
 {
+    internal virtual bool DoNotExpectAAAARecordsFromInetResolver { get; } = false;
+    
     [Fact(DisplayName = "DnsServiceDiscovery should be loadable via config")]
     public void DnsServiceDiscoveryShouldBeLoadableViaConfig()
     {
@@ -229,11 +233,15 @@ public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , 
         {
             Output.WriteLine($"  Host: {addr.Host}, Address: {addr.Address}, Port: {addr.Port}");
         }
-
-        resolved.Addresses
-            .Sum(x => x.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 ? 1 : 0)
-            .Should().BeGreaterThan(0, "At least one IPv6 record should be found");
         
+        // skip this on windows for inet-resolver as it doesn't return AAAA 
+        if (!DoNotExpectAAAARecordsFromInetResolver)
+        {
+            resolved.Addresses
+                .Sum(x => x.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 ? 1 : 0)
+                .Should().BeGreaterThan(0, "At least one IPv6 record should be found");
+        }
+
         resolved.Addresses
             .Sum(x => x.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? 1 : 0)
             .Should().BeGreaterThan(0, "At least one IPv4 record should be found");
