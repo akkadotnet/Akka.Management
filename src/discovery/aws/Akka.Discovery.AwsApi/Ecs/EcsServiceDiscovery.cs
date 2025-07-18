@@ -19,7 +19,7 @@ using EcsTask = Amazon.ECS.Model.Task;
 
 namespace Akka.Discovery.AwsApi.Ecs
 {
-    internal sealed class EcsServiceDiscovery : ServiceDiscovery
+    public class EcsServiceDiscovery : ServiceDiscovery
     {
         public static readonly EcsTagComparer TagComparer = new ();
         
