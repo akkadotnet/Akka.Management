@@ -38,21 +38,6 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
     public sealed record Dropped(short Id);
 
     /// <summary>
-    /// Internal message for UDP DNS answers
-    /// </summary>
-    // private sealed record UdpAnswer
-    // {
-    //     public ImmutableArray<DnsProtocol.Question> Questions { get; }
-    //     public DnsProtocol.Message Content { get; }
-    //
-    //     public UdpAnswer(IEnumerable<DnsProtocol.Question> questions, DnsProtocol.Message content)
-    //     {
-    //         Questions = questions.ToImmutableArray();
-    //         Content = content;
-    //     }
-    // }
-
-    /// <summary>
     /// Message indicating TCP connection dropped
     /// </summary>
     public static readonly object TcpDropped = new object();

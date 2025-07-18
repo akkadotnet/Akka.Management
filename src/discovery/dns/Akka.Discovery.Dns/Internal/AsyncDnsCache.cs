@@ -29,6 +29,7 @@ internal interface IPeriodicCacheCleanup
 /// A simple in-memory DNS cache that stores resolved DNS entries with TTL-based expiration.
 /// This class is a copy of SimpleDnsCache adjusted for DnsClient.Answer use 
 /// </summary>
+// ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
 public class AsyncDnsCache : DnsBase, IPeriodicCacheCleanup
 {
     private readonly AtomicReference<Cache> _cache;
@@ -99,89 +100,61 @@ public class AsyncDnsCache : DnsBase, IPeriodicCacheCleanup
             CleanUp();
     }
 
-    class Cache
+    class Cache(SortedSet<ExpiryEntry> queue, Dictionary<string, CacheEntry> cache, Func<long> clock)
     {
-        private readonly SortedSet<ExpiryEntry> _queue;
-        private readonly Dictionary<string, CacheEntry> _cache;
-        private readonly Func<long> _clock;
         private readonly object _queueCleanupLock = new();
-
-        public Cache(SortedSet<ExpiryEntry> queue, Dictionary<string, CacheEntry> cache, Func<long> clock)
-        {
-            _queue = queue;
-            _cache = cache;
-            _clock = clock;
-        }
 
         public TResolved? Get(string name)
         {
-            if (_cache.TryGetValue(name, out var e) && e.IsValid(_clock()))
+            if (cache.TryGetValue(name, out var e) && e.IsValid(clock()))
                 return e.Answer;
             return null;
         }
 
         public Cache Put(TResolved answer, long ttl)
         {
-            var until = _clock() + ttl;
+            var until = clock() + ttl;
 
-            var cache = new Dictionary<string, CacheEntry>(_cache);
+            var cache1 = new Dictionary<string, CacheEntry>(cache);
 
-            cache[answer.FirstQuestionName] = new CacheEntry(answer, until);
+            cache1[answer.FirstQuestionName] = new CacheEntry(answer, until);
 
             return new Cache(
-                queue: new SortedSet<ExpiryEntry>(_queue, new ExpiryEntryComparer()) { new(answer.FirstQuestionName, until) },
-                cache: cache,
-                clock: _clock); 
+                queue: new SortedSet<ExpiryEntry>(queue, new ExpiryEntryComparer()) { new(answer.FirstQuestionName, until) },
+                cache: cache1,
+                clock: clock); 
         }
 
         public Cache Cleanup()
         {
             lock (_queueCleanupLock)
             {
-                var now = _clock();
-                while (_queue.Any() && !_queue.First().IsValid(now))
+                var now = clock();
+                while (queue.Any() && !queue.First().IsValid(now))
                 {
-                    var minEntry = _queue.First();
+                    var minEntry = queue.First();
                     var name = minEntry.Name;
-                    _queue.Remove(minEntry);
+                    queue.Remove(minEntry);
 
-                    if (_cache.TryGetValue(name, out var cacheEntry) && !cacheEntry.IsValid(now))
-                        _cache.Remove(name);
+                    if (cache.TryGetValue(name, out var cacheEntry) && !cacheEntry.IsValid(now))
+                        cache.Remove(name);
                 }
             }
                 
-            return new Cache(new SortedSet<ExpiryEntry>(), new Dictionary<string, CacheEntry>(_cache), _clock);
+            return new Cache(new SortedSet<ExpiryEntry>(), new Dictionary<string, CacheEntry>(cache), clock);
         }
     }
 
-    class CacheEntry
+    record CacheEntry(TResolved Answer, long Until)
     {
-        public CacheEntry(TResolved answer, long until)
-        {
-            Answer = answer;
-            Until = until;
-        }
-
-        public TResolved Answer { get; private set; }
-        public long Until { get; private set; }
-
         public bool IsValid(long clock)
         {
             return clock < Until;
         }
     }
 
-    class ExpiryEntry 
+    record ExpiryEntry(string Name, long Until)
     {
-        public ExpiryEntry(string name, long until)
-        {
-            Name = name;
-            Until = until;
-        }
-
-        public string Name { get; private set; }
-        public long Until { get; private set; }
-
         public bool IsValid(long clock)
         {
             return clock < Until;
@@ -191,8 +164,11 @@ public class AsyncDnsCache : DnsBase, IPeriodicCacheCleanup
     class ExpiryEntryComparer : IComparer<ExpiryEntry>
     {
         /// <inheritdoc/>
-        public int Compare(ExpiryEntry x, ExpiryEntry y)
+        public int Compare(ExpiryEntry? x, ExpiryEntry? y)
         {
+            if(x == null && y == null) return 0;
+            if(y == null) return 1;
+            if(x == null) return -1;
             return x.Until.CompareTo(y.Until);
         }
     }
