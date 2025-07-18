@@ -27,7 +27,6 @@ public class DnsServiceDiscovery : ServiceDiscovery
         _dns = dns.Manager;
         CanLookupSrv = dns.Provider is IDnsProviderWithSrvLookup;
     }
-
     
     /// <summary>
     /// Cleans an IP string by removing leading '/' if present.
@@ -143,6 +142,7 @@ public class DnsServiceDiscovery : ServiceDiscovery
             }
             
             aIps.Add(aRecord.Ip);
+            ips.Add(aRecord.Name, aIps);
         }
         
         foreach (var aaaaRecord in resolved.AdditionalRecords.OfType<Internal.AaaaRecord>())
@@ -154,6 +154,7 @@ public class DnsServiceDiscovery : ServiceDiscovery
             }
             
             aaaaIps.Add(aaaaRecord.Ip);
+            ips.Add(aaaaRecord.Name, aaaaIps);
         }
 
         // Build the list of resolved targets from SRV records
