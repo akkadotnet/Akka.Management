@@ -61,26 +61,14 @@ public static class DnsProtocol
     /// </summary>
     public record MessageFlags
     {
-        public bool IsResponse { get; init; }
-        public byte OpCode { get; init; }
-        public bool IsAuthoritativeAnswer { get; init; }
-        public bool IsTruncated { get; init; }
-        public bool IsRecursionDesired { get; init; }
-        public bool IsRecursionAvailable { get; init; }
-        public ResponseCode ResponseCode { get; init; }
-
-        public MessageFlags()
-        {
-            // Default values for a query
-            IsResponse = false;
-            OpCode = 0;
-            IsAuthoritativeAnswer = false;
-            IsTruncated = false;
-            IsRecursionDesired = true;
-            IsRecursionAvailable = false;
-            ResponseCode = ResponseCode.Success;
-        }
-
+        public bool IsResponse { get; init; } = false;
+        public byte OpCode { get; init; } = 0;
+        public bool IsAuthoritativeAnswer { get; init; } = false;
+        public bool IsTruncated { get; init; } = false;
+        public bool IsRecursionDesired { get; init; } = true;
+        public bool IsRecursionAvailable { get; init; } = false;
+        public ResponseCode ResponseCode { get; init; } = ResponseCode.Success;
+        
         /// <summary>
         /// Parse message flags from a 16-bit value
         /// </summary>
@@ -126,19 +114,8 @@ public static class DnsProtocol
     /// <summary>
     /// DNS question
     /// </summary>
-    public class Question
+    public record Question(string Name, RecordType Type, RecordClass Class)
     {
-        public string Name { get; }
-        public RecordType Type { get; }
-        public RecordClass Class { get; }
-
-        public Question(string name, RecordType type, RecordClass @class)
-        {
-            Name = name;
-            Type = type;
-            Class = @class;
-        }
-
         public override string ToString()
         {
             return $"Question({Name}, {Type}, {Class})";
@@ -186,32 +163,30 @@ public static class DnsProtocol
         /// </summary>
         public byte[] Write()
         {
-            using (var ms = new MemoryStream())
-            using (var writer = new BinaryWriter(ms))
+            using var ms = new MemoryStream();
+            using var writer = new BinaryWriter(ms);
+            // Write header
+            writer.Write(IPAddress.HostToNetworkOrder((short)Id));
+            writer.Write(IPAddress.HostToNetworkOrder((short)Flags.ToUInt16()));
+            writer.Write(IPAddress.HostToNetworkOrder((short)Questions.Count));
+            writer.Write(IPAddress.HostToNetworkOrder((short)AnswerRecords.Count));
+            writer.Write(IPAddress.HostToNetworkOrder((short)AuthorityRecords.Count));
+            writer.Write(IPAddress.HostToNetworkOrder((short)AdditionalRecords.Count));
+
+            // Write questions
+            foreach (var question in Questions)
             {
-                // Write header
-                writer.Write(IPAddress.HostToNetworkOrder((short)Id));
-                writer.Write(IPAddress.HostToNetworkOrder((short)Flags.ToUInt16()));
-                writer.Write(IPAddress.HostToNetworkOrder((short)Questions.Count));
-                writer.Write(IPAddress.HostToNetworkOrder((short)AnswerRecords.Count));
-                writer.Write(IPAddress.HostToNetworkOrder((short)AuthorityRecords.Count));
-                writer.Write(IPAddress.HostToNetworkOrder((short)AdditionalRecords.Count));
-
-                // Write questions
-                foreach (var question in Questions)
-                {
-                    WriteDomainName(writer, question.Name);
-                    writer.Write(IPAddress.HostToNetworkOrder((short)question.Type));
-                    writer.Write(IPAddress.HostToNetworkOrder((short)question.Class));
-                }
-
-                // Write resource records
-                WriteResourceRecords(writer, AnswerRecords);
-                WriteResourceRecords(writer, AuthorityRecords);
-                WriteResourceRecords(writer, AdditionalRecords);
-
-                return ms.ToArray();
+                WriteDomainName(writer, question.Name);
+                writer.Write(IPAddress.HostToNetworkOrder((short)question.Type));
+                writer.Write(IPAddress.HostToNetworkOrder((short)question.Class));
             }
+
+            // Write resource records
+            WriteResourceRecords(writer, AnswerRecords);
+            WriteResourceRecords(writer, AuthorityRecords);
+            WriteResourceRecords(writer, AdditionalRecords);
+
+            return ms.ToArray();
         }
 
         public string FirstQuestionName
@@ -229,43 +204,41 @@ public static class DnsProtocol
         /// </summary>
         public static Message Parse(byte[] data)
         {
-            using (var ms = new MemoryStream(data))
-            using (var reader = new BinaryReader(ms))
+            using var ms = new MemoryStream(data);
+            using var reader = new BinaryReader(ms);
+            // Read header
+            short id = IPAddress.NetworkToHostOrder(reader.ReadInt16());
+            ushort flags = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
+            ushort questionCount = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
+            ushort answerCount = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
+            ushort authorityCount = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
+            ushort additionalCount = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
+
+            var messageFlags = MessageFlags.FromUInt16(flags);
+
+            // Read questions
+            var questions = ImmutableList.CreateBuilder<Question>();
+            for (int i = 0; i < questionCount; i++)
             {
-                // Read header
-                short id = IPAddress.NetworkToHostOrder(reader.ReadInt16());
-                ushort flags = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
-                ushort questionCount = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
-                ushort answerCount = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
-                ushort authorityCount = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
-                ushort additionalCount = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
+                string name = ReadDomainName(reader, ms);
+                ushort type = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
+                ushort @class = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
 
-                var messageFlags = MessageFlags.FromUInt16(flags);
-
-                // Read questions
-                var questions = ImmutableList.CreateBuilder<Question>();
-                for (int i = 0; i < questionCount; i++)
-                {
-                    string name = ReadDomainName(reader, ms);
-                    ushort type = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
-                    ushort @class = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
-
-                    questions.Add(new Question(name, (RecordType)type, (RecordClass)@class));
-                }
-
-                // Read resource records
-                var answerRecords = ReadResourceRecords(reader, ms, answerCount);
-                var authorityRecords = ReadResourceRecords(reader, ms, authorityCount);
-                var additionalRecords = ReadResourceRecords(reader, ms, additionalCount);
-
-                return new Message(
-                    id,
-                    messageFlags,
-                    questions.ToImmutable(),
-                    answerRecords,
-                    authorityRecords,
-                    additionalRecords);
+                questions.Add(new Question(name, (RecordType)type, (RecordClass)@class));
             }
+
+            // Read resource records
+            var answerRecords = ReadResourceRecords(reader, ms, answerCount);
+            var authorityRecords = ReadResourceRecords(reader, ms, authorityCount);
+            var additionalRecords = ReadResourceRecords(reader, ms, additionalCount);
+
+            return new Message(
+                id,
+                messageFlags,
+                questions.ToImmutable(),
+                answerRecords,
+                authorityRecords,
+                additionalRecords);
         }
 
         /// <summary>
@@ -406,11 +379,9 @@ public static class DnsProtocol
         /// </summary>
         private static string ReadDomainNameFromData(byte[] data)
         {
-            using (var ms = new MemoryStream(data))
-            using (var reader = new BinaryReader(ms))
-            {
-                return ReadDomainName(reader, ms);
-            }
+            using var ms = new MemoryStream(data);
+            using var reader = new BinaryReader(ms);
+            return ReadDomainName(reader, ms);
         }
 
         /// <summary>
@@ -418,16 +389,14 @@ public static class DnsProtocol
         /// </summary>
         private static SrvRecord ReadSrvRecord(string name, RecordClass @class, uint ttl, byte[] data)
         {
-            using (var ms = new MemoryStream(data))
-            using (var reader = new BinaryReader(ms))
-            {
-                ushort priority = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
-                ushort weight = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
-                ushort port = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
-                string target = ReadDomainName(reader, ms);
+            using var ms = new MemoryStream(data);
+            using var reader = new BinaryReader(ms);
+            ushort priority = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
+            ushort weight = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
+            ushort port = (ushort)IPAddress.NetworkToHostOrder(reader.ReadInt16());
+            string target = ReadDomainName(reader, ms);
 
-                return new SrvRecord(name, @class, ttl, priority, weight, port, target);
-            }
+            return new SrvRecord(name, @class, ttl, priority, weight, port, target);
         }
         
         /// <summary>
@@ -462,11 +431,10 @@ public static class DnsProtocol
                     x switch { 
                         AaaaRecord aaaa => aaaa.Ip, 
                         ARecord a => a.Ip,
-                        
                         _ => 
-                        IPAddress.TryParse(x.Name, out var ip) 
-                        ? Option<IPAddress>.Create(ip) 
-                        : Option<IPAddress>.None }) //this might lose data if answer is hostname 
+                            IPAddress.TryParse(x.Name, out var ip) 
+                                ? Option<IPAddress>.Create(ip) 
+                                : Option<IPAddress>.None }) //this might lose data if answer is hostname 
                 .Where(x => x.HasValue)
                 .Select(x => x.Value);
         

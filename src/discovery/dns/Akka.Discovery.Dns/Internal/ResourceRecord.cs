@@ -111,15 +111,13 @@ public sealed record SrvRecord(
 {
      public override byte[] WriteData()
      {
-         using (var ms = new MemoryStream())
-         using (var writer = new BinaryWriter(ms))
-         {
-             writer.Write(IPAddress.HostToNetworkOrder((short)Priority));
-             writer.Write(IPAddress.HostToNetworkOrder((short)Weight));
-             writer.Write(IPAddress.HostToNetworkOrder((short)Port));
-             WriteDomainName(writer, Target);
-             return ms.ToArray();
-         }
+         using var ms = new MemoryStream();
+         using var writer = new BinaryWriter(ms);
+         writer.Write(IPAddress.HostToNetworkOrder((short)Priority));
+         writer.Write(IPAddress.HostToNetworkOrder((short)Weight));
+         writer.Write(IPAddress.HostToNetworkOrder((short)Port));
+         WriteDomainName(writer, Target);
+         return ms.ToArray();
      }
 }
 
