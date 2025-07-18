@@ -108,7 +108,9 @@ public class DnsDiscoverySettings
         return new DnsDiscoverySettings();
     }
 }
-
+/// <summary>
+/// Base record to define caching behaviour of AsyncDnsClient  
+/// </summary>
 public abstract record PositiveTtl
 {
     
@@ -119,19 +121,28 @@ public abstract record PositiveTtl
             "never" => Never.Instance,
             _ => new TtlTimeSpan(config.GetTimeSpan("positive-ttl")), 
         };
+    
+    /// <summary>
+    /// Cache DNS records for the amount of time defined in the response TTL flag  
+    /// </summary>
     public record Forever : PositiveTtl
     {
         public static readonly Forever Instance = new();
         public override string ToString() => "forever";
     }
 
+    /// <summary>
+    /// Never cache DNS records
+    /// </summary>
     public record Never : PositiveTtl
     {
         public static readonly Never Instance = new();
         public override string ToString() => "never";
-        
     }
 
+    /// <summary>
+    /// Cache DNS records for a fixed amount of time
+    /// </summary>
     public record TtlTimeSpan(TimeSpan TimeSpan) : PositiveTtl
     {
         public override string ToString() => $"{TimeSpan.TotalSeconds}s";
@@ -140,8 +151,6 @@ public abstract record PositiveTtl
 
 public class AsyncDnsResolverOptions : IHoconOption
 {
-
-
     public const string DefaultPath = "async-dns";
 
     public const string NameserversPath = "nameservers";

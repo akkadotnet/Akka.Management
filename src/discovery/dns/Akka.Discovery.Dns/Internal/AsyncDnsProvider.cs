@@ -4,12 +4,9 @@ using Akka.IO;
 namespace Akka.Discovery.Dns.Internal;
 
 /// <summary>
-/// 
+/// This interface is used by DnsServiceDiscovery to determine if SRV or A/AAAA lookup should be performed
 /// </summary>
-public interface IDnsProviderWithSrvLookup : IDnsProvider
-{
-    
-}
+public interface IDnsProviderWithSrvLookup : IDnsProvider;
 public class AsyncDnsProvider : IDnsProviderWithSrvLookup
 {
     /// <summary>
