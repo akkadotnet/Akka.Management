@@ -9,13 +9,178 @@ using Akka.Util;
 
 namespace Akka.Discovery.Dns.Internal;
 
+/*
+    This documentation is copied directly from RFC-1035
+
+    ## 3.1. Name space definitions
+    
+    Domain names in messages are expressed in terms of a sequence of labels.
+    Each label is represented as a one octet length field followed by that
+    number of octets.  Since every domain name ends with the null label of
+    the root, a domain name is terminated by a length byte of zero.  The
+    high order two bits of every length octet must be zero, and the
+    remaining six bits of the length field limit the label to 63 octets or
+    less.
+
+    To simplify implementations, the total length of a domain name (i.e.,
+    label octets and label length octets) is restricted to 255 octets or
+    less.
+
+    Although labels can contain any 8 bit values in octets that make up a
+    label, it is strongly recommended that labels follow the preferred
+    syntax described elsewhere in this memo, which is compatible with
+    existing host naming conventions.  Name servers and resolvers must
+    compare labels in a case-insensitive manner (i.e., A=a), assuming ASCII
+    with zero parity.  Non-alphabetic codes must match exactly.
+    
+    # 4. Message
+
+    ## 4.1. Format
+
+    All communications inside the domain protocol are carried in a single
+    format called a message. The top level format of message is divided
+    into 5 sections (some of which are empty in certain cases) shown below:
+
+    ```
+        +---------------------+
+        |        Header       |
+        +---------------------+
+        |       Question      | the question for the name server
+        +---------------------+
+        |        Answer       | RRs answering the question
+        +---------------------+
+        |      Authority      | RRs pointing toward an authority
+        +---------------------+
+        |      Additional     | RRs holding additional information
+        +---------------------+
+    ```
+
+    The header section is always present.  The header includes fields that
+    specify which of the remaining sections are present, and also specify
+    whether the message is a query or a response, a standard query or some
+    other opcode, etc.
+
+    The names of the sections after the header are derived from their use in
+    standard queries.  The question section contains fields that describe a
+    question to a name server.  These fields are a query type (QTYPE), a
+    query class (QCLASS), and a query domain name (QNAME).  The last three
+    sections have the same format: a possibly empty list of concatenated
+    resource records (RRs).  The answer section contains RRs that answer the
+    question; the authority section contains RRs that point toward an
+    authoritative name server; the additional records section contains RRs
+    which relate to the query, but are not strictly answers for the
+    question.
+
+    ### 4.1.1. Header section format
+
+    The header contains the following fields:
+    ```
+                                        1  1  1  1  1  1
+          0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        |                      ID                       |
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        |QR|   Opcode  |AA|TC|RD|RA|   Z    |   RCODE   | // <-- FLAGS
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        |                    QDCOUNT                    |
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        |                    ANCOUNT                    |
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        |                    NSCOUNT                    |
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        |                    ARCOUNT                    |
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+    ```
+    where:
+
+    * ID:
+      A 16 bit identifier assigned by the program that generates any kind of query. 
+      This identifier is copied the corresponding reply and can be used by the 
+      requester to match up replies to outstanding queries.
+
+    * QR:
+      A one bit field that specifies whether this message is a query (0), or a 
+      response (1).
+
+    * OPCODE:
+      A four bit field that specifies kind of query in this message. This value is 
+      set by the originator of a query and copied into the response. The values are:
+      
+      | Value | Description                      |
+      | ----- | -------------------------------- |
+      | 0     | a standard query (QUERY)         |
+      | 1     | an inverse query (IQUERY)        |
+      | 2     | a server status request (STATUS) |
+      | 3-15  | reserved for future use          |
+
+    * AA (Authoritative Answer): 
+      This bit is valid in responses, and specifies that the responding name server 
+      is an authority for the domain name in question section.
+
+      Note that the contents of the answer section may have multiple owner names 
+      because of aliases. The AA bit corresponds to the name which matches the 
+      query name, or the first owner name in the answer section.
+
+    * TC (TrunCation):
+      Specifies that this message was truncated due to length greater than that 
+      permitted on the transmission channel.
+
+    * RD (Recursion Desired):
+      This bit may be set in a query and is copied into the response. If RD is 
+      set, it directs the name server to pursue the query recursively.
+      Recursive query support is optional.
+
+    * RA (Recursion Available):
+      This bit is set or cleared in a response, and denotes whether recursive query 
+      support is available in the name server.
+
+    * Z:
+     Reserved for future use.  Must be zero in all queries and responses.
+
+    * RCODE (Response Code):
+      This 4 bit field is set as part of responses.  The values have the following
+      interpretation:
+
+      * 0: No error condition
+      * 1: Format error - The name server was unable to interpret the query.
+      * 2: Server failure - The name server was unable to process this query due to
+           a problem with the name server.
+      * 3: Name Error - Meaningful only for responses from an authoritative name
+           server, this code signifies that the domain name referenced in the 
+           query does not exist.
+      * 4: Not Implemented - The name server does not support the requested kind
+           of query.
+      * 5: Refused - The name server refuses to perform the specified operation for
+           policy reasons.  For example, a name server may not wish to provide the
+           information to the particular requester, or a name server may not wish 
+           to perform a particular operation (e.g., zone transfer) for particular 
+           data.
+      * 6-15: Reserved for future use.
+
+    * QDCOUNT:
+      An unsigned 16 bit integer specifying the number of entries in the question 
+      section.
+
+    * ANCOUNT:
+      An unsigned 16 bit integer specifying the number of resource records in the 
+      answer section.
+
+    * NSCOUNT:
+      an unsigned 16 bit integer specifying the number of name server resource 
+      records in the authority records section.
+
+    * ARCOUNT:
+      an unsigned 16 bit integer specifying the number of resource records in the 
+      additional records section
+ */
+
 /// <summary>
 /// DNS protocol implementation supporting SRV records
 /// </summary>
 public static class DnsProtocol
 {
     /// <summary>
-    /// DNS record types
+    /// DNS record types (QTYPE)
     /// </summary>
     public enum RecordType : ushort
     {
@@ -32,7 +197,7 @@ public static class DnsProtocol
     }
 
     /// <summary>
-    /// DNS record classes
+    /// DNS record classes (QCLASS)
     /// </summary>
     public enum RecordClass : ushort
     {
@@ -44,7 +209,7 @@ public static class DnsProtocol
     }
 
     /// <summary>
-    /// DNS response codes
+    /// DNS response codes (RCODE)
     /// </summary>
     public enum ResponseCode : byte
     {
@@ -56,6 +221,14 @@ public static class DnsProtocol
         Refused = 5
     }
 
+    /*
+     * FLAGS format:
+     *                                  1  1  1  1  1  1
+     *    0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+     *  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+     *  |QR|   Opcode  |AA|TC|RD|RA|   Z    |   RCODE   | 
+     *  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+     */
     /// <summary>
     /// DNS message flags
     /// </summary>

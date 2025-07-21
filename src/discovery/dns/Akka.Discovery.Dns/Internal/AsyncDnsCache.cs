@@ -44,11 +44,11 @@ public class AsyncDnsCache : DnsBase, IPeriodicCacheCleanup
         _ticksBase = DateTime.Now.Ticks;
     }
 
-    // /// <summary>
-    // /// Gets a cached DNS resolution result for the specified hostname.
-    // /// </summary>
-    // /// <param name="name">The hostname to lookup in the cache.</param>
-    // /// <returns>The cached DNS resolution result, or null if not found or expired.</returns>
+    /// <summary>
+    /// Gets a cached DNS resolution result for the specified hostname.
+    /// </summary>
+    /// <param name="name">The hostname to lookup in the cache.</param>
+    /// <returns>The cached DNS resolution result, or null if not found or expired.</returns>
     internal TResolved? GetCached(string name) => _cache.Value.Get(name);
 
     internal static IO.Dns.Resolved? Convert(TResolved? answer) =>
