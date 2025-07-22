@@ -22,7 +22,7 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
     /// <summary>
     /// Base class for DNS questions
     /// </summary>
-    public record DnsQuestion(short Id, string Name, DnsProtocol.RecordType RecordType) : IConsistentHashable
+    public record DnsQuestion(string Name, DnsProtocol.RecordType RecordType) : IConsistentHashable
     {
         public object ConsistentHashKey { get; } = Name; //not sure is this it the right approach 
     }
@@ -285,9 +285,13 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
         _log.Debug("Resolving both A and AAAA records for [{0}]", request.Name);
         
         // Generate unique IDs for both requests
-        short idA = NewQueryId();
-        short idAaaa = NewQueryId();
-        
+        var idA = NewQueryId();
+        var idAaaa = NewQueryId();
+        //make sure both IDs are unique 
+        while (idAaaa == idA)
+        {
+            idAaaa = NewQueryId();
+        }
         SendDnsQuestion(idA, request.Name, DnsProtocol.RecordType.A, idAaaa);
         SendDnsQuestion(idAaaa, request.Name, DnsProtocol.RecordType.Aaaa, idA);
     }
@@ -306,15 +310,8 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
     }
     
 
-    private void HandleQuestion(short id, string name, DnsProtocol.RecordType recordType)
+    private void HandleQuestion(string name, DnsProtocol.RecordType recordType)
     {
-        if (_inflightRequests.ContainsKey(id))
-        {
-            _log.Warning("DNS transaction ID collision encountered for ID [{0}], ignoring. This likely indicates a bug.",
-                id);
-            return;
-        }
-        
         var answer = cache.GetCached(name);
         if (answer != null)
         {
@@ -322,10 +319,10 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
             return;
         }
 
-        SendDnsQuestion(id, name, recordType);
+        SendDnsQuestion(NewQueryId(), name, recordType);
     }
     
-    internal virtual DnsProtocol.Message CreateMessage(string name, int id, DnsProtocol.RecordType recordType)
+    internal virtual DnsProtocol.Message CreateMessage(string name, short id, DnsProtocol.RecordType recordType)
     {
         var question = new DnsProtocol.Question(name, recordType, DnsProtocol.RecordClass.In);
         return new DnsProtocol.Message(
@@ -358,8 +355,19 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
             BackoffSupervisor.Props(backoffOptions),
             "tcpDnsClientSupervisor");
     }   
-    //TODO: Maybe this should be more resilient, what if we have a lot of requests at the same time?  
-    internal static short NewQueryId() => (short)Random.Next(0, 65535);
+    /// <summary>
+    /// Generate random unique query ID
+    /// </summary>
+    /// <returns></returns>
+    private short NewQueryId()
+    {
+        var r = (short)Random.Next(0, 65535);
+        while (_inflightRequests.ContainsKey(r))
+        {
+            r++;
+        }
+        return r;
+    } 
     
     /// <summary>
     /// Determine if need to cache DNS response and for how long

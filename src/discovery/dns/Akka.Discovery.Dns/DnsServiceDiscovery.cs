@@ -52,7 +52,7 @@ public class DnsServiceDiscovery : ServiceDiscovery
         try
         {
             // Send SRV question and await response
-            var result = await _dns.Ask<object>(new Internal.AsyncDnsClient.DnsQuestion(AsyncDnsClient.NewQueryId(), srvRequest, DnsProtocol.RecordType.Srv), resolveTimeout);
+            var result = await _dns.Ask<object>(new Internal.AsyncDnsClient.DnsQuestion(srvRequest, DnsProtocol.RecordType.Srv), resolveTimeout);
             
             if (result is DnsProtocol.Message answer)
             {
