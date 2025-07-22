@@ -50,7 +50,7 @@ internal class TcpDnsClient(IActorRef tcpManager, EndPoint nameserver, IActorRef
                 
             case Tcp.CommandFailed failed when failed.Cmd is Tcp.Connect:
                 _log.Warning("Failed to connect to DNS server: {0}", failed);
-                parent.Tell(AsyncDnsClient.TcpDropped);
+                parent.Tell(AsyncDnsClient.TcpDropped.Instance);
                 Context.Stop(Self);
                 break;
                 
@@ -60,7 +60,7 @@ internal class TcpDnsClient(IActorRef tcpManager, EndPoint nameserver, IActorRef
                 
             case Tcp.ConnectionClosed _:
                 _log.Debug("Connection to DNS server closed");
-                parent.Tell(AsyncDnsClient.TcpDropped);
+                parent.Tell(AsyncDnsClient.TcpDropped.Instance);
                 Context.Stop(Self);
                 break;
                 
@@ -78,7 +78,7 @@ internal class TcpDnsClient(IActorRef tcpManager, EndPoint nameserver, IActorRef
                 
             case Status.Failure failure:
                 _log.Error(failure.Cause, "TCP DNS client failure");
-                parent.Tell(AsyncDnsClient.TcpDropped);
+                parent.Tell(AsyncDnsClient.TcpDropped.Instance);
                 Context.Stop(Self);
                 break;
         }

@@ -40,7 +40,11 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
     /// <summary>
     /// Message indicating TCP connection dropped
     /// </summary>
-    public static readonly object TcpDropped = new object();
+    public sealed record TcpDropped
+    {
+        private TcpDropped()  { }
+        public static readonly TcpDropped Instance = new();
+    }
 
     /// <summary>
     /// Information about an in-flight DNS request
@@ -118,7 +122,6 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
             case DropRequest dropRequest:
                 HandleDropRequest(dropRequest);
                 break;
-            
             case DnsQuestion question:
                 HandleQuestion(question.Id, question.Name, question.RecordType);
                 break;
@@ -249,13 +252,13 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
             case Udp.CommandFailed cmdFailed:
                 _log.Warning("DNS client failed to send {0}", cmdFailed.Cmd);
                 break;
-                
+            case TcpDropped _:
             case Tcp.Aborted _:
                 _log.Warning("TCP client failed, clearing inflight resolves which were being resolved by TCP");
-                _inflightRequests = _inflightRequests.Where(kv => !kv.Value.TcpRequest)
+                _inflightRequests = _inflightRequests
+                    .Where(kv => !kv.Value.TcpRequest)
                     .ToDictionary(kv => kv.Key, kv => kv.Value);
                 break;
-                
             case Udp.Unbind _:
                 Sender.Tell(Udp.Unbind.Instance);
                 break;
@@ -266,7 +269,6 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
             case IO.Dns.Resolve r:
                 HandleLegacyResolveRequest(r);
                 break;
-
             default:
                 Unhandled(message);
                 break;
