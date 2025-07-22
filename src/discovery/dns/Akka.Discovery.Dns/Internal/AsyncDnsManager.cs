@@ -113,8 +113,9 @@ internal class AsyncDnsManager : ActorBase, IRequiresMessageQueue<IUnboundedMess
     /// <summary>
     /// Message sent to trigger DNS cache cleanup.
     /// </summary>
-    internal class CacheCleanup
+    internal record CacheCleanup
     {
+        private CacheCleanup() { }
         /// <summary>
         /// Singleton instance of the cache cleanup message.
         /// </summary>

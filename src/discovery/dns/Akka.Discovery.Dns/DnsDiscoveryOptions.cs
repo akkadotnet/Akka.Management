@@ -127,6 +127,7 @@ public abstract record PositiveTtl
     /// </summary>
     public record Forever : PositiveTtl
     {
+        private Forever() { }
         public static readonly Forever Instance = new();
         public override string ToString() => "forever";
     }
@@ -136,6 +137,7 @@ public abstract record PositiveTtl
     /// </summary>
     public record Never : PositiveTtl
     {
+        private Never() { }
         public static readonly Never Instance = new();
         public override string ToString() => "never";
     }
