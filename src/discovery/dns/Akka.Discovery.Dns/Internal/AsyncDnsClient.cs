@@ -28,16 +28,6 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
     }
 
     /// <summary>
-    /// Request to drop a pending DNS question
-    /// </summary>
-    public sealed record DropRequest(DnsQuestion Question);
-
-    /// <summary>
-    /// Notification that a request has been dropped
-    /// </summary>
-    public sealed record Dropped(short Id);
-
-    /// <summary>
     /// Message indicating TCP connection dropped
     /// </summary>
     public sealed record TcpDropped
@@ -119,13 +109,9 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
     {
         switch (message)
         {
-            case DropRequest dropRequest:
-                HandleDropRequest(dropRequest);
-                break;
             case DnsQuestion question:
-                HandleQuestion(question.Id, question.Name, question.RecordType);
+                HandleQuestion(question.Name, question.RecordType);
                 break;
-                
             case Udp.Received received:
                 try
                 {
@@ -330,39 +316,8 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
 
         SendDnsQuestion(id, name, recordType);
     }
-
-    private void HandleDropRequest(DropRequest dropRequest)
-    {
-        var id = dropRequest.Question.Id;
-        if (_inflightRequests.TryGetValue(id, out var inFlight))
-        {
-            var sentQuestions = inFlight.Message.Questions.Select(q => new { q.Name, q.Type }).ToList();
-                
-            string expectedName = dropRequest.Question.Name;
-            DnsProtocol.RecordType expectedType = dropRequest.Question.RecordType;
-            
-            if (sentQuestions.Any(q => q.Name == expectedName && q.Type == expectedType))
-            {
-                _log.Debug("Dropping request [{0}]", id);
-                _inflightRequests.Remove(id);
-                Sender.Tell(new Dropped(id));
-            }
-            else if (_log.IsInfoEnabled)
-            {
-                _log.Info("Requested to drop request for id [{0}] expecting [{1}/{2}] but found requests for [{3}]... ignoring drop request",
-                    id, 
-                    expectedName, 
-                    expectedType,
-                    string.Join(", ", sentQuestions.Select(q => $"{q.Name}/{q.Type}")));
-            }
-        }
-        else
-        {
-            Sender.Tell(new Dropped(id));
-        }
-    }
-
-    internal virtual DnsProtocol.Message CreateMessage(string name, short id, DnsProtocol.RecordType recordType)
+    
+    internal virtual DnsProtocol.Message CreateMessage(string name, int id, DnsProtocol.RecordType recordType)
     {
         var question = new DnsProtocol.Question(name, recordType, DnsProtocol.RecordClass.In);
         return new DnsProtocol.Message(
