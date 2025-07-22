@@ -241,8 +241,16 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
             case TcpDropped _:
             case Tcp.Aborted _:
                 _log.Warning("TCP client failed, clearing inflight resolves which were being resolved by TCP");
+                var tcpRequests = _inflightRequests
+                    .Where(kv => kv.Value.TcpRequest)
+                    .ToDictionary(kv => kv.Key, kv => kv.Value);
+                
+                foreach (var inFlight in tcpRequests.Values)
+                {
+                    inFlight.ReplyTo.Tell(new Status.Failure(new Exception("TCP connection to nameserver failed")));    
+                }
                 _inflightRequests = _inflightRequests
-                    .Where(kv => !kv.Value.TcpRequest)
+                    .Where(kv => tcpRequests.ContainsKey(kv.Key))
                     .ToDictionary(kv => kv.Key, kv => kv.Value);
                 break;
             case Udp.Unbind _:
