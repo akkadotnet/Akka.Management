@@ -607,7 +607,11 @@ public static class DnsProtocol
                         _ => 
                             IPAddress.TryParse(x.Name, out var ip) 
                                 ? Option<IPAddress>.Create(ip) 
-                                : Option<IPAddress>.None }) //this might lose data if answer is hostname 
+                                // This can happen if the record is not an A/AAAA record but a SRV, CNAME, NS, MX,
+                                // or other record, where the answer is a hostname instead of an IP address.
+                                // In this case, we ignore it as this method is only interested in IP addresses.
+                                : Option<IPAddress>.None
+                        })
                 .Where(x => x.HasValue)
                 .Select(x => x.Value);
         
