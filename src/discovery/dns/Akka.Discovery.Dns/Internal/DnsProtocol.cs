@@ -272,7 +272,7 @@ public static class DnsProtocol
             if (IsTruncated) flags |= 0x0200;
             if (IsRecursionDesired) flags |= 0x0100;
             if (IsRecursionAvailable) flags |= 0x0080;
-            flags |= (ushort)((int)ResponseCode & 0xF);
+            flags |= (ushort)((ushort)ResponseCode & 0xF);
 
             return flags;
         }

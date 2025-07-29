@@ -137,24 +137,20 @@ public class DnsServiceDiscovery : ServiceDiscovery
         {
             if (!ips.TryGetValue(aRecord.Name, out var aIps))
             {
-                aIps = new List<IPAddress>();
-                ips[aRecord.Name] = aIps;
+                aIps = [];
             }
-            
             aIps.Add(aRecord.Ip);
-            ips.Add(aRecord.Name, aIps);
+            ips[aRecord.Name] = aIps;
         }
         
         foreach (var aaaaRecord in resolved.AdditionalRecords.OfType<Internal.AaaaRecord>())
         {
             if (!ips.TryGetValue(aaaaRecord.Name, out var aaaaIps))
             {
-                aaaaIps = new List<IPAddress>();
-                ips[aaaaRecord.Name] = aaaaIps;
+                aaaaIps = [];
             }
-            
             aaaaIps.Add(aaaaRecord.Ip);
-            ips.Add(aaaaRecord.Name, aaaaIps);
+            ips[aaaaRecord.Name] = aaaaIps;
         }
 
         // Build the list of resolved targets from SRV records

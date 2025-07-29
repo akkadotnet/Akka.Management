@@ -19,7 +19,9 @@ internal class TcpDnsClient(IActorRef tcpManager, EndPoint nameserver, IActorRef
     private readonly ILoggingAdapter _log = Context.GetLogger();
 
     private IActorRef? _connection;
-    private byte[] _readBuffer = new byte[2048]; // Buffer for reading DNS responses
+    private const int DnsMessageBufferSize = 2048; // DNS message buffer size
+
+    private byte[] _readBuffer = new byte[DnsMessageBufferSize]; // Buffer for reading DNS responses
     private int _expectedLength = -1; // Expected length of current DNS response
     private int _currentPosition = 0; // Current position in the buffer
 

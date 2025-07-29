@@ -250,7 +250,7 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
                     inFlight.ReplyTo.Tell(new Status.Failure(new Exception("TCP connection to nameserver failed")));    
                 }
                 _inflightRequests = _inflightRequests
-                    .Where(kv => tcpRequests.ContainsKey(kv.Key))
+                    .Where(kv => !tcpRequests.ContainsKey(kv.Key))
                     .ToDictionary(kv => kv.Key, kv => kv.Value);
                 break;
             case Udp.Unbind _:
@@ -361,7 +361,7 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
     /// <returns></returns>
     private short NewQueryId()
     {
-        var r = (short)Random.Next(0, 65535);
+        var r = (short)Random.Next(short.MinValue, short.MaxValue);
         while (_inflightRequests.ContainsKey(r))
         {
             r++;
