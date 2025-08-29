@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 //  <copyright file="HostingSpecs.cs" company="Akka.NET Project">
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Hosting;
@@ -26,6 +28,51 @@ namespace Akka.Management.Tests
 {
     public class HostingSpecs
     {
+        // Port allocation for tests - uses a high range unlikely to conflict
+        private static int _nextPort = 45000;
+        private static readonly object PortLock = new object();
+        
+        private static int GetTestPort()
+        {
+            lock (PortLock)
+            {
+                // Find next available port in range 45000-55000
+                const int maxPort = 55000;
+                var startPort = _nextPort;
+                
+                while (_nextPort < maxPort)
+                {
+                    var currentPort = _nextPort++;
+                    if (IsPortAvailable(currentPort))
+                        return currentPort;
+                }
+                
+                // Wrap around if we hit the max
+                _nextPort = 45000;
+                while (_nextPort < startPort)
+                {
+                    var currentPort = _nextPort++;
+                    if (IsPortAvailable(currentPort))
+                        return currentPort;
+                }
+                
+                throw new InvalidOperationException($"No available ports found in range 45000-{maxPort}");
+            }
+        }
+        
+        private static bool IsPortAvailable(int port)
+        {
+            try
+            {
+                using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                socket.Bind(new IPEndPoint(IPAddress.Loopback, port));
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
         private async Task<IHost> StartHost(
             Action<AkkaConfigurationBuilder> testSetup,
             LogLevel minimumLogLevel = LogLevel.Debug)
@@ -65,72 +112,74 @@ namespace Akka.Management.Tests
         [Theory(DisplayName = "WithAkkaManagement should work")]
         [MemberData(nameof(StartupFactory))]
         public async Task WithAkkaManagementTest(
-            Action<AkkaConfigurationBuilder> startupAction)
+            Action<AkkaConfigurationBuilder, int> startupAction)
         {
-            using var host = await StartHost(startupAction);
+            // Use our sequential port allocation to minimize conflicts
+            var port = GetTestPort();
+            
+            using var host = await StartHost(builder => startupAction(builder, port));
             var sys = host.Services.GetService<ActorSystem>();
             var testKit = new TestKit.Xunit2.TestKit(sys);
 
             var client = new HttpClient();
             await testKit.AwaitAssertAsync(async () =>
             {
-                var response = await client.GetAsync("http://localhost:18558/bootstrap/seed-nodes");
+                var response = await client.GetAsync($"http://localhost:{port}/bootstrap/seed-nodes");
                 response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
-            });
+            }, TimeSpan.FromSeconds(5));
         }
 
         public static IEnumerable<object[]> StartupFactory()
         {
-            var startups = new Action<AkkaConfigurationBuilder>[]
+            var startups = new Action<AkkaConfigurationBuilder, int>[]
             {
-                builder =>
+                (builder, port) =>
                 {
                     builder
-                        .WithAkkaManagement("localhost", 18558, "localhost", 18558)
-                        
-                    .AddStartup(async (system, _) =>
-                    {
-                        await AkkaManagement.Get(system).Start();
-                    });
+                        .WithAkkaManagement("localhost", port, "localhost", port)
+                        .AddStartup(async (system, _) =>
+                        {
+                            await AkkaManagement.Get(system).Start();
+                        });
                 },
-                builder =>
+                (builder, port) =>
                 {
-                    builder.WithAkkaManagement("localhost", 18558, "localhost", 18558, true);
+                    builder.WithAkkaManagement("localhost", port, "localhost", port, true);
                 },
                 
-                builder =>
+                (builder, port) =>
                 {
                     builder.WithAkkaManagement(setup =>
                     {
                         setup.Http.HostName = "localhost";
-                        setup.Http.Port = 18558;
+                        setup.Http.Port = port;
                         setup.Http.BindHostName = "localhost";
-                        setup.Http.BindPort = 18558;
+                        setup.Http.BindPort = port;
                     })
                     .AddStartup(async (system, _) =>
                     {
                         await AkkaManagement.Get(system).Start();
                     });
                 },
-                builder =>
+                (builder, port) =>
                 {
                     builder.WithAkkaManagement(setup =>
                     {
                         setup.Http.HostName = "localhost";
-                        setup.Http.Port = 18558;
+                        setup.Http.Port = port;
                         setup.Http.BindHostName = "localhost";
-                        setup.Http.BindPort = 18558;
+                        setup.Http.BindPort = port;
                     }, true);
                 },
                 
-                builder =>
+                (builder, port) =>
                 {
                     var setup = new AkkaManagementSetup( new HttpSetup
                         {
                             HostName = "localhost",
-                            Port = 18558,
+                            Port = port,
                             BindHostName = "localhost",
-                            BindPort = 18558,
+                            BindPort = port,
                         });
                     builder.WithAkkaManagement(setup)
                     .AddStartup(async (system, _) =>
@@ -138,14 +187,14 @@ namespace Akka.Management.Tests
                         await AkkaManagement.Get(system).Start();
                     });
                 },
-                builder =>
+                (builder, port) =>
                 {
                     var setup = new AkkaManagementSetup(new HttpSetup
                     {
                         HostName = "localhost",
-                        Port = 18558,
+                        Port = port,
                         BindHostName = "localhost",
-                        BindPort = 18558,
+                        BindPort = port,
                     });
                     builder.WithAkkaManagement(setup, true);
                 },
@@ -160,5 +209,4 @@ namespace Akka.Management.Tests
             }
         }
     }
-    
 }
