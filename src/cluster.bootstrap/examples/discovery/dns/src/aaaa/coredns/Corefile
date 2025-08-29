@@ -1,0 +1,17 @@
+.:53 {
+    log {
+        class all
+    }
+    errors
+    auto
+    reload
+    hosts {
+        fallthrough
+    }
+    file /etc/coredns/zones/akkacluster.dns.oci akkacluster.dns.oci
+    prometheus
+    cache
+    template ANY A akkacluster.dns.oci {
+        rcode REFUSED
+    }
+}

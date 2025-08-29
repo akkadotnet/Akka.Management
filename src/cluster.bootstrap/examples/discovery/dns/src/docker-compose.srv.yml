@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  # CoreDNS server for SRV record resolution
+  coredns:
+    image: coredns/coredns:1.10.1
+    hostname: dns-server
+    volumes:
+      - ./srv/coredns:/etc/coredns
+    command: ["-conf", "/etc/coredns/Corefile"]
+    ports:
+      - "1053:1053/udp"
+      - "1053:1053/tcp"
+    networks:
+      akkanet:
+        ipv4_address: 172.28.0.2
+        aliases:
+          - dns-server
+
+  node1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: akka-dns-cluster:latest
+    hostname: node1.akkacluster
+    environment:
+      - CLUSTER__PORT=4053
+      - CLUSTER__IP=0.0.0.0
+      - ACTORSYSTEM=DnsCluster
+      - MANAGEMENT__PORT=18558
+      - PBM__PORT=9110
+      - SERVICENAME=akkacluster.dns.oci
+      - PORTNAME=management
+      - DNS_PORT=1053
+      - DNS_NAMESERVER=172.28.0.2
+    ports:
+      - "4053:4053"
+      - "18558:18558" 
+      - "9110:9110"
+    networks:
+      akkanet:
+        ipv4_address: 172.28.0.10
+        aliases:
+          - akkacluster
+    depends_on:
+      - coredns
+
+  node2:
+    image: akka-dns-cluster:latest
+    hostname: node2.akkacluster
+    environment:
+      - CLUSTER__PORT=4053
+      - CLUSTER__IP=0.0.0.0
+      - ACTORSYSTEM=DnsCluster
+      - MANAGEMENT__PORT=28558
+      - PBM__PORT=9110
+      - SERVICENAME=akkacluster.dns.oci
+      - PORTNAME=management
+      - DNS_PORT=1053
+      - DNS_NAMESERVER=172.28.0.2
+    ports:
+      - "4054:4053" 
+      - "28558:28558"
+      - "9111:9110"
+    networks:
+      akkanet:
+        ipv4_address: 172.28.0.20
+        aliases:
+          - akkacluster
+    depends_on:
+      - node1
+
+  node3:
+    image: akka-dns-cluster:latest
+    hostname: node3.akkacluster
+    environment:
+      - CLUSTER__PORT=4053
+      - CLUSTER__IP=0.0.0.0
+      - ACTORSYSTEM=DnsCluster
+      - MANAGEMENT__PORT=38558
+      - PBM__PORT=9110
+      - SERVICENAME=akkacluster.dns.oci
+      - PORTNAME=management
+      - DNS_PORT=1053
+      - DNS_NAMESERVER=172.28.0.2
+    ports:
+      - "4055:4053"
+      - "38558:38558"
+      - "9112:9110"
+    networks:
+      akkanet:
+        ipv4_address: 172.28.0.30
+        aliases:
+          - akkacluster
+    depends_on:
+      - node1
+
+networks:
+  akkanet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

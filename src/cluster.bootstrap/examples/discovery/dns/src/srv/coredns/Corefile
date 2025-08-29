@@ -1,0 +1,12 @@
+.:1053 {
+    log
+    errors
+    auto
+    reload
+    hosts {
+        fallthrough
+    }
+    file /etc/coredns/zones/akkacluster.dns.oci akkacluster.dns.oci
+    prometheus
+    cache
+}
