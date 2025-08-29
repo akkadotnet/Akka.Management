@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Hosting;
@@ -26,6 +28,51 @@ namespace Akka.Management.Tests
 {
     public class HostingSpecs
     {
+        // Port allocation for tests - uses a high range unlikely to conflict
+        private static int _nextPort = 45000;
+        private static readonly object PortLock = new object();
+        
+        private static int GetTestPort()
+        {
+            lock (PortLock)
+            {
+                // Find next available port in range 45000-55000
+                const int maxPort = 55000;
+                var startPort = _nextPort;
+                
+                while (_nextPort < maxPort)
+                {
+                    var currentPort = _nextPort++;
+                    if (IsPortAvailable(currentPort))
+                        return currentPort;
+                }
+                
+                // Wrap around if we hit the max
+                _nextPort = 45000;
+                while (_nextPort < startPort)
+                {
+                    var currentPort = _nextPort++;
+                    if (IsPortAvailable(currentPort))
+                        return currentPort;
+                }
+                
+                throw new InvalidOperationException($"No available ports found in range 45000-{maxPort}");
+            }
+        }
+        
+        private static bool IsPortAvailable(int port)
+        {
+            try
+            {
+                using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                socket.Bind(new IPEndPoint(IPAddress.Loopback, port));
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
         private async Task<IHost> StartHost(
             Action<AkkaConfigurationBuilder> testSetup,
             LogLevel minimumLogLevel = LogLevel.Debug)
@@ -67,37 +114,19 @@ namespace Akka.Management.Tests
         public async Task WithAkkaManagementTest(
             Action<AkkaConfigurationBuilder, int> startupAction)
         {
-            // Try up to 3 times to find a free port and start the service
-            Exception? lastException = null;
-            for (int attempt = 0; attempt < 3; attempt++)
-            {
-                var port = SocketUtil.TemporaryTcpAddress("127.0.0.1").Port;
-                
-                try
-                {
-                    using var host = await StartHost(builder => startupAction(builder, port));
-                    var sys = host.Services.GetService<ActorSystem>();
-                    var testKit = new TestKit.Xunit2.TestKit(sys);
-
-                    var client = new HttpClient();
-                    await testKit.AwaitAssertAsync(async () =>
-                    {
-                        var response = await client.GetAsync($"http://localhost:{port}/bootstrap/seed-nodes");
-                        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
-                    }, TimeSpan.FromSeconds(5));
-                    
-                    return; // Success!
-                }
-                catch (InvalidOperationException ex) when (ex.Message.Contains("Failed to start Akka Management HTTP endpoint"))
-                {
-                    // Port was likely taken between when we found it free and when we tried to bind
-                    lastException = ex;
-                    _output.WriteLine($"Attempt {attempt + 1} failed with port {port}, retrying...");
-                    await Task.Delay(100); // Small delay before retry
-                }
-            }
+            // Use our sequential port allocation to minimize conflicts
+            var port = GetTestPort();
             
-            throw new Exception($"Failed to start Akka Management after 3 attempts", lastException);
+            using var host = await StartHost(builder => startupAction(builder, port));
+            var sys = host.Services.GetService<ActorSystem>();
+            var testKit = new TestKit.Xunit2.TestKit(sys);
+
+            var client = new HttpClient();
+            await testKit.AwaitAssertAsync(async () =>
+            {
+                var response = await client.GetAsync($"http://localhost:{port}/bootstrap/seed-nodes");
+                response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+            }, TimeSpan.FromSeconds(5));
         }
 
         public static IEnumerable<object[]> StartupFactory()
