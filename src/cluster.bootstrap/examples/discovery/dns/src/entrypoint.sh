@@ -16,13 +16,14 @@ echo "  DNS_PORT: $DNS_PORT"
 echo "  DNS_NAMESERVER: $DNS_NAMESERVER"
 echo "==================================="
 DNS_PORT=${DNS_PORT:-53}
-echo "\nPerforming DNS resolution test for '$SERVICENAME'..."
+DNS_SERVER="${DNS_NAMESERVER:-127.0.0.1}"
+echo "\nPerforming DNS resolution test for '$SERVICENAME' using DNS server $DNS_SERVER:$DNS_PORT..."
 # A records
-dig -p $DNS_PORT $SERVICENAME
+dig @$DNS_SERVER -p $DNS_PORT $SERVICENAME
 # AAAA records
-dig -p $DNS_PORT -t aaaa $SERVICENAME
+dig @$DNS_SERVER -p $DNS_PORT -t aaaa $SERVICENAME
 # SRV records
-dig -p $DNS_PORT -t srv "_${PORTNAME}._tcp.$SERVICENAME"
+dig @$DNS_SERVER -p $DNS_PORT -t srv "_${PORTNAME}._tcp.$SERVICENAME"
 
 export NAMESERVER="${DNS_NAMESERVER:-127.0.0.1}:$DNS_PORT"
 echo "\nStarting DnsCluster with DNS discovery..."
