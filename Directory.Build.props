@@ -43,8 +43,7 @@ The DNS discovery mechanism is ideal for containerized environments, cloud deplo
     <AkkaVersion>1.5.48</AkkaVersion>
     <AkkaHostingVersion>1.5.48</AkkaHostingVersion>
     <PbmVersion>1.4.4</PbmVersion>
-    <KubernetesClientVersionNetStandard>4.0.26</KubernetesClientVersionNetStandard>
-    <KubernetesClientVersionNet>13.0.26</KubernetesClientVersionNet>
+    <KubernetesClientVersionNet>17.0.14</KubernetesClientVersionNet>
     <MicrosoftExtensionsVersion>[6.0.*,)</MicrosoftExtensionsVersion>
     <AzureIdentityVersion>1.14.2</AzureIdentityVersion>
     <ProtobufVersion>3.30.2</ProtobufVersion>
