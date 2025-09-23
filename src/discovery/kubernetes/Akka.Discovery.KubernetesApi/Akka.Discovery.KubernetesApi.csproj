@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+        <TargetFramework>net8.0</TargetFramework>
         <Description>Akka.NET discovery module for Kubernetes</Description>
         <PackageTags>$(AkkaPackageTags);Kubernetes;</PackageTags>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -11,28 +11,6 @@
     <ItemGroup>
         <PackageReference Include="Akka.Discovery" Version="$(AkkaVersion)" />
         <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
-    </ItemGroup>
-    
-    <ItemGroup Condition=" '$(TargetFramework)' == '$(LibraryFramework)' ">
-        <PackageReference Include="KubernetesClient" Version="$(KubernetesClientVersionNetStandard)" />
-
-        <!--
-          These reference is added to resolve CVE-2024-21319 because KubernetesClient 4.0.26 references the bad version
-          of this package. This can be removed if KubernetesClient ever release a clean version in the future (not 
-          likely) or if we drop .NET Standard 2.0 support
-        -->
-        <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="5.7.0" />
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.7.0" />
-
-        <!--
-          These reference is added to resolve CVE-2022-26907 because KubernetesClient 4.0.26 references the bad version
-          of this package. This can be removed if KubernetesClient ever release a clean version in the future (not 
-          likely) or if we drop .NET Standard 2.0 support
-        -->
-        <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.24" />
-    </ItemGroup>
-
-    <ItemGroup Condition=" '$(TargetFramework)' == '$(NetFramework)' ">
         <PackageReference Include="KubernetesClient" Version="$(KubernetesClientVersionNet)" />
     </ItemGroup>
 
