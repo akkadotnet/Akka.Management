@@ -128,7 +128,8 @@ namespace Akka.Management.Dsl
                 var effectiveBindPort = Settings.Http.EffectiveBindPort;
                 var effectiveProviderSettings = transformSettings(ProviderSettings());
 
-                _log.Info("Binding Akka Management (HTTP) endpoint to: {0}:{1}", effectiveBindHostname, effectiveBindPort);
+                _log.Info("Binding Akka Management (HTTP) endpoint to: {0}:{1}, advertising as hostname: {2}",
+                    effectiveBindHostname, effectiveBindPort, Settings.Http.Hostname);
 
                 var combinedRoutes = PrepareCombinedRoutes(effectiveProviderSettings);
 

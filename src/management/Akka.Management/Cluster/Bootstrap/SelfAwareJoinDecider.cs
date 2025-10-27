@@ -51,9 +51,12 @@ namespace Akka.Management.Cluster.Bootstrap
             
             if (!info.ContactPoints.Any(t => MatchesSelf(t, self)))
             {
-                Log.Warning("Self contact point [{0}] not found in targets {1}",
+                Log.Warning(
+                    "Self contact point [{0}] (hostname: {1}, port: {2}) not found in targets [{3}]",
                     ContactPointString(self),
-                    string.Join(", ", info.ContactPoints));
+                    self.host,
+                    self.port,
+                    string.Join(", ", info.ContactPoints.Select(ContactPointString)));
             }
             return false;
         }
@@ -62,14 +65,38 @@ namespace Akka.Management.Cluster.Bootstrap
         {
             if (target.Port == null)
                 return HostMatches(contactPoint.host, target);
-            return HostMatches(contactPoint.host, target) && contactPoint.port == target.Port;
+
+            var hostMatches = HostMatches(contactPoint.host, target);
+            var portMatches = contactPoint.port == target.Port;
+            var result = hostMatches && portMatches;
+
+            if (Log.IsDebugEnabled && hostMatches && !portMatches)
+            {
+                Log.Debug(
+                    "MatchesSelf: Hostname matched but port mismatch - self port={0}, target port={1}",
+                    contactPoint.port, target.Port);
+            }
+
+            return result;
         }
 
         public bool HostMatches(string host, ServiceDiscovery.ResolvedTarget target)
         {
             var cleaned = _hostReplaceRegex.Replace(host, "");
-            return string.Equals(host, target.Host, StringComparison.OrdinalIgnoreCase) || 
-                   (target.Address?.ToString() ?? "").Contains(cleaned);
+            var directMatch = string.Equals(host, target.Host, StringComparison.OrdinalIgnoreCase);
+            var addressString = target.Address?.ToString() ?? "";
+            var containsMatch = addressString.Contains(cleaned);
+            var result = directMatch || containsMatch;
+
+            if (Log.IsDebugEnabled)
+            {
+                Log.Debug(
+                    "HostMatches comparison: self hostname='{0}', target hostname='{1}', target address='{2}', " +
+                    "direct match={3}, contains match={4}, result={5}",
+                    host, target.Host, addressString, directMatch, containsMatch, result);
+            }
+
+            return result;
         }
 
         public abstract Task<IJoinDecision> Decide(SeedNodesInformation info);
