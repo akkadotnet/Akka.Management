@@ -3,8 +3,8 @@
     <Copyright>Copyright © 2013-$([System.DateTime]::Now.Year) Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
     <VersionPrefix>1.5.52</VersionPrefix>
-    <PackageReleaseNotes>* Update to [Akka.NET v1.5.52](https://github.com/akkadotnet/akka.net/releases/tag/1.5.52)
-* Update to [Akka.Hosting v1.5.52](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.52)</PackageReleaseNotes>
+    <PackageReleaseNotes>* Update to [Akka.NET v1.5.55](https://github.com/akkadotnet/akka.net/releases/tag/1.5.55)
+* Update to [Akka.Hosting v1.5.55](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.55)</PackageReleaseNotes>
     <PackageIconUrl>https://getakka.net/images/akkalogo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/akkadotnet/Akka.Management</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -25,9 +25,9 @@
     <FluentAssertionVersion>7.0.0</FluentAssertionVersion>
     <TestSdkVersion>17.13.0</TestSdkVersion>
     <WireMockVersion>1.8.4</WireMockVersion>
-    <AkkaVersion>1.5.52</AkkaVersion>
-    <AkkaHostingVersion>1.5.52</AkkaHostingVersion>
-    <PbmVersion>1.4.4</PbmVersion>
+    <AkkaVersion>1.5.55</AkkaVersion>
+    <AkkaHostingVersion>1.5.55</AkkaHostingVersion>
+    <PbmVersion>1.4.5</PbmVersion>
     <KubernetesClientVersionNet>17.0.14</KubernetesClientVersionNet>
     <MicrosoftExtensionsVersion>[6.0.*,)</MicrosoftExtensionsVersion>
     <AzureIdentityVersion>1.14.2</AzureIdentityVersion>
