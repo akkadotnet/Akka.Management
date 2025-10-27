@@ -6,15 +6,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
-        <PackageReference Include="xunit" Version="$(XunitVersion)" />
-        <PackageReference Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVersion)">
+        <PackageReference Include="FluentAssertions" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="coverlet.collector" Version="$(CoverletVersion)">
+        <PackageReference Include="coverlet.collector">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>

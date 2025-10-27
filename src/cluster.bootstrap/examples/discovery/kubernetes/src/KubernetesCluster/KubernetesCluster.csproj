@@ -9,12 +9,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Akka.Cluster.Hosting" Version="$(AkkaHostingVersion)" />
-        <PackageReference Include="Akka.Cluster.Tools" Version="$(AkkaVersion)" />
-        <PackageReference Include="Akka.DependencyInjection" Version="$(AkkaVersion)" />
-        <PackageReference Include="Petabridge.Cmd.Cluster" Version="$(PbmVersion)" />
-        <PackageReference Include="Petabridge.Cmd.Remote" Version="$(PbmVersion)" />
-        <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
+        <PackageReference Include="Akka.Cluster.Hosting" />
+        <PackageReference Include="Akka.Cluster.Tools" />
+        <PackageReference Include="Akka.DependencyInjection" />
+        <PackageReference Include="Petabridge.Cmd.Cluster" />
+        <PackageReference Include="Petabridge.Cmd.Remote" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" />
     </ItemGroup>
 
     <ItemGroup>

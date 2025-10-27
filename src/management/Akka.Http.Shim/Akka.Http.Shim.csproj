@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" Version="$(AkkaVersion)" />
-    <PackageReference Include="Ceen.Httpd" Version="0.9.9" />
+    <PackageReference Include="Akka" />
+    <PackageReference Include="Ceen.Httpd" />
   </ItemGroup>
 
 </Project>

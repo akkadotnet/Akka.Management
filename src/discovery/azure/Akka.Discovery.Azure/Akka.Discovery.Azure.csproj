@@ -13,13 +13,13 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Akka.Discovery" Version="$(AkkaVersion)" />
-      <PackageReference Include="Akka.Cluster" Version="$(AkkaVersion)" />
-      <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
-      <PackageReference Include="Azure.Data.Tables" Version="12.10.0" />
-      <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
-      <PackageReference Include="Google.Protobuf" Version="$(ProtobufVersion)" />
-      <PackageReference Include="Grpc.Tools" Version="$(GrpcToolsVersion)">
+      <PackageReference Include="Akka.Discovery" />
+      <PackageReference Include="Akka.Cluster" />
+      <PackageReference Include="Akka.Hosting" />
+      <PackageReference Include="Azure.Data.Tables" />
+      <PackageReference Include="Azure.Identity" />
+      <PackageReference Include="Google.Protobuf" />
+      <PackageReference Include="Grpc.Tools">
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         <PrivateAssets>all</PrivateAssets>
       </PackageReference>

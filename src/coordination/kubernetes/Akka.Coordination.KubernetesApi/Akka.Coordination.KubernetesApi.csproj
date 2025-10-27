@@ -9,10 +9,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Akka.Coordination" Version="$(AkkaVersion)" />
-        <PackageReference Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
-        <PackageReference Include="Akka.Cluster.Hosting" Version="$(AkkaHostingVersion)" />
-        <PackageReference Include="KubernetesClient" Version="$(KubernetesClientVersionNet)" />
+        <PackageReference Include="Akka.Coordination" />
+        <PackageReference Include="Akka.Hosting" />
+        <PackageReference Include="Akka.Cluster.Hosting" />
+        <PackageReference Include="KubernetesClient" />
     </ItemGroup>
 
     <ItemGroup>

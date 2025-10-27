@@ -1,0 +1,85 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!-- Akka.NET packages -->
+  <ItemGroup>
+    <PackageVersion Include="Akka" Version="$(AkkaVersion)" />
+    <PackageVersion Include="Akka.Cluster" Version="$(AkkaVersion)" />
+    <PackageVersion Include="Akka.Cluster.Tools" Version="$(AkkaVersion)" />
+    <PackageVersion Include="Akka.Coordination" Version="$(AkkaVersion)" />
+    <PackageVersion Include="Akka.DependencyInjection" Version="$(AkkaVersion)" />
+    <PackageVersion Include="Akka.Discovery" Version="$(AkkaVersion)" />
+    <PackageVersion Include="Akka.Remote.Hosting" Version="$(AkkaHostingVersion)" />
+    <PackageVersion Include="Akka.TestKit" Version="$(AkkaVersion)" />
+    <PackageVersion Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
+  </ItemGroup>
+
+  <!-- Akka.Hosting packages -->
+  <ItemGroup>
+    <PackageVersion Include="Akka.Hosting" Version="$(AkkaHostingVersion)" />
+    <PackageVersion Include="Akka.Hosting.TestKit" Version="$(AkkaHostingVersion)" />
+    <PackageVersion Include="Akka.Cluster.Hosting" Version="$(AkkaHostingVersion)" />
+  </ItemGroup>
+
+  <!-- AWS SDK packages -->
+  <ItemGroup>
+    <PackageVersion Include="AWSSDK.CloudFormation" Version="3.7.403.18" />
+    <PackageVersion Include="AWSSDK.EC2" Version="3.7.437.13" />
+    <PackageVersion Include="AWSSDK.ECS" Version="3.7.409.1" />
+    <PackageVersion Include="AWSSDK.S3" Version="3.7.416.13" />
+  </ItemGroup>
+
+  <!-- Azure packages -->
+  <ItemGroup>
+    <PackageVersion Include="Azure.Data.Tables" Version="12.10.0" />
+    <PackageVersion Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.23.0" />
+  </ItemGroup>
+
+  <!-- Kubernetes packages -->
+  <ItemGroup>
+    <PackageVersion Include="KubernetesClient" Version="$(KubernetesClientVersionNet)" />
+  </ItemGroup>
+
+  <!-- Microsoft Extensions packages -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="$(MicrosoftExtensionsVersion)" />
+  </ItemGroup>
+
+  <!-- Testing packages -->
+  <ItemGroup>
+    <PackageVersion Include="xunit" Version="$(XunitVersion)" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVersion)" />
+    <PackageVersion Include="Xunit.SkippableFact" Version="1.5.23" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
+    <PackageVersion Include="coverlet.collector" Version="$(CoverletVersion)" />
+    <PackageVersion Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
+    <PackageVersion Include="WireMock.Net" Version="$(WireMockVersion)" />
+    <PackageVersion Include="Testcontainers.Azurite" Version="4.4.0" />
+    <PackageVersion Include="Testcontainers.LocalStack" Version="4.4.0" />
+  </ItemGroup>
+
+  <!-- Protobuf and gRPC packages -->
+  <ItemGroup>
+    <PackageVersion Include="Google.Protobuf" Version="$(ProtobufVersion)" />
+    <PackageVersion Include="Grpc.Tools" Version="$(GrpcToolsVersion)" />
+  </ItemGroup>
+
+  <!-- Petabridge packages -->
+  <ItemGroup>
+    <PackageVersion Include="Petabridge.Cmd.Cluster" Version="$(PbmVersion)" />
+    <PackageVersion Include="Petabridge.Cmd.Remote" Version="$(PbmVersion)" />
+  </ItemGroup>
+
+  <!-- Other packages -->
+  <ItemGroup>
+    <PackageVersion Include="Ceen.Httpd" Version="0.9.9" />
+    <PackageVersion Include="Docker.DotNet" Version="3.125.15" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+  </ItemGroup>
+</Project>
