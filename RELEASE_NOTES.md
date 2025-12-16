@@ -1,3 +1,8 @@
+#### 1.5.57 December 16th 2025 ####
+
+* Update to [Akka.NET v1.5.57](https://github.com/akkadotnet/akka.net/releases/tag/1.5.57)
+* Update to [Akka.Hosting v1.5.57](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.57)
+
 #### 1.5.55 October 26th 2025 ####
 
 * [Improve logging for Cluster.Bootstrap hostname matching diagnostics](https://github.com/akkadotnet/Akka.Management/pull/3388) - fixes [#3387](https://github.com/akkadotnet/Akka.Management/issues/3387)

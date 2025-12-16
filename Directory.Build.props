@@ -2,9 +2,9 @@
   <PropertyGroup>
     <Copyright>Copyright © 2013-$([System.DateTime]::Now.Year) Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>1.5.55</VersionPrefix>
-    <PackageReleaseNotes>* [Improve logging for Cluster.Bootstrap hostname matching diagnostics](https://github.com/akkadotnet/Akka.Management/pull/3388) - fixes [#3387](https://github.com/akkadotnet/Akka.Management/issues/3387)
-* [Update Akka.Hosting and Pbm versions](https://github.com/akkadotnet/Akka.Management/pull/3389)</PackageReleaseNotes>
+    <VersionPrefix>1.5.57</VersionPrefix>
+    <PackageReleaseNotes>* Update to Akka.NET v1.5.57
+* Update to Akka.Hosting v1.5.57</PackageReleaseNotes>
     <PackageIconUrl>https://getakka.net/images/akkalogo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/akkadotnet/Akka.Management</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -25,8 +25,8 @@
     <FluentAssertionVersion>7.0.0</FluentAssertionVersion>
     <TestSdkVersion>17.13.0</TestSdkVersion>
     <WireMockVersion>1.8.4</WireMockVersion>
-    <AkkaVersion>1.5.55</AkkaVersion>
-    <AkkaHostingVersion>1.5.55</AkkaHostingVersion>
+    <AkkaVersion>1.5.57</AkkaVersion>
+    <AkkaHostingVersion>1.5.57</AkkaHostingVersion>
     <PbmVersion>1.4.5</PbmVersion>
     <KubernetesClientVersionNet>17.0.14</KubernetesClientVersionNet>
     <MicrosoftExtensionsVersion>6.0.0</MicrosoftExtensionsVersion>
