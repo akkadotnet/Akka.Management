@@ -21,6 +21,24 @@ using Newtonsoft.Json;
 
 namespace Akka.Coordination.Azure.Internal
 {
+    /// <summary>
+    /// Thrown when Azure Blob container initialization fails.
+    /// Used to distinguish container-level errors from blob-level <see cref="RequestFailedException"/>
+    /// so that callers can retry appropriately.
+    /// </summary>
+    internal sealed class ContainerInitializationException : Exception
+    {
+        public int StatusCode { get; }
+        public string? ErrorCode { get; }
+
+        public ContainerInitializationException(string message, int statusCode, string? errorCode, Exception innerException)
+            : base(message, innerException)
+        {
+            StatusCode = statusCode;
+            ErrorCode = errorCode;
+        }
+    }
+
     internal sealed class AzureApiImpl: IAzureApi
     {
         private readonly AzureLeaseSettings _settings;
@@ -73,10 +91,45 @@ namespace Akka.Coordination.Azure.Internal
             
             var client = serviceClient.GetBlobContainerClient(_settings.ContainerName);
             
-            // Make sure that `CreateIfNotExistsAsync()` only get called once for every AzureApi instance
+            // Ensure container exists. Only attempted once per AzureApiImpl instance.
+            //
+            // Uses CreateAsync() instead of CreateIfNotExistsAsync() because the latter has known
+            // Azure SDK bugs where it still throws RequestFailedException(409).
+            // See: https://github.com/Azure/azure-sdk-for-net/issues/28549
             if (!_initialized)
             {
-                await client.CreateIfNotExistsAsync();
+                try
+                {
+                    await client.CreateAsync();
+                }
+                catch (RequestFailedException ex)
+                {
+                    switch ((HttpStatusCode)ex.Status)
+                    {
+                        case HttpStatusCode.Conflict when ex.ErrorCode == "ContainerAlreadyExists":
+                            // Benign — container already exists from a previous run or another node.
+                            _log.Debug("Container '{0}' already exists", _settings.ContainerName);
+                            break;
+
+                        case HttpStatusCode.Conflict:
+                            // ContainerBeingDeleted or other transient 409 — retriable
+                            throw new ContainerInitializationException(
+                                $"Container '{_settings.ContainerName}' creation conflict: {ex.ErrorCode}",
+                                ex.Status, ex.ErrorCode, ex);
+
+                        case HttpStatusCode.Forbidden:
+                        case HttpStatusCode.Unauthorized:
+                            throw new ContainerInitializationException(
+                                $"Not authorized to create container '{_settings.ContainerName}': [{ex.ErrorCode}]",
+                                ex.Status, ex.ErrorCode, ex);
+
+                        default:
+                            // Other errors (429, 500, 503, etc.)
+                            throw new ContainerInitializationException(
+                                $"Container '{_settings.ContainerName}' creation failed with status {ex.Status}: {ex.ErrorCode}",
+                                ex.Status, ex.ErrorCode, ex);
+                    }
+                }
                 _initialized = true;
             }
             
@@ -166,6 +219,11 @@ namespace Akka.Coordination.Azure.Internal
                 _log.Debug("Lease resource {0} created", leaseName);
                 return ToLeaseResource(leaseBody, operationResponse);
             }
+            catch (ContainerInitializationException e)
+            {
+                _log.Warning(e, "Container initialization failed while creating lease {0}: {1}", leaseName, e.Message);
+                return null;
+            }
             catch (RequestFailedException e)
             {
                 switch ((HttpStatusCode)e.Status)
@@ -212,6 +270,11 @@ namespace Akka.Coordination.Azure.Internal
                 var response = await blobClient.ExistsAsync(cts.Token);
                 return response.Value;
             }
+            catch (ContainerInitializationException e)
+            {
+                _log.Warning(e, "Container initialization failed while checking lease {0} existence: {1}", leaseName, e.Message);
+                return false;
+            }
             catch (RequestFailedException e)
             {
                 throw (HttpStatusCode)e.Status switch
@@ -250,6 +313,11 @@ namespace Akka.Coordination.Azure.Internal
                 var lease = ToLeaseResource(operationResponse.Value);
                 _log.Debug("Resource {0} exists: {1}", leaseName, lease);
                 return lease;
+            }
+            catch (ContainerInitializationException e)
+            {
+                _log.Warning(e, "Container initialization failed while retrieving lease {0}: {1}", leaseName, e.Message);
+                return null;
             }
             catch (RequestFailedException e)
             {
