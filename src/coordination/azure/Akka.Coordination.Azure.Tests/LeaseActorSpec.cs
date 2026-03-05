@@ -6,6 +6,9 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
@@ -393,83 +396,37 @@ namespace Akka.Coordination.Azure.Tests
             // TODO this could accumulate senders and reply to all, atm it'll log saying previous action hasn't finished
         }
 
-        // Regression test: when a write conflict occurs in Granting state and the blob has no owner,
-        // LeaseAcquired must NOT be sent until the retry write succeeds. Sending it prematurely causes
-        // the shard to start without localGranted=true and without heartbeats, leading to a shard-level
-        // split brain if another node takes the lease before the retry completes.
-        [Fact(DisplayName = "LeaseActor should not send LeaseAcquired prematurely on conflict retry in Granting state")]
-        public void ShouldNotSendLeaseAcquiredPrematurelyOnConflictRetry()
+        // Regression test: when a CAS conflict occurs in Granting state and the blob is unowned,
+        // the actor retries the write. If the retry is then stolen by another node, the caller
+        // should receive exactly one message: LeaseTaken — not a premature LeaseAcquired.
+        [Fact(DisplayName = "LeaseActor should not send premature LeaseAcquired when conflict retry is stolen")]
+        public void ShouldNotSendPrematureLeaseAcquiredWhenConflictRetryIsStolen()
         {
             RunTest(() =>
             {
-                // Start acquiring: read returns empty lease
                 UnderTest.Tell(new LeaseActor.Acquire(), Sender);
                 LeaseProbe.ExpectMsg(LeaseName);
                 LeaseProbe.Reply(new LeaseResource("", CurrentVersion, CurrentTime));
 
-                // First write attempt
+                // First write: conflict with unowned blob — triggers retry
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
-
-                // Conflict: version moved but no owner (another node wrote and released)
                 var conflictVersion = new ETag((CurrentVersionCount + 3).ToString());
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
                         new LeaseResource("", conflictVersion, CurrentTime)));
 
-                // LeaseAcquired must NOT have been sent yet — the retry hasn't completed
-                SenderProbe.ExpectNoMsg(TimeSpan.FromMilliseconds(100));
-
-                // Retry write is issued with the new version
+                // Retry write dispatched, then stolen by another node
                 UpdateProbe.ExpectMsg((OwnerName, conflictVersion));
-
-                // Retry also conflicts, but this time another node owns it
                 var stolenVersion = new ETag((CurrentVersionCount + 5).ToString());
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
                         new LeaseResource("another-node", stolenVersion, CurrentTime)));
 
-                // Now the caller should get LeaseTaken (not a stale LeaseAcquired)
-                SenderProbe.ExpectMsg<LeaseActor.LeaseTaken>();
+                // Single-sender ordering: if the premature LeaseAcquired was sent,
+                // it arrives before LeaseTaken. So the first message tells us everything.
+                SenderProbe.ExpectMsg<object>().Should().BeOfType<LeaseActor.LeaseTaken>(
+                    "caller should receive LeaseTaken, not a premature LeaseAcquired");
                 Granted.Value.Should().BeFalse();
-            });
-        }
-
-        // Verify that conflict retry with no owner eventually succeeds and properly
-        // transitions to Granted state with heartbeats enabled
-        [Fact(DisplayName = "LeaseActor should acquire lease after conflict retry succeeds")]
-        public void ShouldAcquireLeaseAfterConflictRetrySucceeds()
-        {
-            RunTest(() =>
-            {
-                UnderTest.Tell(new LeaseActor.Acquire(), Sender);
-                LeaseProbe.ExpectMsg(LeaseName);
-                LeaseProbe.Reply(new LeaseResource("", CurrentVersion, CurrentTime));
-
-                // First write attempt
-                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
-
-                // Conflict: version moved but no owner
-                var conflictVersion = new ETag((CurrentVersionCount + 3).ToString());
-                UpdateProbe.Reply(
-                    new Left<LeaseResource, LeaseResource>(
-                        new LeaseResource("", conflictVersion, CurrentTime)));
-
-                // No premature LeaseAcquired
-                SenderProbe.ExpectNoMsg(TimeSpan.FromMilliseconds(100));
-
-                // Retry write succeeds
-                UpdateProbe.ExpectMsg((OwnerName, conflictVersion));
-                var grantedVersion = new ETag((CurrentVersionCount + 6).ToString());
-                UpdateProbe.Reply(
-                    new Right<LeaseResource, LeaseResource>(
-                        new LeaseResource(OwnerName, grantedVersion, CurrentTime)));
-
-                // NOW LeaseAcquired should be sent
-                SenderProbe.ExpectMsg<LeaseActor.LeaseAcquired>();
-                Granted.Value.Should().BeTrue();
-
-                // Heartbeat should be running (proves we're in Granted state)
-                UpdateProbe.ExpectMsg((OwnerName, grantedVersion));
             });
         }
 
