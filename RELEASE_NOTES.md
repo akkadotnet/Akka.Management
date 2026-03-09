@@ -1,3 +1,10 @@
+#### 1.5.62 March 9th 2026 ####
+
+* Update to [Akka.NET v1.5.62](https://github.com/akkadotnet/akka.net/releases/tag/1.5.62)
+* Update to [Akka.Hosting v1.5.62](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.62)
+* [fix heartbeat surrender bug](https://github.com/akkadotnet/Akka.Management/pull/3407) - transient heartbeat failure causes immediate lease surrender instead of retrying within the TTL safety window in both Azure and Kubernetes `LeaseActor`.
+* [fix premature LeaseAcquired bug](https://github.com/akkadotnet/Akka.Management/pull/3406) - `LeaseActor` sends `LeaseAcquired` before the conflict retry write completes, causing a potential split-brain scenario in both Azure and Kubernetes providers.
+
 #### 1.5.61 February 27th 2026 ####
 
 * Update to [Akka.NET v1.5.61](https://github.com/akkadotnet/akka.net/releases/tag/1.5.61)
