@@ -362,7 +362,6 @@ namespace Akka.Coordination.KubernetesApi
                         throw new LeaseException(
                             $"Update response from Kubernetes API should not return the same version: Response: {leftResponse}. Client: {data}");
                     // Try again as lock version has moved on but is not taken
-                    who.Tell(LeaseAcquired.Instance);
                     _client.UpdateLeaseResource(leaseName, _ownerName, version)
                         .PipeTo(Self, success:result => new WriteResponse(result), failure: FlattenAggregateException);
                     return Stay();

@@ -6,6 +6,9 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
@@ -407,6 +410,98 @@ namespace Akka.Coordination.Azure.Tests
                     new Left<LeaseResource, LeaseResource>(
                         new LeaseResource("I stole your lock", CurrentVersion, CurrentTime)));
                 SenderProbe.ExpectMsg<LeaseActor.LeaseTaken>();
+            });
+        }
+
+        /// <summary>
+        /// Reproduces a split-brain bug: when a CAS conflict occurs during granting and the blob
+        /// has no owner, the LeaseActor sends LeaseAcquired to the caller BEFORE the retry write completes.
+        /// If the retry then fails (another node steals the lease), the caller already believes it holds the
+        /// lease — but it doesn't. localGranted is never set to true, heartbeat never starts.
+        ///
+        /// This test asserts the CORRECT behavior: the caller should receive LeaseTaken (not LeaseAcquired)
+        /// when the retry write is stolen by another node.
+        /// </summary>
+        [Fact(DisplayName = "Bug #3402: should NOT send premature LeaseAcquired when conflict retry is stolen by another node")]
+        public async Task ShouldNotSendPrematureLeaseAcquiredWhenConflictRetryIsStolen()
+        {
+            await RunTestAsync(async () =>
+            {
+                // Step 1: Send Acquire, complete the read (lease unowned), enter Granting state
+                UnderTest.Tell(new LeaseActor.Acquire(), Sender);
+                await LeaseProbe.ExpectMsgAsync(LeaseName);
+                LeaseProbe.Reply(new LeaseResource("", CurrentVersion, CurrentTime));
+
+                // Step 2: First write attempt — expect the CAS update
+                await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
+
+                // Step 3: Reply with CAS conflict (412), but blob has NO owner (version moved on)
+                // This triggers the null-owner retry path at LeaseActor.cs line 356-366
+                var conflictVersion = new ETag((CurrentVersionCount + 5).ToString());
+                UpdateProbe.Reply(
+                    new Left<LeaseResource, LeaseResource>(
+                        new LeaseResource(null, conflictVersion, CurrentTime)));
+
+                // Step 4: Retry write is dispatched — expect it with the new version
+                await UpdateProbe.ExpectMsgAsync((OwnerName, conflictVersion));
+
+                // Step 5: Retry FAILS — another node stole the lease between conflict and retry
+                var stolenVersion = new ETag((CurrentVersionCount + 10).ToString());
+                UpdateProbe.Reply(
+                    new Left<LeaseResource, LeaseResource>(
+                        new LeaseResource("another-node-stole-it", stolenVersion, CurrentTime)));
+
+                // Step 6: Assert CORRECT behavior — caller should get LeaseTaken, NOT LeaseAcquired
+                // BUG: Currently the caller receives LeaseAcquired (premature, from line 362)
+                //       followed by LeaseTaken (which goes to dead letters since Ask already completed)
+                await SenderProbe.ExpectMsgAsync<LeaseActor.LeaseTaken>();
+
+                // Step 7: localGranted should be false — the lease was never actually acquired
+                Granted.Value.Should().BeFalse();
+            });
+        }
+
+        /// <summary>
+        /// Verifies that when a CAS conflict occurs with no owner and the retry SUCCEEDS,
+        /// the lease is properly granted with localGranted=true and heartbeat started.
+        /// This is the happy-path counterpart to the split-brain test above.
+        /// </summary>
+        [Fact(DisplayName = "Bug #3402: should grant lease only after conflict retry succeeds")]
+        public async Task ShouldGrantLeaseOnlyAfterConflictRetrySucceeds()
+        {
+            await RunTestAsync(async () =>
+            {
+                // Step 1: Send Acquire, complete the read (lease unowned), enter Granting state
+                UnderTest.Tell(new LeaseActor.Acquire(), Sender);
+                await LeaseProbe.ExpectMsgAsync(LeaseName);
+                LeaseProbe.Reply(new LeaseResource("", CurrentVersion, CurrentTime));
+
+                // Step 2: First write attempt
+                await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
+
+                // Step 3: CAS conflict, no owner
+                var conflictVersion = new ETag((CurrentVersionCount + 5).ToString());
+                UpdateProbe.Reply(
+                    new Left<LeaseResource, LeaseResource>(
+                        new LeaseResource(null, conflictVersion, CurrentTime)));
+
+                // Step 4: Retry dispatched
+                await UpdateProbe.ExpectMsgAsync((OwnerName, conflictVersion));
+
+                // Step 5: Retry SUCCEEDS
+                var grantedVersion = new ETag((CurrentVersionCount + 11).ToString());
+                UpdateProbe.Reply(
+                    new Right<LeaseResource, LeaseResource>(
+                        new LeaseResource(OwnerName, grantedVersion, CurrentTime)));
+
+                // Step 6: Now we should get LeaseAcquired
+                await SenderProbe.ExpectMsgAsync<LeaseActor.LeaseAcquired>();
+
+                // Step 7: localGranted should be TRUE — the lease was properly acquired
+                await AwaitAssertAsync(() =>
+                {
+                    Granted.Value.Should().BeTrue();
+                });
             });
         }
 

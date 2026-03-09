@@ -358,8 +358,9 @@ namespace Akka.Coordination.Azure
                     if (oldVersion == leftResponse.Version)
                         throw new LeaseException(
                             $"Update response from Azure Blob should not return the same version: Response: {leftResponse}. Client: {data}");
-                    // Try again as lock version has moved on but is not taken
-                    who.Tell(LeaseAcquired.Instance);
+                    // Try again as lock version has moved on but is not taken.
+                    // Do NOT reply yet — wait for the WriteResponse.
+                    // On success the existing Right<> branch will send LeaseAcquired and go to Granted.
                     _client.UpdateLeaseResource(leaseName, _ownerName, version)
                         .ContinueWith(t => new WriteResponse(t.Result))
                         .PipeTo(Self, failure: FlattenAggregateException);
