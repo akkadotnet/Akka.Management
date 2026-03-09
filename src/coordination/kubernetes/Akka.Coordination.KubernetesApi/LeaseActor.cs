@@ -108,19 +108,22 @@ namespace Akka.Coordination.KubernetesApi
         
         public sealed class GrantedVersion: IData
         {
-            public GrantedVersion(string version, Action<Exception?> leaseLostCallback)
+            public GrantedVersion(string version, Action<Exception?> leaseLostCallback, DateTime? lastSuccessfulHeartbeat = null)
             {
                 Version = version;
                 LeaseLostCallback = leaseLostCallback;
+                LastSuccessfulHeartbeat = lastSuccessfulHeartbeat ?? DateTime.UtcNow;
             }
 
             public string Version { get; }
             public Action<Exception?> LeaseLostCallback { get; }
+            public DateTime LastSuccessfulHeartbeat { get; }
 
-            public GrantedVersion Copy(string? version = null, Action<Exception?>? leaseLostCallback = null)
+            public GrantedVersion Copy(string? version = null, Action<Exception?>? leaseLostCallback = null, DateTime? lastSuccessfulHeartbeat = null)
                 => new GrantedVersion(
                     version: version ?? Version,
-                    leaseLostCallback: leaseLostCallback ?? LeaseLostCallback);
+                    leaseLostCallback: leaseLostCallback ?? LeaseLostCallback,
+                    lastSuccessfulHeartbeat: lastSuccessfulHeartbeat ?? LastSuccessfulHeartbeat);
         }
         
         public interface ICommand { }
@@ -393,7 +396,7 @@ namespace Akka.Coordination.KubernetesApi
                             throw new LeaseException($"response from API server has different owner for success: {resource}");
                         _log.Debug("Heartbeat: lease time updated: Version {0}", resource.Value.Version);
                         Timers!.StartSingleTimer("heartbeat", Heartbeat.Instance, settings.TimeoutSettings.HeartbeatInterval);
-                        return Stay().Using(gv.Copy(version: resource.Value.Version));
+                        return Stay().Using(gv.Copy(version: resource.Value.Version, lastSuccessfulHeartbeat: DateTime.UtcNow));
                     
                     case WriteResponse {Response: Left<LeaseResource, LeaseResource> resource}:
                         _log.Warning("Conflict during heartbeat to lease {0}. Lease assumed to be released.", resource.Value);
@@ -402,8 +405,19 @@ namespace Akka.Coordination.KubernetesApi
                         return GoTo(Idle.Instance).Using(ReadRequired.Instance);
                     
                     case Status.Failure failure:
-                        // FIXME, retry if timeout far enough off: https://github.com/lightbend/akka-commercial-addons/issues/501
-                        _log.Warning(failure.Cause, "Failure during heartbeat to lease. Lease assumed to be released.");
+                        var timeSinceLastHeartbeat = DateTime.UtcNow - gv.LastSuccessfulHeartbeat;
+                        var retryWindow = _heartbeatTimeout - _heartbeatOffset - settings.TimeoutSettings.HeartbeatInterval;
+                        if (timeSinceLastHeartbeat < retryWindow)
+                        {
+                            _log.Warning(failure.Cause,
+                                "Transient failure during heartbeat to lease {0}. TTL still valid ({1:F0}s remaining). Retrying.",
+                                leaseName,
+                                (retryWindow - timeSinceLastHeartbeat).TotalSeconds);
+                            Timers!.StartSingleTimer("heartbeat", Heartbeat.Instance, settings.TimeoutSettings.HeartbeatInterval);
+                            return Stay();
+                        }
+                        _log.Warning(failure.Cause,
+                            "Failure during heartbeat to lease {0}. TTL window expired, releasing lease.", leaseName);
                         localGranted.GetAndSet(false);
                         ExecuteLeaseLockCallback(leaseLost, failure.Cause);
                         return GoTo(Idle.Instance).Using(ReadRequired.Instance);

@@ -325,18 +325,13 @@ namespace Akka.Coordination.KubernetesApi.Tests
         {
             RunTest(() =>
             {
-                var failure = new LeaseException("Failed to communicate with API server");
                 AcquireLease();
                 ExpectHeartBeat();
                 Granted.Value.Should().BeTrue();
 
-                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
-                IncrementVersion();
-                UpdateProbe.Reply(new Status.Failure(failure));
-                AwaitAssert(() =>
-                {
-                    Granted.Value.Should().BeFalse();
-                });
+                // With retry logic, multiple failures are needed to exhaust the TTL window
+                HeartBeatFailure();
+                Granted.Value.Should().BeFalse();
             });
         }
 
@@ -354,9 +349,8 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 ExpectHeartBeat();
                 Granted.Value.Should().BeTrue();
 
-                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
-                IncrementVersion();
-                UpdateProbe.Reply(new Status.Failure(failure));
+                // With retry logic, drive failures until TTL expires and callback fires
+                DriveHeartBeatFailures(failure);
                 AwaitAssert(() =>
                 {
                     callbackCalled.Should().Be(failure);
@@ -364,26 +358,95 @@ namespace Akka.Coordination.KubernetesApi.Tests
             });
         }
 
-        [Fact(DisplayName = "Bug #3404: should retry heartbeat on transient failure without surrendering lease")]
-        public void ShouldRetryHeartbeatOnTransientFailureWithoutSurrenderingLease()
+        [Fact(DisplayName = "transient heartbeat failure should retry and stay granted")]
+        public void TransientHeartBeatFailureShouldRetryAndStayGranted()
         {
             RunTest(() =>
             {
-                Exception? callbackError = null;
-                AcquireLease(e => callbackError = e);
+                AcquireLease();
                 ExpectHeartBeat();
                 Granted.Value.Should().BeTrue();
 
+                // First heartbeat fails transiently
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
-                var transientFailure = new LeaseException("Transient failure");
-                UpdateProbe.Reply(new Status.Failure(transientFailure));
+                UpdateProbe.Reply(new Status.Failure(new LeaseException("Transient failure")));
 
-                // Correct behavior: retain lease and retry while TTL still allows it.
+                // Should still be granted - actor retries within TTL window
                 Granted.Value.Should().BeTrue();
-                callbackError.Should().BeNull();
 
-                var retry = UpdateProbe.ExpectMsg<(string, string)>(LeaseSettings.TimeoutSettings.HeartbeatInterval * 3);
-                retry.Should().Be((OwnerName, CurrentVersion));
+                // Retry heartbeat succeeds
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                IncrementVersion();
+                UpdateProbe.Reply(
+                    new Right<LeaseResource, LeaseResource>(
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
+
+                // Should still be granted and heartbeating normally
+                Granted.Value.Should().BeTrue();
+
+                // Normal heartbeat continues
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+            });
+        }
+
+        [Fact(DisplayName = "multiple transient heartbeat failures should recover on success")]
+        public void MultipleTransientHeartBeatFailuresShouldRecover()
+        {
+            RunTest(() =>
+            {
+                AcquireLease();
+                ExpectHeartBeat();
+                Granted.Value.Should().BeTrue();
+
+                // Multiple consecutive failures, all within TTL window
+                for (var i = 0; i < 3; i++)
+                {
+                    UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                    UpdateProbe.Reply(new Status.Failure(new LeaseException($"Transient failure {i}")));
+                    Granted.Value.Should().BeTrue();
+                }
+
+                // Recovery: next heartbeat succeeds
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                IncrementVersion();
+                UpdateProbe.Reply(
+                    new Right<LeaseResource, LeaseResource>(
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
+
+                // Lease is still held
+                Granted.Value.Should().BeTrue();
+            });
+        }
+
+        [Fact(DisplayName = "heartbeat failure should not call lease lost callback during retry")]
+        public void HeartBeatFailureShouldNotCallLeaseLostCallbackDuringRetry()
+        {
+            RunTest(() =>
+            {
+                var callbackCalled = false;
+                AcquireLease(e =>
+                {
+                    callbackCalled = true;
+                });
+                ExpectHeartBeat();
+                Granted.Value.Should().BeTrue();
+
+                // Single transient failure within TTL
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                UpdateProbe.Reply(new Status.Failure(new LeaseException("Transient failure")));
+
+                // Callback should NOT be called - TTL still valid
+                callbackCalled.Should().BeFalse();
+                Granted.Value.Should().BeTrue();
+
+                // Recovery
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                IncrementVersion();
+                UpdateProbe.Reply(
+                    new Right<LeaseResource, LeaseResource>(
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
+
+                callbackCalled.Should().BeFalse();
             });
         }
 
@@ -771,13 +834,18 @@ namespace Akka.Coordination.KubernetesApi.Tests
 
         protected void HeartBeatFailure()
         {
-            UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
-            IncrementVersion();
-            UpdateProbe.Reply(new Status.Failure(new LeaseException("Failed to communicate with API server")));
-            AwaitAssert(() =>
+            DriveHeartBeatFailures(new LeaseException("Failed to communicate with API server"));
+        }
+
+        protected void DriveHeartBeatFailures(Exception failure)
+        {
+            while (Granted.Value)
             {
-                Granted.Value.Should().BeFalse();
-            });
+                UpdateProbe.ExpectMsg<(string, string)>(TimeSpan.FromSeconds(2));
+                UpdateProbe.Reply(new Status.Failure(failure));
+                Task.Delay(10).Wait();
+            }
+            AwaitAssert(() => Granted.Value.Should().BeFalse());
         }
     }
 }
