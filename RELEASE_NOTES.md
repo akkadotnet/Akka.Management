@@ -1,3 +1,15 @@
+#### 1.5.61 February 27th 2026 ####
+
+* Update to [Akka.NET v1.5.61](https://github.com/akkadotnet/akka.net/releases/tag/1.5.61)
+* Update to [Akka.Hosting v1.5.61](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.61)
+* [Fix `CreateIfNotExistsAsync` bug in `Akka.Coordination.Azure`](https://github.com/akkadotnet/Akka.Management/pull/3398) - works around a known Azure SDK bug ([azure-sdk-for-net#28549](https://github.com/Azure/azure-sdk-for-net/issues/28549)) where `CreateIfNotExistsAsync` could still throw a 409 conflict exception.
+* [Update health check guidance in `reference.conf`](https://github.com/akkadotnet/Akka.Management/pull/3395) - corrects outdated comment that pointed users to the deprecated `Akka.HealthCheck` NuGet package.
+
+#### 1.5.60 February 10th 2026 ####
+
+* Update to [Akka.NET v1.5.60](https://github.com/akkadotnet/akka.net/releases/tag/1.5.60)
+* Update to [Akka.Hosting v1.5.60](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.60)
+
 #### 1.5.59 January 26th 2026 ####
 
 * Update to [Akka.NET v1.5.59](https://github.com/akkadotnet/akka.net/releases/tag/1.5.59)

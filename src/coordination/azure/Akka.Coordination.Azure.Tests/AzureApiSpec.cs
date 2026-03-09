@@ -104,5 +104,55 @@ namespace Akka.Coordination.Azure.Tests
             var response = await _underTest.RemoveLease(LeaseName);
             response.Should().Be(Done.Instance);
         }
+
+        // Regression test for https://github.com/akkadotnet/Akka.Management/issues/3397
+        // A second AzureApiImpl instance (_initialized = false) encountering a container that
+        // already exists must handle the 409 ContainerAlreadyExists gracefully instead of
+        // throwing a LeaseException that propagates up to the Split Brain Resolver.
+        [Fact(DisplayName = "Should handle ContainerAlreadyExists when a second instance starts")]
+        public async Task ShouldHandleContainerAlreadyExists()
+        {
+            // First instance creates the container and lease blob
+            var firstLease = await _underTest.ReadOrCreateLeaseResource(LeaseName);
+            firstLease.Owner.Should().BeNull();
+
+            // Second instance has _initialized = false, so ContainerClient() will call
+            // CreateAsync() and receive a 409 ContainerAlreadyExists from Azure.
+            // Before the fix, this threw LeaseException and crashed the lease actor.
+            var secondInstance = new AzureApiImpl(Sys, _settings);
+            var secondLease = await secondInstance.ReadOrCreateLeaseResource(LeaseName);
+            secondLease.Owner.Should().BeNull();
+            secondLease.Version.Should().NotBeNull();
+        }
+
+        // Verifies that multiple independent AzureApiImpl instances can operate concurrently
+        // against the same container — the typical scenario in a multi-node Akka.NET cluster
+        // where each node creates its own AzureApiImpl.
+        [Fact(DisplayName = "Multiple instances should acquire different leases against same container")]
+        public async Task MultipleInstancesShouldAcquireDifferentLeases()
+        {
+            const string leaseName1 = "lease-multi-1";
+            const string leaseName2 = "lease-multi-2";
+            const string owner1 = "node-1";
+            const string owner2 = "node-2";
+
+            var instance1 = new AzureApiImpl(Sys, _settings);
+            var instance2 = new AzureApiImpl(Sys, _settings);
+
+            // Both instances create their leases (both will try CreateAsync on the container)
+            var lease1 = await instance1.ReadOrCreateLeaseResource(leaseName1);
+            var lease2 = await instance2.ReadOrCreateLeaseResource(leaseName2);
+
+            // Both should succeed — one creates the container, the other gets 409 and handles it
+            lease1.Owner.Should().BeNull();
+            lease2.Owner.Should().BeNull();
+
+            // Both instances should be able to update their respective leases
+            var update1 = await instance1.UpdateLeaseResource(leaseName1, owner1, lease1.Version, DateTimeOffset.UtcNow);
+            update1.Should().BeOfType<Right<LeaseResource, LeaseResource>>();
+
+            var update2 = await instance2.UpdateLeaseResource(leaseName2, owner2, lease2.Version, DateTimeOffset.UtcNow);
+            update2.Should().BeOfType<Right<LeaseResource, LeaseResource>>();
+        }
     }
 }
