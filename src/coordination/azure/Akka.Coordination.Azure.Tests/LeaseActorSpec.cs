@@ -363,6 +363,29 @@ namespace Akka.Coordination.Azure.Tests
             });
         }
 
+        [Fact(DisplayName = "Bug #3404: should retry heartbeat on transient failure without surrendering lease")]
+        public void ShouldRetryHeartbeatOnTransientFailureWithoutSurrenderingLease()
+        {
+            RunTest(() =>
+            {
+                Exception? callbackError = null;
+                AcquireLease(e => callbackError = e);
+                ExpectHeartBeat();
+                Granted.Value.Should().BeTrue();
+
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                var transientFailure = new LeaseException("Transient failure");
+                UpdateProbe.Reply(new Status.Failure(transientFailure));
+
+                // Correct behavior: retain lease and retry while TTL still allows it.
+                Granted.Value.Should().BeTrue();
+                callbackError.Should().BeNull();
+
+                var retry = UpdateProbe.ExpectMsg<(string, ETag)>(LeaseSettings.TimeoutSettings.HeartbeatInterval * 3);
+                retry.Should().Be((OwnerName, CurrentVersion));
+            });
+        }
+
         [Fact(DisplayName = "lock should be acquire-able after heart beat conflict")]
         public void LockShouldAcquireAfterHeartBeatConflict()
         {
