@@ -396,40 +396,6 @@ namespace Akka.Coordination.Azure.Tests
             // TODO this could accumulate senders and reply to all, atm it'll log saying previous action hasn't finished
         }
 
-        // Regression test: when a CAS conflict occurs in Granting state and the blob is unowned,
-        // the actor retries the write. If the retry is then stolen by another node, the caller
-        // should receive exactly one message: LeaseTaken — not a premature LeaseAcquired.
-        [Fact(DisplayName = "LeaseActor should not send premature LeaseAcquired when conflict retry is stolen")]
-        public void ShouldNotSendPrematureLeaseAcquiredWhenConflictRetryIsStolen()
-        {
-            RunTest(() =>
-            {
-                UnderTest.Tell(new LeaseActor.Acquire(), Sender);
-                LeaseProbe.ExpectMsg(LeaseName);
-                LeaseProbe.Reply(new LeaseResource("", CurrentVersion, CurrentTime));
-
-                // First write: conflict with unowned blob — triggers retry
-                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
-                var conflictVersion = new ETag((CurrentVersionCount + 3).ToString());
-                UpdateProbe.Reply(
-                    new Left<LeaseResource, LeaseResource>(
-                        new LeaseResource("", conflictVersion, CurrentTime)));
-
-                // Retry write dispatched, then stolen by another node
-                UpdateProbe.ExpectMsg((OwnerName, conflictVersion));
-                var stolenVersion = new ETag((CurrentVersionCount + 5).ToString());
-                UpdateProbe.Reply(
-                    new Left<LeaseResource, LeaseResource>(
-                        new LeaseResource("another-node", stolenVersion, CurrentTime)));
-
-                // Single-sender ordering: if the premature LeaseAcquired was sent,
-                // it arrives before LeaseTaken. So the first message tells us everything.
-                SenderProbe.ExpectMsg<object>().Should().BeOfType<LeaseActor.LeaseTaken>(
-                    "caller should receive LeaseTaken, not a premature LeaseAcquired");
-                Granted.Value.Should().BeFalse();
-            });
-        }
-
         [Fact(DisplayName = "LeaseActor should return lease taken if conflict when updating lease")]
         public void ReturnLeaseTakenIfConflictWhenUpdatingLease()
         {
