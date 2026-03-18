@@ -138,6 +138,7 @@ namespace Akka.Management
         {
             options.Apply(builder);
             builder.AddHocon(AkkaManagementProvider.DefaultConfiguration(), HoconAddMode.Append);
+            builder.AddHocon(Akka.Http.Http.DefaultConfig(), HoconAddMode.Append);
             if (autoStart)
             {
                 builder.WithExtensions(typeof(AkkaManagementProvider));
@@ -167,6 +168,8 @@ namespace Akka.Management
             bool autoStart = false)
         {
             builder.AddSetup(setup);
+            builder.AddHocon(AkkaManagementProvider.DefaultConfiguration(), HoconAddMode.Append);
+            builder.AddHocon(Akka.Http.Http.DefaultConfig(), HoconAddMode.Append);
             if (autoStart)
             {
                 builder.WithExtensions(typeof(AkkaManagementProvider));
