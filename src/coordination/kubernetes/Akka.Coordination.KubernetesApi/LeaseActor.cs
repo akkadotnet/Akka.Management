@@ -404,9 +404,9 @@ namespace Akka.Coordination.KubernetesApi
                             // on the client, so we retried with a stale version. The lease is still ours —
                             // update the version and continue heartbeating.
                             _log.Warning(
-                                "Heartbeat conflict for lease {0}: current holder is [{1}] (we are [{2}]). " +
-                                "Lease is still ours, updating version from {3} to {4} and continuing.",
-                                leaseName, resource.Value.Owner, _ownerName, version, resource.Value.Version);
+                                "Heartbeat self-conflict for lease {0}: our previous write succeeded but timed out. " +
+                                "Updating version from {1} to {2} and continuing.",
+                                leaseName, version, resource.Value.Version);
                             Timers!.StartSingleTimer("heartbeat", Heartbeat.Instance, settings.TimeoutSettings.HeartbeatInterval);
                             return Stay().Using(gv.Copy(version: resource.Value.Version, lastSuccessfulHeartbeat: DateTime.UtcNow));
                         }
