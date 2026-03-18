@@ -398,6 +398,18 @@ namespace Akka.Coordination.KubernetesApi
                         return Stay().Using(gv.Copy(version: resource.Value.Version, lastSuccessfulHeartbeat: DateTime.UtcNow));
                     
                     case WriteResponse {Response: Left<LeaseResource, LeaseResource> resource}:
+                        if (string.Equals(resource.Value.Owner, _ownerName, StringComparison.Ordinal))
+                        {
+                            // Self-conflict: our previous PUT succeeded on the server but timed out
+                            // on the client, so we retried with a stale version. The lease is still ours —
+                            // update the version and continue heartbeating.
+                            _log.Warning(
+                                "Heartbeat conflict for lease {0}: current holder is [{1}] (we are [{2}]). " +
+                                "Lease is still ours, updating version from {3} to {4} and continuing.",
+                                leaseName, resource.Value.Owner, _ownerName, version, resource.Value.Version);
+                            Timers!.StartSingleTimer("heartbeat", Heartbeat.Instance, settings.TimeoutSettings.HeartbeatInterval);
+                            return Stay().Using(gv.Copy(version: resource.Value.Version, lastSuccessfulHeartbeat: DateTime.UtcNow));
+                        }
                         _log.Warning("Conflict during heartbeat to lease {0}. Lease assumed to be released.", resource.Value);
                         localGranted.GetAndSet(false);
                         ExecuteLeaseLockCallback(leaseLost, null);

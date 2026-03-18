@@ -452,6 +452,128 @@ namespace Akka.Coordination.Azure.Tests
             });
         }
 
+        /// <summary>
+        /// Reproduces the self-conflict bug: a heartbeat PUT succeeds on the API server but times out
+        /// on the client. The actor retries (per #3404 fix) with a stale version. The retry gets a CAS
+        /// conflict (Left&lt;&gt;), but the conflict response shows the SAME owner — the node is fighting
+        /// itself because its previous PUT actually succeeded and bumped the version.
+        ///
+        /// Current behavior (BUG): the actor unconditionally releases the lease on any heartbeat conflict.
+        /// Expected behavior: the actor should recognize it still owns the lease, update the version,
+        /// and stay in Granted state.
+        /// </summary>
+        [Fact(DisplayName = "Bug #3407: heartbeat self-conflict after timeout should stay granted")]
+        public void HeartbeatSelfConflictAfterTimeoutShouldStayGranted()
+        {
+            RunTest(() =>
+            {
+                AcquireLease();
+                ExpectHeartBeat();
+                Granted.Value.Should().BeTrue();
+
+                // Step 1: Heartbeat fires, but PUT times out on client (server succeeded and bumped version)
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                UpdateProbe.Reply(new Status.Failure(
+                    new LeaseException("API server request timed out")));
+
+                // Should still be granted — within TTL retry window (#3404 fix)
+                Granted.Value.Should().BeTrue();
+
+                // Step 2: Actor retries heartbeat with stale version (server already moved to next version)
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+
+                // Step 3: Retry gets CAS conflict — but the owner is US (previous PUT succeeded)
+                // The server version moved forward because our timed-out PUT actually went through
+                IncrementVersion();
+                UpdateProbe.Reply(
+                    new Left<LeaseResource, LeaseResource>(
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
+
+                // BUG: Actor currently releases the lease here (lines 400-404)
+                // EXPECTED: Actor should recognize it's still the owner and stay Granted
+                Granted.Value.Should().BeTrue();
+
+                // Step 4: Heartbeat should continue normally with the updated version
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                IncrementVersion();
+                UpdateProbe.Reply(
+                    new Right<LeaseResource, LeaseResource>(
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
+
+                Granted.Value.Should().BeTrue();
+            });
+        }
+
+        /// <summary>
+        /// Verifies that the lease lost callback is NOT called when a heartbeat self-conflict occurs.
+        /// The node still owns the lease — the conflict is only due to a stale version from a
+        /// previously-timed-out-but-successful PUT.
+        /// </summary>
+        [Fact(DisplayName = "Bug #3407: heartbeat self-conflict should not call lease lost callback")]
+        public void HeartbeatSelfConflictShouldNotCallLeaseLostCallback()
+        {
+            RunTest(() =>
+            {
+                var callbackCalled = false;
+                AcquireLease(e =>
+                {
+                    callbackCalled = true;
+                });
+                ExpectHeartBeat();
+                Granted.Value.Should().BeTrue();
+
+                // Heartbeat times out on client
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                UpdateProbe.Reply(new Status.Failure(
+                    new LeaseException("API server request timed out")));
+
+                // Retry gets self-conflict
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                IncrementVersion();
+                UpdateProbe.Reply(
+                    new Left<LeaseResource, LeaseResource>(
+                        new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
+
+                // Callback should NOT be called — we still own the lease
+                callbackCalled.Should().BeFalse();
+                Granted.Value.Should().BeTrue();
+            });
+        }
+
+        /// <summary>
+        /// Verifies that a genuine conflict (different owner) during heartbeat still correctly
+        /// releases the lease. This ensures the self-conflict fix doesn't break the existing
+        /// behavior for real conflicts.
+        /// </summary>
+        [Fact(DisplayName = "Bug #3407: heartbeat conflict with different owner after timeout should still release")]
+        public void HeartbeatConflictWithDifferentOwnerAfterTimeoutShouldRelease()
+        {
+            RunTest(() =>
+            {
+                AcquireLease();
+                ExpectHeartBeat();
+                Granted.Value.Should().BeTrue();
+
+                // Heartbeat times out on client
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                UpdateProbe.Reply(new Status.Failure(
+                    new LeaseException("API server request timed out")));
+
+                // Retry gets conflict with a DIFFERENT owner — lease was genuinely stolen
+                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                IncrementVersion();
+                UpdateProbe.Reply(
+                    new Left<LeaseResource, LeaseResource>(
+                        new LeaseResource("another-node-stole-it", CurrentVersion, CurrentTime)));
+
+                // Should release — this is a genuine conflict
+                AwaitAssert(() =>
+                {
+                    Granted.Value.Should().BeFalse();
+                });
+            });
+        }
+
         [Fact(DisplayName = "lock should be acquire-able after heart beat conflict")]
         public void LockShouldAcquireAfterHeartBeatConflict()
         {
