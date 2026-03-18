@@ -26,7 +26,21 @@ namespace Akka.Http.Dsl.Settings
         public static ServerSettings Create(ExtendedActorSystem system)
         {
             var c = system.Settings.Config.GetConfig("akka.http.server");
-            
+
+            if (c is null)
+            {
+                // Config may not be visible yet due to a race in Settings.RebuildConfig()
+                // where a concurrent InjectTopLevelFallback can overwrite Config with a stale value.
+                // Re-inject and retry. See https://github.com/akkadotnet/akka.net/issues/XXXX
+                system.Settings.InjectTopLevelFallback(Http.DefaultConfig());
+                c = system.Settings.Config.GetConfig("akka.http.server");
+            }
+
+            if (c is null)
+                throw new ConfigurationException(
+                    "akka.http.server configuration section is missing. " +
+                    "Ensure Akka.Http default config has been loaded.");
+
             return new ServerSettings(
                  c.GetString("server-header"),
                  c.GetBoolean("remote-address-attribute"),
