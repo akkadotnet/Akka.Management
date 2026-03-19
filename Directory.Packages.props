@@ -25,7 +25,7 @@
 
   <!-- AWS SDK packages -->
   <ItemGroup>
-    <PackageVersion Include="AWSSDK.CloudFormation" Version="3.7.403.18" />
+    <PackageVersion Include="AWSSDK.CloudFormation" Version="4.0.8.12" />
     <PackageVersion Include="AWSSDK.EC2" Version="3.7.437.13" />
     <PackageVersion Include="AWSSDK.ECS" Version="3.7.409.1" />
     <PackageVersion Include="AWSSDK.S3" Version="3.7.416.13" />
