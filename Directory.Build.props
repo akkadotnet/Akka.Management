@@ -30,7 +30,7 @@
     <PbmVersion>1.4.5</PbmVersion>
     <KubernetesClientVersionNet>17.0.14</KubernetesClientVersionNet>
     <MicrosoftExtensionsVersion>8.0.0</MicrosoftExtensionsVersion>
-    <AzureIdentityVersion>1.14.2</AzureIdentityVersion>
+    <AzureIdentityVersion>1.19.0</AzureIdentityVersion>
     <ProtobufVersion>3.30.2</ProtobufVersion>
     <GrpcToolsVersion>2.71.0</GrpcToolsVersion>
   </PropertyGroup>
