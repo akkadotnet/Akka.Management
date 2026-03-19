@@ -21,7 +21,7 @@
     <TestsNet>net9.0</TestsNet>
     <XunitVersion>2.9.3</XunitVersion>
     <XUnitRunnerVersion>3.1.0</XUnitRunnerVersion>
-    <CoverletVersion>6.0.4</CoverletVersion>
+    <CoverletVersion>8.0.1</CoverletVersion>
     <FluentAssertionVersion>7.0.0</FluentAssertionVersion>
     <TestSdkVersion>17.13.0</TestSdkVersion>
     <WireMockVersion>1.8.4</WireMockVersion>
