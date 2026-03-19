@@ -404,6 +404,18 @@ namespace Akka.Coordination.Azure
                         return Stay().Using(gv.Copy(version: resource.Value.Version, lastSuccessfulHeartbeat: DateTime.UtcNow));
                     
                     case WriteResponse {Response: Left<LeaseResource, LeaseResource> resource}:
+                        if (string.Equals(resource.Value.Owner, _ownerName, StringComparison.Ordinal))
+                        {
+                            // Self-conflict: our previous PUT succeeded on the server but timed out
+                            // on the client, so we retried with a stale version. The lease is still ours —
+                            // update the version and continue heartbeating.
+                            _log.Warning(
+                                "Heartbeat self-conflict for lease {0}: our previous write succeeded but timed out. " +
+                                "Updating version from {1} to {2} and continuing.",
+                                leaseName, version, resource.Value.Version);
+                            Timers!.StartSingleTimer("heartbeat", Heartbeat.Instance, settings.TimeoutSettings.HeartbeatInterval);
+                            return Stay().Using(gv.Copy(version: resource.Value.Version, lastSuccessfulHeartbeat: DateTime.UtcNow));
+                        }
                         _log.Warning("Conflict during heartbeat to lease {0}. Lease assumed to be released.", resource.Value);
                         localGranted.GetAndSet(false);
                         ExecuteLeaseLockCallback(leaseLost, null);
