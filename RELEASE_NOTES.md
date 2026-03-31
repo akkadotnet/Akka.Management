@@ -1,3 +1,10 @@
+#### 1.5.63 March 31st 2026 ####
+
+* Update to [Akka.NET v1.5.63](https://github.com/akkadotnet/akka.net/releases/tag/1.5.63)
+* Update to [Akka.Hosting v1.5.63](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.63)
+* [Fix heartbeat self-conflict causes unnecessary lease release after transient timeout](https://github.com/akkadotnet/Akka.Management/pull/3418)
+* [Fix intermittent NRE in ServerSettings.Create due to config injection race](https://github.com/akkadotnet/Akka.Management/pull/3419)
+
 #### 1.5.62 March 9th 2026 ####
 
 * Update to [Akka.NET v1.5.62](https://github.com/akkadotnet/akka.net/releases/tag/1.5.62)
