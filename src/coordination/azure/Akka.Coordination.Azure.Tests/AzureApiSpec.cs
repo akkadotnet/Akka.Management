@@ -14,12 +14,11 @@ using Akka.Util;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Coordination.Azure.Tests
 {
     [Collection(nameof(AzuriteSpecs))]
-    public class AzureApiSpec : TestKit.Xunit2.TestKit, IAsyncLifetime
+    public class AzureApiSpec : TestKit.Xunit.TestKit, IAsyncLifetime
     {
         private readonly AzureLeaseSettings _settings;
         private readonly AzureApiImpl _underTest;
@@ -43,14 +42,14 @@ namespace Akka.Coordination.Azure.Tests
             _underTest = new AzureApiImpl(Sys, _settings);
         }
         
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             await Util.Cleanup(_connectionString);
         }
 
-        public Task DisposeAsync()
+        public ValueTask DisposeAsync()
         {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         [Fact(DisplayName = "Azure lease resource should be able to be created")]

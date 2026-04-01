@@ -19,12 +19,11 @@ using Azure.Data.Tables;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Discovery.Azure.Tests
 {
     [Collection(nameof(AzuriteSpecs))]
-    public class ActorSpec: TestKit.Xunit2.TestKit, IAsyncLifetime
+    public class ActorSpec: TestKit.Xunit.TestKit, IAsyncLifetime
     {
         private static readonly Configuration.Config Config = ConfigurationFactory.ParseString(@"
 akka.loglevel = DEBUG
@@ -59,15 +58,15 @@ akka.remote.dot-netty.tcp.port = 0
             _rawClient = new TableClient(_connectionString, TableName);
         }
         
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             // Tables are wiped out at every test start
             await DbUtils.Cleanup(_connectionString);
         }
 
-        public Task DisposeAsync()
+        public ValueTask DisposeAsync()
         {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         [Fact(DisplayName = "HeartbeatActor should update ClusterMember entry")]

@@ -14,7 +14,6 @@ using Akka.Util;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
-using Xunit.Abstractions;
 
 #nullable enable
 namespace Akka.Coordination.KubernetesApi.Tests
@@ -840,7 +839,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
             => await _updateLease.Ask<Either<LeaseResource, LeaseResource>>((ownerName, version), _timeout);
     }
 
-    public abstract class LeaseActorTest: TestKit.Xunit2.TestKit
+    public abstract class LeaseActorTest: TestKit.Xunit.TestKit
     {
         protected const string LeaseName = "sbr";
         protected const string OwnerName = "owner1";

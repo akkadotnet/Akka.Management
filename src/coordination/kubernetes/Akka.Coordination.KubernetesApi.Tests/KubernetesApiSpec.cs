@@ -23,7 +23,6 @@ using WireMock.Server;
 using WireMock.Types;
 using WireMock.Util;
 using Xunit;
-using Xunit.Abstractions;
 using static FluentAssertions.FluentActions;
 
 #if !NET6_0_OR_GREATER
@@ -35,7 +34,7 @@ using k8s;
 #nullable enable
 namespace Akka.Coordination.KubernetesApi.Tests
 {
-    public class KubernetesApiSpec : TestKit.Xunit2.TestKit
+    public class KubernetesApiSpec : TestKit.Xunit.TestKit
     {
         private readonly WireMockServer _wireMockServer;
         private readonly KubernetesSettings _settings;

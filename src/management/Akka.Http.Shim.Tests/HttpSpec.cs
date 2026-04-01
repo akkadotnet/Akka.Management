@@ -17,11 +17,10 @@ using Akka.Http.Dsl.Settings;
 using Akka.Http.Extensions;
 using FluentAssertions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Http.Shim.Tests
 {
-    public class HttpSpec : TestKit.Xunit2.TestKit
+    public class HttpSpec : TestKit.Xunit.TestKit
     {
         private static readonly Config BaseConfig = 
             ConfigurationFactory.ParseString("akka.remote.dot-netty.tcp.port = 0");

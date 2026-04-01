@@ -20,7 +20,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit;
-using Xunit.Abstractions;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
@@ -93,7 +92,7 @@ namespace Akka.Management.Tests
                             logger.LogLevel = Event.LogLevel.DebugLevel;
                             logger.AddLoggerFactory();
                         })
-                            .AddHocon(TestKit.Xunit2.TestKit.DefaultConfig, HoconAddMode.Append);
+                            .AddHocon(TestKit.Xunit.TestKit.DefaultConfig, HoconAddMode.Append);
                         testSetup(builder);
                     });
                 }).Build();
@@ -119,7 +118,7 @@ namespace Akka.Management.Tests
             
             using var host = await StartHost(builder => startupAction(builder, port));
             var sys = host.Services.GetService<ActorSystem>();
-            var testKit = new TestKit.Xunit2.TestKit(sys);
+            var testKit = new TestKit.Xunit.TestKit(sys);
 
             var client = new HttpClient();
             await testKit.AwaitAssertAsync(async () =>

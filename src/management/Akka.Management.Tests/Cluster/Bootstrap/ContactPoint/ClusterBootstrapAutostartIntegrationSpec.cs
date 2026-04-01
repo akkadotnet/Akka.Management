@@ -19,15 +19,14 @@ using Akka.Discovery;
 using Akka.Event;
 using Akka.Management.Cluster.Bootstrap;
 using Akka.TestKit;
-using Akka.TestKit.Xunit2.Internals;
+using Akka.TestKit.Xunit.Internals;
 using Akka.Util.Internal;
 using FluentAssertions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
 {
-    public class ClusterBootstrapAutostartIntegrationSpec : TestKit.Xunit2.TestKit
+    public class ClusterBootstrapAutostartIntegrationSpec : TestKit.Xunit.TestKit
     {
         private static readonly Config BaseConfig = 
             ConfigurationFactory.ParseString("akka.remote.dot-netty.tcp.port = 0");

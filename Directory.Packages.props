@@ -1,6 +1,20 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <Xunit3Version>3.2.2</Xunit3Version>
+    <XUnitRunnerVersion>3.1.5</XUnitRunnerVersion>
+    <CoverletVersion>8.0.1</CoverletVersion>
+    <FluentAssertionVersion>7.0.0</FluentAssertionVersion>
+    <TestSdkVersion>17.13.0</TestSdkVersion>
+    <WireMockVersion>1.8.4</WireMockVersion>
+    <AkkaVersion>1.5.64</AkkaVersion>
+    <AkkaHostingVersion>1.5.64</AkkaHostingVersion>
+    <PbmVersion>1.4.5</PbmVersion>
+    <KubernetesClientVersionNet>17.0.14</KubernetesClientVersionNet>
+    <MicrosoftExtensionsVersion>8.0.0</MicrosoftExtensionsVersion>
+    <AzureIdentityVersion>1.14.2</AzureIdentityVersion>
+    <ProtobufVersion>3.30.2</ProtobufVersion>
+    <GrpcToolsVersion>2.71.0</GrpcToolsVersion>
   </PropertyGroup>
 
   <!-- Akka.NET packages -->
@@ -12,8 +26,6 @@
     <PackageVersion Include="Akka.DependencyInjection" Version="$(AkkaVersion)" />
     <PackageVersion Include="Akka.Discovery" Version="$(AkkaVersion)" />
     <PackageVersion Include="Akka.Remote.Hosting" Version="$(AkkaHostingVersion)" />
-    <PackageVersion Include="Akka.TestKit" Version="$(AkkaVersion)" />
-    <PackageVersion Include="Akka.TestKit.Xunit2" Version="$(AkkaVersion)" />
   </ItemGroup>
 
   <!-- Akka.Hosting packages -->
@@ -53,9 +65,10 @@
 
   <!-- Testing packages -->
   <ItemGroup>
-    <PackageVersion Include="xunit" Version="$(XunitVersion)" />
+    <PackageVersion Include="Akka.TestKit" Version="$(AkkaVersion)" />
+    <PackageVersion Include="Akka.TestKit.Xunit" Version="$(AkkaVersion)" />
+    <PackageVersion Include="xunit.v3" Version="$(Xunit3Version)" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVersion)" />
-    <PackageVersion Include="Xunit.SkippableFact" Version="1.5.23" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
     <PackageVersion Include="coverlet.collector" Version="$(CoverletVersion)" />
     <PackageVersion Include="FluentAssertions" Version="$(FluentAssertionVersion)" />

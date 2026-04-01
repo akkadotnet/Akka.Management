@@ -23,13 +23,13 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             AkkaManagement.Get(_system!);
         }
 
-        public Task InitializeAsync()
+        public ValueTask InitializeAsync()
         {
             _system = ActorSystem.Create("InactiveBootstrapSpec");
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             if(_system != null)
                 await _system.Terminate();

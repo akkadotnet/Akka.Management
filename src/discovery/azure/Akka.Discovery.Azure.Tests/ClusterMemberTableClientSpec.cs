@@ -16,13 +16,12 @@ using Azure.Data.Tables;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
-using Xunit.Abstractions;
 using static FluentAssertions.FluentActions;
 
 namespace Akka.Discovery.Azure.Tests
 {
     [Collection(nameof(AzuriteSpecs))]
-    public class ClusterMemberTableClientSpec: TestKit.Xunit2.TestKit, IAsyncLifetime
+    public class ClusterMemberTableClientSpec: TestKit.Xunit.TestKit, IAsyncLifetime
     {
         private readonly string ConnectionString;
         private const string ServiceName = nameof(ServiceName);
@@ -52,15 +51,15 @@ namespace Akka.Discovery.Azure.Tests
             _rawClient = new TableClient(ConnectionString, TableName);
         }
         
-        public async Task InitializeAsync()
+        public async ValueTask InitializeAsync()
         {
             // Tables are wiped out at every test start
             await DbUtils.Cleanup(ConnectionString);
         }
 
-        public Task DisposeAsync()
+        public ValueTask DisposeAsync()
         {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         [Fact(DisplayName = "GetOrCreateAsync should insert a new entry")]

@@ -17,7 +17,6 @@ using Akka.Util;
 using Azure;
 using FluentAssertions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Coordination.Azure.Tests
 {
@@ -842,7 +841,7 @@ namespace Akka.Coordination.Azure.Tests
             => await _updateLease.Ask<Either<LeaseResource, LeaseResource>>((ownerName, version), _timeout);
     }
 
-    public abstract class LeaseActorTest: TestKit.Xunit2.TestKit
+    public abstract class LeaseActorTest: TestKit.Xunit.TestKit
     {
         protected const string LeaseName = "sbr";
         protected const string OwnerName = "owner1";

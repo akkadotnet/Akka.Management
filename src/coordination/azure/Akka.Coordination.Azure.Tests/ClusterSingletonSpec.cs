@@ -15,7 +15,6 @@ using Akka.Remote.Hosting;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Coordination.Azure.Tests
 {

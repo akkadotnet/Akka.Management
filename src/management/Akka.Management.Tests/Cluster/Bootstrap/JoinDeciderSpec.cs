@@ -17,10 +17,9 @@ using Akka.Event;
 using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Cluster.Bootstrap.Util;
 using Akka.Management.Dsl;
-using Akka.TestKit.Xunit2.Internals;
+using Akka.TestKit.Xunit.Internals;
 using FluentAssertions;
 using Xunit;
-using Xunit.Abstractions;
 using static Akka.Discovery.ServiceDiscovery;
 
 namespace Akka.Management.Tests.Cluster.Bootstrap
@@ -89,7 +88,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             _config = config?.WithFallback(Config) ?? Config;
         }
         
-        public Task InitializeAsync()
+        public ValueTask InitializeAsync()
         {
             System = ActorSystem.Create(_systemName, _config);
             var extSystem = (ExtendedActorSystem)System;
@@ -98,10 +97,10 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             Log = Logging.GetLogger(System, GetType());
             Start();
             
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
-        public async Task DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
             if(System is { })
                 await System.Terminate();

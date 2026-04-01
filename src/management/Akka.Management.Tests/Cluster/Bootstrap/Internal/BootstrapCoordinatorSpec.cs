@@ -20,13 +20,12 @@ using Akka.Management.Dsl;
 using Akka.Util;
 using FluentAssertions;
 using Xunit;
-using Xunit.Abstractions;
 using static Akka.Discovery.ServiceDiscovery;
 using static Akka.Management.Cluster.Bootstrap.Internal.BootstrapCoordinator.Protocol;
 
 namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
 {
-    public class BootstrapCoordinatorSpec : TestKit.Xunit2.TestKit
+    public class BootstrapCoordinatorSpec : TestKit.Xunit.TestKit
     {
         private const string ServiceName = "bootstrap-coordinator-test-service";
         private static readonly Config Config = ConfigurationFactory.ParseString($@"

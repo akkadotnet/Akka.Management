@@ -13,12 +13,11 @@ using Akka.Configuration;
 using Akka.Discovery.AwsApi.Ec2;
 using FluentAssertions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Discovery.AwsApi.Integration.Tests
 {
     [Collection("AwsSpec")]
-    public class AwsIntegrationSpec : TestKit.Xunit2.TestKit
+    public class AwsIntegrationSpec : TestKit.Xunit.TestKit
     {
         private static Configuration.Config Config(LocalStackFixture fixture) => ConfigurationFactory.ParseString($@"
 akka {{
@@ -46,10 +45,10 @@ akka {{
             _fixture = fixture;
         }
         
-        [SkippableFact]
+        [Fact]
         public async Task DiscoveryShouldBeAbleToLookupAwsEc2Instances()
         {
-            Skip.If(_fixture.IsWindows, "LocalStack docker image only available for Linux containers");
+            Assert.SkipWhen(_fixture.IsWindows, "LocalStack docker image only available for Linux containers");
             
             var discovery = new Ec2TagBasedServiceDiscovery((ExtendedActorSystem)Sys);
             var lookup = new Lookup("fake-api");

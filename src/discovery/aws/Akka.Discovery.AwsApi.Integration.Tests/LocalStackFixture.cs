@@ -42,7 +42,7 @@ public sealed class LocalStackFixture: IAsyncLifetime
             .Build();
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         using (var client = new DockerClientConfiguration().CreateClient())
         {
@@ -314,7 +314,7 @@ public sealed class LocalStackFixture: IAsyncLifetime
         });            
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await _container.StopAsync();
         await _container.DisposeAsync();
