@@ -8,7 +8,7 @@
     <PackageIconUrl>https://getakka.net/images/akkalogo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/akkadotnet/Akka.Management</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;xUnit1051</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
     <LangVersion>12.0</LangVersion>
@@ -19,20 +19,6 @@
     <LibraryFramework>netstandard2.0</LibraryFramework>
     <NetFramework>net6.0</NetFramework>
     <TestsNet>net9.0</TestsNet>
-    <XunitVersion>2.9.3</XunitVersion>
-    <XUnitRunnerVersion>3.1.0</XUnitRunnerVersion>
-    <CoverletVersion>8.0.1</CoverletVersion>
-    <FluentAssertionVersion>7.0.0</FluentAssertionVersion>
-    <TestSdkVersion>17.13.0</TestSdkVersion>
-    <WireMockVersion>1.8.4</WireMockVersion>
-    <AkkaVersion>1.5.62</AkkaVersion>
-    <AkkaHostingVersion>1.5.62</AkkaHostingVersion>
-    <PbmVersion>1.4.5</PbmVersion>
-    <KubernetesClientVersionNet>17.0.14</KubernetesClientVersionNet>
-    <MicrosoftExtensionsVersion>8.0.0</MicrosoftExtensionsVersion>
-    <AzureIdentityVersion>1.14.2</AzureIdentityVersion>
-    <ProtobufVersion>3.30.2</ProtobufVersion>
-    <GrpcToolsVersion>2.71.0</GrpcToolsVersion>
   </PropertyGroup>
   <!-- SourceLink support for all Akka.NET projects -->
   <ItemGroup>

@@ -14,7 +14,6 @@ using Akka.Discovery.Dns.Internal;
 using Akka.IO;
 using FluentAssertions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Discovery.Dns.Tests;
 
@@ -164,7 +163,7 @@ public class DnsServiceDiscoveryWithTcpFallback(ITestOutputHelper output) : DnsS
     }
 }
 
-public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , string actorSystemName, ITestOutputHelper output) : TestKit.Xunit2.TestKit(config, actorSystemName, output)
+public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , string actorSystemName, ITestOutputHelper output) : TestKit.Xunit.TestKit(config, actorSystemName, output)
 {
     internal virtual bool DoNotExpectAAAARecordsFromInetResolver { get; } = false;
     

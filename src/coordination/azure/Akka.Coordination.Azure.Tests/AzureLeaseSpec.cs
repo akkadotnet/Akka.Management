@@ -10,14 +10,13 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Discovery.Azure.Tests;
 using Xunit;
-using Xunit.Abstractions;
 using FluentAssertions;
 using static FluentAssertions.FluentActions;
 
 namespace Akka.Coordination.Azure.Tests;
 
 [Collection(nameof(AzuriteSpecs))]
-public class AzureLeaseSpec: TestKit.Xunit2.TestKit, IAsyncLifetime
+public class AzureLeaseSpec: TestKit.Xunit.TestKit, IAsyncLifetime
 {
     private const string LeaseName = "lease";
     private const string OwnerName = "owner1";
@@ -62,13 +61,13 @@ public class AzureLeaseSpec: TestKit.Xunit2.TestKit, IAsyncLifetime
         (await task1).Should().BeTrue();
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await Util.Cleanup(_fixture.ConnectionString);
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 }

@@ -11,10 +11,9 @@ using Akka.Event;
 using Akka.Http.Dsl;
 using Akka.IO;
 using Akka.Management.Dsl;
-using Akka.TestKit.Xunit2.Internals;
+using Akka.TestKit.Xunit.Internals;
 using FluentAssertions;
 using Xunit;
-using Xunit.Abstractions;
 using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
 namespace Akka.Management.Tests

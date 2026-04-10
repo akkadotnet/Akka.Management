@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using Akka.Discovery.AwsApi.Ec2;
 using FluentAssertions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Akka.Discovery.AwsApi.Tests
 {

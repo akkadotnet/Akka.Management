@@ -17,7 +17,6 @@ using Humanizer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
-using Xunit.Sdk;
 
 namespace Akka.Coordination.KubernetesApi.Tests
 {

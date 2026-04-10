@@ -32,7 +32,7 @@ public class AzuriteFixture : IAsyncLifetime
         }
     }
     
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var builder = new AzuriteBuilder()
             .WithImage("mcr.microsoft.com/azure-storage/azurite:latest")
@@ -41,7 +41,7 @@ public class AzuriteFixture : IAsyncLifetime
         await Container.StartAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (Container is not null)
             await Container.StopAsync();

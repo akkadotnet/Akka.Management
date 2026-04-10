@@ -24,12 +24,11 @@ using Ceen;
 using FluentAssertions;
 using Newtonsoft.Json;
 using Xunit;
-using Xunit.Abstractions;
 using static Akka.Management.Cluster.Bootstrap.ContactPoint.HttpBootstrapJsonProtocol;
 
 namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
 {
-    public class HttpContactPointRoutesSpec : TestKit.Xunit2.TestKit
+    public class HttpContactPointRoutesSpec : TestKit.Xunit.TestKit
     {
         private static readonly Config Config = ConfigurationFactory.ParseString(@"
             akka.actor.provider = cluster

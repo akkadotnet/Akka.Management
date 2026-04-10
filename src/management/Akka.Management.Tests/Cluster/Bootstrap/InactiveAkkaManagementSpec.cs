@@ -15,12 +15,11 @@ using Akka.TestKit.Extensions;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
-using Xunit.Abstractions;
 using static FluentAssertions.FluentActions;
 
 namespace Akka.Management.Tests.Cluster.Bootstrap
 {
-    public class InactiveAkkaManagementSpec : TestKit.Xunit2.TestKit
+    public class InactiveAkkaManagementSpec : TestKit.Xunit.TestKit
     {
         private static readonly Config Config = ConfigurationFactory
             .ParseString(@"
@@ -46,7 +45,7 @@ akka.remote.dot-netty.tcp.port = 0
             await Awaiting(() => ClusterBootstrap.Get(Sys).Start())
                 .Should().ThrowAsync<Exception>()
                 .WithMessage("Awaiting ClusterBootstrap.SelfContactPointUri timed out.")
-                .ShouldCompleteWithin(15.Seconds(), "ClusterBootstrap failed to stop itself after 10 seconds");
+                .WaitAsync(15.Seconds());
 
             await AwaitAssertAsync(() =>
             {
