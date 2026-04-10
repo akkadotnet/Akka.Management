@@ -462,16 +462,16 @@ namespace Akka.Coordination.Azure.Tests
         /// and stay in Granted state.
         /// </summary>
         [Fact(DisplayName = "Bug #3407: heartbeat self-conflict after timeout should stay granted")]
-        public void HeartbeatSelfConflictAfterTimeoutShouldStayGranted()
+        public async Task HeartbeatSelfConflictAfterTimeoutShouldStayGranted()
         {
-            RunTest(() =>
+            await RunTestAsync(async () =>
             {
-                AcquireLease();
-                ExpectHeartBeat();
+                await AcquireLeaseAsync();
+                await ExpectHeartBeatAsync();
                 Granted.Value.Should().BeTrue();
 
                 // Step 1: Heartbeat fires, but PUT times out on client (server succeeded and bumped version)
-                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
                 UpdateProbe.Reply(new Status.Failure(
                     new LeaseException("API server request timed out")));
 
@@ -479,7 +479,7 @@ namespace Akka.Coordination.Azure.Tests
                 Granted.Value.Should().BeTrue();
 
                 // Step 2: Actor retries heartbeat with stale version (server already moved to next version)
-                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
 
                 // Step 3: Retry gets CAS conflict — but the owner is US (previous PUT succeeded)
                 // The server version moved forward because our timed-out PUT actually went through
@@ -493,7 +493,7 @@ namespace Akka.Coordination.Azure.Tests
                 Granted.Value.Should().BeTrue();
 
                 // Step 4: Heartbeat should continue normally with the updated version
-                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Right<LeaseResource, LeaseResource>(
@@ -509,25 +509,25 @@ namespace Akka.Coordination.Azure.Tests
         /// previously-timed-out-but-successful PUT.
         /// </summary>
         [Fact(DisplayName = "Bug #3407: heartbeat self-conflict should not call lease lost callback")]
-        public void HeartbeatSelfConflictShouldNotCallLeaseLostCallback()
+        public async Task HeartbeatSelfConflictShouldNotCallLeaseLostCallback()
         {
-            RunTest(() =>
+            await RunTestAsync(async () =>
             {
                 var callbackCalled = false;
-                AcquireLease(e =>
+                await AcquireLeaseAsync(e =>
                 {
                     callbackCalled = true;
                 });
-                ExpectHeartBeat();
+                await ExpectHeartBeatAsync();
                 Granted.Value.Should().BeTrue();
 
                 // Heartbeat times out on client
-                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
                 UpdateProbe.Reply(new Status.Failure(
                     new LeaseException("API server request timed out")));
 
                 // Retry gets self-conflict
-                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
@@ -545,28 +545,28 @@ namespace Akka.Coordination.Azure.Tests
         /// behavior for real conflicts.
         /// </summary>
         [Fact(DisplayName = "Bug #3407: heartbeat conflict with different owner after timeout should still release")]
-        public void HeartbeatConflictWithDifferentOwnerAfterTimeoutShouldRelease()
+        public async Task HeartbeatConflictWithDifferentOwnerAfterTimeoutShouldRelease()
         {
-            RunTest(() =>
+            await RunTestAsync(async () =>
             {
-                AcquireLease();
-                ExpectHeartBeat();
+                await AcquireLeaseAsync();
+                await ExpectHeartBeatAsync();
                 Granted.Value.Should().BeTrue();
 
                 // Heartbeat times out on client
-                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
                 UpdateProbe.Reply(new Status.Failure(
                     new LeaseException("API server request timed out")));
 
                 // Retry gets conflict with a DIFFERENT owner — lease was genuinely stolen
-                UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
+                await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
                         new LeaseResource("another-node-stole-it", CurrentVersion, CurrentTime)));
 
                 // Should release — this is a genuine conflict
-                AwaitAssert(() =>
+                await AwaitAssertAsync(() =>
                 {
                     Granted.Value.Should().BeFalse();
                 });
@@ -957,6 +957,28 @@ namespace Akka.Coordination.Azure.Tests
             UpdateProbe.Reply(
                 new Right<LeaseResource, LeaseResource>(
                     new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
+        }
+
+        protected async Task ExpectHeartBeatAsync()
+        {
+            await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
+            IncrementVersion();
+            UpdateProbe.Reply(
+                new Right<LeaseResource, LeaseResource>(
+                    new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
+        }
+
+        protected async Task AcquireLeaseAsync(Action<Exception?>? callback = null)
+        {
+            UnderTest.Tell(new LeaseActor.Acquire(callback), Sender);
+            await LeaseProbe.ExpectMsgAsync(LeaseName);
+            LeaseProbe.Reply(new LeaseResource("", CurrentVersion, new DateTimeOffset(1L, TimeSpan.Zero)));
+            await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
+            IncrementVersion();
+            UpdateProbe.Reply(
+                new Right<LeaseResource, LeaseResource>(
+                    new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
+            await SenderProbe.ExpectMsgAsync<LeaseActor.LeaseAcquired>();
         }
 
         protected void FailToGetTakenLease(string leaseOwner)
