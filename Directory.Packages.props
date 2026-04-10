@@ -47,7 +47,7 @@
   <ItemGroup>
     <PackageVersion Include="Azure.Data.Tables" Version="12.10.0" />
     <PackageVersion Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
-    <PackageVersion Include="Azure.Storage.Blobs" Version="12.23.0" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.27.0" />
   </ItemGroup>
 
   <!-- Kubernetes packages -->
