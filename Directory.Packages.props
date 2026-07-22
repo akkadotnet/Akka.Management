@@ -3,7 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <Xunit3Version>3.2.2</Xunit3Version>
     <XUnitRunnerVersion>3.1.5</XUnitRunnerVersion>
-    <CoverletVersion>8.0.1</CoverletVersion>
+    <CoverletVersion>10.0.1</CoverletVersion>
     <FluentAssertionVersion>7.0.0</FluentAssertionVersion>
     <TestSdkVersion>17.13.0</TestSdkVersion>
     <WireMockVersion>1.8.4</WireMockVersion>
