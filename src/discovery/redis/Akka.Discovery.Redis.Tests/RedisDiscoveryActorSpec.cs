@@ -25,7 +25,13 @@ namespace Akka.Discovery.Redis.Tests
         private const string ServiceName = nameof(ServiceName);
         private const string Host = "10.1.2.3";
         private const int SelfPort = 8558;
-        private const string KeyPrefix = "akka:discovery";
+
+        // Unique per test instance so the tests in this class never share a Redis key. Without this,
+        // a prior test's in-flight heartbeat write (a StringSet that completes *after* the guardian
+        // stops, i.e. after RedisFixture.ClearAsync has already run for the next test) can re-create
+        // the very key StopDiscoveryShouldRemoveSelf asserts is gone. xUnit builds a fresh instance
+        // per test method, so each test gets its own prefix.
+        private readonly string _keyPrefix = $"akka:discovery:{Guid.NewGuid():N}";
 
         private readonly RedisFixture _fixture;
         private RedisDiscoverySettings _settings = null!;
@@ -45,7 +51,7 @@ namespace Akka.Discovery.Redis.Tests
                 .WithServiceName(ServiceName)
                 .WithHostName(Host)
                 .WithPort(SelfPort)
-                .WithKeyPrefix(KeyPrefix)
+                .WithKeyPrefix(_keyPrefix)
                 .WithConnectionString(_fixture.ConnectionString)
                 .WithTtlHeartbeatInterval(1.Seconds());
         }
@@ -89,7 +95,7 @@ namespace Akka.Discovery.Redis.Tests
 
             await using var connection = await ConnectionMultiplexer.ConnectAsync(_fixture.ConnectionString);
             var database = connection.GetDatabase();
-            var key = ClusterMember.CreateKey(KeyPrefix, ServiceName, Host, SelfPort);
+            var key = ClusterMember.CreateKey(_keyPrefix, ServiceName, Host, SelfPort);
 
             async Task<DateTime> ReadLastUpdate()
             {
@@ -117,8 +123,9 @@ namespace Akka.Discovery.Redis.Tests
         [Fact(DisplayName = "StopDiscovery should remove the self entry from Redis")]
         public async Task StopDiscoveryShouldRemoveSelf()
         {
-            // Use a long heartbeat so a heartbeat tick cannot race RemoveSelf and re-create the entry
-            // during shutdown (self is registered at init, not by the heartbeat).
+            // Use a long heartbeat so this guardian's *own* heartbeat cannot have a write in flight that
+            // lands after RemoveSelf and re-creates the entry during shutdown (self is registered at init,
+            // not by the heartbeat). Cross-test collisions are handled separately by the per-test _keyPrefix.
             var settings = _settings.WithTtlHeartbeatInterval(TimeSpan.FromMinutes(1));
             var guardian = Sys.ActorOf(RedisDiscoveryGuardian.Props(settings));
 
@@ -131,7 +138,7 @@ namespace Akka.Discovery.Redis.Tests
             await guardian.Ask<Done>(StopDiscovery.Instance, 5.Seconds());
 
             await using var connection = await ConnectionMultiplexer.ConnectAsync(_fixture.ConnectionString);
-            var key = ClusterMember.CreateKey(KeyPrefix, ServiceName, Host, SelfPort);
+            var key = ClusterMember.CreateKey(_keyPrefix, ServiceName, Host, SelfPort);
             (await connection.GetDatabase().StringGetAsync(key)).HasValue.Should().BeFalse();
         }
     }
