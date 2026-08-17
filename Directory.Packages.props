@@ -55,6 +55,11 @@
     <PackageVersion Include="KubernetesClient" Version="$(KubernetesClientVersionNet)" />
   </ItemGroup>
 
+  <!-- Redis packages -->
+  <ItemGroup>
+    <PackageVersion Include="StackExchange.Redis" Version="2.10.14" />
+  </ItemGroup>
+
   <!-- Microsoft Extensions packages -->
   <ItemGroup>
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
@@ -75,6 +80,7 @@
     <PackageVersion Include="WireMock.Net" Version="$(WireMockVersion)" />
     <PackageVersion Include="Testcontainers.Azurite" Version="4.4.0" />
     <PackageVersion Include="Testcontainers.LocalStack" Version="4.4.0" />
+    <PackageVersion Include="Testcontainers.Redis" Version="4.4.0" />
   </ItemGroup>
 
   <!-- Protobuf and gRPC packages -->

@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+        <Description>Redis-based service discovery plugin for Akka.NET. A lightweight alternative to Azure Table Storage for cluster member discovery, ideal for .NET Aspire local development and Redis-backed deployments.</Description>
+        <PackageTags>$(AkkaPackageTags);Redis;Service Discovery</PackageTags>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <None Remove="protobuf\ClusterMemberProto.proto" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Akka" />
+      <PackageReference Include="Akka.Discovery" />
+      <PackageReference Include="Akka.Hosting" />
+      <PackageReference Include="StackExchange.Redis" />
+      <PackageReference Include="Google.Protobuf" />
+      <PackageReference Include="Grpc.Tools">
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+      </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Protobuf Include="protobuf\ClusterMemberProto.proto" Access="Internal" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="reference.conf" />
+      <EmbeddedResource Include="reference.conf" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+</Project>
