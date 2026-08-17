@@ -46,7 +46,9 @@ builder.Services.AddAkka("SampleSystem", (akkaBuilder, sp) =>
     akkaBuilder.WithAspireClusterBootstrap(sp,
         configureDiscovery: (b, config) =>
         {
-            var redisConn = config.GetConnectionString("akka-discovery");
+            // The AppHost injects the discovery resource's name; fall back to the literal for clarity.
+            var connectionStringName = config["Akka:Cluster:Clustering:ConnectionStringName"] ?? "akka-discovery";
+            var redisConn = config.GetConnectionString(connectionStringName);
             if (!string.IsNullOrEmpty(redisConn))
                 b.WithRedisDiscovery(redisConn, config["Akka:Cluster:ServiceName"]);
         },

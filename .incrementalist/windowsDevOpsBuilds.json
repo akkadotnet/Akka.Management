@@ -8,7 +8,8 @@
   "failOnNoProjects": false,
   "noCache": false,
   "skip": [
-    "**/*.Azure.Tests.csproj"
+    "**/*.Azure.Tests.csproj",
+    "**/Akka.Aspire.Hosting.Tests.csproj"
   ],
   "target": []
 }

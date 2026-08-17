@@ -46,7 +46,9 @@ builder.Services.AddAkka("SampleSystem", (akkaBuilder, sp) =>
     akkaBuilder.WithAspireClusterBootstrap(sp,
         configureDiscovery: (b, config) =>
         {
-            var azureConn = config.GetConnectionString("akka-discovery");
+            // The AppHost injects the discovery resource's name; fall back to the literal for clarity.
+            var connectionStringName = config["Akka:Cluster:Clustering:ConnectionStringName"] ?? "akka-discovery";
+            var azureConn = config.GetConnectionString(connectionStringName);
             if (!string.IsNullOrEmpty(azureConn))
                 b.WithAzureDiscovery(azureConn, config["Akka:Cluster:ServiceName"]);
         },

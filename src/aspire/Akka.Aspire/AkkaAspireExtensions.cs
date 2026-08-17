@@ -135,6 +135,11 @@ public static class AkkaAspireExtensions
         HealthStatus? failureStatus = null,
         IEnumerable<string>? tags = null)
     {
+        // Cluster membership is the natural readiness signal: a node is only "ready" to serve traffic
+        // once it has joined the cluster (MemberStatus.Up). Tagging it "readiness" lets a /healthz/ready
+        // probe gate on it. Without this the readiness endpoint would match no checks and be always-green.
+        tags ??= new[] { "readiness" };
+
         return builder.WithHealthCheck("akka-cluster-membership", (system, _, _) =>
         {
             var cluster = Cluster.Cluster.Get(system);

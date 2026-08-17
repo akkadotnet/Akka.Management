@@ -117,7 +117,10 @@ namespace Akka.Discovery.Redis.Tests
         [Fact(DisplayName = "StopDiscovery should remove the self entry from Redis")]
         public async Task StopDiscoveryShouldRemoveSelf()
         {
-            var guardian = Sys.ActorOf(RedisDiscoveryGuardian.Props(_settings));
+            // Use a long heartbeat so a heartbeat tick cannot race RemoveSelf and re-create the entry
+            // during shutdown (self is registered at init, not by the heartbeat).
+            var settings = _settings.WithTtlHeartbeatInterval(TimeSpan.FromMinutes(1));
+            var guardian = Sys.ActorOf(RedisDiscoveryGuardian.Props(settings));
 
             await AwaitAssertAsync(async () =>
             {
