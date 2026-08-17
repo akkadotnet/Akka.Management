@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+        <Description>Redis-based service discovery plugin for Akka.NET. A lightweight alternative to Azure Table Storage for cluster member discovery, ideal for .NET Aspire local development and Redis-backed deployments.</Description>
+        <PackageTags>$(AkkaPackageTags);Redis;Service Discovery</PackageTags>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Akka" />
+      <PackageReference Include="Akka.Discovery" />
+      <PackageReference Include="Akka.Hosting" />
+      <PackageReference Include="StackExchange.Redis" />
+      <PackageReference Include="System.Text.Json" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="reference.conf" />
+      <EmbeddedResource Include="reference.conf" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
+</Project>
