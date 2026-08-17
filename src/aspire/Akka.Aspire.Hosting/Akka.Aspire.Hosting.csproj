@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Description>.NET Aspire hosting integration for Akka.NET clusters. Provides AddAkka(), WithClustering(), and WithReference() for configuring Akka.NET in .NET Aspire AppHost projects.</Description>
+    <PackageTags>$(AkkaPackageTags);aspire;hosting</PackageTags>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsAspireSharedProject>true</IsAspireSharedProject>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+  </ItemGroup>
+
+</Project>

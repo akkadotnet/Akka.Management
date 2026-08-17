@@ -15,6 +15,7 @@
     <AzureIdentityVersion>1.14.2</AzureIdentityVersion>
     <ProtobufVersion>3.30.2</ProtobufVersion>
     <GrpcToolsVersion>2.71.0</GrpcToolsVersion>
+    <AspireVersion>13.3.5</AspireVersion>
   </PropertyGroup>
 
   <!-- Akka.NET packages -->
@@ -58,6 +59,23 @@
   <!-- Redis packages -->
   <ItemGroup>
     <PackageVersion Include="StackExchange.Redis" Version="2.10.14" />
+  </ItemGroup>
+
+  <!-- .NET Aspire packages (net10.0 only) -->
+  <ItemGroup>
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="$(AspireVersion)" />
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="$(AspireVersion)" />
+    <PackageVersion Include="Aspire.Hosting.Azure.Storage" Version="$(AspireVersion)" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="$(AspireVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.2" />
+  </ItemGroup>
+
+  <!-- OpenTelemetry packages (Aspire samples) -->
+  <ItemGroup>
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
   </ItemGroup>
 
   <!-- Microsoft Extensions packages -->
