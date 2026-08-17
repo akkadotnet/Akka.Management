@@ -102,7 +102,17 @@ namespace Akka.Discovery.Redis.Tests
                 initial.Addresses.Should().BeEmpty();
 
                 // Bring Redis up; the guardian's retry loop should now register self and resolve it.
-                await container.StartAsync();
+                try
+                {
+                    await container.StartAsync();
+                }
+                catch (Exception e)
+                {
+                    // Docker present but the image can't be pulled/started (e.g. Windows CI agents that
+                    // can't fetch the linux redis image) — skip rather than fail.
+                    Assert.Skip($"Could not start Redis container: {e.Message}");
+                    return;
+                }
 
                 await AwaitAssertAsync(async () =>
                 {

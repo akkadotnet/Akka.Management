@@ -72,12 +72,17 @@ namespace Akka.Discovery.Redis
                     host = Dns.GetHostName();
             }
 
+            var connectionString = config.GetString("connection-string");
+            if (connectionString == "<connection-string>")
+                throw new ConfigurationException(
+                    "akka.discovery.redis.connection-string must be set to a real Redis connection string");
+
             return new RedisDiscoverySettings(
                 readOnly: config.GetBoolean("read-only"),
                 serviceName: config.GetString("service-name"),
                 hostName: host,
                 port: config.GetInt("public-port"),
-                connectionString: config.GetString("connection-string"),
+                connectionString: connectionString,
                 ttl: config.GetTimeSpan("ttl"),
                 ttlHeartbeatInterval: config.GetTimeSpan("ttl-heartbeat-interval"),
                 staleTtlThreshold: config.GetTimeSpan("stale-ttl-threshold"),

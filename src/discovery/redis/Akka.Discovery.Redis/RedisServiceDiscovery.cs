@@ -69,7 +69,7 @@ namespace Akka.Discovery.Redis
             {
                 try
                 {
-                    await _guardianActor.Ask<global::Akka.Done>(StopDiscovery.Instance);
+                    await _guardianActor.Ask<global::Akka.Done>(StopDiscovery.Instance, TimeSpan.FromSeconds(5));
                 }
                 catch
                 {

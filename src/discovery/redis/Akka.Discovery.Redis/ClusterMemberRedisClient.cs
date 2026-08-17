@@ -52,6 +52,8 @@ namespace Akka.Discovery.Redis
             if (_entity != null)
                 return _entity;
 
+            token.ThrowIfCancellationRequested();
+
             var host = _settings.HostName;
             var port = _settings.Port;
             var serviceName = _settings.ServiceName;

@@ -94,7 +94,6 @@ namespace Akka.Discovery.Redis.Actors
         public static Props Props(RedisDiscoverySettings settings)
             => global::Akka.Actor.Props.Create(() => new RedisDiscoveryGuardian(settings)).WithDeploy(Deploy.Local);
 
-        private static int _startRetryCount;
         private static readonly Status.Failure DefaultFailure = new Status.Failure(null);
 
         private readonly ILoggingAdapter _log;
@@ -136,13 +135,10 @@ namespace Akka.Discovery.Redis.Actors
             base.PreStart();
             Become(Initializing);
 
-            // Perform an actor-start backoff so that a fleet of nodes racing to connect to a
-            // recovering Redis does not thundering-herd it.
-            var backoff = Clamp(new TimeSpan(_backoff.Ticks * _startRetryCount++));
-            if (backoff > TimeSpan.Zero)
-                Task.Delay(backoff, _shutdownCts.Token).PipeTo(Self, success: () => Start.Instance);
-            else
-                Self.Tell(Start.Instance);
+            // Connection and registration happen inside the actor. Retry backoff for a down Redis is
+            // handled per-operation by ExecuteOperationWithRetry, so there is no separate start-backoff
+            // (which, as a process-global static, would otherwise couple unrelated ActorSystems).
+            Self.Tell(Start.Instance);
         }
 
         /// <inheritdoc/>
@@ -183,7 +179,6 @@ namespace Akka.Discovery.Redis.Actors
                     return true;
 
                 case Status.Success _:
-                    _startRetryCount = 0;
                     Context.ActorOf(HeartbeatActor.Props(_settings, _client!));
                     Become(Running);
 
@@ -205,6 +200,14 @@ namespace Akka.Discovery.Redis.Actors
                     Sender.Tell(ImmutableList<ClusterMember>.Empty);
                     return true;
 
+                case StopDiscovery _:
+                    // Shutting down before init completed (e.g. Redis was never reachable). Nothing is
+                    // confirmed-registered here; any partially-written key expires via its TTL. Reply
+                    // immediately so CoordinatedShutdown does not stall waiting on the guardian.
+                    Sender.Tell(global::Akka.Done.Instance);
+                    Context.Stop(Self);
+                    return true;
+
                 default:
                     return false;
             }
@@ -218,7 +221,10 @@ namespace Akka.Discovery.Redis.Actors
                     if (_lookingUp)
                     {
                         if (_log.IsDebugEnabled)
-                            _log.Debug("Another lookup operation is still underway, ignoring request.");
+                            _log.Debug("Another lookup operation is still underway, replying empty.");
+                        // Reply immediately so the caller does not wait out its resolveTimeout while an
+                        // in-flight lookup is retrying; the next poll will pick up fresh results.
+                        Sender.Tell(ImmutableList<ClusterMember>.Empty);
                         return true;
                     }
 
@@ -327,6 +333,14 @@ namespace Akka.Discovery.Redis.Actors
             // handled by ExecuteOperationWithRetry rather than at connect time.
             var options = ConfigurationOptions.Parse(_settings.ConnectionString);
             options.AbortOnConnectFail = false;
+
+            // StackExchange.Redis operations do not accept a CancellationToken, so `operation-timeout`
+            // is enforced through the multiplexer's own connect/sync/async timeouts rather than the
+            // linked CTS. This makes the configured timeout actually bound each Redis round-trip.
+            var timeoutMs = (int)Math.Min(int.MaxValue, Math.Max(1, _timeout.TotalMilliseconds));
+            options.ConnectTimeout = timeoutMs;
+            options.SyncTimeout = timeoutMs;
+            options.AsyncTimeout = timeoutMs;
 
             _connection = await ConnectionMultiplexer.ConnectAsync(options);
             _client = new ClusterMemberRedisClient(_connection, _settings, _log);
