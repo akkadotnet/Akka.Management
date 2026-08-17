@@ -8,7 +8,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Akka.Event;
@@ -17,16 +16,11 @@ using StackExchange.Redis;
 namespace Akka.Discovery.Redis
 {
     /// <summary>
-    /// Internal client for managing Redis operations for cluster member discovery
+    /// Internal client for managing Redis operations for cluster member discovery.
+    /// Entries are stored as protobuf bytes (see <see cref="ClusterMember.ToBytes"/>).
     /// </summary>
     internal class ClusterMemberRedisClient
     {
-        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = false
-        };
-
         private readonly ILoggingAdapter _log;
         private readonly IConnectionMultiplexer _connection;
         private readonly IDatabase _database;
@@ -64,22 +58,18 @@ namespace Akka.Discovery.Redis
 
             _myKey = ClusterMember.CreateKey(_settings.KeyPrefix, serviceName, host, port);
 
-            var existingJson = await _database.StringGetAsync(_myKey);
-            if (existingJson.HasValue)
+            var existing = await _database.StringGetAsync(_myKey);
+            if (existing.HasValue)
             {
-                _entity = JsonSerializer.Deserialize<ClusterMember>((string)existingJson!, JsonOptions);
-                if (_entity != null)
-                {
-                    if (_log.IsDebugEnabled)
-                        _log.Debug($"[{serviceName}@{host}:{port}] Found existing entry. Created: [{_entity.Created}], last update: [{_entity.LastUpdate}]");
-                    await UpdateAsync(token);
-                    return _entity;
-                }
+                _entity = ClusterMember.FromBytes((byte[])existing!);
+                if (_log.IsDebugEnabled)
+                    _log.Debug($"[{serviceName}@{host}:{port}] Found existing entry. Created: [{_entity.Created}], last update: [{_entity.LastUpdate}]");
+                await UpdateAsync(token);
+                return _entity;
             }
 
             _entity = ClusterMember.CreateEntity(serviceName, host, port);
-            var json = JsonSerializer.Serialize(_entity, JsonOptions);
-            await _database.StringSetAsync(_myKey, json, _settings.Ttl);
+            await _database.StringSetAsync(_myKey, _entity.ToBytes(), _settings.Ttl);
 
             if (_log.IsDebugEnabled)
                 _log.Debug($"[{serviceName}:{_entity}] New entry created.");
@@ -109,13 +99,11 @@ namespace Akka.Discovery.Redis
                 {
                     token.ThrowIfCancellationRequested();
 
-                    var json = await _database.StringGetAsync(key);
-                    if (!json.HasValue)
+                    var value = await _database.StringGetAsync(key);
+                    if (!value.HasValue)
                         continue;
 
-                    var member = JsonSerializer.Deserialize<ClusterMember>((string)json!, JsonOptions);
-                    if (member is null)
-                        continue;
+                    var member = ClusterMember.FromBytes((byte[])value!);
 
                     if (member.LastUpdate < oldestAllowed)
                     {
@@ -146,8 +134,7 @@ namespace Akka.Discovery.Redis
 
             var original = _entity.LastUpdate;
             _entity = _entity.Update();
-            var json = JsonSerializer.Serialize(_entity, JsonOptions);
-            await _database.StringSetAsync(_myKey, json, _settings.Ttl);
+            await _database.StringSetAsync(_myKey, _entity.ToBytes(), _settings.Ttl);
 
             if (_log.IsDebugEnabled)
                 _log.Debug($"[{_settings.ServiceName}@{_entity.Host}:{_entity.Port}] LastUpdate successfully updated from [{original}] to [{_entity.LastUpdate}]");

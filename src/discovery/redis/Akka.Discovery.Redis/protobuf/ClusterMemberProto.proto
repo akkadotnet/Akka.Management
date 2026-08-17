@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "Akka.Discovery.Redis";
+
+// Wire format for a Redis-stored cluster member entry.
+// Extend-only: never renumber or reuse field numbers, never change field types.
+// This mirrors Akka.Discovery.Azure's protobuf contract so that data-model changes
+// remain forward/backward compatible across mixed-version rolling upgrades.
+message ClusterMemberProto {
+  string service_name = 1;
+  string host = 2;
+  int32 port = 3;
+  google.protobuf.Timestamp created = 4;
+  google.protobuf.Timestamp last_update = 5;
+}

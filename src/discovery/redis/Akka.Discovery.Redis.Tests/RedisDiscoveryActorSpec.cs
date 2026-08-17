@@ -7,7 +7,6 @@
 #nullable enable
 using System;
 using System.Collections.Immutable;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Discovery;
@@ -94,12 +93,9 @@ namespace Akka.Discovery.Redis.Tests
 
             async Task<DateTime> ReadLastUpdate()
             {
-                var json = await database.StringGetAsync(key);
-                json.HasValue.Should().BeTrue();
-                return JsonSerializer.Deserialize<ClusterMember>((string)json!, new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                })!.LastUpdate;
+                var value = await database.StringGetAsync(key);
+                value.HasValue.Should().BeTrue();
+                return ClusterMember.FromBytes((byte[])value!).LastUpdate;
             }
 
             // Wait until the self entry is registered, capture its first LastUpdate.

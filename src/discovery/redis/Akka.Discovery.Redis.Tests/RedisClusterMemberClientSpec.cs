@@ -6,11 +6,12 @@
 
 #nullable enable
 using System;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Akka.Event;
 using FluentAssertions;
 using FluentAssertions.Extensions;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 using StackExchange.Redis;
 using Xunit;
 
@@ -24,11 +25,6 @@ namespace Akka.Discovery.Redis.Tests
         private const string Host = "10.0.0.1";
         private const int SelfPort = 8558;
         private const string KeyPrefix = "akka:discovery";
-
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
 
         private readonly RedisFixture _fixture;
         private readonly RedisDiscoverySettings _settings;
@@ -65,9 +61,13 @@ namespace Akka.Discovery.Redis.Tests
 
         private Task SeedAsync(string host, int port, DateTime lastUpdate)
         {
-            var member = new ClusterMember(ServiceName, host, port, lastUpdate, lastUpdate);
+            var ts = Timestamp.FromDateTime(DateTime.SpecifyKind(lastUpdate, DateTimeKind.Utc));
+            var proto = new ClusterMemberProto
+            {
+                ServiceName = ServiceName, Host = host, Port = port, Created = ts, LastUpdate = ts
+            };
             var key = ClusterMember.CreateKey(KeyPrefix, ServiceName, host, port);
-            return _database.StringSetAsync(key, JsonSerializer.Serialize(member, JsonOptions));
+            return _database.StringSetAsync(key, proto.ToByteArray());
         }
 
         [Fact(DisplayName = "GetOrCreateAsync should insert a new entry")]

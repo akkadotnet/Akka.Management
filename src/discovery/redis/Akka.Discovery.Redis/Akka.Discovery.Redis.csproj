@@ -9,11 +9,23 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Remove="protobuf\ClusterMemberProto.proto" />
+    </ItemGroup>
+
+    <ItemGroup>
       <PackageReference Include="Akka" />
       <PackageReference Include="Akka.Discovery" />
       <PackageReference Include="Akka.Hosting" />
       <PackageReference Include="StackExchange.Redis" />
-      <PackageReference Include="System.Text.Json" Condition="'$(TargetFramework)' == 'netstandard2.0'" />
+      <PackageReference Include="Google.Protobuf" />
+      <PackageReference Include="Grpc.Tools">
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+      </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Protobuf Include="protobuf\ClusterMemberProto.proto" Access="Internal" />
     </ItemGroup>
 
     <ItemGroup>

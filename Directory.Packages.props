@@ -58,7 +58,6 @@
   <!-- Redis packages -->
   <ItemGroup>
     <PackageVersion Include="StackExchange.Redis" Version="2.10.14" />
-    <PackageVersion Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>
 
   <!-- Microsoft Extensions packages -->

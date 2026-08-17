@@ -6,32 +6,29 @@
 
 #nullable enable
 using System;
-using System.Text.Json;
+using System.Linq;
 using FluentAssertions;
+using Google.Protobuf;
 using Xunit;
 
 namespace Akka.Discovery.Redis.Tests
 {
     /// <summary>
-    /// The Redis entries are stored as camelCase JSON. These specs pin the wire format and its
-    /// tolerance of missing/unknown fields, which is the compatibility contract during rolling
-    /// upgrades across plugin versions.
+    /// Redis entries are stored as protobuf bytes (<c>ClusterMemberProto</c>), matching the
+    /// extend-only contract used by Akka.Discovery.Azure. These specs pin the wire-format round-trip
+    /// and its schema-evolution tolerance (unknown fields ignored, absent fields default), which is
+    /// the compatibility guarantee during rolling upgrades across plugin versions.
     /// </summary>
     public class ClusterMemberSpec
     {
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = false
-        };
+        private static readonly DateTime Epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         [Fact]
-        public void Should_round_trip_through_json()
+        public void Should_round_trip_through_protobuf()
         {
             var member = ClusterMember.CreateEntity("my-service", "10.0.0.5", 8558);
 
-            var json = JsonSerializer.Serialize(member, JsonOptions);
-            var restored = JsonSerializer.Deserialize<ClusterMember>(json, JsonOptions)!;
+            var restored = ClusterMember.FromBytes(member.ToBytes());
 
             restored.ServiceName.Should().Be(member.ServiceName);
             restored.Host.Should().Be(member.Host);
@@ -41,41 +38,34 @@ namespace Akka.Discovery.Redis.Tests
         }
 
         [Fact]
-        public void Should_serialize_using_camel_case_property_names()
+        public void Should_ignore_unknown_fields_from_a_newer_version()
         {
-            var member = ClusterMember.CreateEntity("svc", "host", 1234);
-            var json = JsonSerializer.Serialize(member, JsonOptions);
+            // Simulate a newer producer that added field #6. Extend-only compatibility requires an
+            // older reader to ignore it rather than throw.
+            var member = ClusterMember.CreateEntity("svc", "host", 42);
+            // field 6, wire type 0 (varint) => tag 0x30, value 0x01
+            var withUnknownField = member.ToBytes().Concat(new byte[] { 0x30, 0x01 }).ToArray();
 
-            json.Should().Contain("\"serviceName\":");
-            json.Should().Contain("\"lastUpdate\":");
-        }
+            var act = () => ClusterMember.FromBytes(withUnknownField);
 
-        [Fact]
-        public void Should_tolerate_missing_fields()
-        {
-            // An older/newer producer that omits timestamps must not blow up the reader.
-            const string json = "{\"serviceName\":\"svc\",\"host\":\"host\",\"port\":42}";
-
-            var restored = JsonSerializer.Deserialize<ClusterMember>(json, JsonOptions)!;
-
+            act.Should().NotThrow();
+            var restored = act();
             restored.ServiceName.Should().Be("svc");
             restored.Host.Should().Be("host");
             restored.Port.Should().Be(42);
-            restored.Created.Should().Be(default);
-            restored.LastUpdate.Should().Be(default);
         }
 
         [Fact]
-        public void Should_ignore_unknown_fields()
+        public void Should_default_absent_timestamps_to_epoch()
         {
-            const string json = "{\"serviceName\":\"svc\",\"host\":\"host\",\"port\":42," +
-                                 "\"created\":\"2026-01-01T00:00:00Z\",\"lastUpdate\":\"2026-01-01T00:00:00Z\"," +
-                                 "\"somethingNew\":\"ignored\"}";
+            // A payload written before created/last_update existed must read back as maximally stale,
+            // not throw.
+            var proto = new ClusterMemberProto { ServiceName = "svc", Host = "host", Port = 42 };
 
-            var act = () => JsonSerializer.Deserialize<ClusterMember>(json, JsonOptions);
+            var restored = ClusterMember.FromBytes(proto.ToByteArray());
 
-            act.Should().NotThrow();
-            act()!.ServiceName.Should().Be("svc");
+            restored.Created.Should().Be(Epoch);
+            restored.LastUpdate.Should().Be(Epoch);
         }
 
         [Fact]
