@@ -1,0 +1,28 @@
+<Project>
+
+  <!--
+    README fallback for packaging.
+
+    A packable project that does NOT ship its own README.md (in its project directory) falls back to
+    the repository's root README.md on its NuGet page, instead of shipping with no readme at all.
+
+    Projects that provide their own README.md and wire <PackageReadmeFile> themselves are left
+    untouched (the '$(PackageReadmeFile)' == '' and !Exists(local README) guards both exclude them).
+    Test and sample projects are excluded because they set <IsPackable>false</IsPackable>.
+
+    This lives in Directory.Build.targets (imported after the project body) so that $(IsPackable),
+    set inside each .csproj, is resolved before these conditions are evaluated.
+  -->
+  <!-- '$(IsPackable)' != 'false' matches both explicit true and the default (empty): packable
+       unless a project opts out with IsPackable=false, which is how test/sample projects exclude
+       themselves. -->
+  <PropertyGroup Condition=" '$(IsPackable)' != 'false' AND '$(PackageReadmeFile)' == '' AND !Exists('$(MSBuildProjectDirectory)/README.md') ">
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <_UseRootReadmeFallback>true</_UseRootReadmeFallback>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" '$(_UseRootReadmeFallback)' == 'true' ">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
