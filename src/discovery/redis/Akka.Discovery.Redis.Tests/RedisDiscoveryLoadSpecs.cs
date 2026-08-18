@@ -8,7 +8,6 @@
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Discovery.Redis.Tests
@@ -34,7 +33,7 @@ namespace Akka.Discovery.Redis.Tests
             using var system = ActorSystem.Create("redis-load-spec", config);
 
             var discovery = Discovery.Get(system).LoadServiceDiscovery("redis");
-            discovery.Should().BeOfType<RedisServiceDiscovery>();
+            Assert.IsType<RedisServiceDiscovery>(discovery);
 
             await system.Terminate();
         }

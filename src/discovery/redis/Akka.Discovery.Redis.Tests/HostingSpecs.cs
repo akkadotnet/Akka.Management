@@ -9,7 +9,6 @@ using System;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Hosting;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -32,9 +31,9 @@ namespace Akka.Discovery.Redis.Tests
                 builder.WithRedisDiscovery("localhost:6379", "test-service"));
 
             var config = system.Settings.Config;
-            config.GetString("akka.discovery.method").Should().Be("redis");
-            config.GetString("akka.discovery.redis.connection-string").Should().Be("localhost:6379");
-            config.GetString("akka.discovery.redis.service-name").Should().Be("test-service");
+            Assert.Equal("redis", config.GetString("akka.discovery.method"));
+            Assert.Equal("localhost:6379", config.GetString("akka.discovery.redis.connection-string"));
+            Assert.Equal("test-service", config.GetString("akka.discovery.redis.service-name"));
 
             await system.Terminate();
         }
@@ -54,14 +53,14 @@ namespace Akka.Discovery.Redis.Tests
             }));
 
             var config = system.Settings.Config;
-            config.GetString("akka.discovery.method").Should().Be("redis");
-            config.GetString("akka.discovery.redis.connection-string").Should().Be("redis-server:6379");
-            config.GetString("akka.discovery.redis.service-name").Should().Be("my-cluster");
-            config.GetInt("akka.discovery.redis.public-port").Should().Be(9999);
-            config.GetTimeSpan("akka.discovery.redis.ttl").Should().Be(TimeSpan.FromMinutes(5));
-            config.GetBoolean("akka.discovery.redis.read-only").Should().BeTrue();
-            config.GetTimeSpan("akka.discovery.redis.stale-ttl-threshold").Should().Be(TimeSpan.FromSeconds(90));
-            config.GetTimeSpan("akka.discovery.redis.operation-timeout").Should().Be(TimeSpan.FromSeconds(7));
+            Assert.Equal("redis", config.GetString("akka.discovery.method"));
+            Assert.Equal("redis-server:6379", config.GetString("akka.discovery.redis.connection-string"));
+            Assert.Equal("my-cluster", config.GetString("akka.discovery.redis.service-name"));
+            Assert.Equal(9999, config.GetInt("akka.discovery.redis.public-port"));
+            Assert.Equal(TimeSpan.FromMinutes(5), config.GetTimeSpan("akka.discovery.redis.ttl"));
+            Assert.True(config.GetBoolean("akka.discovery.redis.read-only"));
+            Assert.Equal(TimeSpan.FromSeconds(90), config.GetTimeSpan("akka.discovery.redis.stale-ttl-threshold"));
+            Assert.Equal(TimeSpan.FromSeconds(7), config.GetTimeSpan("akka.discovery.redis.operation-timeout"));
 
             await system.Terminate();
         }
@@ -70,7 +69,7 @@ namespace Akka.Discovery.Redis.Tests
         public async Task WithRedisDiscovery_should_set_default_discovery_method()
         {
             var system = await StartSystem(builder => builder.WithRedisDiscovery("localhost:6379"));
-            system.Settings.Config.GetString("akka.discovery.method").Should().Be("redis");
+            Assert.Equal("redis", system.Settings.Config.GetString("akka.discovery.method"));
             await system.Terminate();
         }
 
@@ -83,7 +82,7 @@ namespace Akka.Discovery.Redis.Tests
                 options.IsDefaultPlugin = false;
             }));
 
-            system.Settings.Config.HasPath("akka.discovery.method").Should().BeFalse();
+            Assert.False(system.Settings.Config.HasPath("akka.discovery.method"));
             await system.Terminate();
         }
     }

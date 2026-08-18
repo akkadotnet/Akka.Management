@@ -11,8 +11,6 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Discovery;
 using Akka.Discovery.Redis.Actors;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using StackExchange.Redis;
 using Xunit;
 
@@ -53,7 +51,7 @@ namespace Akka.Discovery.Redis.Tests
                 .WithPort(SelfPort)
                 .WithKeyPrefix(_keyPrefix)
                 .WithConnectionString(_fixture.ConnectionString)
-                .WithTtlHeartbeatInterval(1.Seconds());
+                .WithTtlHeartbeatInterval(TimeSpan.FromSeconds(1));
         }
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -65,11 +63,11 @@ namespace Akka.Discovery.Redis.Tests
 
             await AwaitAssertAsync(async () =>
             {
-                var members = await guardian.Ask<ImmutableList<ClusterMember>>(new Lookup(ServiceName), 3.Seconds());
-                members.Count.Should().Be(1);
-                members[0].Host.Should().Be(Host);
-                members[0].Port.Should().Be(SelfPort);
-            }, 20.Seconds(), 500.Milliseconds());
+                var members = await guardian.Ask<ImmutableList<ClusterMember>>(new Lookup(ServiceName), TimeSpan.FromSeconds(3));
+                Assert.Single(members);
+                Assert.Equal(Host, members[0].Host);
+                Assert.Equal(SelfPort, members[0].Port);
+            }, TimeSpan.FromSeconds(20), TimeSpan.FromMilliseconds(500));
         }
 
         [Fact(DisplayName = "Guardian should return empty on a service-name mismatch")]
@@ -80,12 +78,12 @@ namespace Akka.Discovery.Redis.Tests
             // wait until initialized (self resolvable)
             await AwaitAssertAsync(async () =>
             {
-                var members = await guardian.Ask<ImmutableList<ClusterMember>>(new Lookup(ServiceName), 3.Seconds());
-                members.Count.Should().Be(1);
-            }, 20.Seconds(), 500.Milliseconds());
+                var members = await guardian.Ask<ImmutableList<ClusterMember>>(new Lookup(ServiceName), TimeSpan.FromSeconds(3));
+                Assert.Single(members);
+            }, TimeSpan.FromSeconds(20), TimeSpan.FromMilliseconds(500));
 
-            var mismatch = await guardian.Ask<ImmutableList<ClusterMember>>(new Lookup("some-other-service"), 3.Seconds());
-            mismatch.Should().BeEmpty();
+            var mismatch = await guardian.Ask<ImmutableList<ClusterMember>>(new Lookup("some-other-service"), TimeSpan.FromSeconds(3));
+            Assert.Empty(mismatch);
         }
 
         [Fact(DisplayName = "Heartbeat child should keep refreshing the self entry")]
@@ -100,7 +98,7 @@ namespace Akka.Discovery.Redis.Tests
             async Task<DateTime> ReadLastUpdate()
             {
                 var value = await database.StringGetAsync(key);
-                value.HasValue.Should().BeTrue();
+                Assert.True(value.HasValue);
                 return ClusterMember.FromBytes((byte[])value!).LastUpdate;
             }
 
@@ -108,16 +106,16 @@ namespace Akka.Discovery.Redis.Tests
             DateTime first = default;
             await AwaitAssertAsync(async () =>
             {
-                (await database.KeyExistsAsync(key)).Should().BeTrue();
+                Assert.True(await database.KeyExistsAsync(key));
                 first = await ReadLastUpdate();
-            }, 20.Seconds(), 500.Milliseconds());
+            }, TimeSpan.FromSeconds(20), TimeSpan.FromMilliseconds(500));
 
             // The 1s heartbeat must advance LastUpdate over time.
             await AwaitAssertAsync(async () =>
             {
                 var current = await ReadLastUpdate();
-                current.Should().BeAfter(first);
-            }, 10.Seconds(), 500.Milliseconds());
+                Assert.True(current > first);
+            }, TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(500));
         }
 
         [Fact(DisplayName = "StopDiscovery should remove the self entry from Redis")]
@@ -131,15 +129,15 @@ namespace Akka.Discovery.Redis.Tests
 
             await AwaitAssertAsync(async () =>
             {
-                var members = await guardian.Ask<ImmutableList<ClusterMember>>(new Lookup(ServiceName), 3.Seconds());
-                members.Count.Should().Be(1);
-            }, 20.Seconds(), 500.Milliseconds());
+                var members = await guardian.Ask<ImmutableList<ClusterMember>>(new Lookup(ServiceName), TimeSpan.FromSeconds(3));
+                Assert.Single(members);
+            }, TimeSpan.FromSeconds(20), TimeSpan.FromMilliseconds(500));
 
-            await guardian.Ask<Done>(StopDiscovery.Instance, 5.Seconds());
+            await guardian.Ask<Done>(StopDiscovery.Instance, TimeSpan.FromSeconds(5));
 
             await using var connection = await ConnectionMultiplexer.ConnectAsync(_fixture.ConnectionString);
             var key = ClusterMember.CreateKey(_keyPrefix, ServiceName, Host, SelfPort);
-            (await connection.GetDatabase().StringGetAsync(key)).HasValue.Should().BeFalse();
+            Assert.False((await connection.GetDatabase().StringGetAsync(key)).HasValue);
         }
     }
 }
