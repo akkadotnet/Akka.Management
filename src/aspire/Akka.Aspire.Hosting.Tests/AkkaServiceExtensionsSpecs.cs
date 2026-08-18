@@ -6,7 +6,6 @@
 
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -25,10 +24,10 @@ public class AkkaServiceExtensionsSpecs
 
         var akkaService = appBuilder.AddAkka(serviceName);
 
-        akkaService.Should().NotBeNull();
-        akkaService.Name.Should().Be(serviceName);
-        akkaService.Builder.Should().BeSameAs(appBuilder);
-        akkaService.Clustering.Should().BeNull();
+        Assert.NotNull(akkaService);
+        Assert.Equal(serviceName, akkaService.Name);
+        Assert.Same(appBuilder, akkaService.Builder);
+        Assert.Null(akkaService.Clustering);
     }
 
     [Fact]
@@ -38,7 +37,8 @@ public class AkkaServiceExtensionsSpecs
 
         var act = () => builder.AddAkka("test");
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("builder");
+        var ex = Assert.Throws<ArgumentNullException>(act);
+        Assert.Equal("builder", ex.ParamName);
     }
 
     [Fact]
@@ -48,7 +48,8 @@ public class AkkaServiceExtensionsSpecs
 
         var act = () => appBuilder.AddAkka(null!);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("name");
+        var ex = Assert.Throws<ArgumentNullException>(act);
+        Assert.Equal("name", ex.ParamName);
     }
 
     [Fact]
@@ -60,8 +61,8 @@ public class AkkaServiceExtensionsSpecs
 
         var result = akkaService.WithClustering(redis);
 
-        result.Should().BeSameAs(akkaService);
-        akkaService.Clustering.Should().NotBeNull();
+        Assert.Same(akkaService, result);
+        Assert.NotNull(akkaService.Clustering);
     }
 
     [Fact]
@@ -73,7 +74,8 @@ public class AkkaServiceExtensionsSpecs
 
         var act = () => akkaService.WithClustering(redis);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("akkaService");
+        var ex = Assert.Throws<ArgumentNullException>(act);
+        Assert.Equal("akkaService", ex.ParamName);
     }
 
     [Fact]
@@ -84,7 +86,8 @@ public class AkkaServiceExtensionsSpecs
 
         var act = () => akkaService.WithClustering(null!);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("resource");
+        var ex = Assert.Throws<ArgumentNullException>(act);
+        Assert.Equal("resource", ex.ParamName);
     }
 
     [Fact]
@@ -99,24 +102,24 @@ public class AkkaServiceExtensionsSpecs
 
         var result = containerResource.WithReference(akkaService);
 
-        result.Should().BeSameAs(containerResource);
+        Assert.Same(containerResource, result);
 
         var endpoints = containerResource.Resource.Annotations.OfType<EndpointAnnotation>().ToList();
-        endpoints.Should().Contain(e => e.Name == "akka-remote");
-        endpoints.Should().Contain(e => e.Name == "akka-management");
+        Assert.Contains(endpoints, e => e.Name == "akka-remote");
+        Assert.Contains(endpoints, e => e.Name == "akka-management");
 
         var remoteEndpoint = endpoints.First(e => e.Name == "akka-remote");
-        remoteEndpoint.UriScheme.Should().Be("tcp");
-        remoteEndpoint.IsProxied.Should().BeTrue();
-        remoteEndpoint.IsExternal.Should().BeFalse();
+        Assert.Equal("tcp", remoteEndpoint.UriScheme);
+        Assert.True(remoteEndpoint.IsProxied);
+        Assert.False(remoteEndpoint.IsExternal);
 
         var managementEndpoint = endpoints.First(e => e.Name == "akka-management");
-        managementEndpoint.UriScheme.Should().Be("http");
-        managementEndpoint.IsProxied.Should().BeTrue();
-        managementEndpoint.IsExternal.Should().BeFalse();
+        Assert.Equal("http", managementEndpoint.UriScheme);
+        Assert.True(managementEndpoint.IsProxied);
+        Assert.False(managementEndpoint.IsExternal);
 
         var envCallbacks = containerResource.Resource.Annotations.OfType<EnvironmentCallbackAnnotation>();
-        envCallbacks.Should().NotBeEmpty();
+        Assert.NotEmpty(envCallbacks);
     }
 
     [Fact]
@@ -128,11 +131,11 @@ public class AkkaServiceExtensionsSpecs
 
         var result = containerResource.WithReference(akkaService);
 
-        result.Should().BeSameAs(containerResource);
+        Assert.Same(containerResource, result);
 
         var endpoints = containerResource.Resource.Annotations.OfType<EndpointAnnotation>();
-        endpoints.Should().Contain(e => e.Name == "akka-remote");
-        endpoints.Should().Contain(e => e.Name == "akka-management");
+        Assert.Contains(endpoints, e => e.Name == "akka-remote");
+        Assert.Contains(endpoints, e => e.Name == "akka-management");
     }
 
     [Fact]
@@ -144,7 +147,8 @@ public class AkkaServiceExtensionsSpecs
 
         var act = () => builder.WithReference(akkaService);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("builder");
+        var ex = Assert.Throws<ArgumentNullException>(act);
+        Assert.Equal("builder", ex.ParamName);
     }
 
     [Fact]
@@ -155,7 +159,8 @@ public class AkkaServiceExtensionsSpecs
 
         var act = () => containerResource.WithReference(null!);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("akkaService");
+        var ex = Assert.Throws<ArgumentNullException>(act);
+        Assert.Equal("akkaService", ex.ParamName);
     }
 
     [Fact]
@@ -180,8 +185,8 @@ public class AkkaServiceExtensionsSpecs
             callback.Callback(envContext);
         }
 
-        envContext.EnvironmentVariables.Should().ContainKey("Akka__Cluster__RequiredContactPointsNr");
-        envContext.EnvironmentVariables["Akka__Cluster__RequiredContactPointsNr"].Should().Be("3");
+        Assert.Contains("Akka__Cluster__RequiredContactPointsNr", envContext.EnvironmentVariables.Keys);
+        Assert.Equal("3", envContext.EnvironmentVariables["Akka__Cluster__RequiredContactPointsNr"]);
     }
 
     [Fact]
@@ -204,16 +209,16 @@ public class AkkaServiceExtensionsSpecs
             callback.Callback(envContext);
         }
 
-        envContext.EnvironmentVariables.Should().ContainKey("Akka__Cluster__Enabled");
-        envContext.EnvironmentVariables["Akka__Cluster__Enabled"].Should().Be("true");
-        envContext.EnvironmentVariables.Should().ContainKey("Akka__Cluster__PublicHostName");
-        envContext.EnvironmentVariables["Akka__Cluster__PublicHostName"].Should().Be("localhost");
-        envContext.EnvironmentVariables.Should().ContainKey("Akka__Cluster__ServiceName");
-        envContext.EnvironmentVariables["Akka__Cluster__ServiceName"].Should().Be("my-akka-cluster");
-        envContext.EnvironmentVariables.Should().ContainKey("Akka__Cluster__FilterOnFallbackPort");
-        envContext.EnvironmentVariables["Akka__Cluster__FilterOnFallbackPort"].Should().Be("false");
-        envContext.EnvironmentVariables.Should().ContainKey("Akka__Cluster__RequiredContactPointsNr");
-        envContext.EnvironmentVariables["Akka__Cluster__RequiredContactPointsNr"].Should().Be("1");
+        Assert.Contains("Akka__Cluster__Enabled", envContext.EnvironmentVariables.Keys);
+        Assert.Equal("true", envContext.EnvironmentVariables["Akka__Cluster__Enabled"]);
+        Assert.Contains("Akka__Cluster__PublicHostName", envContext.EnvironmentVariables.Keys);
+        Assert.Equal("localhost", envContext.EnvironmentVariables["Akka__Cluster__PublicHostName"]);
+        Assert.Contains("Akka__Cluster__ServiceName", envContext.EnvironmentVariables.Keys);
+        Assert.Equal("my-akka-cluster", envContext.EnvironmentVariables["Akka__Cluster__ServiceName"]);
+        Assert.Contains("Akka__Cluster__FilterOnFallbackPort", envContext.EnvironmentVariables.Keys);
+        Assert.Equal("false", envContext.EnvironmentVariables["Akka__Cluster__FilterOnFallbackPort"]);
+        Assert.Contains("Akka__Cluster__RequiredContactPointsNr", envContext.EnvironmentVariables.Keys);
+        Assert.Equal("1", envContext.EnvironmentVariables["Akka__Cluster__RequiredContactPointsNr"]);
     }
 
     [Fact]
@@ -229,7 +234,7 @@ public class AkkaServiceExtensionsSpecs
         containerResource.WithReference(akkaService);
 
         var envCallbacks = containerResource.Resource.Annotations.OfType<EnvironmentCallbackAnnotation>();
-        envCallbacks.Should().NotBeEmpty("because clustering provider should add environment callbacks");
+        Assert.True(envCallbacks.Any(), "because clustering provider should add environment callbacks");
     }
 
     [Fact]
@@ -259,9 +264,9 @@ public class AkkaServiceExtensionsSpecs
         });
         await Task.WhenAll(tasks);
 
-        envContext.EnvironmentVariables.Should().ContainKey("Akka__Cluster__Clustering__ProviderType");
-        envContext.EnvironmentVariables["Akka__Cluster__Clustering__ProviderType"].Should().Be("Redis");
-        envContext.EnvironmentVariables.Should().ContainKey("Akka__Cluster__Clustering__ConnectionStringName");
-        envContext.EnvironmentVariables["Akka__Cluster__Clustering__ConnectionStringName"].Should().Be("my-redis");
+        Assert.Contains("Akka__Cluster__Clustering__ProviderType", envContext.EnvironmentVariables.Keys);
+        Assert.Equal("Redis", envContext.EnvironmentVariables["Akka__Cluster__Clustering__ProviderType"]);
+        Assert.Contains("Akka__Cluster__Clustering__ConnectionStringName", envContext.EnvironmentVariables.Keys);
+        Assert.Equal("my-redis", envContext.EnvironmentVariables["Akka__Cluster__Clustering__ConnectionStringName"]);
     }
 }

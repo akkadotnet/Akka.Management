@@ -12,8 +12,6 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Discovery;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Testcontainers.Redis;
 using Xunit;
 
@@ -62,10 +60,11 @@ namespace Akka.Discovery.Redis.Tests
 
             ServiceDiscovery? discovery = null;
             var load = () => discovery = Discovery.Get(system).LoadServiceDiscovery("redis");
-            load.Should().NotThrow("the connection must be established lazily, not in the discovery constructor");
+            var loadException = Record.Exception(load);
+            Assert.True(loadException is null, "the connection must be established lazily, not in the discovery constructor");
 
-            var resolved = await discovery!.Lookup(new Lookup("svc"), 2.Seconds());
-            resolved.Addresses.Should().BeEmpty();
+            var resolved = await discovery!.Lookup(new Lookup("svc"), TimeSpan.FromSeconds(2));
+            Assert.Empty(resolved.Addresses);
 
             await system.Terminate();
         }
@@ -98,8 +97,8 @@ namespace Akka.Discovery.Redis.Tests
                 var discovery = Discovery.Get(system).LoadServiceDiscovery("redis");
 
                 // Redis is not up yet: startup survived and lookup is empty.
-                var initial = await discovery.Lookup(new Lookup("recovery"), 2.Seconds());
-                initial.Addresses.Should().BeEmpty();
+                var initial = await discovery.Lookup(new Lookup("recovery"), TimeSpan.FromSeconds(2));
+                Assert.Empty(initial.Addresses);
 
                 // Bring Redis up; the guardian's retry loop should now register self and resolve it.
                 try
@@ -116,9 +115,9 @@ namespace Akka.Discovery.Redis.Tests
 
                 await AwaitAssertAsync(async () =>
                 {
-                    var resolved = await discovery.Lookup(new Lookup("recovery"), 3.Seconds());
-                    resolved.Addresses.Count.Should().Be(1);
-                }, 30.Seconds(), 1.Seconds());
+                    var resolved = await discovery.Lookup(new Lookup("recovery"), TimeSpan.FromSeconds(3));
+                    Assert.Single(resolved.Addresses);
+                }, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(1));
             }
             finally
             {

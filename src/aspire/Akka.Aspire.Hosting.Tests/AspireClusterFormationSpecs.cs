@@ -7,7 +7,6 @@
 using System.Net;
 using Aspire.Hosting;
 using Aspire.Hosting.Testing;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Aspire.Hosting.Tests;
@@ -87,8 +86,8 @@ public sealed class AspireClusterFormationSpecs : IAsyncLifetime
             await Task.Delay(1000, cts.Token);
         }
 
-        response.Should().NotBeNull();
-        response!.StatusCode.Should().Be(HttpStatusCode.OK,
+        Assert.NotNull(response);
+        Assert.True(response!.StatusCode == HttpStatusCode.OK,
             "health check returns 200 only once the 3-node cluster has formed and member status is Up");
     }
 
@@ -101,7 +100,7 @@ public sealed class AspireClusterFormationSpecs : IAsyncLifetime
         var endpoint = _app!.GetEndpoint("service", "http");
         using var client = new HttpClient { BaseAddress = endpoint };
         var response = await client.GetStringAsync("/");
-        response.Should().Contain("Hello from Akka.NET Aspire");
+        Assert.Contains("Hello from Akka.NET Aspire", response);
     }
 
     public async ValueTask DisposeAsync()

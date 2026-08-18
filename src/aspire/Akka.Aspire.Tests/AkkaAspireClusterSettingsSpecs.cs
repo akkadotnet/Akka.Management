@@ -4,7 +4,6 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
-using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 
@@ -17,14 +16,14 @@ public class AkkaAspireClusterSettingsSpecs
     {
         var settings = new AkkaAspireClusterSettings();
 
-        settings.Enabled.Should().BeFalse();
-        settings.RemotePort.Should().Be(8081);
-        settings.ManagementPort.Should().Be(8558);
-        settings.PublicHostName.Should().Be("localhost");
-        settings.ServiceName.Should().Be("default");
-        settings.RequiredContactPointsNr.Should().Be(1);
-        settings.FilterOnFallbackPort.Should().BeFalse();
-        settings.Clustering.Should().BeNull();
+        Assert.False(settings.Enabled);
+        Assert.Equal(8081, settings.RemotePort);
+        Assert.Equal(8558, settings.ManagementPort);
+        Assert.Equal("localhost", settings.PublicHostName);
+        Assert.Equal("default", settings.ServiceName);
+        Assert.Equal(1, settings.RequiredContactPointsNr);
+        Assert.False(settings.FilterOnFallbackPort);
+        Assert.Null(settings.Clustering);
     }
 
     [Fact]
@@ -48,13 +47,13 @@ public class AkkaAspireClusterSettingsSpecs
         var settings = new AkkaAspireClusterSettings();
         configuration.GetSection("Akka:Cluster").Bind(settings);
 
-        settings.Enabled.Should().BeTrue();
-        settings.RemotePort.Should().Be(9999);
-        settings.ManagementPort.Should().Be(7777);
-        settings.PublicHostName.Should().Be("myhost.example.com");
-        settings.ServiceName.Should().Be("my-service");
-        settings.RequiredContactPointsNr.Should().Be(3);
-        settings.FilterOnFallbackPort.Should().BeTrue();
+        Assert.True(settings.Enabled);
+        Assert.Equal(9999, settings.RemotePort);
+        Assert.Equal(7777, settings.ManagementPort);
+        Assert.Equal("myhost.example.com", settings.PublicHostName);
+        Assert.Equal("my-service", settings.ServiceName);
+        Assert.Equal(3, settings.RequiredContactPointsNr);
+        Assert.True(settings.FilterOnFallbackPort);
     }
 
     [Fact]
@@ -73,9 +72,9 @@ public class AkkaAspireClusterSettingsSpecs
         var settings = new AkkaAspireClusterSettings();
         configuration.GetSection("Akka:Cluster").Bind(settings);
 
-        settings.Enabled.Should().BeTrue();
-        settings.Clustering.Should().NotBeNull();
-        settings.Clustering!.ProviderType.Should().Be("Redis");
+        Assert.True(settings.Enabled);
+        Assert.NotNull(settings.Clustering);
+        Assert.Equal("Redis", settings.Clustering!.ProviderType);
     }
 
     [Fact]
@@ -94,10 +93,10 @@ public class AkkaAspireClusterSettingsSpecs
         var settings = new AkkaAspireClusterSettings();
         configuration.GetSection("Akka:Cluster").Bind(settings);
 
-        settings.Enabled.Should().BeTrue();
-        settings.ServiceName.Should().Be("test-service");
-        settings.RemotePort.Should().Be(8081);
-        settings.ManagementPort.Should().Be(8558);
-        settings.PublicHostName.Should().Be("localhost");
+        Assert.True(settings.Enabled);
+        Assert.Equal("test-service", settings.ServiceName);
+        Assert.Equal(8081, settings.RemotePort);
+        Assert.Equal(8558, settings.ManagementPort);
+        Assert.Equal("localhost", settings.PublicHostName);
     }
 }

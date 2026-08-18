@@ -7,7 +7,6 @@
 #nullable enable
 using System;
 using System.Linq;
-using FluentAssertions;
 using Google.Protobuf;
 using Xunit;
 
@@ -30,11 +29,11 @@ namespace Akka.Discovery.Redis.Tests
 
             var restored = ClusterMember.FromBytes(member.ToBytes());
 
-            restored.ServiceName.Should().Be(member.ServiceName);
-            restored.Host.Should().Be(member.Host);
-            restored.Port.Should().Be(member.Port);
-            restored.Created.Should().Be(member.Created);
-            restored.LastUpdate.Should().Be(member.LastUpdate);
+            Assert.Equal(member.ServiceName, restored.ServiceName);
+            Assert.Equal(member.Host, restored.Host);
+            Assert.Equal(member.Port, restored.Port);
+            Assert.Equal(member.Created, restored.Created);
+            Assert.Equal(member.LastUpdate, restored.LastUpdate);
         }
 
         [Fact]
@@ -48,11 +47,12 @@ namespace Akka.Discovery.Redis.Tests
 
             var act = () => ClusterMember.FromBytes(withUnknownField);
 
-            act.Should().NotThrow();
+            var ex = Record.Exception(act);
+            Assert.Null(ex);
             var restored = act();
-            restored.ServiceName.Should().Be("svc");
-            restored.Host.Should().Be("host");
-            restored.Port.Should().Be(42);
+            Assert.Equal("svc", restored.ServiceName);
+            Assert.Equal("host", restored.Host);
+            Assert.Equal(42, restored.Port);
         }
 
         [Fact]
@@ -64,15 +64,15 @@ namespace Akka.Discovery.Redis.Tests
 
             var restored = ClusterMember.FromBytes(proto.ToByteArray());
 
-            restored.Created.Should().Be(Epoch);
-            restored.LastUpdate.Should().Be(Epoch);
+            Assert.Equal(Epoch, restored.Created);
+            Assert.Equal(Epoch, restored.LastUpdate);
         }
 
         [Fact]
         public void CreateKey_should_be_stable_and_namespaced()
         {
             var key = ClusterMember.CreateKey("akka:discovery", "svc", "10.0.0.5", 8558);
-            key.Should().Be("akka:discovery:svc:10.0.0.5:8558");
+            Assert.Equal("akka:discovery:svc:10.0.0.5:8558", key);
         }
     }
 }
