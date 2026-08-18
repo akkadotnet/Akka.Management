@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Hosting;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Xunit;
@@ -40,12 +39,12 @@ namespace Akka.Discovery.KubernetesApi.Tests
             var system = host.Services.GetRequiredService<ActorSystem>();
                 
             var settings = KubernetesDiscovery.Get(system).Settings;
-            settings.PodNamespace.Should().Be("underTest");
+            Assert.Equal("underTest", settings.PodNamespace);
                 
-            system.Settings.Config.GetString("akka.discovery.method").Should().Be("kubernetes-api");
+            Assert.Equal("kubernetes-api", system.Settings.Config.GetString("akka.discovery.method"));
             
             var config = system.Settings.Config.GetConfig("akka.discovery.kubernetes-api");
-            config.Should().NotBeNull();
+            Assert.NotNull(config);
         }
     }
 }

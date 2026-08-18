@@ -8,10 +8,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Akka.Actor;
-using FluentAssertions;
 using k8s.Models;
 using Xunit;
 
@@ -58,13 +58,16 @@ namespace Akka.Discovery.KubernetesApi.Tests
 
             var result =
                 KubernetesApiServiceDiscovery.Targets(podList, "management", "default", "cluster.local", false, null);
-            result.Should().BeEquivalentTo(new List<ServiceDiscovery.ResolvedTarget>
-            {
-                new ServiceDiscovery.ResolvedTarget(
-                    host: "172-17-0-4.default.pod.cluster.local",
-                    port: 10001,
-                    address: IPAddress.Parse("172.17.0.4"))
-            });
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(
+                new List<ServiceDiscovery.ResolvedTarget>
+                {
+                    new ServiceDiscovery.ResolvedTarget(
+                        host: "172-17-0-4.default.pod.cluster.local",
+                        port: 10001,
+                        address: IPAddress.Parse("172.17.0.4"))
+                }.OrderBy(t => t.Host),
+                result.OrderBy(t => t.Host));
         }
 
         [Fact(DisplayName = "Issue #223: Targets should ignore containers with IP with no ports if port name is queried")]
@@ -120,13 +123,16 @@ namespace Akka.Discovery.KubernetesApi.Tests
 
             var result =
                 KubernetesApiServiceDiscovery.Targets(podList, "management", "default", "cluster.local", false, "akka-cluster-tooling-example");
-            result.Should().BeEquivalentTo(new List<ServiceDiscovery.ResolvedTarget>
-            {
-                new ServiceDiscovery.ResolvedTarget(
-                    host: "172-17-0-4.default.pod.cluster.local",
-                    port: 10001,
-                    address: IPAddress.Parse("172.17.0.4"))
-            });
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(
+                new List<ServiceDiscovery.ResolvedTarget>
+                {
+                    new ServiceDiscovery.ResolvedTarget(
+                        host: "172-17-0-4.default.pod.cluster.local",
+                        port: 10001,
+                        address: IPAddress.Parse("172.17.0.4"))
+                }.OrderBy(t => t.Host),
+                result.OrderBy(t => t.Host));
         }
         
         [Fact(DisplayName = "Targets should ignore deleted pods")]
@@ -150,9 +156,9 @@ namespace Akka.Discovery.KubernetesApi.Tests
 
             var result =
                 KubernetesApiServiceDiscovery.Targets(podList, "management", "default", "cluster.local", false, null);
-            result.Should().BeEquivalentTo(new List<ServiceDiscovery.ResolvedTarget>());
+            Assert.Empty(result); // converted from BeEquivalentTo(new List<ResolvedTarget>())
         }
-        
+
         // This test allows users to not declare the management port in their container spec,
         // which is not only convenient, it also is required in Istio where ports declared
         // in the container spec are redirected through Envoy, and in Knative, where only
@@ -204,21 +210,24 @@ namespace Akka.Discovery.KubernetesApi.Tests
 
             var result =
                 KubernetesApiServiceDiscovery.Targets(podList, null, "default", "cluster.local", false, null);
-            result.Should().BeEquivalentTo(new List<ServiceDiscovery.ResolvedTarget>
-            {
-                new ServiceDiscovery.ResolvedTarget(
-                    host: "172-17-0-4.default.pod.cluster.local",
-                    port: null,
-                    address: IPAddress.Parse("172.17.0.4")),
-                new ServiceDiscovery.ResolvedTarget(
-                    host: "172-17-0-5.default.pod.cluster.local",
-                    port: null,
-                    address: IPAddress.Parse("172.17.0.5")),
-                new ServiceDiscovery.ResolvedTarget(
-                    host: "172-17-0-6.default.pod.cluster.local",
-                    port: null,
-                    address: IPAddress.Parse("172.17.0.6")),
-            });
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(
+                new List<ServiceDiscovery.ResolvedTarget>
+                {
+                    new ServiceDiscovery.ResolvedTarget(
+                        host: "172-17-0-4.default.pod.cluster.local",
+                        port: null,
+                        address: IPAddress.Parse("172.17.0.4")),
+                    new ServiceDiscovery.ResolvedTarget(
+                        host: "172-17-0-5.default.pod.cluster.local",
+                        port: null,
+                        address: IPAddress.Parse("172.17.0.5")),
+                    new ServiceDiscovery.ResolvedTarget(
+                        host: "172-17-0-6.default.pod.cluster.local",
+                        port: null,
+                        address: IPAddress.Parse("172.17.0.6")),
+                }.OrderBy(t => t.Host),
+                result.OrderBy(t => t.Host));
         }
 
         [Fact(DisplayName = "Targets should ignore non-running pods")]
@@ -242,9 +251,9 @@ namespace Akka.Discovery.KubernetesApi.Tests
 
             var result =
                 KubernetesApiServiceDiscovery.Targets(podList, "management", "default", "cluster.local", false, null);
-            result.Should().BeEquivalentTo(new List<ServiceDiscovery.ResolvedTarget>());
+            Assert.Empty(result); // converted from BeEquivalentTo(new List<ResolvedTarget>())
         }
-        
+
         [Fact(DisplayName = "Targets should ignore running pods where the container is waiting")]
         public void IgnoreRunningPodsWhereContainerIsWaiting()
         {
@@ -255,30 +264,32 @@ namespace Akka.Discovery.KubernetesApi.Tests
             var podList = KubernetesJson.Deserialize<V1PodList>(json);
 #endif
 
-            KubernetesApiServiceDiscovery.Targets(
-                podList, 
+            // converted from BeEquivalentTo(new List<ResolvedTarget>())
+            Assert.Empty(KubernetesApiServiceDiscovery.Targets(
+                podList,
                 null,
                 "b58dbc88-3651-4fb4-8408-60c375592d1d",
                 "cluster.local",
-                false, 
-                "cloudstate-sidecar")
-                .Should().BeEquivalentTo(new List<ServiceDiscovery.ResolvedTarget>());
-            
+                false,
+                "cloudstate-sidecar"));
+
             // Nonsense for this example data, but to check we do find the other containers:
-            KubernetesApiServiceDiscovery.Targets(
-                    podList, 
-                    null,
-                    "b58dbc88-3651-4fb4-8408-60c375592d1d",
-                    "cluster.local",
-                    false, 
-                    "user-function")
-                .Should().BeEquivalentTo(new List<ServiceDiscovery.ResolvedTarget>
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(
+                new List<ServiceDiscovery.ResolvedTarget>
                 {
                     new ServiceDiscovery.ResolvedTarget(
                         host: "10-8-7-9.b58dbc88-3651-4fb4-8408-60c375592d1d.pod.cluster.local",
                         port: null,
                         address: IPAddress.Parse("10.8.7.9"))
-                });
+                }.OrderBy(t => t.Host),
+                KubernetesApiServiceDiscovery.Targets(
+                    podList,
+                    null,
+                    "b58dbc88-3651-4fb4-8408-60c375592d1d",
+                    "cluster.local",
+                    false,
+                    "user-function").OrderBy(t => t.Host));
         }
 
         [Fact(DisplayName = "Targets should use a ip instead of the host if requested")]
@@ -302,13 +313,16 @@ namespace Akka.Discovery.KubernetesApi.Tests
 
             var result =
                 KubernetesApiServiceDiscovery.Targets(podList, "management", "default", "cluster.local", true, null);
-            result.Should().BeEquivalentTo(new List<ServiceDiscovery.ResolvedTarget>
-            {
-                new ServiceDiscovery.ResolvedTarget(
-                    host: "172.17.0.4",
-                    port: 10001,
-                    address: IPAddress.Parse("172.17.0.4"))
-            });
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(
+                new List<ServiceDiscovery.ResolvedTarget>
+                {
+                    new ServiceDiscovery.ResolvedTarget(
+                        host: "172.17.0.4",
+                        port: 10001,
+                        address: IPAddress.Parse("172.17.0.4"))
+                }.OrderBy(t => t.Host),
+                result.OrderBy(t => t.Host));
         }
 
         [Fact(DisplayName = "The discovery loading mechanism should allow loading kubernetes-api discovery even if it is not the default")]
@@ -318,7 +332,7 @@ namespace Akka.Discovery.KubernetesApi.Tests
             
             // kubernetes-api-discovery
             var discovery = Discovery.Get(sys).LoadServiceDiscovery("kubernetes-api");
-            discovery.Should().BeOfType<KubernetesApiServiceDiscovery>();
+            Assert.IsType<KubernetesApiServiceDiscovery>(discovery);
             await sys.Terminate();
         }
 

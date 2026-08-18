@@ -13,10 +13,7 @@ using Akka.Discovery.Azure.Model;
 using Akka.Discovery.Azure.Tests.Utils;
 using Akka.Event;
 using Azure.Data.Tables;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Xunit;
-using static FluentAssertions.FluentActions;
 
 namespace Akka.Discovery.Azure.Tests
 {
@@ -74,10 +71,10 @@ namespace Akka.Discovery.Azure.Tests
             {
                 entries.Add(entry);
             }
-            entries.Count.Should().Be(1);
+            Assert.Equal(1, entries.Count);
 
             var tableEntity = ClusterMember.FromEntity(entries[0]);
-            entity.Should().Be(tableEntity);
+            Assert.Equal(tableEntity, entity);
         }
 
         [Fact(DisplayName = "GetOrCreateAsync should fetch existing entry and updates LastUpdate")]
@@ -89,7 +86,7 @@ namespace Akka.Discovery.Azure.Tests
             // GetOrCreateAsync SHOULD update this value during fetch.
             var entity = await _client.GetOrCreateAsync(Host, _address, FirstPort);
             var now = DateTime.UtcNow;
-            entity.LastUpdate.Should().BeApproximately(now, 1.Seconds());
+            entity.LastUpdate.BeApproximately(now, TimeSpan.FromSeconds(1));
         }
 
         
@@ -101,15 +98,15 @@ namespace Akka.Discovery.Azure.Tests
             // initialize internal cache, this also updates the entry
             await _client.GetOrCreateAsync(Host, _address, FirstPort);
             
-            var lastUpdate = DateTime.UtcNow - 20.Seconds();
+            var lastUpdate = DateTime.UtcNow - TimeSpan.FromSeconds(20);
             // Grab all entries from the correct service
             var entries = await _client.GetAllAsync(lastUpdate.Ticks);
             
-            entries.Count.Should().Be(4);
+            Assert.Equal(4, entries.Count);
             foreach (var entry in entries)
             {
-                entry.ServiceName.Should().Be(ServiceName);
-                entry.LastUpdate.Should().BeAfter(lastUpdate);
+                Assert.Equal(ServiceName, entry.ServiceName);
+                Assert.True(entry.LastUpdate > lastUpdate);
             }
         }
 
@@ -122,13 +119,13 @@ namespace Akka.Discovery.Azure.Tests
             await _client.GetOrCreateAsync(Host, _address, FirstPort);
 
             // update should also update the table entry
-            await Awaiting(async () => await _client.UpdateAsync())
-                .Should().NotThrowAsync();
+            var updateException = await Record.ExceptionAsync(async () => await _client.UpdateAsync());
+            Assert.Null(updateException);
 
             // Retrieve the entry directly from the table and check LastUpdate value
             var entry = await _client.GetEntityAsync(ClusterMember.CreateRowKey(Host, _address, FirstPort), default);
-            entry.Should().NotBeNull();
-            entry!.LastUpdate.Should().BeApproximately(DateTime.UtcNow, 500.Milliseconds());
+            Assert.NotNull(entry);
+            entry!.LastUpdate.BeApproximately(DateTime.UtcNow, TimeSpan.FromMilliseconds(500));
         }
 
         [Fact(DisplayName = "PruneAsync should prunes entries and only on proper service name")]
@@ -139,9 +136,9 @@ namespace Akka.Discovery.Azure.Tests
             // populate the internal cache, this also updates the entry
             await _client.GetOrCreateAsync(Host, _address, FirstPort);
 
-            var lastUpdate = DateTime.UtcNow - 10.Minutes();
-            await Awaiting(async () => await _client.PruneAsync(lastUpdate.Ticks))
-                .Should().NotThrowAsync();
+            var lastUpdate = DateTime.UtcNow - TimeSpan.FromMinutes(10);
+            var pruneException = await Record.ExceptionAsync(async () => await _client.PruneAsync(lastUpdate.Ticks));
+            Assert.Null(pruneException);
 
             // Grab all entries via the raw client
             var entries = new List<TableEntity>();
@@ -151,15 +148,15 @@ namespace Akka.Discovery.Azure.Tests
             }
             
             // entries should contain 10 items, 4 valid entries and 6 entries from other service
-            entries.Count.Should().Be(10);
-            entries.Count(e => e.PartitionKey == ServiceName).Should().Be(4);
-            entries.Count(e => e.PartitionKey != ServiceName).Should().Be(6);
+            Assert.Equal(10, entries.Count);
+            Assert.Equal(4, entries.Count(e => e.PartitionKey == ServiceName));
+            Assert.Equal(6, entries.Count(e => e.PartitionKey != ServiceName));
             
             // entries with correct service name should have its LastUpdate correctly pruned
             foreach (var entry in entries.Where(e => e.PartitionKey == ServiceName))
             {
                 var entity = ClusterMember.FromEntity(entry);
-                entity.LastUpdate.Should().BeAfter(lastUpdate);
+                Assert.True(entity.LastUpdate > lastUpdate);
             }
         }
         
@@ -170,23 +167,23 @@ namespace Akka.Discovery.Azure.Tests
             var add = TableTransactionActionType.Add;
             
             // add 3 entries in the past
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 4.Hours()))); // This is the test actual entry
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 3.Hours())));
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 2.Hours())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromHours(4)))); // This is the test actual entry
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromHours(3))));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromHours(2))));
             
             // add 3 valid entries 
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 5.Seconds())));
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 3.Seconds())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromSeconds(5))));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromSeconds(3))));
             batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now)));
             
             // add 3 entries from different service name in the past
-            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - 4.Hours())));
-            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - 3.Hours())));
-            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - 2.Hours())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - TimeSpan.FromHours(4))));
+            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - TimeSpan.FromHours(3))));
+            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - TimeSpan.FromHours(2))));
             
             // add 3 valid entries from different service name
-            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - 5.Seconds())));
-            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - 3.Seconds())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - TimeSpan.FromSeconds(5))));
+            batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now - TimeSpan.FromSeconds(3))));
             batch.Add(new TableTransactionAction(add, CreateEntity(WrongService, now)));
 
             await _rawClient.CreateIfNotExistsAsync();

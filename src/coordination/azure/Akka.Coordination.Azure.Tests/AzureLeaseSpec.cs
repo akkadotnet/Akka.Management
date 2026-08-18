@@ -10,8 +10,6 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Discovery.Azure.Tests;
 using Xunit;
-using FluentAssertions;
-using static FluentAssertions.FluentActions;
 
 namespace Akka.Coordination.Azure.Tests;
 
@@ -43,11 +41,12 @@ public class AzureLeaseSpec: TestKit.Xunit.TestKit, IAsyncLifetime
     [Fact(DisplayName = "Releasing non-acquired lease should not throw an exception")]
     public async Task NonAcquiredReleaseTest()
     {
-        await Awaiting(async () =>
+        var ex = await Record.ExceptionAsync(async () =>
         {
             var result = await _lease.Release();
-            result.Should().BeTrue();
-        }).Should().NotThrowAsync();
+            Assert.True(result);
+        });
+        Assert.Null(ex);
     }
 
     [Fact(DisplayName = "Acquire should be idempotent and returns the same task while acquire is in progress")]
@@ -57,8 +56,9 @@ public class AzureLeaseSpec: TestKit.Xunit.TestKit, IAsyncLifetime
         var task2 = _lease.Acquire();
         var task3 = _lease.Acquire();
 
-        task1.Should().Be(task2).And.Be(task3);
-        (await task1).Should().BeTrue();
+        Assert.Equal(task2, task1);
+        Assert.Equal(task3, task1);
+        Assert.True((await task1));
     }
 
     public async ValueTask InitializeAsync()

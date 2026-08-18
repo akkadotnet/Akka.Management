@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Hosting;
-using FluentAssertions;
 using Humanizer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,25 +28,25 @@ namespace Akka.Coordination.KubernetesApi.Tests
             
             builder.WithKubernetesLease();
             
-            builder.Configuration.HasValue.Should().BeTrue();
-            builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath).Should().NotBeNull();
+            Assert.True(builder.Configuration.HasValue);
+            Assert.NotNull(builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath));
             
             var leaseSettings = GetSettings(builder);
             var settings = KubernetesSettings.Create(leaseSettings);
-            settings.ApiCaPath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt");
-            settings.ApiTokenPath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/token");
-            settings.ApiServiceHostEnvName.Should().Be("KUBERNETES_SERVICE_HOST");
-            settings.ApiServicePortEnvName.Should().Be("KUBERNETES_SERVICE_PORT");
-            settings.Namespace.Should().BeNull(); 
-            settings.NamespacePath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); 
-            settings.ApiServiceRequestTimeout.Should().Be(2.Seconds());
-            settings.Secure.Should().BeTrue(); 
-            settings.BodyReadTimeout.Should().Be(1.Seconds()); 
+            Assert.Equal("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt", settings.ApiCaPath);
+            Assert.Equal("/var/run/secrets/kubernetes.io/serviceaccount/token", settings.ApiTokenPath);
+            Assert.Equal("KUBERNETES_SERVICE_HOST", settings.ApiServiceHostEnvName);
+            Assert.Equal("KUBERNETES_SERVICE_PORT", settings.ApiServicePortEnvName);
+            Assert.Null(settings.Namespace);
+            Assert.Equal("/var/run/secrets/kubernetes.io/serviceaccount/namespace", settings.NamespacePath);
+            Assert.Equal(2.Seconds(), settings.ApiServiceRequestTimeout);
+            Assert.True(settings.Secure);
+            Assert.Equal(1.Seconds(), settings.BodyReadTimeout);
 
             var timeSettings = TimeoutSettings.Create(leaseSettings.LeaseConfig);
-            timeSettings.HeartbeatInterval.Should().Be(12.Seconds());
-            timeSettings.HeartbeatTimeout.Should().Be(120.Seconds());
-            timeSettings.OperationTimeout.Should().Be(5.Seconds());
+            Assert.Equal(12.Seconds(), timeSettings.HeartbeatInterval);
+            Assert.Equal(120.Seconds(), timeSettings.HeartbeatTimeout);
+            Assert.Equal(5.Seconds(), timeSettings.OperationTimeout);
         }
         
         [Fact(DisplayName = "Hosting Action<KubernetesLeaseOption> extension should override hocon settings")]
@@ -70,25 +69,25 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 lease.LeaseOperationTimeout = 4.Seconds();
             });
                         
-            builder.Configuration.HasValue.Should().BeTrue();
-            builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath).Should().NotBeNull();
+            Assert.True(builder.Configuration.HasValue);
+            Assert.NotNull(builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath));
             
             var leaseSettings = GetSettings(builder);
             var settings = KubernetesSettings.Create(leaseSettings);
-            settings.ApiCaPath.Should().Be("a");
-            settings.ApiTokenPath.Should().Be("b");
-            settings.ApiServiceHostEnvName.Should().Be("c");
-            settings.ApiServicePortEnvName.Should().Be("d");
-            settings.Namespace.Should().Be("e"); 
-            settings.NamespacePath.Should().Be("f"); 
-            settings.ApiServiceRequestTimeout.Should().Be(3.Seconds());
-            settings.Secure.Should().BeFalse(); 
-            settings.BodyReadTimeout.Should().Be(1.5.Seconds());
+            Assert.Equal("a", settings.ApiCaPath);
+            Assert.Equal("b", settings.ApiTokenPath);
+            Assert.Equal("c", settings.ApiServiceHostEnvName);
+            Assert.Equal("d", settings.ApiServicePortEnvName);
+            Assert.Equal("e", settings.Namespace);
+            Assert.Equal("f", settings.NamespacePath);
+            Assert.Equal(3.Seconds(), settings.ApiServiceRequestTimeout);
+            Assert.False(settings.Secure);
+            Assert.Equal(1.5.Seconds(), settings.BodyReadTimeout);
 
             var timeSettings = TimeoutSettings.Create(leaseSettings.LeaseConfig);
-            timeSettings.HeartbeatInterval.Should().Be(4.Seconds());
-            timeSettings.HeartbeatTimeout.Should().Be(10.Seconds());
-            timeSettings.OperationTimeout.Should().Be(4.Seconds());
+            Assert.Equal(4.Seconds(), timeSettings.HeartbeatInterval);
+            Assert.Equal(10.Seconds(), timeSettings.HeartbeatTimeout);
+            Assert.Equal(4.Seconds(), timeSettings.OperationTimeout);
         }
         
         [Fact(DisplayName = "Hosting Setup extension should override hocon settings")]
@@ -111,25 +110,25 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 LeaseOperationTimeout = 4.Seconds()
             });
                         
-            builder.Configuration.HasValue.Should().BeTrue();
-            builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath).Should().NotBeNull();
+            Assert.True(builder.Configuration.HasValue);
+            Assert.NotNull(builder.Configuration.Value.GetConfig(KubernetesLease.ConfigPath));
             
             var leaseSettings = GetSettings(builder);
             var settings = KubernetesSettings.Create(leaseSettings);
-            settings.ApiCaPath.Should().Be("a");
-            settings.ApiTokenPath.Should().Be("b");
-            settings.ApiServiceHostEnvName.Should().Be("c");
-            settings.ApiServicePortEnvName.Should().Be("d");
-            settings.Namespace.Should().Be("e"); 
-            settings.NamespacePath.Should().Be("f"); 
-            settings.ApiServiceRequestTimeout.Should().Be(3.Seconds());
-            settings.Secure.Should().BeFalse(); 
-            settings.BodyReadTimeout.Should().Be(1.5.Seconds());
+            Assert.Equal("a", settings.ApiCaPath);
+            Assert.Equal("b", settings.ApiTokenPath);
+            Assert.Equal("c", settings.ApiServiceHostEnvName);
+            Assert.Equal("d", settings.ApiServicePortEnvName);
+            Assert.Equal("e", settings.Namespace);
+            Assert.Equal("f", settings.NamespacePath);
+            Assert.Equal(3.Seconds(), settings.ApiServiceRequestTimeout);
+            Assert.False(settings.Secure);
+            Assert.Equal(1.5.Seconds(), settings.BodyReadTimeout);
 
             var timeSettings = TimeoutSettings.Create(leaseSettings.LeaseConfig);
-            timeSettings.HeartbeatInterval.Should().Be(4.Seconds());
-            timeSettings.HeartbeatTimeout.Should().Be(10.Seconds());
-            timeSettings.OperationTimeout.Should().Be(4.Seconds());
+            Assert.Equal(4.Seconds(), timeSettings.HeartbeatInterval);
+            Assert.Equal(10.Seconds(), timeSettings.HeartbeatTimeout);
+            Assert.Equal(4.Seconds(), timeSettings.OperationTimeout);
         }
 
         private static LeaseSettings GetSettings(AkkaConfigurationBuilder builder)

@@ -6,8 +6,8 @@
 //-----------------------------------------------------------------------
 
 using System.Collections.Generic;
+using System.Linq;
 using Akka.Discovery.AwsApi.Ec2;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Discovery.AwsApi.Tests
@@ -18,7 +18,7 @@ namespace Akka.Discovery.AwsApi.Tests
         public void ParseEmptyString()
         {
             var result = Ec2TagBasedServiceDiscovery.ParseFiltersString("");
-            result.Count.Should().Be(0);
+            Assert.Equal(0, result.Count);
         }
         
         [Fact(DisplayName = "Can parse simple filter")]
@@ -26,10 +26,10 @@ namespace Akka.Discovery.AwsApi.Tests
         {
             var filters = "tag:purpose=demo";
             var result = Ec2TagBasedServiceDiscovery.ParseFiltersString(filters);
-            result.Count.Should().Be(1);
-            result[0].Name.Should().Be("tag:purpose");
-            result[0].Values.Count.Should().Be(1);
-            result[0].Values[0].Should().Be("demo");
+            Assert.Equal(1, result.Count);
+            Assert.Equal("tag:purpose", result[0].Name);
+            Assert.Equal(1, result[0].Values.Count);
+            Assert.Equal("demo", result[0].Values[0]);
         }
 
         [Fact(DisplayName = "Can parse complex filter")]
@@ -37,19 +37,23 @@ namespace Akka.Discovery.AwsApi.Tests
         {
             var filters = "tag:purpose=production;tag:department=engineering;tag:critical=no;tag:numbers=one,two,three";
             var result = Ec2TagBasedServiceDiscovery.ParseFiltersString(filters);
-            result.Count.Should().Be(4);
+            Assert.Equal(4, result.Count);
 
-            result[0].Name.Should().Be("tag:purpose");
-            result[0].Values.Should().BeEquivalentTo(new List<string> {"production"});
-            
-            result[1].Name.Should().Be("tag:department");
-            result[1].Values.Should().BeEquivalentTo(new List<string> {"engineering"});
-            
-            result[2].Name.Should().Be("tag:critical");
-            result[2].Values.Should().BeEquivalentTo(new List<string> {"no"});
-            
-            result[3].Name.Should().Be("tag:numbers");
-            result[3].Values.Should().BeEquivalentTo(new List<string> {"one", "two", "three"});
+            Assert.Equal("tag:purpose", result[0].Name);
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(new List<string> {"production"}.OrderBy(x => x), result[0].Values.OrderBy(x => x));
+
+            Assert.Equal("tag:department", result[1].Name);
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(new List<string> {"engineering"}.OrderBy(x => x), result[1].Values.OrderBy(x => x));
+
+            Assert.Equal("tag:critical", result[2].Name);
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(new List<string> {"no"}.OrderBy(x => x), result[2].Values.OrderBy(x => x));
+
+            Assert.Equal("tag:numbers", result[3].Name);
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(new List<string> {"one", "two", "three"}.OrderBy(x => x), result[3].Values.OrderBy(x => x));
         }
     }
 }

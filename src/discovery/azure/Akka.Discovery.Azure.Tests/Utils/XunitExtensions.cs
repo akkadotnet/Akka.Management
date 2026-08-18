@@ -1,24 +1,24 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 //  <copyright file="XunitExtensions.cs" company="Akka.NET Project">
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
 // -----------------------------------------------------------------------
 
 using System;
-using FluentAssertions;
-using FluentAssertions.Primitives;
+using Xunit;
 
 namespace Akka.Discovery.Azure.Tests.Utils
 {
     public static class XunitExtensions
     {
-        public static AndConstraint<DateTimeAssertions> BeApproximately(
-            this DateTimeAssertions assertion, 
-            DateTime expected, 
+        // converted from a BeAfter(expected - epsilon) + BeBefore(expected + epsilon) assertion (strict bounds)
+        public static void BeApproximately(
+            this DateTime subject,
+            DateTime expected,
             TimeSpan epsilon)
         {
-            assertion.Subject.Should().BeAfter(expected - epsilon).And.BeBefore(expected + epsilon);
-            return new AndConstraint<DateTimeAssertions>(assertion);
+            Assert.True(subject > expected - epsilon);
+            Assert.True(subject < expected + epsilon);
         }
     }
 }

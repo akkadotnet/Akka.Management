@@ -7,7 +7,6 @@
 
 using System;
 using Akka.Configuration;
-using FluentAssertions;
 using Humanizer;
 using Xunit;
 
@@ -38,51 +37,54 @@ namespace Akka.Coordination.KubernetesApi.Tests
         [Fact(DisplayName = "default request-timeout should be 2/5 of the lease-operation-timeout")]
         public void RequestTimeoutIsTwoFifthOfLeaseOperationTimeout()
         {
-            Conf("akka.coordination.lease.lease-operation-timeout=10s")
-                .ApiServiceRequestTimeout.Should().Be(TimeSpan.FromSeconds(4));
+            Assert.Equal(TimeSpan.FromSeconds(4),
+                Conf("akka.coordination.lease.lease-operation-timeout=10s")
+                    .ApiServiceRequestTimeout);
         }
 
         [Fact(DisplayName = "default body-read timeout should be 1/2 of api request timeout")]
         public void BodyReadTimeoutIsHalfOfApiRequestTimeout()
         {
-            Conf("akka.coordination.lease.lease-operation-timeout=10s")
-                .BodyReadTimeout.Should().Be(TimeSpan.FromSeconds(2));
+            Assert.Equal(TimeSpan.FromSeconds(2),
+                Conf("akka.coordination.lease.lease-operation-timeout=10s")
+                    .BodyReadTimeout);
         }
 
         [Fact(DisplayName = "Kubernetes settings should allow api server request timeout override")]
         public void ShouldAllowServerRequestTimeoutOverride()
         {
-            Conf(@"
+            Assert.Equal(TimeSpan.FromSeconds(4),
+                Conf(@"
             akka.coordination.lease.lease-operation-timeout=5s
-            akka.coordination.lease.kubernetes.api-service-request-timeout=4s").ApiServiceRequestTimeout
-                .Should().Be(TimeSpan.FromSeconds(4));
+            akka.coordination.lease.kubernetes.api-service-request-timeout=4s").ApiServiceRequestTimeout);
         }
 
         [Fact(DisplayName =
             "Kubernetes settings should not allow service request timeout greater than operation timeout")]
         public void InvalidServerRequestTimeout()
         {
-            Assert.Throws<ConfigurationException>(() =>
+            var ex = Assert.Throws<ConfigurationException>(() =>
             {
                 Conf(@"
                     akka.coordination.lease.lease-operation-timeout=5s
                     akka.coordination.lease.kubernetes.api-service-request-timeout=6s");
-            }).Message.Should().Be("'api-service-request-timeout can not be greater than 'lease-operation-timeout'");
+            });
+            Assert.Equal("'api-service-request-timeout can not be greater than 'lease-operation-timeout'", ex.Message);
         }
 
         [Fact(DisplayName = "KubernetesSettings should contain default values")]
         public void DefaultKubernetesSettingsTest()
         {
             var settings = Conf(null);
-            settings.ApiCaPath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt");
-            settings.ApiTokenPath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/token");
-            settings.ApiServiceHostEnvName.Should().Be("KUBERNETES_SERVICE_HOST");
-            settings.ApiServicePortEnvName.Should().Be("KUBERNETES_SERVICE_PORT");
-            settings.Namespace.Should().BeNull(); 
-            settings.NamespacePath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); 
-            settings.ApiServiceRequestTimeout.Should().Be(2.Seconds());
-            settings.Secure.Should().BeTrue(); 
-            settings.BodyReadTimeout.Should().Be(1.Seconds()); 
+            Assert.Equal("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt", settings.ApiCaPath);
+            Assert.Equal("/var/run/secrets/kubernetes.io/serviceaccount/token", settings.ApiTokenPath);
+            Assert.Equal("KUBERNETES_SERVICE_HOST", settings.ApiServiceHostEnvName);
+            Assert.Equal("KUBERNETES_SERVICE_PORT", settings.ApiServicePortEnvName);
+            Assert.Null(settings.Namespace);
+            Assert.Equal("/var/run/secrets/kubernetes.io/serviceaccount/namespace", settings.NamespacePath);
+            Assert.Equal(2.Seconds(), settings.ApiServiceRequestTimeout);
+            Assert.True(settings.Secure);
+            Assert.Equal(1.Seconds(), settings.BodyReadTimeout);
         }
 
         [Fact(DisplayName = "Empty KubernetesSettings should contain default values")]
@@ -90,15 +92,15 @@ namespace Akka.Coordination.KubernetesApi.Tests
         {
             var settings = Conf(null);
             var empty = KubernetesSettings.Empty;
-            empty.ApiCaPath.Should().Be(settings.ApiCaPath);
-            empty.ApiTokenPath.Should().Be(settings.ApiTokenPath);
-            empty.ApiServiceHostEnvName.Should().Be(settings.ApiServiceHostEnvName);
-            empty.ApiServicePortEnvName.Should().Be(settings.ApiServicePortEnvName);
-            empty.Namespace.Should().Be(settings.Namespace);
-            empty.NamespacePath.Should().Be(settings.NamespacePath); 
-            empty.ApiServiceRequestTimeout.Should().Be(settings.ApiServiceRequestTimeout);
-            empty.Secure.Should().Be(settings.Secure); 
-            empty.BodyReadTimeout.Should().Be(settings.BodyReadTimeout); 
+            Assert.Equal(settings.ApiCaPath, empty.ApiCaPath);
+            Assert.Equal(settings.ApiTokenPath, empty.ApiTokenPath);
+            Assert.Equal(settings.ApiServiceHostEnvName, empty.ApiServiceHostEnvName);
+            Assert.Equal(settings.ApiServicePortEnvName, empty.ApiServicePortEnvName);
+            Assert.Equal(settings.Namespace, empty.Namespace);
+            Assert.Equal(settings.NamespacePath, empty.NamespacePath);
+            Assert.Equal(settings.ApiServiceRequestTimeout, empty.ApiServiceRequestTimeout);
+            Assert.Equal(settings.Secure, empty.Secure);
+            Assert.Equal(settings.BodyReadTimeout, empty.BodyReadTimeout);
         }
 
         [Fact(DisplayName = "KubernetesSettings overrides should work")]
@@ -115,15 +117,15 @@ namespace Akka.Coordination.KubernetesApi.Tests
                 .WithSecure(false)
                 .WithBodyReadTimeout(12.Seconds());
             
-            settings.ApiCaPath.Should().Be("a");
-            settings.ApiTokenPath.Should().Be("b");
-            settings.ApiServiceHostEnvName.Should().Be("c");
-            settings.ApiServicePortEnvName.Should().Be("d");
-            settings.Namespace.Should().Be("e"); 
-            settings.NamespacePath.Should().Be("f"); 
-            settings.ApiServiceRequestTimeout.Should().Be(11.Seconds());
-            settings.Secure.Should().BeFalse(); 
-            settings.BodyReadTimeout.Should().Be(12.Seconds()); 
+            Assert.Equal("a", settings.ApiCaPath);
+            Assert.Equal("b", settings.ApiTokenPath);
+            Assert.Equal("c", settings.ApiServiceHostEnvName);
+            Assert.Equal("d", settings.ApiServicePortEnvName);
+            Assert.Equal("e", settings.Namespace);
+            Assert.Equal("f", settings.NamespacePath);
+            Assert.Equal(11.Seconds(), settings.ApiServiceRequestTimeout);
+            Assert.False(settings.Secure);
+            Assert.Equal(12.Seconds(), settings.BodyReadTimeout);
         }
         
         [Fact(DisplayName = "KubernetesLeaseSetup overrides should work")]
@@ -143,15 +145,15 @@ namespace Akka.Coordination.KubernetesApi.Tests
             };
             
             var settings = setup.Apply(KubernetesSettings.Empty);
-            settings.ApiCaPath.Should().Be("a");
-            settings.ApiTokenPath.Should().Be("b");
-            settings.ApiServiceHostEnvName.Should().Be("c");
-            settings.ApiServicePortEnvName.Should().Be("d");
-            settings.Namespace.Should().Be("e"); 
-            settings.NamespacePath.Should().Be("f"); 
-            settings.ApiServiceRequestTimeout.Should().Be(11.Seconds());
-            settings.Secure.Should().BeFalse(); 
-            settings.BodyReadTimeout.Should().Be(12.Seconds()); 
+            Assert.Equal("a", settings.ApiCaPath);
+            Assert.Equal("b", settings.ApiTokenPath);
+            Assert.Equal("c", settings.ApiServiceHostEnvName);
+            Assert.Equal("d", settings.ApiServicePortEnvName);
+            Assert.Equal("e", settings.Namespace);
+            Assert.Equal("f", settings.NamespacePath);
+            Assert.Equal(11.Seconds(), settings.ApiServiceRequestTimeout);
+            Assert.False(settings.Secure);
+            Assert.Equal(12.Seconds(), settings.BodyReadTimeout);
         }
     }
 }

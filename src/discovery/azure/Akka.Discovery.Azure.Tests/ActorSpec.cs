@@ -16,8 +16,6 @@ using Akka.Discovery.Azure.Model;
 using Akka.Discovery.Azure.Tests.Utils;
 using Akka.Event;
 using Azure.Data.Tables;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Xunit;
 
 namespace Akka.Discovery.Azure.Tests
@@ -81,7 +79,7 @@ akka.remote.dot-netty.tcp.port = 0
             var firstEntry = await _client.GetOrCreateAsync(Host, _address, FirstPort);
             var actor = Sys.ActorOf(HeartbeatActor.Props(settings, _client));
 
-            await WithinAsync(3.Seconds(), async () =>
+            await WithinAsync(TimeSpan.FromSeconds(3), async () =>
             {
                 await EventFilter.Debug(contains: "LastUpdate successfully updated from")
                     .ExpectOneAsync(() =>
@@ -92,9 +90,9 @@ akka.remote.dot-netty.tcp.port = 0
             });
 
             var members = await GetEntriesAsync();
-            members.Count.Should().Be(1);
+            Assert.Equal(1, members.Count);
 
-            members[0].LastUpdate.Should().BeAfter(firstEntry.LastUpdate);
+            Assert.True(members[0].LastUpdate > firstEntry.LastUpdate);
         }
 
         [Fact(DisplayName = "PruneActor should prune ClusterMember entries")]
@@ -111,7 +109,7 @@ akka.remote.dot-netty.tcp.port = 0
             await PopulateTable();
 
             var members = await GetEntriesAsync();
-            members.Count.Should().Be(9);
+            Assert.Equal(9, members.Count);
             
             // Initialize client
             await _client.GetOrCreateAsync(Host, _address, FirstPort);
@@ -120,7 +118,7 @@ akka.remote.dot-netty.tcp.port = 0
             // Simulate leadership acquisition 
             actor.Tell(new ClusterEvent.LeaderChanged(selfAddress), Nobody.Instance);
             
-            await WithinAsync(3.Seconds(), async () =>
+            await WithinAsync(TimeSpan.FromSeconds(3), async () =>
             {
                 await EventFilter.Debug(contains: "row entries pruned:")
                     .ExpectOneAsync(() =>
@@ -131,7 +129,7 @@ akka.remote.dot-netty.tcp.port = 0
             });
 
             members = await GetEntriesAsync();
-            members.Count.Should().Be(4);
+            Assert.Equal(4, members.Count);
         }
 
         private async Task<List<ClusterMember>> GetEntriesAsync()
@@ -153,16 +151,16 @@ akka.remote.dot-netty.tcp.port = 0
             var add = TableTransactionActionType.Add;
             
             // add 6 entries in the past
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 9.Hours())));
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 8.Hours())));
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 7.Hours())));
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 6.Hours())));
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 5.Hours())));
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 4.Hours())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromHours(9))));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromHours(8))));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromHours(7))));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromHours(6))));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromHours(5))));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromHours(4))));
             
             // add 3 valid entries 
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 5.Seconds())));
-            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - 3.Seconds())));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromSeconds(5))));
+            batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now - TimeSpan.FromSeconds(3))));
             batch.Add(new TableTransactionAction(add, CreateEntity(ServiceName, now)));
             
             await _rawClient.CreateIfNotExistsAsync();

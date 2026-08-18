@@ -8,8 +8,6 @@ using System;
 using System.Net;
 using Akka.Discovery.Azure.Model;
 using Akka.Discovery.Azure.Tests.Utils;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Xunit;
 
 // If anything throws InvalidOperationException, then the test failed anyway.
@@ -32,17 +30,17 @@ namespace Akka.Discovery.Azure.Tests
             var proto = ClusterMemberProto.Parser.ParseFrom(entity.GetBinary(ClusterMember.PayloadName));
             
             var created = proto.Created.ToDateTime();
-            created.Should().BeApproximately(DateTime.UtcNow, 200.Milliseconds());
-            entity.GetInt64(ClusterMember.LastUpdateName).Should().Be(created.Ticks);
+            created.BeApproximately(DateTime.UtcNow, TimeSpan.FromMilliseconds(200));
+            Assert.Equal(created.Ticks, entity.GetInt64(ClusterMember.LastUpdateName));
             
-            IPAddress.Parse(proto.Address).Should().Be(_address);
-            proto.Port.Should().Be(Port);
-            proto.Host.Should().Be(Host);
+            Assert.Equal(_address, IPAddress.Parse(proto.Address));
+            Assert.Equal(Port, proto.Port);
+            Assert.Equal(Host, proto.Host);
             
             
-            entity.PartitionKey.Should().Be(ServiceName);
-            entity.RowKey.Should().NotBeNullOrWhiteSpace();
-            entity.RowKey.Should().Be(ClusterMember.CreateRowKey(Host, _address, Port));
+            Assert.Equal(ServiceName, entity.PartitionKey);
+            Assert.False(string.IsNullOrWhiteSpace(entity.RowKey));
+            Assert.Equal(ClusterMember.CreateRowKey(Host, _address, Port), entity.RowKey);
         }
 
         [Fact(DisplayName = "Should be able to create ClusterMemberEntity from TableEntity")]
@@ -50,15 +48,15 @@ namespace Akka.Discovery.Azure.Tests
         {
             var entity = ClusterMember.FromEntity(ClusterMember.CreateEntity(ServiceName, Host, _address, Port));
             
-            entity.Created.Should().BeApproximately(DateTime.UtcNow, 200.Milliseconds());
-            entity.Created.Should().Be(entity.LastUpdate);
+            entity.Created.BeApproximately(DateTime.UtcNow, TimeSpan.FromMilliseconds(200));
+            Assert.Equal(entity.LastUpdate, entity.Created);
             
-            entity.PartitionKey.Should().Be(ServiceName);
-            entity.RowKey.Should().NotBeNullOrWhiteSpace();
-            entity.RowKey.Should().Be(ClusterMember.CreateRowKey(Host, _address, Port));
-            entity.Host.Should().Be(Host);
-            entity.Address.Should().Be(_address);
-            entity.Port.Should().Be(Port);
+            Assert.Equal(ServiceName, entity.PartitionKey);
+            Assert.False(string.IsNullOrWhiteSpace(entity.RowKey));
+            Assert.Equal(ClusterMember.CreateRowKey(Host, _address, Port), entity.RowKey);
+            Assert.Equal(Host, entity.Host);
+            Assert.Equal(_address, entity.Address);
+            Assert.Equal(Port, entity.Port);
         }
 
         [Fact(DisplayName = "Should create and parse RowKey properly")]
@@ -67,9 +65,9 @@ namespace Akka.Discovery.Azure.Tests
             var rowKey = ClusterMember.CreateRowKey(Host, _address, Port);
             var (host, address, port) = ClusterMember.ParseRowKey(rowKey);
 
-            host.Should().Be(Host);
-            address.Should().Be(_address);
-            port.Should().Be(Port);
+            Assert.Equal(Host, host);
+            Assert.Equal(_address, address);
+            Assert.Equal(Port, port);
         }
     }
 }

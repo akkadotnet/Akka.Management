@@ -8,10 +8,7 @@
 using System;
 using System.Net;
 using Azure.Identity;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Xunit;
-using static FluentAssertions.FluentActions;
 
 namespace Akka.Discovery.Azure.Tests
 {
@@ -24,21 +21,21 @@ namespace Akka.Discovery.Azure.Tests
 
             var assemblyName = typeof(AzureServiceDiscovery).Assembly.FullName!.Split(',')[0].Trim();
             var config = AzureDiscovery.DefaultConfiguration().GetConfig(AzureServiceDiscovery.DefaultConfigPath);
-            config.GetString("class").Should().Be($"{typeof(AzureServiceDiscovery).Namespace}.{nameof(AzureServiceDiscovery)}, {assemblyName}");
+            Assert.Equal($"{typeof(AzureServiceDiscovery).Namespace}.{nameof(AzureServiceDiscovery)}, {assemblyName}", config.GetString("class"));
 
-            settings.ReadOnly.Should().BeFalse();
-            settings.ServiceName.Should().Be("default");
-            settings.HostName.Should().Be(Dns.GetHostName());
-            settings.Port.Should().Be(8558);
-            settings.ConnectionString.Should().Be("<connection-string>");
-            settings.TableName.Should().Be("akkaclustermembers");
-            settings.TtlHeartbeatInterval.Should().Be(1.Minutes());
-            settings.StaleTtlThreshold.Should().Be(TimeSpan.Zero);
-            settings.PruneInterval.Should().Be(1.Hours());
-            settings.OperationTimeout.Should().Be(10.Seconds());
-            settings.EffectiveStaleTtlThreshold.Should().Be(new TimeSpan(settings.TtlHeartbeatInterval.Ticks * 5));
-            settings.AzureTableEndpoint.Should().BeNull();
-            settings.AzureAzureCredential.Should().BeNull();
+            Assert.False(settings.ReadOnly);
+            Assert.Equal("default", settings.ServiceName);
+            Assert.Equal(Dns.GetHostName(), settings.HostName);
+            Assert.Equal(8558, settings.Port);
+            Assert.Equal("<connection-string>", settings.ConnectionString);
+            Assert.Equal("akkaclustermembers", settings.TableName);
+            Assert.Equal(TimeSpan.FromMinutes(1), settings.TtlHeartbeatInterval);
+            Assert.Equal(TimeSpan.Zero, settings.StaleTtlThreshold);
+            Assert.Equal(TimeSpan.FromHours(1), settings.PruneInterval);
+            Assert.Equal(TimeSpan.FromSeconds(10), settings.OperationTimeout);
+            Assert.Equal(new TimeSpan(settings.TtlHeartbeatInterval.Ticks * 5), settings.EffectiveStaleTtlThreshold);
+            Assert.Null(settings.AzureTableEndpoint);
+            Assert.Null(settings.AzureAzureCredential);
         }
 
         [Fact(DisplayName = "Empty settings variable and default settings should match")]
@@ -47,19 +44,19 @@ namespace Akka.Discovery.Azure.Tests
             var settings = AzureDiscoverySettings.Create(AzureDiscovery.DefaultConfiguration());
             var empty = AzureDiscoverySettings.Empty;
 
-            empty.ReadOnly.Should().Be(settings.ReadOnly);
-            empty.ServiceName.Should().Be(settings.ServiceName);
-            empty.HostName.Should().Be(settings.HostName);
-            empty.Port.Should().Be(settings.Port);
-            empty.ConnectionString.Should().Be(settings.ConnectionString);
-            empty.TableName.Should().Be(settings.TableName);
-            empty.TtlHeartbeatInterval.Should().Be(settings.TtlHeartbeatInterval);
-            empty.StaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
-            empty.PruneInterval.Should().Be(settings.PruneInterval);
-            empty.OperationTimeout.Should().Be(settings.OperationTimeout);
-            empty.EffectiveStaleTtlThreshold.Should().Be(settings.EffectiveStaleTtlThreshold);
-            settings.AzureTableEndpoint.Should().Be(settings.AzureTableEndpoint);
-            settings.AzureAzureCredential.Should().Be(settings.AzureAzureCredential);
+            Assert.Equal(settings.ReadOnly, empty.ReadOnly);
+            Assert.Equal(settings.ServiceName, empty.ServiceName);
+            Assert.Equal(settings.HostName, empty.HostName);
+            Assert.Equal(settings.Port, empty.Port);
+            Assert.Equal(settings.ConnectionString, empty.ConnectionString);
+            Assert.Equal(settings.TableName, empty.TableName);
+            Assert.Equal(settings.TtlHeartbeatInterval, empty.TtlHeartbeatInterval);
+            Assert.Equal(settings.StaleTtlThreshold, empty.StaleTtlThreshold);
+            Assert.Equal(settings.PruneInterval, empty.PruneInterval);
+            Assert.Equal(settings.OperationTimeout, empty.OperationTimeout);
+            Assert.Equal(settings.EffectiveStaleTtlThreshold, empty.EffectiveStaleTtlThreshold);
+            Assert.Equal(settings.AzureTableEndpoint, settings.AzureTableEndpoint);
+            Assert.Equal(settings.AzureAzureCredential, settings.AzureAzureCredential);
         }
 
         [Fact(DisplayName = "Settings override should work properly")]
@@ -74,25 +71,25 @@ namespace Akka.Discovery.Azure.Tests
                 .WithPublicPort(1234)
                 .WithConnectionString("b")
                 .WithTableName("c")
-                .WithTtlHeartbeatInterval(1.Seconds())
-                .WithStaleTtlThreshold(2.Seconds())
-                .WithPruneInterval(3.Seconds())
-                .WithOperationTimeout(4.Seconds())
+                .WithTtlHeartbeatInterval(TimeSpan.FromSeconds(1))
+                .WithStaleTtlThreshold(TimeSpan.FromSeconds(2))
+                .WithPruneInterval(TimeSpan.FromSeconds(3))
+                .WithOperationTimeout(TimeSpan.FromSeconds(4))
                 .WithAzureCredential(uri, credential);
 
-            settings.ReadOnly.Should().BeTrue();
-            settings.ServiceName.Should().Be("a");
-            settings.HostName.Should().Be("host");
-            settings.Port.Should().Be(1234);
-            settings.ConnectionString.Should().Be("b");
-            settings.TableName.Should().Be("c");
-            settings.TtlHeartbeatInterval.Should().Be(1.Seconds());
-            settings.StaleTtlThreshold.Should().Be(2.Seconds());
-            settings.PruneInterval.Should().Be(3.Seconds());
-            settings.OperationTimeout.Should().Be(4.Seconds());
-            settings.EffectiveStaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
-            settings.AzureTableEndpoint.Should().Be(uri);
-            settings.AzureAzureCredential.Should().Be(credential);
+            Assert.True(settings.ReadOnly);
+            Assert.Equal("a", settings.ServiceName);
+            Assert.Equal("host", settings.HostName);
+            Assert.Equal(1234, settings.Port);
+            Assert.Equal("b", settings.ConnectionString);
+            Assert.Equal("c", settings.TableName);
+            Assert.Equal(TimeSpan.FromSeconds(1), settings.TtlHeartbeatInterval);
+            Assert.Equal(TimeSpan.FromSeconds(2), settings.StaleTtlThreshold);
+            Assert.Equal(TimeSpan.FromSeconds(3), settings.PruneInterval);
+            Assert.Equal(TimeSpan.FromSeconds(4), settings.OperationTimeout);
+            Assert.Equal(settings.StaleTtlThreshold, settings.EffectiveStaleTtlThreshold);
+            Assert.Equal(uri, settings.AzureTableEndpoint);
+            Assert.Equal(credential, settings.AzureAzureCredential);
         }
 
         [Fact(DisplayName = "Setup override should work properly")]
@@ -107,27 +104,27 @@ namespace Akka.Discovery.Azure.Tests
                 .WithPublicPort(1234)
                 .WithConnectionString("b")
                 .WithTableName("c")
-                .WithTtlHeartbeatInterval(1.Seconds())
-                .WithStaleTtlThreshold(2.Seconds())
-                .WithPruneInterval(3.Seconds())
-                .WithOperationTimeout(4.Seconds())
+                .WithTtlHeartbeatInterval(TimeSpan.FromSeconds(1))
+                .WithStaleTtlThreshold(TimeSpan.FromSeconds(2))
+                .WithPruneInterval(TimeSpan.FromSeconds(3))
+                .WithOperationTimeout(TimeSpan.FromSeconds(4))
                 .WithAzureCredential(uri, credential);
             
             var settings = setup.Apply(AzureDiscoverySettings.Empty);
 
-            settings.ReadOnly.Should().BeTrue();
-            settings.ServiceName.Should().Be("a");
-            settings.HostName.Should().Be("host");
-            settings.Port.Should().Be(1234);
-            settings.ConnectionString.Should().Be("b");
-            settings.TableName.Should().Be("c");
-            settings.TtlHeartbeatInterval.Should().Be(1.Seconds());
-            settings.StaleTtlThreshold.Should().Be(2.Seconds());
-            settings.PruneInterval.Should().Be(3.Seconds());
-            settings.OperationTimeout.Should().Be(4.Seconds());
-            settings.EffectiveStaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
-            settings.AzureTableEndpoint.Should().Be(uri);
-            settings.AzureAzureCredential.Should().Be(credential);
+            Assert.True(settings.ReadOnly);
+            Assert.Equal("a", settings.ServiceName);
+            Assert.Equal("host", settings.HostName);
+            Assert.Equal(1234, settings.Port);
+            Assert.Equal("b", settings.ConnectionString);
+            Assert.Equal("c", settings.TableName);
+            Assert.Equal(TimeSpan.FromSeconds(1), settings.TtlHeartbeatInterval);
+            Assert.Equal(TimeSpan.FromSeconds(2), settings.StaleTtlThreshold);
+            Assert.Equal(TimeSpan.FromSeconds(3), settings.PruneInterval);
+            Assert.Equal(TimeSpan.FromSeconds(4), settings.OperationTimeout);
+            Assert.Equal(settings.StaleTtlThreshold, settings.EffectiveStaleTtlThreshold);
+            Assert.Equal(uri, settings.AzureTableEndpoint);
+            Assert.Equal(credential, settings.AzureAzureCredential);
         }
 
         [Fact(DisplayName = "Settings constructor should throw on invalid values")]
@@ -135,29 +132,30 @@ namespace Akka.Discovery.Azure.Tests
         {
             var settings = AzureDiscoverySettings.Empty;
 
-            Invoking(() => settings.WithTtlHeartbeatInterval(TimeSpan.Zero))
-                .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than zero*");
+            // converted from ThrowExactly + WithMessage glob "Must be greater than zero*"
+            Assert.StartsWith("Must be greater than zero",
+                Assert.Throws<ArgumentException>(() => { settings.WithTtlHeartbeatInterval(TimeSpan.Zero); }).Message);
 
-            Invoking(() => settings.WithPruneInterval(TimeSpan.Zero))
-                .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than zero*");
+            Assert.StartsWith("Must be greater than zero",
+                Assert.Throws<ArgumentException>(() => { settings.WithPruneInterval(TimeSpan.Zero); }).Message);
 
-            Invoking(() => settings.WithStaleTtlThreshold(1.Seconds()))
-                .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than*");
-            
-            Invoking(() => settings.WithPublicHostName(""))
-                .Should().ThrowExactly<ArgumentException>().WithMessage("Must not be empty or whitespace*");
-            
-            Invoking(() => settings.WithPublicPort(0))
-                .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than zero and less than or equal to 65535*");
-            
-            Invoking(() => settings.WithPublicPort(65536))
-                .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than zero and less than or equal to 65535*");
-            
-            Invoking(() => settings.WithRetryBackoff(TimeSpan.Zero, TimeSpan.FromSeconds(1)))
-                .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than zero*");
-            
-            Invoking(() => settings.WithRetryBackoff(TimeSpan.FromSeconds(1), TimeSpan.Zero))
-                .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than retryBackoff*");
+            Assert.StartsWith("Must be greater than",
+                Assert.Throws<ArgumentException>(() => { settings.WithStaleTtlThreshold(TimeSpan.FromSeconds(1)); }).Message);
+
+            Assert.StartsWith("Must not be empty or whitespace",
+                Assert.Throws<ArgumentException>(() => { settings.WithPublicHostName(""); }).Message);
+
+            Assert.StartsWith("Must be greater than zero and less than or equal to 65535",
+                Assert.Throws<ArgumentException>(() => { settings.WithPublicPort(0); }).Message);
+
+            Assert.StartsWith("Must be greater than zero and less than or equal to 65535",
+                Assert.Throws<ArgumentException>(() => { settings.WithPublicPort(65536); }).Message);
+
+            Assert.StartsWith("Must be greater than zero",
+                Assert.Throws<ArgumentException>(() => { settings.WithRetryBackoff(TimeSpan.Zero, TimeSpan.FromSeconds(1)); }).Message);
+
+            Assert.StartsWith("Must be greater than retryBackoff",
+                Assert.Throws<ArgumentException>(() => { settings.WithRetryBackoff(TimeSpan.FromSeconds(1), TimeSpan.Zero); }).Message);
         }
     }
 }

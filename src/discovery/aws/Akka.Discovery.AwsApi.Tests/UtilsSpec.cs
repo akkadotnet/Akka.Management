@@ -10,7 +10,6 @@ using System.Linq;
 using System.Net;
 using Akka.Discovery.AwsApi.Ecs;
 using Amazon.ECS.Model;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Discovery.AwsApi.Tests
@@ -22,8 +21,9 @@ namespace Akka.Discovery.AwsApi.Tests
         {
             var list = Enumerable.Range(0, 10).Select(i => i.ToString());
             var chunked = list.ChunkBy(20).ToList();
-            chunked.Count.Should().Be(1);
-            chunked[0].Should().BeEquivalentTo(Enumerable.Range(0, 10).Select(i => i.ToString()));
+            Assert.Equal(1, chunked.Count);
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(Enumerable.Range(0, 10).Select(i => i.ToString()).OrderBy(x => x), chunked[0].OrderBy(x => x));
         }
         
         [Fact(DisplayName = "ChunkBy with items more than chunk count should work")]
@@ -31,10 +31,11 @@ namespace Akka.Discovery.AwsApi.Tests
         {
             var list = Enumerable.Range(0, 50).Select(i => i.ToString());
             var chunked = list.ChunkBy(20).ToList();
-            chunked.Count.Should().Be(3);
-            chunked[0].Should().BeEquivalentTo(Enumerable.Range(0, 20).Select(i => i.ToString()));
-            chunked[1].Should().BeEquivalentTo(Enumerable.Range(20, 20).Select(i => i.ToString()));
-            chunked[2].Should().BeEquivalentTo(Enumerable.Range(40, 10).Select(i => i.ToString()));
+            Assert.Equal(3, chunked.Count);
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(Enumerable.Range(0, 20).Select(i => i.ToString()).OrderBy(x => x), chunked[0].OrderBy(x => x));
+            Assert.Equal(Enumerable.Range(20, 20).Select(i => i.ToString()).OrderBy(x => x), chunked[1].OrderBy(x => x));
+            Assert.Equal(Enumerable.Range(40, 10).Select(i => i.ToString()).OrderBy(x => x), chunked[2].OrderBy(x => x));
         }
         
         [Theory(DisplayName = "Diff should return appropriate List emulating Scala list.diff()")]
@@ -42,10 +43,10 @@ namespace Akka.Discovery.AwsApi.Tests
         public void DiffTest(List<AwsTag> listA, List<AwsTag> listB, List<AwsTag> listDiff)
         {
             var result = listA.Diff(listB);
-            result.Count.Should().Be(listDiff.Count);
+            Assert.Equal(listDiff.Count, result.Count);
             foreach (var tag in listDiff)
             {
-                result.Should().Contain(tag);
+                Assert.Contains(tag, result);
             }
         }
         
@@ -252,14 +253,14 @@ namespace Akka.Discovery.AwsApi.Tests
         [MemberData(nameof(LocalhostIpAddressDataSource))]
         public void IsLocalhostAddress(IPAddress address, bool isLocal)
         {
-            address.IsLoopbackAddress().Should().Be(isLocal);
+            Assert.Equal(isLocal, address.IsLoopbackAddress());
         }
 
         [Theory(DisplayName = "IPAddress.IsSiteLocalAddress() extension method should work properly")]
         [MemberData(nameof(SiteLocalIpAddressDataSource))]
         public void IsSiteLocalAddress(IPAddress address, bool isLocal)
         {
-            address.IsSiteLocalAddress().Should().Be(isLocal);
+            Assert.Equal(isLocal, address.IsSiteLocalAddress());
         }
 
         public static IEnumerable<object[]> LocalhostIpAddressDataSource()
