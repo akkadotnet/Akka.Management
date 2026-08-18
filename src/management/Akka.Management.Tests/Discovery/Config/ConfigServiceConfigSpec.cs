@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using Akka.Discovery.Config;
 using Akka.Discovery.Config.Hosting;
 using Akka.Hosting;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -35,9 +34,13 @@ public class ConfigServiceConfigSpec
         var systemConfig = builder.Configuration.Value;
         var config = systemConfig.GetConfig(ConfigServiceDiscoveryOptions.DefaultConfigPath);
 
-        Type.GetType(config.GetString("class")).Should().Be(typeof(ConfigServiceDiscovery));
-        config.GetString("services-path").Should().Be("akka.discovery.config.services");
-        config.GetStringList("services.Test.endpoints").Should().BeEquivalentTo("abc:1", "def:2");
+        Assert.Equal(typeof(ConfigServiceDiscovery), Type.GetType(config.GetString("class")));
+        Assert.Equal("akka.discovery.config.services", config.GetString("services-path"));
+        // converted from BeEquivalentTo (order-insensitive)
+        var defaultEndpoints = config.GetStringList("services.Test.endpoints");
+        Assert.Equal(2, defaultEndpoints.Count);
+        Assert.Contains("abc:1", defaultEndpoints);
+        Assert.Contains("def:2", defaultEndpoints);
     }
     
     [Fact(DisplayName = "ConfigServiceDiscoveryOptions should generate proper HOCON config on the correct config path")]
@@ -59,11 +62,15 @@ public class ConfigServiceConfigSpec
         var systemConfig = builder.Configuration.Value;
         var config = systemConfig.GetConfig(ConfigServiceDiscoveryOptions.FullPath("new-config"));
 
-        Type.GetType(config.GetString("class")).Should().Be(typeof(ConfigServiceDiscovery));
-        config.GetString("services-path").Should().Be("akka.discovery.new-config.services");
-        config.GetStringList("services.Test.endpoints").Should().BeEquivalentTo("abc:1", "def:2");
+        Assert.Equal(typeof(ConfigServiceDiscovery), Type.GetType(config.GetString("class")));
+        Assert.Equal("akka.discovery.new-config.services", config.GetString("services-path"));
+        // converted from BeEquivalentTo (order-insensitive)
+        var endpoints = config.GetStringList("services.Test.endpoints");
+        Assert.Equal(2, endpoints.Count);
+        Assert.Contains("abc:1", endpoints);
+        Assert.Contains("def:2", endpoints);
 
-        systemConfig.GetConfig(ConfigServiceDiscoveryOptions.DefaultConfigPath).Should().BeNull();
+        Assert.Null(systemConfig.GetConfig(ConfigServiceDiscoveryOptions.DefaultConfigPath));
     }
     
 }

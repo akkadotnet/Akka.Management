@@ -21,7 +21,6 @@ using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Cluster.Bootstrap.ContactPoint;
 using Akka.Management.Dsl;
 using Ceen;
-using FluentAssertions;
 using Newtonsoft.Json;
 using Xunit;
 using static Akka.Management.Cluster.Bootstrap.ContactPoint.HttpBootstrapJsonProtocol;
@@ -68,15 +67,15 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
                     {
                         handled = true;
                         var response = (FakeResponse)context.Response;
-                        response.Response.Should().Contain("\"Nodes\":[]");
+                        Assert.Contains("\"Nodes\":[]", response.Response, StringComparison.Ordinal);
                     }
                 }
             }
 
-            handled.Should().BeTrue("At least one handler has to handle the request");
+            Assert.True(handled, "At least one handler has to handle the request");
         }
 
-        [Fact( 
+        [Fact(
             Skip = "Extremely racy in CI/CD",
             DisplayName = "Http Bootstrap routes should include seed nodes when part of a cluster")]
         public async Task IncludeSeedsWhenPartOfCluster()
@@ -122,17 +121,18 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
                             throw new Exception($"Could not deserialize response. Response: {response.Response}");
                         
                         var seedNodes = nodes.Nodes.Select(n => n.Node).ToList();
-                        seedNodes.Contains(cluster.SelfAddress).Should()
-                            .BeTrue(
+                        Assert.True(
+                            seedNodes.Contains(cluster.SelfAddress),
+                            string.Format(
                                 "Seed nodes should contain self address but it does not. Self address: [{0}], seed nodes: [{1}], response string: [{2}]",
                                 cluster.SelfAddress,
                                 string.Join(", ", seedNodes),
-                                response.Response);
+                                response.Response));
                     }
                 }
             }
 
-            handled.Should().BeTrue("At least one handler has to handle the request");
+            Assert.True(handled, "At least one handler has to handle the request");
         }
     }
 

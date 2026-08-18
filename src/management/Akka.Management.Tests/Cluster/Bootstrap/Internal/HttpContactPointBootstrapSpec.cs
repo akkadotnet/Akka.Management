@@ -7,7 +7,6 @@
 
 using Akka.Actor;
 using Akka.Management.Cluster.Bootstrap.Internal;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
@@ -18,7 +17,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
         public void ShouldUseSafeName()
         {
             var name = HttpContactPointBootstrap.Name("[fe80::1013:2070:258a:c662]", 443);
-            ActorPath.IsValidPathElement(name).Should().BeTrue();
+            Assert.True(ActorPath.IsValidPathElement(name));
         }
     }
 }
