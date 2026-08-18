@@ -18,7 +18,6 @@ using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Cluster.Bootstrap.Internal;
 using Akka.Management.Dsl;
 using Akka.Util;
-using FluentAssertions;
 using Xunit;
 using static Akka.Discovery.ServiceDiscovery;
 using static Akka.Management.Cluster.Bootstrap.Internal.BootstrapCoordinator.Protocol;
@@ -75,10 +74,10 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
             AwaitAssert(() =>
             {
                 var targetsToCheck = targets.Value;
-                targetsToCheck.Count.Should().BeGreaterOrEqualTo(2);
-                targetsToCheck.Select(t => t.Host).Should().Contain("host1");
-                targetsToCheck.Select(t => t.Host).Should().Contain("host2");
-                targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count.Should().Be(0);
+                Assert.True(targetsToCheck.Count >= 2);
+                Assert.Contains("host1", targetsToCheck.Select(t => t.Host));
+                Assert.Contains("host2", targetsToCheck.Select(t => t.Host));
+                Assert.Equal(0, targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count);
             });
             
             coordinator.Tell(new JoinOtherSeedNodes(new [] {Akka.Cluster.Cluster.Get(Sys).SelfAddress}.ToImmutableHashSet()));
@@ -109,10 +108,10 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
             AwaitAssert(() =>
             {
                 var targetsToCheck = targets.Value;
-                targetsToCheck.Count.Should().BeGreaterOrEqualTo(2);
-                targetsToCheck.Select(t => t.Host).Should().Contain("host1");
-                targetsToCheck.Select(t => t.Host).Should().Contain("host2");
-                targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count.Should().Be(0);
+                Assert.True(targetsToCheck.Count >= 2);
+                Assert.Contains("host1", targetsToCheck.Select(t => t.Host));
+                Assert.Contains("host2", targetsToCheck.Select(t => t.Host));
+                Assert.Equal(0, targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count);
             });
             
             coordinator.Tell(JoinSelf.Instance);
@@ -141,10 +140,11 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
             AwaitAssert(() =>
             {
                 var targetsToCheck = targets.Value;
-                targetsToCheck.Count.Should().BeGreaterOrEqualTo(2);
-                targetsToCheck.Select(t => t.Host).Should().Contain("host1");
-                targetsToCheck.Select(t => t.Host).Should().Contain("host2");
-                targetsToCheck.Select(t => t.Port).ToImmutableHashSet().Should().BeEquivalentTo(new HashSet<int> {8558});
+                Assert.True(targetsToCheck.Count >= 2);
+                Assert.Contains("host1", targetsToCheck.Select(t => t.Host));
+                Assert.Contains("host2", targetsToCheck.Select(t => t.Host));
+                // converted from BeEquivalentTo: set must equal { 8558 } (exactly one distinct port, value 8558)
+                Assert.Equal((int?)8558, Assert.Single(targetsToCheck.Select(t => t.Port).ToImmutableHashSet()));
             });
         }
 
@@ -171,10 +171,10 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
             AwaitAssert(() =>
             {
                 var targetsToCheck = targets.Value;
-                targetsToCheck.Count.Should().BeGreaterOrEqualTo(2);
-                targetsToCheck.Select(t => t.Host).Should().Contain("host1");
-                targetsToCheck.Select(t => t.Host).Should().Contain("host2");
-                targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count.Should().Be(0);
+                Assert.True(targetsToCheck.Count >= 2);
+                Assert.Contains("host1", targetsToCheck.Select(t => t.Host));
+                Assert.Contains("host2", targetsToCheck.Select(t => t.Host));
+                Assert.Equal(0, targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count);
             });
         }
         
@@ -189,8 +189,11 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
                 new ResolvedTarget("host2", 3, null),
                 new ResolvedTarget("host2", 4, null),
             }.ToImmutableList();
-            BootstrapCoordinator.SelectHosts(new Lookup("service", "cats"), 8558, false, beforeFiltering)
-                .Should().BeEquivalentTo(beforeFiltering);
+            // converted from BeEquivalentTo (order-insensitive); ResolvedTarget has value equality (Host, Port, Address)
+            Assert.Equal(
+                beforeFiltering.OrderBy(t => t.Host).ThenBy(t => t.Port).ToList(),
+                BootstrapCoordinator.SelectHosts(new Lookup("service", "cats"), 8558, false, beforeFiltering)
+                    .OrderBy(t => t.Host).ThenBy(t => t.Port).ToList());
         }
         
         // For example when using DNS A-record-based discovery in K8s
@@ -205,12 +208,15 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
                 new ResolvedTarget("host2", 8558, null),
                 new ResolvedTarget("host2", 4, null),
             }.ToImmutableList();
-            BootstrapCoordinator.SelectHosts(new Lookup("service"), 8558, true, beforeFiltering)
-                .Should().BeEquivalentTo(new []
+            // converted from BeEquivalentTo (order-insensitive); ResolvedTarget has value equality (Host, Port, Address)
+            Assert.Equal(
+                new []
                 {
                     new ResolvedTarget("host1", 8558, null),
                     new ResolvedTarget("host2", 8558, null),
-                }.ToImmutableList());
+                }.OrderBy(t => t.Host).ThenBy(t => t.Port).ToList(),
+                BootstrapCoordinator.SelectHosts(new Lookup("service"), 8558, true, beforeFiltering)
+                    .OrderBy(t => t.Host).ThenBy(t => t.Port).ToList());
         }
         
         // For example when using ECS service discovery
@@ -225,8 +231,11 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
                 new ResolvedTarget("host2", 8558, null),
                 new ResolvedTarget("host2", 4, null),
             }.ToImmutableList();
-            BootstrapCoordinator.SelectHosts(new Lookup("service"), 8558, false, beforeFiltering)
-                .Should().BeEquivalentTo(beforeFiltering);
+            // converted from BeEquivalentTo (order-insensitive); ResolvedTarget has value equality (Host, Port, Address)
+            Assert.Equal(
+                beforeFiltering.OrderBy(t => t.Host).ThenBy(t => t.Port).ToList(),
+                BootstrapCoordinator.SelectHosts(new Lookup("service"), 8558, false, beforeFiltering)
+                    .OrderBy(t => t.Host).ThenBy(t => t.Port).ToList());
         }
         
         [Fact(DisplayName =
@@ -240,8 +249,11 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
                 new ResolvedTarget("host3", 8558, null),
                 new ResolvedTarget("host4", 4, null),
             }.ToImmutableList();
-            BootstrapCoordinator.SelectHosts(new Lookup("service"), 8558, true, beforeFiltering)
-                .Should().BeEquivalentTo(beforeFiltering);
+            // converted from BeEquivalentTo (order-insensitive); ResolvedTarget has value equality (Host, Port, Address)
+            Assert.Equal(
+                beforeFiltering.OrderBy(t => t.Host).ThenBy(t => t.Port).ToList(),
+                BootstrapCoordinator.SelectHosts(new Lookup("service"), 8558, true, beforeFiltering)
+                    .OrderBy(t => t.Host).ThenBy(t => t.Port).ToList());
         }
         
         private class TestBootstrapCoordinator : BootstrapCoordinator

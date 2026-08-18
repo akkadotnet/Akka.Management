@@ -12,7 +12,6 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Discovery.Dns.Internal;
 using Akka.IO;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Discovery.Dns.Tests;
@@ -171,7 +170,7 @@ public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , 
     public void DnsServiceDiscoveryShouldBeLoadableViaConfig()
     {
         var serviceDiscovery = Discovery.Get(Sys).LoadServiceDiscovery("akka-dns");
-        serviceDiscovery.Should().BeOfType<Dns.DnsServiceDiscovery>();
+        Assert.IsType<Dns.DnsServiceDiscovery>(serviceDiscovery);
     }
 
     [Theory(DisplayName = "DnsServiceDiscovery should handle SRV lookup with real DNS")]
@@ -187,7 +186,7 @@ public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , 
         var lookup = new Lookup(serviceName, portName, protocol);
         var resolved = await serviceDiscovery.Lookup(lookup, TimeSpan.FromSeconds(60));
 
-        resolved.Addresses.Count.Should().BeGreaterThan(0, $"No SRV records found for {description}.");
+        Assert.True(resolved.Addresses.Count > 0, $"No SRV records found for {description}.");
         // Log information for diagnostic purposes
         Output.WriteLine($"Resolved targets: {resolved.Addresses.Count}");
         foreach (var addr in resolved.Addresses)
@@ -195,17 +194,17 @@ public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , 
             Output.WriteLine($"  Host: {addr.Host}, Address: {addr.Address}, Port: {addr.Port}");
         }
 
-        resolved.Addresses.Count.Should().BeGreaterThan(0, "At least one SRV record should be found");
+        Assert.True(resolved.Addresses.Count > 0, "At least one SRV record should be found");
         foreach (var address in resolved.Addresses)
         {
-            address.Host.Should().NotBeNullOrEmpty("Host should not be empty");
+            Assert.False(string.IsNullOrEmpty(address.Host), "Host should not be empty");
             if (serviceDiscovery.CanLookupSrv)
             {
-                address.Port.Should().BeGreaterThan(0, "Port should be specified for SRV lookup");
+                Assert.True(address.Port > 0, "Port should be specified for SRV lookup");
             }
             else
             {
-                address.Port.Should().BeNull( "Port should not be specified if resolver doesn't support SRV lookup");
+                Assert.True(address.Port is null, "Port should not be specified if resolver doesn't support SRV lookup");
             }
         }
     }
@@ -224,7 +223,7 @@ public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , 
         var lookup = new Lookup(serviceName);
         var resolved = await serviceDiscovery.Lookup(lookup, TimeSpan.FromSeconds(60));
 
-        resolved.Addresses.Count.Should().BeGreaterThan(0, $"No A/AAAA records found for {description}.");
+        Assert.True(resolved.Addresses.Count > 0, $"No A/AAAA records found for {description}.");
 
         // Log information for diagnostic purposes
         Output.WriteLine($"Resolved targets: {resolved.Addresses.Count}");
@@ -232,25 +231,25 @@ public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , 
         {
             Output.WriteLine($"  Host: {addr.Host}, Address: {addr.Address}, Port: {addr.Port}");
         }
-        
-        // skip this on windows for inet-resolver as it doesn't return AAAA 
+
+        // skip this on windows for inet-resolver as it doesn't return AAAA
         if (!DoNotExpectAAAARecordsFromInetResolver)
         {
-            resolved.Addresses
-                .Sum(x => x.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 ? 1 : 0)
-                .Should().BeGreaterThan(0, "At least one IPv6 record should be found");
+            Assert.True(resolved.Addresses
+                .Sum(x => x.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6 ? 1 : 0) > 0,
+                "At least one IPv6 record should be found");
         }
 
-        resolved.Addresses
-            .Sum(x => x.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? 1 : 0)
-            .Should().BeGreaterThan(0, "At least one IPv4 record should be found");
+        Assert.True(resolved.Addresses
+            .Sum(x => x.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork ? 1 : 0) > 0,
+            "At least one IPv4 record should be found");
 
-        
-        resolved.Addresses.Count.Should().BeGreaterThan(0, "At least one SRV record should be found");
+
+        Assert.True(resolved.Addresses.Count > 0, "At least one SRV record should be found");
         foreach (var address in resolved.Addresses)
         {
-            address.Host.Should().NotBeNullOrEmpty("Host should not be empty");
-            address.Port.Should().BeNull( "Port should be specified for SRV lookup");
+            Assert.False(string.IsNullOrEmpty(address.Host), "Host should not be empty");
+            Assert.True(address.Port is null, "Port should be specified for SRV lookup");
         }
     }
 }

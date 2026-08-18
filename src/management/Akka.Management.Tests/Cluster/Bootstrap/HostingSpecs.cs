@@ -14,8 +14,6 @@ using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Dsl;
 using Akka.Remote.Hosting;
 using Akka.Util;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -92,7 +90,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                 tcs.SetResult(Done.Instance);
             });
 
-            await tcs.Task.WaitAsync(30.Seconds());
+            await tcs.Task.WaitAsync(TimeSpan.FromSeconds(30));
             
             await host.StopAsync();
         }

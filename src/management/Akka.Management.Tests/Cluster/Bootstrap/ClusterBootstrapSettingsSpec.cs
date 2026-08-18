@@ -9,8 +9,6 @@ using System;
 using Akka.Event;
 using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Dsl;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Xunit;
 
 namespace Akka.Management.Tests.Cluster.Bootstrap
@@ -24,28 +22,28 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                 .WithFallback(AkkaManagementProvider.DefaultConfiguration());
             
             var settings = ClusterBootstrapSettings.Create(config, NoLogger.Instance);
-            settings.NewClusterEnabled.Should().BeTrue();
-            
-            settings.ContactPointDiscovery.ServiceName.Should().BeNull();
-            settings.ContactPointDiscovery.PortName.Should().BeNull();
-            settings.ContactPointDiscovery.Protocol.Should().Be("tcp");
-            settings.ContactPointDiscovery.ServiceNamespace.Should().BeNull();
-            settings.ContactPointDiscovery.DiscoveryMethod.Should().Be("akka.discovery");
-            settings.ContactPointDiscovery.StableMargin.Should().Be(TimeSpan.FromSeconds(5));
-            settings.ContactPointDiscovery.Interval.Should().Be(TimeSpan.FromSeconds(1));
-            settings.ContactPointDiscovery.ExponentialBackoffRandomFactor.Should().Be(0.2);
-            settings.ContactPointDiscovery.ExponentialBackoffMax.Should().Be(TimeSpan.FromSeconds(15));
-            settings.ContactPointDiscovery.RequiredContactPointsNr.Should().Be(2);
-            settings.ContactPointDiscovery.ResolveTimeout.Should().Be(TimeSpan.FromSeconds(3));
-            settings.ContactPointDiscovery.ContactWithAllContactPoints.Should().BeTrue();
+            Assert.True(settings.NewClusterEnabled);
 
-            settings.ContactPoint.FallbackPort.Should().BeNull();
-            settings.ContactPoint.FilterOnFallbackPort.Should().BeTrue();
-            settings.ContactPoint.ProbingFailureTimeout.Should().Be(TimeSpan.FromSeconds(3));
-            settings.ContactPoint.ProbeInterval.Should().Be(TimeSpan.FromSeconds(5));
-            settings.ContactPoint.ProbeIntervalJitter.Should().Be(0.2);
-            settings.JoinDecider.ImplClass.Should()
-                .Be("Akka.Management.Cluster.Bootstrap.LowestAddressJoinDecider, Akka.Management");
+            Assert.Null(settings.ContactPointDiscovery.ServiceName);
+            Assert.Null(settings.ContactPointDiscovery.PortName);
+            Assert.Equal("tcp", settings.ContactPointDiscovery.Protocol);
+            Assert.Null(settings.ContactPointDiscovery.ServiceNamespace);
+            Assert.Equal("akka.discovery", settings.ContactPointDiscovery.DiscoveryMethod);
+            Assert.Equal(TimeSpan.FromSeconds(5), settings.ContactPointDiscovery.StableMargin);
+            Assert.Equal(TimeSpan.FromSeconds(1), settings.ContactPointDiscovery.Interval);
+            Assert.Equal(0.2, settings.ContactPointDiscovery.ExponentialBackoffRandomFactor);
+            Assert.Equal(TimeSpan.FromSeconds(15), settings.ContactPointDiscovery.ExponentialBackoffMax);
+            Assert.Equal(2, settings.ContactPointDiscovery.RequiredContactPointsNr);
+            Assert.Equal(TimeSpan.FromSeconds(3), settings.ContactPointDiscovery.ResolveTimeout);
+            Assert.True(settings.ContactPointDiscovery.ContactWithAllContactPoints);
+
+            Assert.Null(settings.ContactPoint.FallbackPort);
+            Assert.True(settings.ContactPoint.FilterOnFallbackPort);
+            Assert.Equal(TimeSpan.FromSeconds(3), settings.ContactPoint.ProbingFailureTimeout);
+            Assert.Equal(TimeSpan.FromSeconds(5), settings.ContactPoint.ProbeInterval);
+            Assert.Equal(0.2, settings.ContactPoint.ProbeIntervalJitter);
+            Assert.Equal("Akka.Management.Cluster.Bootstrap.LowestAddressJoinDecider, Akka.Management",
+                settings.JoinDecider.ImplClass);
         }
         
         [Fact(DisplayName = "ClusterBootstrapSetup should override ClusterBootstrapSettings")]
@@ -65,20 +63,20 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                     Protocol = "c",
                     ServiceNamespace = "d",
                     DiscoveryMethod = "e",
-                    StableMargin = 1.Seconds(),
-                    Interval = 2.Seconds(),
+                    StableMargin = TimeSpan.FromSeconds(1),
+                    Interval = TimeSpan.FromSeconds(2),
                     ExponentialBackoffRandomFactor = 1.0,
-                    ExponentialBackoffMax = 3.Seconds(),
+                    ExponentialBackoffMax = TimeSpan.FromSeconds(3),
                     RequiredContactPointsNr = 1,
-                    ResolveTimeout = 4.Seconds(),
+                    ResolveTimeout = TimeSpan.FromSeconds(4),
                     ContactWithAllContactPoints = false
                 },
                 ContactPoint = new ContactPointSetup
                 {
                     FallbackPort = 1234,
                     FilterOnFallbackPort = false,
-                    ProbeInterval = 2.Seconds(),
-                    ProbingFailureTimeout = 4.Seconds(),
+                    ProbeInterval = TimeSpan.FromSeconds(2),
+                    ProbingFailureTimeout = TimeSpan.FromSeconds(4),
                     ProbeIntervalJitter = 1.0
                 },
                 JoinDecider = new JoinDeciderSetup
@@ -87,29 +85,29 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                 }
             };
             var settings = setup.Apply(original);
-            settings.NewClusterEnabled.Should().BeFalse();
-            
-            settings.ContactPointDiscovery.ServiceName.Should().Be("a");
-            settings.ContactPointDiscovery.PortName.Should().Be("b");
-            settings.ContactPointDiscovery.Protocol.Should().Be("c");
-            settings.ContactPointDiscovery.ServiceNamespace.Should().Be("d");
-            settings.ContactPointDiscovery.DiscoveryMethod.Should().Be("e");
-            settings.ContactPointDiscovery.StableMargin.Should().Be(1.Seconds());
-            settings.ContactPointDiscovery.Interval.Should().Be(2.Seconds());
-            settings.ContactPointDiscovery.ExponentialBackoffRandomFactor.Should().Be(1.0);
-            settings.ContactPointDiscovery.ExponentialBackoffMax.Should().Be(3.Seconds());
-            settings.ContactPointDiscovery.RequiredContactPointsNr.Should().Be(1);
-            settings.ContactPointDiscovery.ResolveTimeout.Should().Be(4.Seconds());
-            settings.ContactPointDiscovery.ContactWithAllContactPoints.Should().BeFalse();
+            Assert.False(settings.NewClusterEnabled);
 
-            settings.ContactPoint.FallbackPort.Should().Be(1234);
-            settings.ContactPoint.FilterOnFallbackPort.Should().BeFalse();
-            settings.ContactPoint.ProbeInterval.Should().Be(2.Seconds());
-            settings.ContactPoint.ProbingFailureTimeout.Should().Be(4.Seconds());
-            settings.ContactPoint.ProbeIntervalJitter.Should().Be(1.0);
-            
-            settings.JoinDecider.ImplClass.Should()
-                .Be(typeof(ClusterBootstrap).AssemblyQualifiedName);
+            Assert.Equal("a", settings.ContactPointDiscovery.ServiceName);
+            Assert.Equal("b", settings.ContactPointDiscovery.PortName);
+            Assert.Equal("c", settings.ContactPointDiscovery.Protocol);
+            Assert.Equal("d", settings.ContactPointDiscovery.ServiceNamespace);
+            Assert.Equal("e", settings.ContactPointDiscovery.DiscoveryMethod);
+            Assert.Equal(TimeSpan.FromSeconds(1), settings.ContactPointDiscovery.StableMargin);
+            Assert.Equal(TimeSpan.FromSeconds(2), settings.ContactPointDiscovery.Interval);
+            Assert.Equal(1.0, settings.ContactPointDiscovery.ExponentialBackoffRandomFactor);
+            Assert.Equal(TimeSpan.FromSeconds(3), settings.ContactPointDiscovery.ExponentialBackoffMax);
+            Assert.Equal(1, settings.ContactPointDiscovery.RequiredContactPointsNr);
+            Assert.Equal(TimeSpan.FromSeconds(4), settings.ContactPointDiscovery.ResolveTimeout);
+            Assert.False(settings.ContactPointDiscovery.ContactWithAllContactPoints);
+
+            Assert.Equal(1234, settings.ContactPoint.FallbackPort);
+            Assert.False(settings.ContactPoint.FilterOnFallbackPort);
+            Assert.Equal(TimeSpan.FromSeconds(2), settings.ContactPoint.ProbeInterval);
+            Assert.Equal(TimeSpan.FromSeconds(4), settings.ContactPoint.ProbingFailureTimeout);
+            Assert.Equal(1.0, settings.ContactPoint.ProbeIntervalJitter);
+
+            Assert.Equal(typeof(ClusterBootstrap).AssemblyQualifiedName,
+                settings.JoinDecider.ImplClass);
         }
     }
 }

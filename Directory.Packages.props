@@ -4,7 +4,6 @@
     <Xunit3Version>3.2.2</Xunit3Version>
     <XUnitRunnerVersion>3.1.5</XUnitRunnerVersion>
     <CoverletVersion>10.0.1</CoverletVersion>
-    <FluentAssertionVersion>7.0.0</FluentAssertionVersion>
     <TestSdkVersion>17.13.0</TestSdkVersion>
     <WireMockVersion>1.8.4</WireMockVersion>
     <AkkaVersion>1.5.70</AkkaVersion>
@@ -94,7 +93,6 @@
     <PackageVersion Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVersion)" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
     <PackageVersion Include="coverlet.collector" Version="$(CoverletVersion)" />
-    <PackageVersion Include="FluentAssertions" Version="$(FluentAssertionVersion)" />
     <PackageVersion Include="WireMock.Net" Version="$(WireMockVersion)" />
     <PackageVersion Include="Testcontainers.Azurite" Version="4.4.0" />
     <PackageVersion Include="Testcontainers.LocalStack" Version="4.4.0" />

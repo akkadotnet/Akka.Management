@@ -7,7 +7,6 @@
 
 using System.Linq;
 using Akka.Http.Extensions;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Http.Shim.Tests;
@@ -19,10 +18,10 @@ public class UtilSpec
     {
         var list = Enumerable.Range(0, 100).ToList();
         list.Shuffle();
-        list.Count.Should().Be(100);
+        Assert.Equal(100, list.Count);
         foreach (var i in Enumerable.Range(0, 100))
         {
-            list.Should().Contain(i);
+            Assert.Contains(i, list);
         }
     }
 }

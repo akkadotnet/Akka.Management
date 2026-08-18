@@ -12,10 +12,7 @@ using Akka.Discovery;
 using Akka.Event;
 using Akka.Management.Cluster.Bootstrap;
 using Akka.TestKit.Extensions;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Xunit;
-using static FluentAssertions.FluentActions;
 
 namespace Akka.Management.Tests.Cluster.Bootstrap
 {
@@ -42,15 +39,15 @@ akka.remote.dot-netty.tcp.port = 0
             var probe = CreateTestProbe();
             Sys.EventStream.Subscribe(probe.Ref, typeof(Error));
 
-            await Awaiting(() => ClusterBootstrap.Get(Sys).Start())
-                .Should().ThrowAsync<Exception>()
-                .WithMessage("Awaiting ClusterBootstrap.SelfContactPointUri timed out.")
-                .WaitAsync(15.Seconds());
+            var ex = await Assert.ThrowsAnyAsync<Exception>(() => ClusterBootstrap.Get(Sys).Start())
+                .WaitAsync(TimeSpan.FromSeconds(15));
+            // converted from WithMessage glob (FA MatchEquivalentOf is case-insensitive, full-string, no wildcards)
+            Assert.Equal("Awaiting ClusterBootstrap.SelfContactPointUri timed out.", ex.Message, ignoreCase: true);
 
             await AwaitAssertAsync(() =>
             {
-                probe.ExpectMsg<Error>().Message.ToString().Should()
-                    .StartWith("'Bootstrap.selfContactPoint' was NOT set, but is required for the bootstrap to work");
+                Assert.StartsWith("'Bootstrap.selfContactPoint' was NOT set, but is required for the bootstrap to work",
+                    probe.ExpectMsg<Error>().Message.ToString(), StringComparison.Ordinal);
             });
         }
     }

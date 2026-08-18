@@ -1,7 +1,6 @@
 using System;
 using System.Net;
 using Akka.Discovery.Dns.Internal;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Discovery.Dns.Tests;
@@ -13,9 +12,9 @@ public class AsyncDnsManagerSpec {
     {
         var result = AsyncDnsManager.ParseEndPoint("192.168.1.1:53");
         var ipEndPoint = result as IPEndPoint;
-        ipEndPoint.Should().NotBeNull();
-        ipEndPoint!.Address.ToString().Should().Be("192.168.1.1");
-        ipEndPoint.Port.Should().Be(53);
+        Assert.NotNull(ipEndPoint);
+        Assert.Equal("192.168.1.1", ipEndPoint!.Address.ToString());
+        Assert.Equal(53, ipEndPoint.Port);
     }
 
     [Fact]
@@ -23,11 +22,11 @@ public class AsyncDnsManagerSpec {
     {
         var result = AsyncDnsManager.ParseEndPoint("1dot1dot1dot1.cloudflare-dns.com:53");
         var ipEndPoint = result as IPEndPoint;
-        ipEndPoint.Should().NotBeNull();
+        Assert.NotNull(ipEndPoint);
         //can be 1.0.0.1 or 1.1.1.1
-        ipEndPoint!.Address.ToString().Should().StartWith("1.");
-        ipEndPoint!.Address.ToString().Should().EndWith(".1");
-        ipEndPoint.Port.Should().Be(53);
+        Assert.StartsWith("1.", ipEndPoint!.Address.ToString(), StringComparison.Ordinal);
+        Assert.EndsWith(".1", ipEndPoint!.Address.ToString(), StringComparison.Ordinal);
+        Assert.Equal(53, ipEndPoint.Port);
     }
 
     [Fact]
@@ -35,11 +34,11 @@ public class AsyncDnsManagerSpec {
     {
         var result = AsyncDnsManager.ParseEndPoint("1dot1dot1dot1.cloudflare-dns.com");
         var ipEndPoint = result as IPEndPoint;
-        ipEndPoint.Should().NotBeNull();
+        Assert.NotNull(ipEndPoint);
         //can be 1.0.0.1 or 1.1.1.1
-        ipEndPoint!.Address.ToString().Should().StartWith("1.");
-        ipEndPoint!.Address.ToString().Should().EndWith(".1");
-        ipEndPoint.Port.Should().Be(53); // Default port is now 53
+        Assert.StartsWith("1.", ipEndPoint!.Address.ToString(), StringComparison.Ordinal);
+        Assert.EndsWith(".1", ipEndPoint!.Address.ToString(), StringComparison.Ordinal);
+        Assert.Equal(53, ipEndPoint.Port); // Default port is now 53
     }
     
     [Fact]
@@ -47,9 +46,9 @@ public class AsyncDnsManagerSpec {
     {
         var result = AsyncDnsManager.ParseEndPoint("[2001:db8:1::2]:53");
         var ipEndPoint = result as IPEndPoint;
-        ipEndPoint.Should().NotBeNull();
-        ipEndPoint!.Address.ToString().Should().Be("2001:db8:1::2");
-        ipEndPoint.Port.Should().Be(53);
+        Assert.NotNull(ipEndPoint);
+        Assert.Equal("2001:db8:1::2", ipEndPoint!.Address.ToString());
+        Assert.Equal(53, ipEndPoint.Port);
     }
 
     [Fact]
@@ -81,9 +80,9 @@ public class AsyncDnsManagerSpec {
     {
         var result = AsyncDnsManager.ParseEndPoint("2001:db8:1::2");
         var ipEndPoint = result as IPEndPoint;
-        ipEndPoint.Should().NotBeNull();
-        ipEndPoint!.Address.ToString().Should().Be("2001:db8:1::2");
-        ipEndPoint.Port.Should().Be(53); // Default port is now 53
+        Assert.NotNull(ipEndPoint);
+        Assert.Equal("2001:db8:1::2", ipEndPoint!.Address.ToString());
+        Assert.Equal(53, ipEndPoint.Port); // Default port is now 53
     }
 
     [Fact]
@@ -91,9 +90,9 @@ public class AsyncDnsManagerSpec {
     {
         var result = AsyncDnsManager.ParseEndPoint("192.168.1.1");
         var ipEndPoint = result as IPEndPoint;
-        ipEndPoint.Should().NotBeNull();
-        ipEndPoint.Address.ToString().Should().Be("192.168.1.1");
-        ipEndPoint.Port.Should().Be(53);
+        Assert.NotNull(ipEndPoint);
+        Assert.Equal("192.168.1.1", ipEndPoint.Address.ToString());
+        Assert.Equal(53, ipEndPoint.Port);
     }
 
 }
