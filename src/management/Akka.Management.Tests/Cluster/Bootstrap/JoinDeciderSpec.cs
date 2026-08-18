@@ -18,7 +18,6 @@ using Akka.Management.Cluster.Bootstrap;
 using Akka.Management.Cluster.Bootstrap.Util;
 using Akka.Management.Dsl;
 using Akka.TestKit.Xunit.Internals;
-using FluentAssertions;
 using Xunit;
 using static Akka.Discovery.ServiceDiscovery;
 
@@ -115,7 +114,8 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
 
             for (var i = 0; i < expected.Count; i++)
             {
-                expected[i].Should().BeEquivalentTo(actual[i]);
+                // converted from BeEquivalentTo (ResolvedTarget has value equality over Host, Port, Address)
+                Assert.Equal(expected[i], actual[i]);
             }
         }
     }
@@ -222,7 +222,10 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                         addr,
                         new[] { addr }.ToImmutableHashSet())
                 }.ToImmutableHashSet());
-            (await decider.Decide(info)).Should().BeEquivalentTo(new JoinOtherSeedNodes(new []{addr}.ToImmutableHashSet()));
+            // converted from BeEquivalentTo: JoinOtherSeedNodes uses reference equality, so compare member-wise (its SeedNodes set)
+            var decision = await decider.Decide(info);
+            var join = Assert.IsType<JoinOtherSeedNodes>(decision);
+            Assert.Equal(new []{addr}.ToImmutableHashSet(), join.SeedNodes);
         }
 
         [Fact(DisplayName = "LowestAddressJoinDecider should keep probing when contact points changed within stable-margin")]
@@ -252,7 +255,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                         new Address("akka", "join-decider-spec-system", "c", 2552),
                         ImmutableHashSet<Address>.Empty),
                 }.ToImmutableHashSet());
-            (await decider.Decide(info)).Should().Be(KeepProbing.Instance);
+            Assert.Equal(KeepProbing.Instance, await decider.Decide(info));
         }
 
         [Fact(DisplayName = "LowestAddressJoinDecider should keep probing when not enough contact points")]
@@ -277,7 +280,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                         new Address("akka", "join-decider-spec-system", "b", 2552),
                         ImmutableHashSet<Address>.Empty),
                 }.ToImmutableHashSet());
-            (await decider.Decide(info)).Should().Be(KeepProbing.Instance);
+            Assert.Equal(KeepProbing.Instance, await decider.Decide(info));
         }
 
         [Fact(DisplayName = "LowestAddressJoinDecider should keep probing when not enough confirmed contact points")]
@@ -302,13 +305,13 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                         new Address("akka", "join-decider-spec-system", "b", 2552),
                         ImmutableHashSet<Address>.Empty),
                 }.ToImmutableHashSet()); // << 2 < required-contact-point-nr
-            (await decider.Decide(info)).Should().Be(KeepProbing.Instance);
+            Assert.Equal(KeepProbing.Instance, await decider.Decide(info));
         }
         
         [Fact(DisplayName = "LowestAddressJoinDecider should join self when all conditions met and self has the lowest address")]
         public async Task JoinSelfWhenAllConditionsMetAndSelfHasTheLowestAddress()
         {
-            _settings!.NewClusterEnabled.Should().BeTrue();
+            Assert.True(_settings!.NewClusterEnabled);
             ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
             var decider = new LowestAddressJoinDecider(System!, _settings);
             var now = DateTimeOffset.Now;
@@ -334,7 +337,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                         new Address("akka", "join-decider-spec-system", "c", 2552),
                         ImmutableHashSet<Address>.Empty),
                 }.ToImmutableHashSet());
-            (await decider.Decide(info)).Should().Be(JoinSelf.Instance);
+            Assert.Equal(JoinSelf.Instance, await decider.Decide(info));
         }
         
     }
@@ -401,7 +404,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             var targetList = info.SeedNodesObservations.Select(o => o.ContactPoint).ToList();
             targetList.Sort(ResolvedTargetComparer.Instance);
             var target = targetList.First();
-            decider.MatchesSelf(target, selfContactPoint).Should().BeTrue();
+            Assert.True(decider.MatchesSelf(target, selfContactPoint));
         }
         
         [Fact(DisplayName = "SelfAwareJoinDecider should be able to join self if all conditions met")]
@@ -413,16 +416,16 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             var targetList = info.SeedNodesObservations.Select(o => o.ContactPoint).ToList();
             targetList.Sort(ResolvedTargetComparer.Instance);
             var target = targetList.First();
-            decider.CanJoinSelf(target, info).Should().BeTrue();
+            Assert.True(decider.CanJoinSelf(target, info));
         }
         
         [Fact(DisplayName = "SelfAwareJoinDecider should not join self if `new-cluster-enabled=off`, even if all conditions met")]
         public async Task NotJoinSelfIfNewClusterEnabledIsSetToOffEvenWhenAllConditionsMet()
         {
-            _settings!.NewClusterEnabled.Should().BeFalse();
+            Assert.False(_settings!.NewClusterEnabled);
             ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
             var decider = new LowestAddressJoinDecider(System!, _settings);
-            (await decider.Decide(_seedNodes)).Should().Be(KeepProbing.Instance);
+            Assert.Equal(KeepProbing.Instance, await decider.Decide(_seedNodes));
         }
 
         [Fact(DisplayName = "SelfAwareJoinDecider should match hostnames with different case")]
@@ -439,7 +442,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                 address: null);
             
             // Should match despite case difference
-            decider.MatchesSelf(targetWithUppercaseHost, selfContactPoint).Should().BeTrue();
+            Assert.True(decider.MatchesSelf(targetWithUppercaseHost, selfContactPoint));
             
             // Create a target with mixed case hostname
             var targetWithMixedCaseHost = new ResolvedTarget(
@@ -448,7 +451,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                 address: null);
             
             // Should match despite case difference
-            decider.MatchesSelf(targetWithMixedCaseHost, selfContactPoint).Should().BeTrue();
+            Assert.True(decider.MatchesSelf(targetWithMixedCaseHost, selfContactPoint));
             
             // Create a target with completely different hostname
             var targetWithDifferentHost = new ResolvedTarget(
@@ -457,7 +460,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                 address: null);
             
             // Should not match
-            decider.MatchesSelf(targetWithDifferentHost, selfContactPoint).Should().BeFalse();
+            Assert.False(decider.MatchesSelf(targetWithDifferentHost, selfContactPoint));
         }
 
         protected override Task Start()
@@ -514,7 +517,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             var targetList = info.SeedNodesObservations.Select(o => o.ContactPoint).ToList();
             targetList.Sort(ResolvedTargetComparer.Instance);
             var target = targetList.First();
-            decider.MatchesSelf(target, selfContactPoint).Should().BeTrue();
+            Assert.True(decider.MatchesSelf(target, selfContactPoint));
         }
         
         [Fact(DisplayName = "SelfAwareJoinDecider (IPv6) should be able to join self if all conditions met")]
@@ -526,16 +529,16 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             var targetList = info.SeedNodesObservations.Select(o => o.ContactPoint).ToList();
             targetList.Sort(ResolvedTargetComparer.Instance);
             var target = targetList.First();
-            decider.CanJoinSelf(target, info).Should().BeTrue();
+            Assert.True(decider.CanJoinSelf(target, info));
         }
         
         [Fact(DisplayName = "SelfAwareJoinDecider (IPv6) should not join self if `new-cluster-enabled=off`, even if all conditions met")]
         public async Task NotJoinSelfIfNewClusterEnabledIsSetToOffEvenWhenAllConditionsMet()
         {
-            _settings!.NewClusterEnabled.Should().BeFalse();
+            Assert.False(_settings!.NewClusterEnabled);
             ClusterBootstrap.Get(System!).SetSelfContactPoint(new Uri($"http://10.0.0.2:{ManagementPort}/test"));
             var decider = new LowestAddressJoinDecider(System!, _settings);
-            (await decider.Decide(_seedNodes)).Should().Be(KeepProbing.Instance);
+            Assert.Equal(KeepProbing.Instance, await decider.Decide(_seedNodes));
         }
 
         [Fact(DisplayName = "SelfAwareJoinDecider should match hostnames with different case")]
@@ -552,7 +555,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                 address: null);
             
             // Should match despite case difference
-            decider.MatchesSelf(targetWithUppercaseHost, selfContactPoint).Should().BeTrue();
+            Assert.True(decider.MatchesSelf(targetWithUppercaseHost, selfContactPoint));
             
             // Create a target with mixed case hostname
             var targetWithMixedCaseHost = new ResolvedTarget(
@@ -561,7 +564,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                 address: null);
             
             // Should match despite case difference
-            decider.MatchesSelf(targetWithMixedCaseHost, selfContactPoint).Should().BeTrue();
+            Assert.True(decider.MatchesSelf(targetWithMixedCaseHost, selfContactPoint));
             
             // Create a target with completely different hostname
             var targetWithDifferentHost = new ResolvedTarget(
@@ -570,7 +573,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
                 address: null);
             
             // Should not match
-            decider.MatchesSelf(targetWithDifferentHost, selfContactPoint).Should().BeFalse();
+            Assert.False(decider.MatchesSelf(targetWithDifferentHost, selfContactPoint));
         }
 
         protected override Task Start()

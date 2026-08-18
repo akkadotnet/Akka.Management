@@ -15,7 +15,6 @@ using Akka.Actor;
 using Akka.Hosting;
 using Akka.Http.Dsl;
 using Akka.Management.Dsl;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -124,7 +123,7 @@ namespace Akka.Management.Tests
             await testKit.AwaitAssertAsync(async () =>
             {
                 var response = await client.GetAsync($"http://localhost:{port}/bootstrap/seed-nodes");
-                response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+                Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
             }, TimeSpan.FromSeconds(5));
         }
 

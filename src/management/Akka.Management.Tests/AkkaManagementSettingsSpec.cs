@@ -13,10 +13,8 @@ using Akka.Configuration;
 using Akka.Hosting;
 using Akka.Http.Dsl;
 using Akka.Management.Dsl;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using static FluentAssertions.FluentActions;
 using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
 namespace Akka.Management.Tests
@@ -34,23 +32,23 @@ namespace Akka.Management.Tests
                 .First(ip => !Equals(ip, IPAddress.Any) && !Equals(ip, IPAddress.IPv6Any))
                 .ToString();
 
-            http.Hostname.Should().Be(defaultHostname);
-            http.Port.Should().Be(8558);
-            http.EffectiveBindHostname.Should().Be(defaultHostname);
-            http.EffectiveBindPort.Should().Be(8558);
-            http.BasePath.Should().BeEmpty();
-            http.RouteProviders.Count.Should().Be(3);
-            
-            http.RouteProviders[0].Name.Should().Be("cluster-bootstrap");
-            http.RouteProviders[0].FullyQualifiedClassName.Should().Be("Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management");
-            
-            http.RouteProviders[1].Name.Should().Be("remote-address");
-            http.RouteProviders[1].FullyQualifiedClassName.Should().Be("Akka.Management.Routes.AddressRouteProvider, Akka.Management");
-            
-            http.RouteProviders[2].Name.Should().Be("cluster-client-receptionist");
-            http.RouteProviders[2].FullyQualifiedClassName.Should().Be("Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management");
-            
-            http.RouteProvidersReadOnly.Should().BeTrue();
+            Assert.Equal(defaultHostname, http.Hostname);
+            Assert.Equal(8558, http.Port);
+            Assert.Equal(defaultHostname, http.EffectiveBindHostname);
+            Assert.Equal(8558, http.EffectiveBindPort);
+            Assert.Empty(http.BasePath);
+            Assert.Equal(3, http.RouteProviders.Count);
+
+            Assert.Equal("cluster-bootstrap", http.RouteProviders[0].Name);
+            Assert.Equal("Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management", http.RouteProviders[0].FullyQualifiedClassName);
+
+            Assert.Equal("remote-address", http.RouteProviders[1].Name);
+            Assert.Equal("Akka.Management.Routes.AddressRouteProvider, Akka.Management", http.RouteProviders[1].FullyQualifiedClassName);
+
+            Assert.Equal("cluster-client-receptionist", http.RouteProviders[2].Name);
+            Assert.Equal("Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management", http.RouteProviders[2].FullyQualifiedClassName);
+
+            Assert.True(http.RouteProvidersReadOnly);
         }
 
         [Fact(DisplayName = "AkkaManagementOptions should contain default values")]
@@ -67,25 +65,25 @@ namespace Akka.Management.Tests
                 .First(ip => !Equals(ip, IPAddress.Any) && !Equals(ip, IPAddress.IPv6Any))
                 .ToString();
 
-            http.Hostname.Should().Be(defaultHostname);
-            http.Port.Should().Be(8558);
-            http.EffectiveBindHostname.Should().Be(defaultHostname);
-            http.EffectiveBindPort.Should().Be(8558);
-            http.BasePath.Should().BeEmpty();
-            http.RouteProviders.Count.Should().Be(3);
-            
-            http.RouteProviders[0].Name.Should().Be("cluster-bootstrap");
-            http.RouteProviders[0].FullyQualifiedClassName.Should().Be("Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management");
-            
-            http.RouteProviders[1].Name.Should().Be("remote-address");
-            http.RouteProviders[1].FullyQualifiedClassName.Should().Be("Akka.Management.Routes.AddressRouteProvider, Akka.Management");
-            
-            http.RouteProviders[2].Name.Should().Be("cluster-client-receptionist");
-            http.RouteProviders[2].FullyQualifiedClassName.Should().Be("Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management");
-            
-            http.RouteProvidersReadOnly.Should().BeTrue();
+            Assert.Equal(defaultHostname, http.Hostname);
+            Assert.Equal(8558, http.Port);
+            Assert.Equal(defaultHostname, http.EffectiveBindHostname);
+            Assert.Equal(8558, http.EffectiveBindPort);
+            Assert.Empty(http.BasePath);
+            Assert.Equal(3, http.RouteProviders.Count);
+
+            Assert.Equal("cluster-bootstrap", http.RouteProviders[0].Name);
+            Assert.Equal("Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management", http.RouteProviders[0].FullyQualifiedClassName);
+
+            Assert.Equal("remote-address", http.RouteProviders[1].Name);
+            Assert.Equal("Akka.Management.Routes.AddressRouteProvider, Akka.Management", http.RouteProviders[1].FullyQualifiedClassName);
+
+            Assert.Equal("cluster-client-receptionist", http.RouteProviders[2].Name);
+            Assert.Equal("Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management", http.RouteProviders[2].FullyQualifiedClassName);
+
+            Assert.True(http.RouteProvidersReadOnly);
         }
-        
+
         [Fact(DisplayName = "AkkaManagementSetup should override AkkaManagementSettings value")]
         public void SetupOverrideSettings()
         {
@@ -102,21 +100,18 @@ namespace Akka.Management.Tests
             var settings = setup.Apply(AkkaManagementSettings.Create(AkkaManagementProvider.DefaultConfiguration()));
             var http = settings.Http;
             
-            http.Hostname.Should().Be("a");
-            http.Port.Should().Be(1234);
-            http.EffectiveBindHostname.Should().Be("b");
-            http.EffectiveBindPort.Should().Be(1235);
-            http.BasePath.Should().Be("c");
-            http.RouteProviders.Count.Should().Be(4);
-            http.RouteProviders[0].Should()
-                .BeEquivalentTo(new NamedRouteProvider("cluster-bootstrap", "Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management"));
-            http.RouteProviders[1].Should()
-                .BeEquivalentTo(new NamedRouteProvider("remote-address", "Akka.Management.Routes.AddressRouteProvider, Akka.Management"));
-            http.RouteProviders[2].Should()
-                .BeEquivalentTo(new NamedRouteProvider("cluster-client-receptionist", "Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management"));
-            http.RouteProviders[3].Should()
-                .BeEquivalentTo(new NamedRouteProvider("test", typeof(FakeRouteProvider).AssemblyQualifiedName));
-            http.RouteProvidersReadOnly.Should().BeFalse();
+            Assert.Equal("a", http.Hostname);
+            Assert.Equal(1234, http.Port);
+            Assert.Equal("b", http.EffectiveBindHostname);
+            Assert.Equal(1235, http.EffectiveBindPort);
+            Assert.Equal("c", http.BasePath);
+            Assert.Equal(4, http.RouteProviders.Count);
+            // converted from BeEquivalentTo (NamedRouteProvider has value equality over Name + FullyQualifiedClassName)
+            Assert.Equal(new NamedRouteProvider("cluster-bootstrap", "Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management"), http.RouteProviders[0]);
+            Assert.Equal(new NamedRouteProvider("remote-address", "Akka.Management.Routes.AddressRouteProvider, Akka.Management"), http.RouteProviders[1]);
+            Assert.Equal(new NamedRouteProvider("cluster-client-receptionist", "Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management"), http.RouteProviders[2]);
+            Assert.Equal(new NamedRouteProvider("test", typeof(FakeRouteProvider).AssemblyQualifiedName), http.RouteProviders[3]);
+            Assert.False(http.RouteProvidersReadOnly);
         }
 
         [Fact(DisplayName = "AkkaManagementOptions should override default values")]
@@ -139,21 +134,18 @@ namespace Akka.Management.Tests
             var settings = AkkaManagementSettings.Create(builder.Configuration.Value);
             var http = settings.Http;
 
-            http.Hostname.Should().Be("a");
-            http.Port.Should().Be(1234);
-            http.EffectiveBindHostname.Should().Be("b");
-            http.EffectiveBindPort.Should().Be(1235);
-            http.BasePath.Should().Be("c");
-            http.RouteProviders.Count.Should().Be(4);
-            http.RouteProviders[0].Should()
-                .BeEquivalentTo(new NamedRouteProvider("cluster-bootstrap", "Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management"));
-            http.RouteProviders[1].Should()
-                .BeEquivalentTo(new NamedRouteProvider("remote-address", "Akka.Management.Routes.AddressRouteProvider, Akka.Management"));
-            http.RouteProviders[2].Should()
-                .BeEquivalentTo(new NamedRouteProvider("cluster-client-receptionist", "Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management"));
-            http.RouteProviders[3].Should()
-                .BeEquivalentTo(new NamedRouteProvider("test", typeof(FakeRouteProvider).AssemblyQualifiedName));
-            http.RouteProvidersReadOnly.Should().BeFalse();
+            Assert.Equal("a", http.Hostname);
+            Assert.Equal(1234, http.Port);
+            Assert.Equal("b", http.EffectiveBindHostname);
+            Assert.Equal(1235, http.EffectiveBindPort);
+            Assert.Equal("c", http.BasePath);
+            Assert.Equal(4, http.RouteProviders.Count);
+            // converted from BeEquivalentTo (NamedRouteProvider has value equality over Name + FullyQualifiedClassName)
+            Assert.Equal(new NamedRouteProvider("cluster-bootstrap", "Akka.Management.Cluster.Bootstrap.ClusterBootstrapProvider, Akka.Management"), http.RouteProviders[0]);
+            Assert.Equal(new NamedRouteProvider("remote-address", "Akka.Management.Routes.AddressRouteProvider, Akka.Management"), http.RouteProviders[1]);
+            Assert.Equal(new NamedRouteProvider("cluster-client-receptionist", "Akka.Management.Routes.ClusterClientReceptionistRouteProvider, Akka.Management"), http.RouteProviders[2]);
+            Assert.Equal(new NamedRouteProvider("test", typeof(FakeRouteProvider).AssemblyQualifiedName), http.RouteProviders[3]);
+            Assert.False(http.RouteProvidersReadOnly);
         }
 
         [Fact(DisplayName = "AkkaManagementSetup.Apply should throw on invalid route provider type")]
@@ -168,13 +160,19 @@ namespace Akka.Management.Tests
                 }
             });
 
-            Invoking(() => setup.Apply(AkkaManagementSettings.Create(AkkaManagementProvider.DefaultConfiguration())))
-                .Should().ThrowExactly<ConfigurationException>()
-                .WithMessage("*invalid-route*").WithMessage("*InvalidRouteProvider*");
+            // ThrowExactly<ConfigurationException> -> Assert.Throws (exact type); WithMessage globs are case-insensitive (FA MatchEquivalentOf)
+            var ex = Assert.Throws<ConfigurationException>(() =>
+            {
+                setup.Apply(AkkaManagementSettings.Create(AkkaManagementProvider.DefaultConfiguration()));
+            });
+            Assert.Contains("invalid-route", ex.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("InvalidRouteProvider", ex.Message, StringComparison.OrdinalIgnoreCase);
 
-            Invoking(() => setup.Http.WithRouteProvider<FakeRouteProvider>("test2"))
-                .Should().ThrowExactly<ConfigurationException>()
-                .WithMessage("*already added");
+            var ex2 = Assert.Throws<ConfigurationException>(() =>
+            {
+                setup.Http.WithRouteProvider<FakeRouteProvider>("test2");
+            });
+            Assert.EndsWith("already added", ex2.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact(DisplayName = "AkkaManagementOptions.Apply should throw on invalid route provider type")]
@@ -190,13 +188,19 @@ namespace Akka.Management.Tests
             };
             var builder = new AkkaConfigurationBuilder(new ServiceCollection(), "test");
 
-            Invoking(() => options.Apply(builder))
-                .Should().ThrowExactly<ConfigurationException>()
-                .WithMessage("*invalid-route*").WithMessage("*InvalidRouteProvider*");
+            // ThrowExactly<ConfigurationException> -> Assert.Throws (exact type); WithMessage globs are case-insensitive (FA MatchEquivalentOf)
+            var ex = Assert.Throws<ConfigurationException>(() =>
+            {
+                options.Apply(builder);
+            });
+            Assert.Contains("invalid-route", ex.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("InvalidRouteProvider", ex.Message, StringComparison.OrdinalIgnoreCase);
 
-            Invoking(() => options.WithRouteProvider<FakeRouteProvider>("test2"))
-                .Should().ThrowExactly<ConfigurationException>()
-                .WithMessage("*already added");
+            var ex2 = Assert.Throws<ConfigurationException>(() =>
+            {
+                options.WithRouteProvider<FakeRouteProvider>("test2");
+            });
+            Assert.EndsWith("already added", ex2.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         private class InvalidRouteProvider

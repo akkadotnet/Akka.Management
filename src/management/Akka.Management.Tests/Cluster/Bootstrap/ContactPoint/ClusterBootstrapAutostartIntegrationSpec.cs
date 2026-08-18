@@ -21,7 +21,6 @@ using Akka.Management.Cluster.Bootstrap;
 using Akka.TestKit;
 using Akka.TestKit.Xunit.Internals;
 using Akka.Util.Internal;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
@@ -149,7 +148,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
             {
                 var _ = ClusterBootstrapSettings.Create(_systems[0].Settings.Config, NoLogger.Instance);
             });
-            exception.Should().BeNull();
+            Assert.Null(exception);
         }
 
         // join three DNS discovered nodes by forming new cluster (happy path)
@@ -168,7 +167,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
                     selection.Tell(new Identify(null));
                     var response = ExpectMsg<ActorIdentity>(TimeSpan.FromSeconds(10));
                     coordinator = response.Subject;
-                    coordinator.Should().NotBeNull();
+                    Assert.NotNull(coordinator);
                     coordinatorProbe.Watch(coordinator);
                 });
                 probeList.Add((coordinatorProbe, coordinator!));
@@ -179,8 +178,8 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
             var cluster = _clusters[0];
             probe.AwaitAssert(() =>
             {
-                cluster.State.Members.Count.Should().Be(ClusterSize);
-                cluster.State.Members.Count(m => m.Status == MemberStatus.Up).Should().Be(ClusterSize);
+                Assert.Equal(ClusterSize, cluster.State.Members.Count);
+                Assert.Equal(ClusterSize, cluster.State.Members.Count(m => m.Status == MemberStatus.Up));
             }, RemainingOrDefault * ClusterSize * 2);
             
             // cluster bootstrap coordinator should stop after joining
@@ -188,7 +187,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
             {
                 var (coordinatorProbe, coordinator) = tuple;
                 coordinatorProbe.ExpectTerminated(coordinator);
-                ((RepointableActorRef) coordinator).Children.ToList().Count.Should().Be(0);
+                Assert.Equal(0, ((RepointableActorRef) coordinator).Children.ToList().Count);
             }
         }
         

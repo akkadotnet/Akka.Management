@@ -12,7 +12,6 @@ using Akka.Http.Dsl;
 using Akka.IO;
 using Akka.Management.Dsl;
 using Akka.TestKit.Xunit.Internals;
-using FluentAssertions;
 using Xunit;
 using Route = System.ValueTuple<string, Akka.Http.Dsl.HttpModuleBase>;
 
@@ -111,13 +110,13 @@ namespace Akka.Management.Tests
             logger.Tell(new InitializeLogger(system.EventStream));
             
             var management = AkkaManagement.Get(system);
-            management.Settings.Http.RouteProviders.Should().Contain(new NamedRouteProvider("test1", null));
-            management.Settings.Http.RouteProviders.Should().Contain(new NamedRouteProvider("test2",
-                "Akka.Management.Tests.HttpManagementEndpointSpecRoutesNetFxDsl, Akka.Management.Tests"));
-            
+            Assert.Contains(new NamedRouteProvider("test1", null), management.Settings.Http.RouteProviders);
+            Assert.Contains(new NamedRouteProvider("test2",
+                "Akka.Management.Tests.HttpManagementEndpointSpecRoutesNetFxDsl, Akka.Management.Tests"), management.Settings.Http.RouteProviders);
+
             await management.Start();
-            HttpManagementEndpointSpecRoutesDotNetDsl.Started.Should().BeFalse();
-            HttpManagementEndpointSpecRoutesNetFxDsl.Started.Should().BeTrue();
+            Assert.False(HttpManagementEndpointSpecRoutesDotNetDsl.Started);
+            Assert.True(HttpManagementEndpointSpecRoutesNetFxDsl.Started);
         }
         
         [Fact]
@@ -138,10 +137,10 @@ namespace Akka.Management.Tests
             logger.Tell(new InitializeLogger(system.EventStream));
 
             var management = AkkaManagement.Get(system);
-            management.Settings.Http.RouteProviders.Should().Contain(new NamedRouteProvider("test1",
-                "Akka.Management.Tests.HttpManagementEndpointSpecRoutesDotNetDsl, Akka.Management.Tests"));
-            management.Settings.Http.RouteProviders.Should().Contain(new NamedRouteProvider("test2",
-                "Akka.Management.Tests.HttpManagementEndpointSpecRoutesNetFxDsl, Akka.Management.Tests"));
+            Assert.Contains(new NamedRouteProvider("test1",
+                "Akka.Management.Tests.HttpManagementEndpointSpecRoutesDotNetDsl, Akka.Management.Tests"), management.Settings.Http.RouteProviders);
+            Assert.Contains(new NamedRouteProvider("test2",
+                "Akka.Management.Tests.HttpManagementEndpointSpecRoutesNetFxDsl, Akka.Management.Tests"), management.Settings.Http.RouteProviders);
 
             // Start() should be idempotent, it should return the same Task on multiple invocation
             var tasks = new List<Task<Uri?>>();
@@ -151,18 +150,18 @@ namespace Akka.Management.Tests
                 tasks.Add(management.Start());
                 tasks.Add(management.Start());
 
-                tasks[1].Should().Be(tasks[0]);
-                tasks[2].Should().Be(tasks[0]);
-                
+                Assert.Equal(tasks[0], tasks[1]);
+                Assert.Equal(tasks[0], tasks[2]);
+
                 var results = await Task.WhenAll(tasks).WithCancellation(cts.Token);
 
-                results[1].Should().Be(results[0]);
-                results[2].Should().Be(results[0]);
+                Assert.Equal(results[0], results[1]);
+                Assert.Equal(results[0], results[2]);
 
                 var task = management.Start();
-                task.Should().Be(tasks[0]);
+                Assert.Equal(tasks[0], task);
                 var result = await task.WithCancellation(cts.Token);
-                result.Should().Be(results[0]);
+                Assert.Equal(results[0], result);
             }
 
             var client = new HttpClient
@@ -174,13 +173,13 @@ namespace Akka.Management.Tests
 
             _output.WriteLine(await response.Content.ReadAsStringAsync());
             
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            (await response.Content.ReadAsStringAsync()).Should().Be("hello .NET Core");
-            
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("hello .NET Core", await response.Content.ReadAsStringAsync());
+
             response = await client.GetAsync($"http://127.0.0.1:{httpPort}/netfx");
             _output.WriteLine(await response.Content.ReadAsStringAsync());
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            (await response.Content.ReadAsStringAsync()).Should().Be("hello .NET Framework");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("hello .NET Framework", await response.Content.ReadAsStringAsync());
 
             try
             {

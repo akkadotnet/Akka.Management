@@ -15,7 +15,6 @@ using Akka.Event;
 using Akka.Http.Dsl;
 using Akka.Http.Dsl.Settings;
 using Akka.Http.Extensions;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Http.Shim.Tests
@@ -67,7 +66,7 @@ namespace Akka.Http.Shim.Tests
             {
                 Output.WriteLine(await result.Content.ReadAsStringAsync());
             }
-            result.StatusCode.Should().Be(expectedResult);
+            Assert.Equal(expectedResult, result.StatusCode);
         }
 
         internal class RouteHandler : HttpModuleBase

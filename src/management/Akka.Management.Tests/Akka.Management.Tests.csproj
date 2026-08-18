@@ -10,7 +10,6 @@
     <PackageReference Include="Akka.Hosting.TestKit" />
     <PackageReference Include="Akka.Cluster.Hosting" />
     <PackageReference Include="Akka.Remote.Hosting" />
-    <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio">
