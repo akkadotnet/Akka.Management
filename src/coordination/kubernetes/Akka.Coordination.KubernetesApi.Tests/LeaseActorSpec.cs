@@ -800,8 +800,12 @@ namespace Akka.Coordination.KubernetesApi.Tests
                     OwnerName,
                     CurrentVersion,
                     CurrentTime - LeaseSettings.TimeoutSettings.HeartbeatTimeout * 2));
-                SenderProbe.ExpectNoMsg(LeaseSettings.TimeoutSettings.HeartbeatTimeout / 3); // not granted yet
+                // Confirm the renewal write first: its arrival deterministically proves the actor took
+                // the granting/write path (rather than granting from cache). Then keep the "not granted
+                // yet" wait to HeartbeatInterval so it does not burn the actor's own HeartbeatTimeout/2
+                // operation-duration budget -- the longer HeartbeatTimeout/3 wait here flaked on slow CI.
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion)); // Update time
+                SenderProbe.ExpectNoMsg(LeaseSettings.TimeoutSettings.HeartbeatInterval); // not granted yet
                 IncrementVersion();
                 UpdateProbe.Reply(
                     new Right<LeaseResource, LeaseResource>(
