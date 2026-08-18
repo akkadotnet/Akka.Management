@@ -6,7 +6,6 @@
 
 using Akka.Actor;
 using Akka.Hosting;
-using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -31,8 +30,8 @@ public class AkkaAspireExtensionsSpecs
 
         var result = builder.WithAspireClusterBootstrap(sp);
 
-        result.Should().NotBeNull();
-        result.Should().BeSameAs(builder);
+        Assert.NotNull(result);
+        Assert.Same(builder, result);
     }
 
     [Fact]
@@ -66,22 +65,22 @@ public class AkkaAspireExtensionsSpecs
         var actorSystem = host.Services.GetRequiredService<ActorSystem>();
         var config = actorSystem.Settings.Config;
 
-        config.GetString("akka.discovery.method").Should().Be("redis");
+        Assert.Equal("redis", config.GetString("akka.discovery.method"));
 
-        config.GetString("akka.remote.dot-netty.tcp.hostname").Should().Be("0.0.0.0");
-        config.GetInt("akka.remote.dot-netty.tcp.port").Should().Be(8081);
-        config.GetString("akka.remote.dot-netty.tcp.public-hostname").Should().Be("localhost");
-        config.GetInt("akka.remote.dot-netty.tcp.public-port").Should().Be(8081);
+        Assert.Equal("0.0.0.0", config.GetString("akka.remote.dot-netty.tcp.hostname"));
+        Assert.Equal(8081, config.GetInt("akka.remote.dot-netty.tcp.port"));
+        Assert.Equal("localhost", config.GetString("akka.remote.dot-netty.tcp.public-hostname"));
+        Assert.Equal(8081, config.GetInt("akka.remote.dot-netty.tcp.public-port"));
 
-        config.GetString("akka.management.http.hostname").Should().Be("localhost");
-        config.GetInt("akka.management.http.port").Should().Be(8558);
+        Assert.Equal("localhost", config.GetString("akka.management.http.hostname"));
+        Assert.Equal(8558, config.GetInt("akka.management.http.port"));
 
-        config.GetInt("akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr").Should().Be(2);
-        config.GetString("akka.management.cluster.bootstrap.contact-point-discovery.service-name").Should().Be("test-service");
-        config.GetBoolean("akka.management.cluster.bootstrap.contact-point.filter-on-fallback-port").Should().BeFalse();
+        Assert.Equal(2, config.GetInt("akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr"));
+        Assert.Equal("test-service", config.GetString("akka.management.cluster.bootstrap.contact-point-discovery.service-name"));
+        Assert.False(config.GetBoolean("akka.management.cluster.bootstrap.contact-point.filter-on-fallback-port"));
 
-        config.GetString("akka.discovery.redis.public-hostname").Should().Be("localhost");
-        config.GetInt("akka.discovery.redis.public-port").Should().Be(8558);
+        Assert.Equal("localhost", config.GetString("akka.discovery.redis.public-hostname"));
+        Assert.Equal(8558, config.GetInt("akka.discovery.redis.public-port"));
     }
 
     [Fact]
@@ -120,7 +119,7 @@ public class AkkaAspireExtensionsSpecs
             .Build();
 
         var actorSystem = host.Services.GetRequiredService<ActorSystem>();
-        actorSystem.Settings.Config.GetString("akka.discovery.method").Should().Be(expectedMethod);
+        Assert.Equal(expectedMethod, actorSystem.Settings.Config.GetString("akka.discovery.method"));
     }
 
     [Fact]
@@ -144,7 +143,7 @@ public class AkkaAspireExtensionsSpecs
             clusterOptions.Roles = ["test-role"];
         });
 
-        callbackInvoked.Should().BeTrue();
+        Assert.True(callbackInvoked);
     }
 
     [Fact]
@@ -175,9 +174,9 @@ public class AkkaAspireExtensionsSpecs
                 receivedConfig = config;
             });
 
-        callbackInvoked.Should().BeTrue();
-        receivedConfig.Should().NotBeNull();
-        receivedConfig!.GetConnectionString("akka-discovery").Should().Be("localhost:6379");
+        Assert.True(callbackInvoked);
+        Assert.NotNull(receivedConfig);
+        Assert.Equal("localhost:6379", receivedConfig!.GetConnectionString("akka-discovery"));
     }
 
     [Fact]
@@ -198,6 +197,6 @@ public class AkkaAspireExtensionsSpecs
         builder.WithAspireClusterBootstrap(sp,
             configureDiscovery: (b, config) => { callbackInvoked = true; });
 
-        callbackInvoked.Should().BeFalse();
+        Assert.False(callbackInvoked);
     }
 }

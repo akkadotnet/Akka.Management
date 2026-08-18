@@ -8,8 +8,6 @@
 using System;
 using System.Threading.Tasks;
 using Akka.Event;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using StackExchange.Redis;
@@ -75,22 +73,22 @@ namespace Akka.Discovery.Redis.Tests
         {
             var entity = await _client.GetOrCreateAsync();
 
-            entity.ServiceName.Should().Be(ServiceName);
-            entity.Host.Should().Be(Host);
-            entity.Port.Should().Be(SelfPort);
+            Assert.Equal(ServiceName, entity.ServiceName);
+            Assert.Equal(Host, entity.Host);
+            Assert.Equal(SelfPort, entity.Port);
 
             var raw = await _database.StringGetAsync(ClusterMember.CreateKey(KeyPrefix, ServiceName, Host, SelfPort));
-            raw.HasValue.Should().BeTrue();
+            Assert.True(raw.HasValue);
         }
 
         [Fact(DisplayName = "GetOrCreateAsync should fetch existing entry and refresh LastUpdate")]
         public async Task GetOrCreateShouldFetchAndRefresh()
         {
-            await SeedAsync(Host, SelfPort, DateTime.UtcNow - 1.Hours());
+            await SeedAsync(Host, SelfPort, DateTime.UtcNow - TimeSpan.FromHours(1));
 
             var entity = await _client.GetOrCreateAsync();
 
-            entity.LastUpdate.Should().BeAfter(DateTime.UtcNow - 5.Seconds());
+            Assert.True(entity.LastUpdate > DateTime.UtcNow - TimeSpan.FromSeconds(5));
         }
 
         [Fact(DisplayName = "GetAllAsync should return live members and exclude stale ones")]
@@ -98,25 +96,25 @@ namespace Akka.Discovery.Redis.Tests
         {
             // self (fresh) + one fresh peer + one stale peer
             await _client.GetOrCreateAsync();
-            await SeedAsync("10.0.0.2", 8558, DateTime.UtcNow - 2.Seconds());
-            await SeedAsync("10.0.0.3", 8558, DateTime.UtcNow - 10.Minutes());
+            await SeedAsync("10.0.0.2", 8558, DateTime.UtcNow - TimeSpan.FromSeconds(2));
+            await SeedAsync("10.0.0.3", 8558, DateTime.UtcNow - TimeSpan.FromMinutes(10));
 
-            var members = await _client.GetAllAsync(30.Seconds());
+            var members = await _client.GetAllAsync(TimeSpan.FromSeconds(30));
 
-            members.Count.Should().Be(2);
-            members.Should().NotContain(m => m.Host == "10.0.0.3");
+            Assert.Equal(2, members.Count);
+            Assert.DoesNotContain(members, m => m.Host == "10.0.0.3");
         }
 
         [Fact(DisplayName = "UpdateAsync should refresh LastUpdate")]
         public async Task UpdateShouldRefresh()
         {
             var first = await _client.GetOrCreateAsync();
-            await Task.Delay(50.Milliseconds());
+            await Task.Delay(TimeSpan.FromMilliseconds(50));
             await _client.UpdateAsync();
 
             var members = await _client.GetAllAsync(TimeSpan.FromMinutes(5));
-            members.Should().ContainSingle();
-            members[0].LastUpdate.Should().BeAfter(first.LastUpdate);
+            Assert.Single(members);
+            Assert.True(members[0].LastUpdate > first.LastUpdate);
         }
 
         [Fact(DisplayName = "RemoveSelfAsync should delete the entry")]
@@ -126,7 +124,7 @@ namespace Akka.Discovery.Redis.Tests
             await _client.RemoveSelfAsync();
 
             var raw = await _database.StringGetAsync(ClusterMember.CreateKey(KeyPrefix, ServiceName, Host, SelfPort));
-            raw.HasValue.Should().BeFalse();
+            Assert.False(raw.HasValue);
         }
 
         [Fact(DisplayName = "Entries should physically expire after their TTL")]
@@ -137,18 +135,18 @@ namespace Akka.Discovery.Redis.Tests
                 .WithHostName(Host)
                 .WithPort(SelfPort)
                 .WithKeyPrefix(KeyPrefix)
-                .WithTtlHeartbeatInterval(1.Seconds())
-                .WithTtl(2.Seconds());
+                .WithTtlHeartbeatInterval(TimeSpan.FromSeconds(1))
+                .WithTtl(TimeSpan.FromSeconds(2));
 
             var shortClient = new ClusterMemberRedisClient(_connection, shortTtl, Logging.GetLogger(Sys, "short-ttl"));
             await shortClient.GetOrCreateAsync();
 
             var key = ClusterMember.CreateKey(KeyPrefix, ServiceName, Host, SelfPort);
-            (await _database.StringGetAsync(key)).HasValue.Should().BeTrue();
+            Assert.True((await _database.StringGetAsync(key)).HasValue);
 
-            await Task.Delay(3.Seconds());
+            await Task.Delay(TimeSpan.FromSeconds(3));
 
-            (await _database.StringGetAsync(key)).HasValue.Should().BeFalse();
+            Assert.False((await _database.StringGetAsync(key)).HasValue);
         }
     }
 }

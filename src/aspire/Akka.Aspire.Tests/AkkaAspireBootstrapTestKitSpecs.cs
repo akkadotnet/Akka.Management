@@ -6,7 +6,6 @@
 
 using Akka.Cluster;
 using Akka.Hosting;
-using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Xunit;
@@ -49,8 +48,8 @@ public class ConfigProviderBootstrapSpecs : global::Akka.Hosting.TestKit.TestKit
     public void Should_configure_remote_correctly()
     {
         var config = Sys.Settings.Config;
-        config.GetString("akka.remote.dot-netty.tcp.hostname").Should().Be("0.0.0.0");
-        config.GetString("akka.remote.dot-netty.tcp.public-hostname").Should().Be("test-host");
+        Assert.Equal("0.0.0.0", config.GetString("akka.remote.dot-netty.tcp.hostname"));
+        Assert.Equal("test-host", config.GetString("akka.remote.dot-netty.tcp.public-hostname"));
     }
 
     [Fact]
@@ -58,29 +57,29 @@ public class ConfigProviderBootstrapSpecs : global::Akka.Hosting.TestKit.TestKit
     {
         // Verify cluster is available by accessing the Cluster extension
         var cluster = Cluster.Cluster.Get(Sys);
-        cluster.Should().NotBeNull();
-        cluster.SelfAddress.Protocol.Should().Be("akka.tcp");
+        Assert.NotNull(cluster);
+        Assert.Equal("akka.tcp", cluster.SelfAddress.Protocol);
     }
 
     [Fact]
     public void Should_set_discovery_method_to_config()
     {
-        Sys.Settings.Config.GetString("akka.discovery.method").Should().Be("config");
+        Assert.Equal("config", Sys.Settings.Config.GetString("akka.discovery.method"));
     }
 
     [Fact]
     public void Should_configure_cluster_bootstrap()
     {
         var config = Sys.Settings.Config;
-        config.GetInt("akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr").Should().Be(2);
-        config.GetString("akka.management.cluster.bootstrap.contact-point-discovery.service-name").Should().Be("test-service");
+        Assert.Equal(2, config.GetInt("akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr"));
+        Assert.Equal("test-service", config.GetString("akka.management.cluster.bootstrap.contact-point-discovery.service-name"));
     }
 
     [Fact]
     public void Should_configure_management_endpoint()
     {
         var config = Sys.Settings.Config;
-        config.GetString("akka.management.http.hostname").Should().Be("test-host");
+        Assert.Equal("test-host", config.GetString("akka.management.http.hostname"));
     }
 }
 
@@ -107,14 +106,14 @@ public class DisabledBootstrapSpecs : global::Akka.Hosting.TestKit.TestKit
     {
         // When disabled, the provider should not be cluster
         var provider = Sys.Settings.Config.GetString("akka.actor.provider");
-        provider.Should().NotContain("Cluster");
+        Assert.DoesNotContain("Cluster", provider);
     }
 
     [Fact]
     public void Should_not_configure_remote_when_disabled()
     {
         // Default remote port should remain 0 (random) since we didn't configure it
-        Sys.Settings.Config.GetInt("akka.remote.dot-netty.tcp.port").Should().Be(0);
+        Assert.Equal(0, Sys.Settings.Config.GetInt("akka.remote.dot-netty.tcp.port"));
     }
 }
 
@@ -150,8 +149,8 @@ public class CustomClusterOptionsSpecs : global::Akka.Hosting.TestKit.TestKit
     public void Should_apply_custom_roles()
     {
         var roles = Sys.Settings.Config.GetStringList("akka.cluster.roles");
-        roles.Should().Contain("test-role");
-        roles.Should().Contain("worker");
+        Assert.Contains("test-role", roles);
+        Assert.Contains("worker", roles);
     }
 
     [Fact]
@@ -159,7 +158,7 @@ public class CustomClusterOptionsSpecs : global::Akka.Hosting.TestKit.TestKit
     {
         // Verify cluster is available
         var cluster = Cluster.Cluster.Get(Sys);
-        cluster.Should().NotBeNull();
-        cluster.SelfAddress.Protocol.Should().Be("akka.tcp");
+        Assert.NotNull(cluster);
+        Assert.Equal("akka.tcp", cluster.SelfAddress.Protocol);
     }
 }

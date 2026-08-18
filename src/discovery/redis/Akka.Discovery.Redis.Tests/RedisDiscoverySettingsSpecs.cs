@@ -7,7 +7,6 @@
 #nullable enable
 using System;
 using Akka.Configuration;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Discovery.Redis.Tests
@@ -40,18 +39,18 @@ namespace Akka.Discovery.Redis.Tests
                 max-retry-backoff = 3s
             ");
 
-            settings.ReadOnly.Should().BeTrue();
-            settings.ServiceName.Should().Be("my-service");
-            settings.HostName.Should().Be("localhost");
-            settings.Port.Should().Be(9999);
-            settings.ConnectionString.Should().Be("redis:6379");
-            settings.Ttl.Should().Be(TimeSpan.FromMinutes(5));
-            settings.TtlHeartbeatInterval.Should().Be(TimeSpan.FromSeconds(45));
-            settings.StaleTtlThreshold.Should().Be(TimeSpan.FromSeconds(90));
-            settings.KeyPrefix.Should().Be("test:prefix");
-            settings.OperationTimeout.Should().Be(TimeSpan.FromSeconds(7));
-            settings.RetryBackoff.Should().Be(TimeSpan.FromMilliseconds(250));
-            settings.MaximumRetryBackoff.Should().Be(TimeSpan.FromSeconds(3));
+            Assert.True(settings.ReadOnly);
+            Assert.Equal("my-service", settings.ServiceName);
+            Assert.Equal("localhost", settings.HostName);
+            Assert.Equal(9999, settings.Port);
+            Assert.Equal("redis:6379", settings.ConnectionString);
+            Assert.Equal(TimeSpan.FromMinutes(5), settings.Ttl);
+            Assert.Equal(TimeSpan.FromSeconds(45), settings.TtlHeartbeatInterval);
+            Assert.Equal(TimeSpan.FromSeconds(90), settings.StaleTtlThreshold);
+            Assert.Equal("test:prefix", settings.KeyPrefix);
+            Assert.Equal(TimeSpan.FromSeconds(7), settings.OperationTimeout);
+            Assert.Equal(TimeSpan.FromMilliseconds(250), settings.RetryBackoff);
+            Assert.Equal(TimeSpan.FromSeconds(3), settings.MaximumRetryBackoff);
         }
 
         [Fact]
@@ -59,16 +58,16 @@ namespace Akka.Discovery.Redis.Tests
         {
             var settings = ParseSettings(@"connection-string = ""localhost""");
 
-            settings.ReadOnly.Should().BeFalse();
-            settings.ServiceName.Should().Be("default");
-            settings.Port.Should().Be(8558);
-            settings.Ttl.Should().Be(TimeSpan.FromMinutes(2));
-            settings.TtlHeartbeatInterval.Should().Be(TimeSpan.FromSeconds(30));
-            settings.StaleTtlThreshold.Should().Be(TimeSpan.Zero);
-            settings.KeyPrefix.Should().Be("akka:discovery");
-            settings.OperationTimeout.Should().Be(TimeSpan.FromSeconds(10));
-            settings.RetryBackoff.Should().Be(TimeSpan.FromMilliseconds(500));
-            settings.MaximumRetryBackoff.Should().Be(TimeSpan.FromSeconds(5));
+            Assert.False(settings.ReadOnly);
+            Assert.Equal("default", settings.ServiceName);
+            Assert.Equal(8558, settings.Port);
+            Assert.Equal(TimeSpan.FromMinutes(2), settings.Ttl);
+            Assert.Equal(TimeSpan.FromSeconds(30), settings.TtlHeartbeatInterval);
+            Assert.Equal(TimeSpan.Zero, settings.StaleTtlThreshold);
+            Assert.Equal("akka:discovery", settings.KeyPrefix);
+            Assert.Equal(TimeSpan.FromSeconds(10), settings.OperationTimeout);
+            Assert.Equal(TimeSpan.FromMilliseconds(500), settings.RetryBackoff);
+            Assert.Equal(TimeSpan.FromSeconds(5), settings.MaximumRetryBackoff);
         }
 
         [Fact]
@@ -79,7 +78,7 @@ namespace Akka.Discovery.Redis.Tests
                               public-hostname = """"",
                 extraSystemHocon: @"akka.remote.dot-netty.tcp.public-hostname = ""my-remote-host""");
 
-            settings.HostName.Should().Be("my-remote-host");
+            Assert.Equal("my-remote-host", settings.HostName);
         }
 
         [Fact]
@@ -87,7 +86,7 @@ namespace Akka.Discovery.Redis.Tests
         {
             // heartbeat 30s, ttl 2m => min(90s, 120s) == 90s
             var settings = ParseSettings(@"connection-string = ""localhost""");
-            settings.EffectiveStaleTtlThreshold.Should().Be(TimeSpan.FromSeconds(90));
+            Assert.Equal(TimeSpan.FromSeconds(90), settings.EffectiveStaleTtlThreshold);
         }
 
         [Fact]
@@ -97,7 +96,7 @@ namespace Akka.Discovery.Redis.Tests
                 connection-string = ""localhost""
                 stale-ttl-threshold = 50s
             ");
-            settings.EffectiveStaleTtlThreshold.Should().Be(TimeSpan.FromSeconds(50));
+            Assert.Equal(TimeSpan.FromSeconds(50), settings.EffectiveStaleTtlThreshold);
         }
 
         [Fact]
@@ -106,10 +105,10 @@ namespace Akka.Discovery.Redis.Tests
             var original = RedisDiscoverySettings.Empty;
             var modified = original.WithServiceName("new-service");
 
-            modified.ServiceName.Should().Be("new-service");
-            modified.HostName.Should().Be(original.HostName);
-            modified.Port.Should().Be(original.Port);
-            original.ServiceName.Should().Be("default");
+            Assert.Equal("new-service", modified.ServiceName);
+            Assert.Equal(original.HostName, modified.HostName);
+            Assert.Equal(original.Port, modified.Port);
+            Assert.Equal("default", original.ServiceName);
         }
 
         [Fact]
@@ -118,8 +117,8 @@ namespace Akka.Discovery.Redis.Tests
             var original = RedisDiscoverySettings.Empty;
             var modified = original.WithReadOnlyMode(true);
 
-            modified.ReadOnly.Should().BeTrue();
-            original.ReadOnly.Should().BeFalse();
+            Assert.True(modified.ReadOnly);
+            Assert.False(original.ReadOnly);
         }
 
         [Theory]
@@ -128,7 +127,7 @@ namespace Akka.Discovery.Redis.Tests
         public void Constructor_should_throw_when_port_is_invalid(int port)
         {
             var act = () => RedisDiscoverySettings.Empty.WithPort(port);
-            act.Should().Throw<ArgumentException>();
+            Assert.Throws<ArgumentException>(act);
         }
 
         [Fact]
@@ -138,7 +137,7 @@ namespace Akka.Discovery.Redis.Tests
                 .WithTtl(TimeSpan.FromSeconds(30))
                 .WithTtlHeartbeatInterval(TimeSpan.FromSeconds(45));
 
-            act.Should().Throw<ArgumentException>();
+            Assert.Throws<ArgumentException>(act);
         }
 
         [Fact]
@@ -146,14 +145,14 @@ namespace Akka.Discovery.Redis.Tests
         {
             // heartbeat is 30s by default; 10s <= 30s must throw
             var act = () => RedisDiscoverySettings.Empty.WithStaleTtlThreshold(TimeSpan.FromSeconds(10));
-            act.Should().Throw<ArgumentException>();
+            Assert.Throws<ArgumentException>(act);
         }
 
         [Fact]
         public void Constructor_should_throw_when_operation_timeout_is_not_positive()
         {
             var act = () => RedisDiscoverySettings.Empty.WithOperationTimeout(TimeSpan.Zero);
-            act.Should().Throw<ArgumentException>();
+            Assert.Throws<ArgumentException>(act);
         }
 
         [Fact]
@@ -161,21 +160,21 @@ namespace Akka.Discovery.Redis.Tests
         {
             var act = () => RedisDiscoverySettings.Empty
                 .WithRetryBackoff(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(1));
-            act.Should().Throw<ArgumentException>();
+            Assert.Throws<ArgumentException>(act);
         }
 
         [Fact]
         public void Constructor_should_throw_on_empty_connection_string()
         {
             var act = () => RedisDiscoverySettings.Empty.WithConnectionString("  ");
-            act.Should().Throw<ArgumentException>();
+            Assert.Throws<ArgumentException>(act);
         }
 
         [Fact]
         public void Constructor_should_throw_on_empty_key_prefix()
         {
             var act = () => RedisDiscoverySettings.Empty.WithKeyPrefix("");
-            act.Should().Throw<ArgumentException>();
+            Assert.Throws<ArgumentException>(act);
         }
     }
 }

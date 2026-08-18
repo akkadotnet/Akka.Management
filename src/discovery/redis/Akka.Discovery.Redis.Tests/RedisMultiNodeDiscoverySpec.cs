@@ -11,8 +11,6 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Discovery;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Xunit;
 
 namespace Akka.Discovery.Redis.Tests
@@ -85,10 +83,10 @@ namespace Akka.Discovery.Redis.Tests
             {
                 foreach (var discovery in _discoveries)
                 {
-                    var resolved = await discovery.Lookup(new Lookup(ServiceName), 5.Seconds());
-                    resolved.Addresses.Count.Should().Be(NodeCount);
+                    var resolved = await discovery.Lookup(new Lookup(ServiceName), TimeSpan.FromSeconds(5));
+                    Assert.Equal(NodeCount, resolved.Addresses.Count);
                 }
-            }, 30.Seconds(), 1.Seconds());
+            }, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(1));
         }
     }
 }
