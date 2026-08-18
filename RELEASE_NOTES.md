@@ -1,3 +1,10 @@
+#### 1.5.70 August 18th 2026 ####
+
+* Update to [Akka.NET v1.5.70](https://github.com/akkadotnet/akka.net/releases/tag/1.5.70)
+* Update to [Akka.Hosting v1.5.70](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.70)
+* **New package: [`Akka.Discovery.Redis`](https://www.nuget.org/packages/Akka.Discovery.Redis)** — Redis-based service discovery for Akka.Cluster.Bootstrap. Each node registers under a TTL key and refreshes it on a heartbeat; dead nodes expire automatically (no separate pruning process) and stale entries are filtered out of lookups. A lightweight alternative to `Akka.Discovery.Azure`, well suited to Redis-backed environments and .NET Aspire local development. ([#3444](https://github.com/akkadotnet/Akka.Management/pull/3444))
+* **New: .NET Aspire integration** — [`Akka.Aspire.Hosting`](https://www.nuget.org/packages/Akka.Aspire.Hosting) (AppHost side) and [`Akka.Aspire`](https://www.nuget.org/packages/Akka.Aspire) (service side) bring automated Akka.NET cluster formation to [.NET Aspire](https://learn.microsoft.com/dotnet/aspire). Declare the discovery backend and replica count in your AppHost, and each service replica auto-discovers its peers, forms a cluster, and reports readiness through a health check — no manual HOCON. ([#3445](https://github.com/akkadotnet/Akka.Management/pull/3445))
+
 #### 1.5.68 May 31st 2026 ####
 
 * Update to [Akka.NET v1.5.68](https://github.com/akkadotnet/akka.net/releases/tag/1.5.68)
