@@ -14,9 +14,7 @@ using Akka.Discovery.AwsApi.Ec2;
 using Amazon.EC2;
 using Amazon.EC2.Model;
 using Amazon.Runtime;
-using FluentAssertions;
 using Xunit;
-using static FluentAssertions.FluentActions;
 
 namespace Akka.Discovery.AwsApi.Tests
 {
@@ -28,13 +26,13 @@ namespace Akka.Discovery.AwsApi.Tests
             var settings = Ec2ServiceDiscoverySettings.Create(
                 AwsEc2Discovery.DefaultConfiguration().GetConfig("akka.discovery.aws-api-ec2-tag-based"));
 
-            settings.ClientConfig.Should().BeNull();
-            settings.CredentialsProvider.Should().Be(typeof(Ec2InstanceMetadataCredentialProvider));
-            settings.TagKey.Should().Be("service");
-            settings.Filters.Should().BeEmpty();
-            settings.Ports.Should().BeEmpty();
-            settings.Endpoint.Should().BeNull();
-            settings.Region.Should().BeNull();
+            Assert.Null(settings.ClientConfig);
+            Assert.Equal(typeof(Ec2InstanceMetadataCredentialProvider), settings.CredentialsProvider);
+            Assert.Equal("service", settings.TagKey);
+            Assert.Empty(settings.Filters);
+            Assert.Empty(settings.Ports);
+            Assert.Null(settings.Endpoint);
+            Assert.Null(settings.Region);
         }
 
         [Fact(DisplayName = "Empty settings should be equal to default")]
@@ -44,13 +42,17 @@ namespace Akka.Discovery.AwsApi.Tests
             var settings = Ec2ServiceDiscoverySettings.Create(AwsEc2Discovery.DefaultConfiguration()
                 .GetConfig("akka.discovery.aws-api-ec2-tag-based"));
 
-            empty.ClientConfig.Should().Be(settings.ClientConfig);
-            empty.CredentialsProvider.Should().Be(settings.CredentialsProvider);
-            empty.TagKey.Should().Be(settings.TagKey);
-            empty.Filters.Should().BeEquivalentTo(settings.Filters);
-            empty.Ports.Should().BeEquivalentTo(settings.Ports);
-            empty.Endpoint.Should().Be(settings.Endpoint);
-            empty.Region.Should().Be(settings.Region);
+            Assert.Equal(settings.ClientConfig, empty.ClientConfig);
+            Assert.Equal(settings.CredentialsProvider, empty.CredentialsProvider);
+            Assert.Equal(settings.TagKey, empty.TagKey);
+            // converted from BeEquivalentTo (structural, order-insensitive)
+            Assert.Equal(
+                settings.Filters.Select(f => (f.Name, Values: string.Join(",", f.Values.OrderBy(v => v)))).OrderBy(t => t.Name),
+                empty.Filters.Select(f => (f.Name, Values: string.Join(",", f.Values.OrderBy(v => v)))).OrderBy(t => t.Name));
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(settings.Ports.OrderBy(p => p), empty.Ports.OrderBy(p => p));
+            Assert.Equal(settings.Endpoint, empty.Endpoint);
+            Assert.Equal(settings.Region, empty.Region);
         }
 
         [Fact(DisplayName = "Ec2ServiceDiscoverySettings With override should work")]
@@ -67,13 +69,17 @@ namespace Akka.Discovery.AwsApi.Tests
                 .WithEndpoint("e")
                 .WithRegion("f");
             
-            settings.ClientConfig.Should().Be(typeof(FakeClientConfig));
-            settings.CredentialsProvider.Should().Be(typeof(FakeCredProvider));
-            settings.TagKey.Should().Be("b");
-            settings.Filters.Should().BeEquivalentTo(filters);
-            settings.Ports.Should().BeEquivalentTo(ports);
-            settings.Endpoint.Should().Be("e");
-            settings.Region.Should().Be("f");
+            Assert.Equal(typeof(FakeClientConfig), settings.ClientConfig);
+            Assert.Equal(typeof(FakeCredProvider), settings.CredentialsProvider);
+            Assert.Equal("b", settings.TagKey);
+            // converted from BeEquivalentTo (structural, order-insensitive)
+            Assert.Equal(
+                filters.Select(f => (f.Name, Values: string.Join(",", f.Values.OrderBy(v => v)))).OrderBy(t => t.Name),
+                settings.Filters.Select(f => (f.Name, Values: string.Join(",", f.Values.OrderBy(v => v)))).OrderBy(t => t.Name));
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(ports.OrderBy(p => p), settings.Ports.OrderBy(p => p));
+            Assert.Equal("e", settings.Endpoint);
+            Assert.Equal("f", settings.Region);
         }
 
         [Fact(DisplayName = "Ec2ServiceDiscoverySetup override should work")]
@@ -93,13 +99,17 @@ namespace Akka.Discovery.AwsApi.Tests
                 .WithCredentialProvider<FakeCredProvider>();
             
             var settings = setup.Apply(Ec2ServiceDiscoverySettings.Empty);
-            settings.ClientConfig.Should().Be(typeof(FakeClientConfig));
-            settings.CredentialsProvider.Should().Be(typeof(FakeCredProvider));
-            settings.TagKey.Should().Be("b");
-            settings.Filters.Should().BeEquivalentTo(filters);
-            settings.Ports.Should().BeEquivalentTo(ports);
-            settings.Endpoint.Should().Be("e");
-            settings.Region.Should().Be("f");
+            Assert.Equal(typeof(FakeClientConfig), settings.ClientConfig);
+            Assert.Equal(typeof(FakeCredProvider), settings.CredentialsProvider);
+            Assert.Equal("b", settings.TagKey);
+            // converted from BeEquivalentTo (structural, order-insensitive)
+            Assert.Equal(
+                filters.Select(f => (f.Name, Values: string.Join(",", f.Values.OrderBy(v => v)))).OrderBy(t => t.Name),
+                settings.Filters.Select(f => (f.Name, Values: string.Join(",", f.Values.OrderBy(v => v)))).OrderBy(t => t.Name));
+            // converted from BeEquivalentTo (order-insensitive)
+            Assert.Equal(ports.OrderBy(p => p), settings.Ports.OrderBy(p => p));
+            Assert.Equal("e", settings.Endpoint);
+            Assert.Equal("f", settings.Region);
         }
 
         [Fact(DisplayName = "Ec2ServiceDiscoverySetup Type based properties should validate values")]
@@ -107,37 +117,31 @@ namespace Akka.Discovery.AwsApi.Tests
         {
             var setup = new Ec2ServiceDiscoverySetup();
 
-            Invoking(() => setup.ClientConfig = typeof(FakeClientConfig))
-                .Should().NotThrow();
-            Invoking(() => setup.ClientConfig = typeof(FakeClientConfig2))
-                .Should().NotThrow();
-            Invoking(() => setup.ClientConfig = typeof(FakeCredProvider))
-                .Should().ThrowExactly<ConfigurationException>().WithMessage("*Type value need to extend*");
-            Invoking(() => setup.ClientConfig = typeof(IllegalClientConfig))
-                .Should().ThrowExactly<ConfigurationException>().WithMessage("*need to have a parameterless constructor*");
-            
-            Invoking(() => setup.WithClientConfig<FakeClientConfig>())
-                .Should().NotThrow();
-            Invoking(() => setup.WithClientConfig<FakeClientConfig2>())
-                .Should().NotThrow();
-            Invoking(() => setup.WithClientConfig<IllegalClientConfig>())
-                .Should().ThrowExactly<ConfigurationException>().WithMessage("*need to have a parameterless constructor*");
-            
-            Invoking(() => setup.CredentialsProvider = typeof(FakeCredProvider))
-                .Should().NotThrow();
-            Invoking(() => setup.CredentialsProvider = typeof(FakeCredProvider2))
-                .Should().NotThrow();
-            Invoking(() => setup.CredentialsProvider = typeof(FakeClientConfig))
-                .Should().ThrowExactly<ConfigurationException>().WithMessage("*Type value need to extend*");
-            Invoking(() => setup.CredentialsProvider = typeof(IllegalCredProvider))
-                .Should().ThrowExactly<ConfigurationException>().WithMessage("*need to have a parameterless constructor*");
-            
-            Invoking(() => setup.WithCredentialProvider<FakeCredProvider>())
-                .Should().NotThrow();
-            Invoking(() => setup.WithCredentialProvider<FakeCredProvider2>())
-                .Should().NotThrow();
-            Invoking(() => setup.WithCredentialProvider<IllegalCredProvider>())
-                .Should().ThrowExactly<ConfigurationException>().WithMessage("*need to have a parameterless constructor*");
+            Assert.Null(Record.Exception(() => { setup.ClientConfig = typeof(FakeClientConfig); }));
+            Assert.Null(Record.Exception(() => { setup.ClientConfig = typeof(FakeClientConfig2); }));
+            // converted from ThrowExactly + WithMessage glob "*Type value need to extend*"
+            Assert.Contains("Type value need to extend",
+                Assert.Throws<ConfigurationException>(() => { setup.ClientConfig = typeof(FakeCredProvider); }).Message);
+            // converted from ThrowExactly + WithMessage glob "*need to have a parameterless constructor*"
+            Assert.Contains("need to have a parameterless constructor",
+                Assert.Throws<ConfigurationException>(() => { setup.ClientConfig = typeof(IllegalClientConfig); }).Message);
+
+            Assert.Null(Record.Exception(() => { setup.WithClientConfig<FakeClientConfig>(); }));
+            Assert.Null(Record.Exception(() => { setup.WithClientConfig<FakeClientConfig2>(); }));
+            Assert.Contains("need to have a parameterless constructor",
+                Assert.Throws<ConfigurationException>(() => { setup.WithClientConfig<IllegalClientConfig>(); }).Message);
+
+            Assert.Null(Record.Exception(() => { setup.CredentialsProvider = typeof(FakeCredProvider); }));
+            Assert.Null(Record.Exception(() => { setup.CredentialsProvider = typeof(FakeCredProvider2); }));
+            Assert.Contains("Type value need to extend",
+                Assert.Throws<ConfigurationException>(() => { setup.CredentialsProvider = typeof(FakeClientConfig); }).Message);
+            Assert.Contains("need to have a parameterless constructor",
+                Assert.Throws<ConfigurationException>(() => { setup.CredentialsProvider = typeof(IllegalCredProvider); }).Message);
+
+            Assert.Null(Record.Exception(() => { setup.WithCredentialProvider<FakeCredProvider>(); }));
+            Assert.Null(Record.Exception(() => { setup.WithCredentialProvider<FakeCredProvider2>(); }));
+            Assert.Contains("need to have a parameterless constructor",
+                Assert.Throws<ConfigurationException>(() => { setup.WithCredentialProvider<IllegalCredProvider>(); }).Message);
         }
         
         private class FakeClientConfig: AmazonEC2Config

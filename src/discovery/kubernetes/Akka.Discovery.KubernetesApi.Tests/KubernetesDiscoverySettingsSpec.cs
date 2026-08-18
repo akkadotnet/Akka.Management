@@ -8,9 +8,7 @@
 using Akka.Actor;
 using Akka.Actor.Setup;
 using Akka.Configuration;
-using FluentAssertions;
 using Xunit;
-using static FluentAssertions.FluentActions;
 
 namespace Akka.Discovery.KubernetesApi.Tests
 {
@@ -22,17 +20,17 @@ namespace Akka.Discovery.KubernetesApi.Tests
             var settings = KubernetesDiscoverySettings.Create(KubernetesDiscovery.DefaultConfiguration()
                 .GetConfig("akka.discovery.kubernetes-api"));
 
-            settings.ApiCaPath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt");
-            settings.ApiTokenPath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/token");
-            settings.ApiServiceHostEnvName.Should().Be("KUBERNETES_SERVICE_HOST");
-            settings.ApiServicePortEnvName.Should().Be("KUBERNETES_SERVICE_PORT");
-            settings.PodNamespacePath.Should().Be("/var/run/secrets/kubernetes.io/serviceaccount/namespace");
-            settings.PodNamespace.Should().BeNull();
-            settings.AllNamespaces.Should().BeFalse();
-            settings.PodDomain.Should().Be("cluster.local");
-            settings.PodLabelSelector("a").Should().Be("app=a");
-            settings.RawIp.Should().BeTrue();
-            settings.ContainerName.Should().BeNull();
+            Assert.Equal("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt", settings.ApiCaPath);
+            Assert.Equal("/var/run/secrets/kubernetes.io/serviceaccount/token", settings.ApiTokenPath);
+            Assert.Equal("KUBERNETES_SERVICE_HOST", settings.ApiServiceHostEnvName);
+            Assert.Equal("KUBERNETES_SERVICE_PORT", settings.ApiServicePortEnvName);
+            Assert.Equal("/var/run/secrets/kubernetes.io/serviceaccount/namespace", settings.PodNamespacePath);
+            Assert.Null(settings.PodNamespace);
+            Assert.False(settings.AllNamespaces);
+            Assert.Equal("cluster.local", settings.PodDomain);
+            Assert.Equal("app=a", settings.PodLabelSelector("a"));
+            Assert.True(settings.RawIp);
+            Assert.Null(settings.ContainerName);
         }
 
         [Fact(DisplayName = "Empty settings should contain default values")]
@@ -42,17 +40,17 @@ namespace Akka.Discovery.KubernetesApi.Tests
             var settings = KubernetesDiscoverySettings.Create(KubernetesDiscovery.DefaultConfiguration()
                 .GetConfig("akka.discovery.kubernetes-api"));
 
-            empty.ApiCaPath.Should().Be(settings.ApiCaPath);
-            empty.ApiTokenPath.Should().Be(settings.ApiTokenPath);
-            empty.ApiServiceHostEnvName.Should().Be(settings.ApiServiceHostEnvName);
-            empty.ApiServicePortEnvName.Should().Be(settings.ApiServicePortEnvName);
-            empty.PodNamespacePath.Should().Be(settings.PodNamespacePath);
-            empty.PodNamespace.Should().Be(settings.PodNamespace);
-            empty.AllNamespaces.Should().Be(settings.AllNamespaces);
-            empty.PodDomain.Should().Be(settings.PodDomain);
-            empty.PodLabelSelector("a").Should().Be(settings.PodLabelSelector("a"));
-            empty.RawIp.Should().Be(settings.RawIp);
-            empty.ContainerName.Should().Be(settings.ContainerName);
+            Assert.Equal(settings.ApiCaPath, empty.ApiCaPath);
+            Assert.Equal(settings.ApiTokenPath, empty.ApiTokenPath);
+            Assert.Equal(settings.ApiServiceHostEnvName, empty.ApiServiceHostEnvName);
+            Assert.Equal(settings.ApiServicePortEnvName, empty.ApiServicePortEnvName);
+            Assert.Equal(settings.PodNamespacePath, empty.PodNamespacePath);
+            Assert.Equal(settings.PodNamespace, empty.PodNamespace);
+            Assert.Equal(settings.AllNamespaces, empty.AllNamespaces);
+            Assert.Equal(settings.PodDomain, empty.PodDomain);
+            Assert.Equal(settings.PodLabelSelector("a"), empty.PodLabelSelector("a"));
+            Assert.Equal(settings.RawIp, empty.RawIp);
+            Assert.Equal(settings.ContainerName, empty.ContainerName);
         }
 
         [Fact(DisplayName = "Settings With override must work")]
@@ -71,17 +69,17 @@ namespace Akka.Discovery.KubernetesApi.Tests
                 .WithRawIp(false)
                 .WithContainerName("i");
                 
-            settings.ApiCaPath.Should().Be("a");
-            settings.ApiTokenPath.Should().Be("b");
-            settings.ApiServiceHostEnvName.Should().Be("c");
-            settings.ApiServicePortEnvName.Should().Be("d");
-            settings.PodNamespacePath.Should().Be("e");
-            settings.PodNamespace.Should().Be("f");
-            settings.AllNamespaces.Should().BeTrue();
-            settings.PodDomain.Should().Be("g");
-            settings.PodLabelSelector("a").Should().Be("h=a");
-            settings.RawIp.Should().BeFalse();
-            settings.ContainerName.Should().Be("i");
+            Assert.Equal("a", settings.ApiCaPath);
+            Assert.Equal("b", settings.ApiTokenPath);
+            Assert.Equal("c", settings.ApiServiceHostEnvName);
+            Assert.Equal("d", settings.ApiServicePortEnvName);
+            Assert.Equal("e", settings.PodNamespacePath);
+            Assert.Equal("f", settings.PodNamespace);
+            Assert.True(settings.AllNamespaces);
+            Assert.Equal("g", settings.PodDomain);
+            Assert.Equal("h=a", settings.PodLabelSelector("a"));
+            Assert.False(settings.RawIp);
+            Assert.Equal("i", settings.ContainerName);
         }
 
         [Fact(DisplayName = "Setup override should work")]
@@ -103,17 +101,17 @@ namespace Akka.Discovery.KubernetesApi.Tests
             };
             var settings = setup.Apply(KubernetesDiscoverySettings.Empty);
                 
-            settings.ApiCaPath.Should().Be("a");
-            settings.ApiTokenPath.Should().Be("b");
-            settings.ApiServiceHostEnvName.Should().Be("c");
-            settings.ApiServicePortEnvName.Should().Be("d");
-            settings.PodNamespacePath.Should().Be("e");
-            settings.PodNamespace.Should().Be("f");
-            settings.AllNamespaces.Should().BeTrue();
-            settings.PodDomain.Should().Be("g");
-            settings.PodLabelSelector("a").Should().Be("h=a");
-            settings.RawIp.Should().BeFalse();
-            settings.ContainerName.Should().Be("i");
+            Assert.Equal("a", settings.ApiCaPath);
+            Assert.Equal("b", settings.ApiTokenPath);
+            Assert.Equal("c", settings.ApiServiceHostEnvName);
+            Assert.Equal("d", settings.ApiServicePortEnvName);
+            Assert.Equal("e", settings.PodNamespacePath);
+            Assert.Equal("f", settings.PodNamespace);
+            Assert.True(settings.AllNamespaces);
+            Assert.Equal("g", settings.PodDomain);
+            Assert.Equal("h=a", settings.PodLabelSelector("a"));
+            Assert.False(settings.RawIp);
+            Assert.Equal("i", settings.ContainerName);
         }
         
         [Fact(DisplayName = "Setup override should work inside the module")]
@@ -139,17 +137,17 @@ namespace Akka.Discovery.KubernetesApi.Tests
             {
                 var settings = KubernetesDiscovery.Get(sys).Settings;
                 
-                settings.ApiCaPath.Should().Be("a");
-                settings.ApiTokenPath.Should().Be("b");
-                settings.ApiServiceHostEnvName.Should().Be("c");
-                settings.ApiServicePortEnvName.Should().Be("d");
-                settings.PodNamespacePath.Should().Be("e");
-                settings.PodNamespace.Should().Be("f");
-                settings.AllNamespaces.Should().BeTrue();
-                settings.PodDomain.Should().Be("g");
-                settings.PodLabelSelector("a").Should().Be("h=a");
-                settings.RawIp.Should().BeFalse();
-                settings.ContainerName.Should().Be("i");
+                Assert.Equal("a", settings.ApiCaPath);
+                Assert.Equal("b", settings.ApiTokenPath);
+                Assert.Equal("c", settings.ApiServiceHostEnvName);
+                Assert.Equal("d", settings.ApiServicePortEnvName);
+                Assert.Equal("e", settings.PodNamespacePath);
+                Assert.Equal("f", settings.PodNamespace);
+                Assert.True(settings.AllNamespaces);
+                Assert.Equal("g", settings.PodDomain);
+                Assert.Equal("h=a", settings.PodLabelSelector("a"));
+                Assert.False(settings.RawIp);
+                Assert.Equal("i", settings.ContainerName);
             }
         }
     }

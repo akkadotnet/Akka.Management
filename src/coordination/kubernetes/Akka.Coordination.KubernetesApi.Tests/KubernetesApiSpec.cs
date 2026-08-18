@@ -14,7 +14,6 @@ using Akka.Coordination.KubernetesApi.Internal;
 using Akka.Coordination.KubernetesApi.Models;
 using Akka.Event;
 using Akka.Util;
-using FluentAssertions;
 using k8s.Models;
 using WireMock;
 using WireMock.RequestBuilders;
@@ -23,7 +22,6 @@ using WireMock.Server;
 using WireMock.Types;
 using WireMock.Util;
 using Xunit;
-using static FluentAssertions.FluentActions;
 
 #if !NET6_0_OR_GREATER
 using Microsoft.Rest.Serialization;
@@ -116,11 +114,11 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithHeader("Content-Type", "application/json")
                         .WithBodyAsJson(json));
 
-                (await _underTest.RemoveLease(LeaseName)).Should().Be(Done.Instance);
+                Assert.Equal(Done.Instance, (await _underTest.RemoveLease(LeaseName)));
                 var leaseRecord = await _underTest.ReadOrCreateLeaseResource(LeaseName);
-                leaseRecord.Owner.Should().Be(null);
-                leaseRecord.Version.Should().NotBeNullOrEmpty();
-                leaseRecord.Version.Should().Be(version);
+                Assert.Null(leaseRecord.Owner);
+                Assert.False(string.IsNullOrEmpty(leaseRecord.Version));
+                Assert.Equal(version, leaseRecord.Version);
             }
             finally
             {
@@ -180,11 +178,11 @@ namespace Akka.Coordination.KubernetesApi.Tests
                             };
                         }));
                 var response = await _underTest.UpdateLeaseResource(LeaseName, owner, "2", timestamp);
-                response.Should().BeOfType<Right<LeaseResource, LeaseResource>>();
+                Assert.IsType<Right<LeaseResource, LeaseResource>>(response);
                 var right = ((Right<LeaseResource, LeaseResource>)response).Value;
-                right.Owner.Should().Be(owner);
-                right.Version.Should().Be("3");
-                right.Time.Should().Be(timestamp);
+                Assert.Equal(owner, right.Owner);
+                Assert.Equal("3", right.Version);
+                Assert.Equal(timestamp, right.Time);
             }
             finally
             {
@@ -232,11 +230,11 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithBodyAsJson(json));
 
                 var response = await _underTest.UpdateLeaseResource(LeaseName, owner, version, timestamp);
-                response.Should().BeOfType<Left<LeaseResource, LeaseResource>>();
+                Assert.IsType<Left<LeaseResource, LeaseResource>>(response);
                 var left = ((Left<LeaseResource, LeaseResource>)response).Value;
-                left.Owner.Should().Be(conflictOwner);
-                left.Version.Should().Be(updatedVersion);
-                left.Time.Should().Be(timestamp);
+                Assert.Equal(conflictOwner, left.Owner);
+                Assert.Equal(updatedVersion, left.Version);
+                Assert.Equal(timestamp, left.Time);
             }
             finally
             {
@@ -256,7 +254,7 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithStatusCode(HttpStatusCode.OK));
 
                 var response = await _underTest.RemoveLease(LeaseName);
-                response.Should().Be(Done.Instance);
+                Assert.Equal(Done.Instance, response);
             }
             finally
             {
@@ -296,9 +294,9 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithStatusCode(HttpStatusCode.OK)
                         .WithHeader("Content-Type", "application/json")
                         .WithBodyAsJson(json));
-                await Awaiting(() => _underTest.ReadOrCreateLeaseResource(LeaseName)).Should()
-                    .ThrowAsync<LeaseTimeoutException>()
-                    .WithMessage($"Timed out reading lease {LeaseName}.*");
+                var ex = await Assert.ThrowsAsync<LeaseTimeoutException>(() => _underTest.ReadOrCreateLeaseResource(LeaseName));
+                // converted from WithMessage glob "Timed out reading lease {LeaseName}.*"
+                Assert.StartsWith($"Timed out reading lease {LeaseName}.", ex.Message);
             }
             finally
             {
@@ -340,9 +338,9 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithStatusCode(HttpStatusCode.OK)
                         .WithHeader("Content-Type", "application/json")
                         .WithBodyAsJson(json));
-                await Awaiting(() => _underTest.ReadOrCreateLeaseResource(LeaseName)).Should()
-                    .ThrowAsync<LeaseTimeoutException>()
-                    .WithMessage($"Timed out creating lease {LeaseName}.*");
+                var ex = await Assert.ThrowsAsync<LeaseTimeoutException>(() => _underTest.ReadOrCreateLeaseResource(LeaseName));
+                // converted from WithMessage glob "Timed out creating lease {LeaseName}.*"
+                Assert.StartsWith($"Timed out creating lease {LeaseName}.", ex.Message);
             }
             finally
             {
@@ -382,9 +380,9 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithStatusCode(HttpStatusCode.OK)
                         .WithHeader("Content-Type", "application/json")
                         .WithBodyAsJson(json));
-                await Awaiting(() => _underTest.UpdateLeaseResource(LeaseName, owner, version)).Should()
-                    .ThrowAsync<LeaseTimeoutException>()
-                    .WithMessage($"Timed out updating lease {LeaseName} to owner {owner}. It is not known if the update happened.*");
+                var ex = await Assert.ThrowsAsync<LeaseTimeoutException>(() => _underTest.UpdateLeaseResource(LeaseName, owner, version));
+                // converted from WithMessage glob "Timed out updating lease {LeaseName} to owner {owner}. It is not known if the update happened.*"
+                Assert.StartsWith($"Timed out updating lease {LeaseName} to owner {owner}. It is not known if the update happened.", ex.Message);
             }
             finally
             {
@@ -402,9 +400,9 @@ namespace Akka.Coordination.KubernetesApi.Tests
                         .WithDelay((int)(_settings.ApiServiceRequestTimeout.TotalMilliseconds * 2)) // time out
                         .WithStatusCode(HttpStatusCode.OK));
 
-                await Awaiting(() => _underTest.RemoveLease(LeaseName)).Should()
-                    .ThrowAsync<LeaseTimeoutException>()
-                    .WithMessage($"Timed out removing lease {LeaseName}. It is not known if the remove happened.*");
+                var ex = await Assert.ThrowsAsync<LeaseTimeoutException>(() => _underTest.RemoveLease(LeaseName));
+                // converted from WithMessage glob "Timed out removing lease {LeaseName}. It is not known if the remove happened.*"
+                Assert.StartsWith($"Timed out removing lease {LeaseName}. It is not known if the remove happened.", ex.Message);
             }
             finally
             {

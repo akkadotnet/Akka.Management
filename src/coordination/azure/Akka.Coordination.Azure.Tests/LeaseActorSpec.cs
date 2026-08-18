@@ -15,7 +15,6 @@ using Akka.Configuration;
 using Akka.TestKit;
 using Akka.Util;
 using Azure;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Coordination.Azure.Tests
@@ -57,7 +56,7 @@ namespace Akka.Coordination.Azure.Tests
                 UnderTest.Tell(new LeaseActor.Acquire(), Sender);
                 LeaseProbe.ExpectMsg(LeaseName);
                 LeaseProbe.Reply(new Status.Failure(failure));
-                SenderProbe.ExpectMsg<Status.Failure>().Cause.Should().Be(failure);
+                Assert.Equal(failure, SenderProbe.ExpectMsg<Status.Failure>().Cause);
             });
         }
 
@@ -100,9 +99,8 @@ namespace Akka.Coordination.Azure.Tests
                         new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
             
                 // not granted
-                SenderProbe.ExpectMsg<Status.Failure>().Cause.Message
-                    .Should().StartWith("API server took too long to respond");
-                Granted.Value.Should().BeFalse();
+                Assert.StartsWith("API server took too long to respond", SenderProbe.ExpectMsg<Status.Failure>().Cause.Message);
+                Assert.False(Granted.Value);
             
                 // should allow retry
                 AcquireLease();
@@ -201,7 +199,7 @@ namespace Akka.Coordination.Azure.Tests
                 UpdateProbe.ExpectMsg(("", CurrentVersion));
                 IncrementVersion();
                 UpdateProbe.Reply(new Status.Failure(failure));
-                SenderProbe.ExpectMsg<Status.Failure>().Cause.Should().Be(failure);
+                Assert.Equal(failure, SenderProbe.ExpectMsg<Status.Failure>().Cause);
             });
         }
 
@@ -210,11 +208,11 @@ namespace Akka.Coordination.Azure.Tests
         {
             RunTest(() =>
             {
-                Granted.Value.Should().BeFalse();
+                Assert.False(Granted.Value);
                 AcquireLease();
                 AwaitAssert(() =>
                 {
-                    Granted.Value.Should().BeTrue();
+                    Assert.True(Granted.Value);
                 });
             });
         }
@@ -224,16 +222,16 @@ namespace Akka.Coordination.Azure.Tests
         {
             RunTest(() =>
             {
-                Granted.Value.Should().BeFalse();
+                Assert.False(Granted.Value);
                 AcquireLease();
                 AwaitAssert(() =>
                 {
-                    Granted.Value.Should().BeTrue();
+                    Assert.True(Granted.Value);
                 });
                 ReleaseLease();
                 AwaitAssert(() =>
                 {
-                    Granted.Value.Should().BeFalse();
+                    Assert.False(Granted.Value);
                 });
             });
         }
@@ -282,7 +280,7 @@ namespace Akka.Coordination.Azure.Tests
             {
                 AcquireLease();
                 ExpectHeartBeat();
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
                 IncrementVersion();
@@ -291,7 +289,7 @@ namespace Akka.Coordination.Azure.Tests
                         new LeaseResource("I stole your lock", CurrentVersion, CurrentTime)));
                 AwaitAssert(() =>
                 {
-                    Granted.Value.Should().BeFalse();
+                    Assert.False(Granted.Value);
                 });
             });
         }
@@ -307,7 +305,7 @@ namespace Akka.Coordination.Azure.Tests
                     callbackCalled = true;
                 });
                 ExpectHeartBeat();
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
                 IncrementVersion();
@@ -316,7 +314,7 @@ namespace Akka.Coordination.Azure.Tests
                         new LeaseResource("I stole your lock", CurrentVersion, CurrentTime)));
                 AwaitAssert(() =>
                 {
-                    callbackCalled.Should().BeTrue();
+                    Assert.True(callbackCalled);
                 });
             });
         }
@@ -328,11 +326,11 @@ namespace Akka.Coordination.Azure.Tests
             {
                 AcquireLease();
                 ExpectHeartBeat();
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // With retry logic, multiple failures are needed to exhaust the TTL window
                 HeartBeatFailure();
-                Granted.Value.Should().BeFalse();
+                Assert.False(Granted.Value);
             });
         }
 
@@ -348,13 +346,13 @@ namespace Akka.Coordination.Azure.Tests
                     callbackCalled = e;
                 });
                 ExpectHeartBeat();
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // With retry logic, drive failures until TTL expires and callback fires
                 DriveHeartBeatFailures(failure);
                 AwaitAssert(() =>
                 {
-                    callbackCalled.Should().Be(failure);
+                    Assert.Equal(failure, callbackCalled);
                 });
             });
         }
@@ -366,14 +364,14 @@ namespace Akka.Coordination.Azure.Tests
             {
                 AcquireLease();
                 ExpectHeartBeat();
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // First heartbeat fails transiently
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
                 UpdateProbe.Reply(new Status.Failure(new LeaseException("Transient failure")));
 
                 // Should still be granted — actor retries within TTL window
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // Retry heartbeat succeeds
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
@@ -383,7 +381,7 @@ namespace Akka.Coordination.Azure.Tests
                         new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
 
                 // Should still be granted and heartbeating normally
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // Normal heartbeat continues
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
@@ -397,14 +395,14 @@ namespace Akka.Coordination.Azure.Tests
             {
                 AcquireLease();
                 ExpectHeartBeat();
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // Multiple consecutive failures, all within TTL window
                 for (var i = 0; i < 3; i++)
                 {
                     UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
                     UpdateProbe.Reply(new Status.Failure(new LeaseException($"Transient failure {i}")));
-                    Granted.Value.Should().BeTrue();
+                    Assert.True(Granted.Value);
                 }
 
                 // Recovery: next heartbeat succeeds
@@ -415,7 +413,7 @@ namespace Akka.Coordination.Azure.Tests
                         new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
 
                 // Lease is still held
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
             });
         }
 
@@ -430,15 +428,15 @@ namespace Akka.Coordination.Azure.Tests
                     callbackCalled = true;
                 });
                 ExpectHeartBeat();
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // Single transient failure within TTL
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
                 UpdateProbe.Reply(new Status.Failure(new LeaseException("Transient failure")));
 
                 // Callback should NOT be called — TTL still valid
-                callbackCalled.Should().BeFalse();
-                Granted.Value.Should().BeTrue();
+                Assert.False(callbackCalled);
+                Assert.True(Granted.Value);
 
                 // Recovery
                 UpdateProbe.ExpectMsg((OwnerName, CurrentVersion));
@@ -447,7 +445,7 @@ namespace Akka.Coordination.Azure.Tests
                     new Right<LeaseResource, LeaseResource>(
                         new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
 
-                callbackCalled.Should().BeFalse();
+                Assert.False(callbackCalled);
             });
         }
 
@@ -468,7 +466,7 @@ namespace Akka.Coordination.Azure.Tests
             {
                 await AcquireLeaseAsync();
                 await ExpectHeartBeatAsync();
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // Step 1: Heartbeat fires, but PUT times out on client (server succeeded and bumped version)
                 await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
@@ -476,7 +474,7 @@ namespace Akka.Coordination.Azure.Tests
                     new LeaseException("API server request timed out")));
 
                 // Should still be granted — within TTL retry window (#3404 fix)
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // Step 2: Actor retries heartbeat with stale version (server already moved to next version)
                 await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
@@ -490,7 +488,7 @@ namespace Akka.Coordination.Azure.Tests
 
                 // BUG: Actor currently releases the lease here (lines 400-404)
                 // EXPECTED: Actor should recognize it's still the owner and stay Granted
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // Step 4: Heartbeat should continue normally with the updated version
                 await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
@@ -499,7 +497,7 @@ namespace Akka.Coordination.Azure.Tests
                     new Right<LeaseResource, LeaseResource>(
                         new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
 
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
             });
         }
 
@@ -519,7 +517,7 @@ namespace Akka.Coordination.Azure.Tests
                     callbackCalled = true;
                 });
                 await ExpectHeartBeatAsync();
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // Heartbeat times out on client
                 await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
@@ -534,8 +532,8 @@ namespace Akka.Coordination.Azure.Tests
                         new LeaseResource(OwnerName, CurrentVersion, CurrentTime)));
 
                 // Callback should NOT be called — we still own the lease
-                callbackCalled.Should().BeFalse();
-                Granted.Value.Should().BeTrue();
+                Assert.False(callbackCalled);
+                Assert.True(Granted.Value);
             });
         }
 
@@ -551,7 +549,7 @@ namespace Akka.Coordination.Azure.Tests
             {
                 await AcquireLeaseAsync();
                 await ExpectHeartBeatAsync();
-                Granted.Value.Should().BeTrue();
+                Assert.True(Granted.Value);
 
                 // Heartbeat times out on client
                 await UpdateProbe.ExpectMsgAsync((OwnerName, CurrentVersion));
@@ -568,7 +566,7 @@ namespace Akka.Coordination.Azure.Tests
                 // Should release — this is a genuine conflict
                 await AwaitAssertAsync(() =>
                 {
-                    Granted.Value.Should().BeFalse();
+                    Assert.False(Granted.Value);
                 });
             });
         }
@@ -664,7 +662,7 @@ namespace Akka.Coordination.Azure.Tests
                 await SenderProbe.ExpectMsgAsync<LeaseActor.LeaseTaken>();
 
                 // Step 7: localGranted should be false — the lease was never actually acquired
-                Granted.Value.Should().BeFalse();
+                Assert.False(Granted.Value);
             });
         }
 
@@ -707,7 +705,7 @@ namespace Akka.Coordination.Azure.Tests
                 // Step 7: localGranted should be TRUE — the lease was properly acquired
                 await AwaitAssertAsync(() =>
                 {
-                    Granted.Value.Should().BeTrue();
+                    Assert.True(Granted.Value);
                 });
             });
         }
@@ -1053,7 +1051,7 @@ namespace Akka.Coordination.Azure.Tests
             LeaseProbe.ExpectMsg(LeaseName);
             LeaseProbe.Reply(new Status.Failure(failure));
             var receivedFailure = SenderProbe.ExpectMsg<Status.Failure>();
-            receivedFailure.Cause.Should().Be(failure);
+            Assert.Equal(failure, receivedFailure.Cause);
         }
 
         protected void HeartBeatConflict()
@@ -1065,7 +1063,7 @@ namespace Akka.Coordination.Azure.Tests
                     new LeaseResource("I stole your lock", CurrentVersion, CurrentTime)));
             AwaitAssert(() =>
             {
-                Granted.Value.Should().BeFalse();
+                Assert.False(Granted.Value);
             });
         }
 
@@ -1090,7 +1088,7 @@ namespace Akka.Coordination.Azure.Tests
                 UpdateProbe.Reply(new Status.Failure(failure));
                 Task.Delay(10).Wait();
             }
-            AwaitAssert(() => Granted.Value.Should().BeFalse());
+            AwaitAssert(() => Assert.False(Granted.Value));
         }
     }
 }

@@ -14,8 +14,6 @@ using Akka.Hosting;
 using Akka.Management;
 using Akka.Management.Cluster.Bootstrap;
 using Akka.Remote.Hosting;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -93,7 +91,7 @@ namespace Akka.Discovery.Azure.Tests
             var cluster = Cluster.Cluster.Get(system);
             cluster.RegisterOnMemberUp(() => { tcs.SetResult(Done.Instance); });
 
-            await tcs.Task.WaitAsync(30.Seconds());
+            await tcs.Task.WaitAsync(TimeSpan.FromSeconds(30));
         }
 
         public static readonly TheoryData<Func<string, AkkaConfigurationBuilder, AkkaConfigurationBuilder>> Startups =

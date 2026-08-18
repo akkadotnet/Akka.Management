@@ -9,7 +9,6 @@ using System;
 using Akka.Configuration;
 using Azure.Identity;
 using Azure.Storage.Blobs;
-using FluentAssertions;
 using Humanizer;
 using Xunit;
 
@@ -31,41 +30,43 @@ namespace Akka.Coordination.Azure.Tests
         [Fact(DisplayName = "default request-timeout should be 2/5 of the lease-operation-timeout")]
         public void RequestTimeoutIsTwoFifthOfLeaseOperationTimeout()
         {
-            Conf($"{AzureLease.ConfigPath}.lease-operation-timeout=10s")
-                .ApiServiceRequestTimeout.Should().Be(TimeSpan.FromSeconds(4));
+            Assert.Equal(TimeSpan.FromSeconds(4),
+                Conf($"{AzureLease.ConfigPath}.lease-operation-timeout=10s")
+                    .ApiServiceRequestTimeout);
         }
 
         [Fact(DisplayName = "Azure settings should allow api server request timeout override")]
         public void ShouldAllowServerRequestTimeoutOverride()
         {
-            Conf(@$"
+            Assert.Equal(TimeSpan.FromSeconds(4),
+                Conf(@$"
             {AzureLease.ConfigPath}.lease-operation-timeout=5s
-            {AzureLease.ConfigPath}.api-service-request-timeout=4s").ApiServiceRequestTimeout
-                .Should().Be(TimeSpan.FromSeconds(4));
+            {AzureLease.ConfigPath}.api-service-request-timeout=4s").ApiServiceRequestTimeout);
         }
 
         [Fact(DisplayName =
             "Azure settings should not allow server request timeout greater than operation timeout")]
         public void InvalidServerRequestTimeout()
         {
-            Assert.Throws<ConfigurationException>(() =>
+            var ex = Assert.Throws<ConfigurationException>(() =>
             {
                 Conf(@$"
                     {AzureLease.ConfigPath}.lease-operation-timeout=5s
                     {AzureLease.ConfigPath}.api-service-request-timeout=6s");
-            }).Message.Should().Be("'api-service-request-timeout can not be less than 'akka.coordination.azure.lease-operation-timeout'");
+            });
+            Assert.Equal("'api-service-request-timeout can not be less than 'akka.coordination.azure.lease-operation-timeout'", ex.Message);
         }
 
         [Fact(DisplayName = "AzureLeaseSettings should contain default values")]
         public void DefaultAzureLeaseSettingsTest()
         {
             var settings = Conf(null);
-            settings.ConnectionString.Should().Be("");
-            settings.ContainerName.Should().Be("akka-coordination-lease");
-            settings.ApiServiceRequestTimeout.Should().Be(6.Seconds());
-            settings.ServiceEndpoint.Should().BeNull();
-            settings.AzureCredential.Should().BeNull();
-            settings.BlobClientOptions.Should().BeNull();
+            Assert.Equal("", settings.ConnectionString);
+            Assert.Equal("akka-coordination-lease", settings.ContainerName);
+            Assert.Equal(6.Seconds(), settings.ApiServiceRequestTimeout);
+            Assert.Null(settings.ServiceEndpoint);
+            Assert.Null(settings.AzureCredential);
+            Assert.Null(settings.BlobClientOptions);
         }
 
         [Fact(DisplayName = "Empty AzureLeaseSettings should contain default values")]
@@ -73,12 +74,12 @@ namespace Akka.Coordination.Azure.Tests
         {
             var settings = Conf(null);
             var empty = AzureLeaseSettings.Empty;
-            empty.ConnectionString.Should().Be(settings.ConnectionString);
-            empty.ContainerName.Should().Be(settings.ContainerName);
-            empty.ApiServiceRequestTimeout.Should().Be(settings.ApiServiceRequestTimeout);
-            empty.ServiceEndpoint.Should().Be(settings.ServiceEndpoint);
-            empty.AzureCredential.Should().Be(settings.AzureCredential); 
-            empty.BlobClientOptions.Should().Be(settings.BlobClientOptions);
+            Assert.Equal(settings.ConnectionString, empty.ConnectionString);
+            Assert.Equal(settings.ContainerName, empty.ContainerName);
+            Assert.Equal(settings.ApiServiceRequestTimeout, empty.ApiServiceRequestTimeout);
+            Assert.Equal(settings.ServiceEndpoint, empty.ServiceEndpoint);
+            Assert.Equal(settings.AzureCredential, empty.AzureCredential);
+            Assert.Equal(settings.BlobClientOptions, empty.BlobClientOptions);
         }
 
         [Fact(DisplayName = "AzureLeaseSettings overrides should work")]
@@ -95,12 +96,12 @@ namespace Akka.Coordination.Azure.Tests
                 .WithAzureCredential(cred, uri)
                 .WithBlobClientOption(opt);
             
-            settings.ConnectionString.Should().Be("a");
-            settings.ContainerName.Should().Be("b");
-            settings.ApiServiceRequestTimeout.Should().Be(11.Seconds());
-            settings.ServiceEndpoint.Should().Be(uri);
-            settings.AzureCredential.Should().Be(cred); 
-            settings.BlobClientOptions.Should().Be(opt);
+            Assert.Equal("a", settings.ConnectionString);
+            Assert.Equal("b", settings.ContainerName);
+            Assert.Equal(11.Seconds(), settings.ApiServiceRequestTimeout);
+            Assert.Equal(uri, settings.ServiceEndpoint);
+            Assert.Equal(cred, settings.AzureCredential);
+            Assert.Equal(opt, settings.BlobClientOptions);
         }
         
         [Fact(DisplayName = "AzureLeaseSetup overrides should work")]
@@ -121,12 +122,12 @@ namespace Akka.Coordination.Azure.Tests
             };
             
             var settings = setup.Apply(AzureLeaseSettings.Empty, null!);
-            settings.ConnectionString.Should().Be("a");
-            settings.ContainerName.Should().Be("b");
-            settings.ApiServiceRequestTimeout.Should().Be(11.Seconds());
-            settings.ServiceEndpoint.Should().Be(uri);
-            settings.AzureCredential.Should().Be(cred); 
-            settings.BlobClientOptions.Should().Be(opt);
+            Assert.Equal("a", settings.ConnectionString);
+            Assert.Equal("b", settings.ContainerName);
+            Assert.Equal(11.Seconds(), settings.ApiServiceRequestTimeout);
+            Assert.Equal(uri, settings.ServiceEndpoint);
+            Assert.Equal(cred, settings.AzureCredential);
+            Assert.Equal(opt, settings.BlobClientOptions);
         }
     }
 }

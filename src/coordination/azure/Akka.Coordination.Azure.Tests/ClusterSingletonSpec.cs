@@ -12,8 +12,6 @@ using Akka.Discovery.Azure.Tests;
 using Akka.Event;
 using Akka.Hosting;
 using Akka.Remote.Hosting;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Xunit;
 
 namespace Akka.Coordination.Azure.Tests
@@ -80,10 +78,10 @@ namespace Akka.Coordination.Azure.Tests
             {
                 tcs.SetResult(Done.Instance);
             });
-            await tcs.Task.WaitAsync(30.Seconds());
+            await tcs.Task.WaitAsync(TimeSpan.FromSeconds(30));
             
             var singleton = ActorRegistry.Get<SingletonKey>();
-            (await singleton.Ask("test")).Should().Be("test");
+            Assert.Equal("test", (await singleton.Ask("test")));
 
             await probe.FishForMessageAsync(evt => evt is Info i && (i.Message?.ToString()?.StartsWith("Acquire lease result") ?? false));
         }

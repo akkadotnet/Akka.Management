@@ -11,8 +11,6 @@ using Akka.Configuration;
 using Akka.Coordination.Azure.Internal;
 using Akka.Discovery.Azure.Tests;
 using Akka.Util;
-using FluentAssertions;
-using FluentAssertions.Extensions;
 using Xunit;
 
 namespace Akka.Coordination.Azure.Tests
@@ -37,7 +35,7 @@ namespace Akka.Coordination.Azure.Tests
             _connectionString = _fixture.ConnectionString;
             _settings = AzureLeaseSettings.Empty
                 .WithConnectionString(_connectionString)
-                .WithApiServiceRequestTimeout(800.Milliseconds());
+                .WithApiServiceRequestTimeout(TimeSpan.FromMilliseconds(800));
                 
             _underTest = new AzureApiImpl(Sys, _settings);
         }
@@ -55,10 +53,11 @@ namespace Akka.Coordination.Azure.Tests
         [Fact(DisplayName = "Azure lease resource should be able to be created")]
         public async Task AbleToCreateLeaseResource()
         {
-            (await _underTest.RemoveLease(LeaseName)).Should().Be(Done.Instance);
+            Assert.Equal(Done.Instance, (await _underTest.RemoveLease(LeaseName)));
             var leaseRecord = await _underTest.ReadOrCreateLeaseResource(LeaseName);
-            leaseRecord.Owner.Should().BeNull();
-            leaseRecord.Version.Should().NotBeNull();
+            Assert.Null(leaseRecord.Owner);
+            // Version is a non-nullable ETag struct; FA's boxed NotBeNull() was vacuously true — preserved via boxing
+            Assert.NotNull((object)leaseRecord.Version);
         }
 
         [Fact(DisplayName = "Azure lease resource should update a lease successfully")]
@@ -69,11 +68,11 @@ namespace Akka.Coordination.Azure.Tests
             var created = await _underTest.ReadOrCreateLeaseResource(LeaseName);
             
             var response = await _underTest.UpdateLeaseResource(LeaseName, owner, created.Version, DateTimeOffset.UtcNow);
-            response.Should().BeOfType<Right<LeaseResource, LeaseResource>>();
+            Assert.IsType<Right<LeaseResource, LeaseResource>>(response);
             var right = ((Right<LeaseResource, LeaseResource>)response).Value;
-            right.Owner.Should().Be(owner);
-            right.Version.Should().NotBe(created.Version);
-            right.Time.Should().BeAfter(created.Time);
+            Assert.Equal(owner, right.Owner);
+            Assert.NotEqual(created.Version, right.Version);
+            Assert.True(right.Time > created.Time);
         }
 
         [Fact(DisplayName = "Azure lease resource should update a lease conflict")]
@@ -87,11 +86,11 @@ namespace Akka.Coordination.Azure.Tests
             var updated = ((Right<LeaseResource, LeaseResource>)updateResponse).Value;
 
             var response = await _underTest.UpdateLeaseResource(LeaseName, owner, created.Version, DateTimeOffset.UtcNow);
-            response.Should().BeOfType<Left<LeaseResource, LeaseResource>>();
+            Assert.IsType<Left<LeaseResource, LeaseResource>>(response);
             var left = ((Left<LeaseResource, LeaseResource>)response).Value;
-            left.Owner.Should().Be(conflictOwner);
-            left.Version.Should().Be(updated.Version);
-            left.Time.Should().Be(updated.Time);
+            Assert.Equal(conflictOwner, left.Owner);
+            Assert.Equal(updated.Version, left.Version);
+            Assert.Equal(updated.Time, left.Time);
 
         }
 
@@ -101,7 +100,7 @@ namespace Akka.Coordination.Azure.Tests
             var created = await _underTest.ReadOrCreateLeaseResource(LeaseName);
 
             var response = await _underTest.RemoveLease(LeaseName);
-            response.Should().Be(Done.Instance);
+            Assert.Equal(Done.Instance, response);
         }
 
         // Regression test for https://github.com/akkadotnet/Akka.Management/issues/3397
@@ -113,15 +112,16 @@ namespace Akka.Coordination.Azure.Tests
         {
             // First instance creates the container and lease blob
             var firstLease = await _underTest.ReadOrCreateLeaseResource(LeaseName);
-            firstLease.Owner.Should().BeNull();
+            Assert.Null(firstLease.Owner);
 
             // Second instance has _initialized = false, so ContainerClient() will call
             // CreateAsync() and receive a 409 ContainerAlreadyExists from Azure.
             // Before the fix, this threw LeaseException and crashed the lease actor.
             var secondInstance = new AzureApiImpl(Sys, _settings);
             var secondLease = await secondInstance.ReadOrCreateLeaseResource(LeaseName);
-            secondLease.Owner.Should().BeNull();
-            secondLease.Version.Should().NotBeNull();
+            Assert.Null(secondLease.Owner);
+            // Version is a non-nullable ETag struct; FA's boxed NotBeNull() was vacuously true — preserved via boxing
+            Assert.NotNull((object)secondLease.Version);
         }
 
         // Verifies that multiple independent AzureApiImpl instances can operate concurrently
@@ -143,15 +143,15 @@ namespace Akka.Coordination.Azure.Tests
             var lease2 = await instance2.ReadOrCreateLeaseResource(leaseName2);
 
             // Both should succeed — one creates the container, the other gets 409 and handles it
-            lease1.Owner.Should().BeNull();
-            lease2.Owner.Should().BeNull();
+            Assert.Null(lease1.Owner);
+            Assert.Null(lease2.Owner);
 
             // Both instances should be able to update their respective leases
             var update1 = await instance1.UpdateLeaseResource(leaseName1, owner1, lease1.Version, DateTimeOffset.UtcNow);
-            update1.Should().BeOfType<Right<LeaseResource, LeaseResource>>();
+            Assert.IsType<Right<LeaseResource, LeaseResource>>(update1);
 
             var update2 = await instance2.UpdateLeaseResource(leaseName2, owner2, lease2.Version, DateTimeOffset.UtcNow);
-            update2.Should().BeOfType<Right<LeaseResource, LeaseResource>>();
+            Assert.IsType<Right<LeaseResource, LeaseResource>>(update2);
         }
     }
 }

@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Discovery.AwsApi.Ec2;
-using FluentAssertions;
 using Xunit;
 
 namespace Akka.Discovery.AwsApi.Integration.Tests
@@ -53,8 +52,11 @@ akka {{
             var discovery = new Ec2TagBasedServiceDiscovery((ExtendedActorSystem)Sys);
             var lookup = new Lookup("fake-api");
             var resolved = await discovery.Lookup(lookup, TimeSpan.FromSeconds(5));
-            resolved.Addresses.Count.Should().Be(4);
-            resolved.Addresses.Select(a => a.Address.ToString()).Should().BeEquivalentTo(_fixture.IpAddresses);
+            Assert.Equal(4, resolved.Addresses.Count);
+            // converted from BeEquivalentTo (order-insensitive collection equivalence)
+            Assert.Equal(
+                _fixture.IpAddresses.OrderBy(x => x),
+                resolved.Addresses.Select(a => a.Address.ToString()).OrderBy(x => x));
         }
     }
 }

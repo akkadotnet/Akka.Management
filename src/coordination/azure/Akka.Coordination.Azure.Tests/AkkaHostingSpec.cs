@@ -6,7 +6,6 @@
 
 using System.Linq;
 using Akka.Hosting;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -21,9 +20,8 @@ namespace Akka.Coordination.Azure.Tests
             
             builder.WithAzureLease("");
             
-            builder.Configuration.HasValue.Should().BeTrue();
-            builder.Configuration.Value.GetConfig("akka.coordination.lease.azure")
-                .Should().NotBeNull();
+            Assert.True(builder.Configuration.HasValue);
+            Assert.NotNull(builder.Configuration.Value.GetConfig("akka.coordination.lease.azure"));
         }
         
         [Fact(DisplayName = "Hosting Action<Options> extension should add default hocon settings")]
@@ -36,10 +34,10 @@ namespace Akka.Coordination.Azure.Tests
                 lease.ContainerName = "underTest";
             });
                         
-            builder.Configuration.HasValue.Should().BeTrue();
+            Assert.True(builder.Configuration.HasValue);
             var config = builder.Configuration.Value.GetConfig("akka.coordination.lease.azure");
-            config.Should().NotBeNull();
-            config.GetString("container-name").Should().Be("underTest");
+            Assert.NotNull(config);
+            Assert.Equal("underTest", config.GetString("container-name"));
         }
         
         [Fact(DisplayName = "Hosting options extension should add default hocon settings")]
@@ -52,10 +50,10 @@ namespace Akka.Coordination.Azure.Tests
                 ContainerName = "underTest"
             });
                         
-            builder.Configuration.HasValue.Should().BeTrue();
+            Assert.True(builder.Configuration.HasValue);
             var config = builder.Configuration.Value.GetConfig("akka.coordination.lease.azure");
-            config.Should().NotBeNull();
-            config.GetString("container-name").Should().Be("underTest");
+            Assert.NotNull(config);
+            Assert.Equal("underTest", config.GetString("container-name"));
         }
     }
 }
