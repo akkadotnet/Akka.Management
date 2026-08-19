@@ -47,6 +47,40 @@ app.Run();
 cluster stack. The `configureDiscovery` callback wires the discovery plugin using the same
 `IConfiguration` that Aspire populates, and `clusterConfigure` sets roles and other cluster options.
 
+## Corresponding AppHost (`Akka.Aspire.Hosting`)
+
+The service above consumes the configuration that the
+[`Akka.Aspire.Hosting`](https://www.nuget.org/packages/Akka.Aspire.Hosting) AppHost injects. The
+matching AppHost declares the discovery backend and the cluster, then wires this service to it with
+`WithReference`:
+
+```csharp
+using Akka.Aspire.Hosting;
+
+var builder = DistributedApplication.CreateBuilder(args);
+
+// The discovery backend the service's `WithRedisDiscovery` connects to. Its resource name
+// ("akka-discovery") surfaces on the service side as `Akka:Cluster:Clustering:ConnectionStringName`,
+// so the two halves stay in sync automatically.
+var redis = builder.AddRedis("akka-discovery");
+
+// Declare the cluster and bind its discovery backend (the provider type is auto-detected).
+var akka = builder.AddAkka("my-cluster")
+    .WithClustering(redis);
+
+// Every replica wired with WithReference discovers its peers and forms the cluster.
+builder.AddProject<Projects.MyService>("service")
+    .WithHttpEndpoint(name: "http")
+    .WithReplicas(3)
+    .WithReference(akka);
+
+builder.Build().Run();
+```
+
+See the [`Akka.Aspire.Hosting`](https://github.com/akkadotnet/Akka.Management/blob/dev/src/aspire/Akka.Aspire.Hosting/README.md)
+README for the full set of injected settings and supported discovery backends, and
+`src/aspire/examples/` for complete runnable Redis and Azure Table Storage samples.
+
 ## Swapping discovery providers
 
 Only the AppHost resource and the `configureDiscovery` callback change between environments — the rest
