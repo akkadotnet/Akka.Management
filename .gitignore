@@ -67,6 +67,12 @@ project.fragment.lock.json
 artifacts/
 **/Properties/launchSettings.json
 
+# Aspire sample AppHosts need launchSettings.json committed - Aspire's dashboard/OTLP
+# endpoints and ASPNETCORE_URLS are normally supplied by it, so without it `dotnet run`
+# fails before the app even starts.
+!src/aspire/examples/Akka.Aspire.Sample.AppHost/Properties/launchSettings.json
+!src/aspire/examples/Akka.Aspire.Sample.Azure.AppHost/Properties/launchSettings.json
+
 *_i.c
 *_p.c
 *_i.h
