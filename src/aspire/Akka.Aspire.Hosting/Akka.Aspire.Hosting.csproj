@@ -23,4 +23,9 @@
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
+
+  <!-- Security: override vulnerable transitive dependency with a patched version (version pinned centrally in Directory.Packages.props). -->
+  <ItemGroup>
+    <PackageReference Include="MessagePack" />
+  </ItemGroup>
 </Project>

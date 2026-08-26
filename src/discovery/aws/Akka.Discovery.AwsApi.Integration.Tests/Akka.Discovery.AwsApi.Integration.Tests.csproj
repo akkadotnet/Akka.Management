@@ -34,4 +34,9 @@
       <None Remove="akka-cluster.json" />
       <EmbeddedResource Include="akka-cluster.json" />
     </ItemGroup>
+
+  <!-- Security: override vulnerable transitive dependency with a patched version (version pinned centrally in Directory.Packages.props). -->
+  <ItemGroup>
+    <PackageReference Include="SSH.NET" />
+  </ItemGroup>
 </Project>

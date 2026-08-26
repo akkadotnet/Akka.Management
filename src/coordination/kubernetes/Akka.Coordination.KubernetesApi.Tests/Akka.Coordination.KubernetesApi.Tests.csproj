@@ -26,4 +26,9 @@
       <ProjectReference Include="..\..\..\discovery\kubernetes\Akka.Discovery.KubernetesApi\Akka.Discovery.KubernetesApi.csproj" />
       <ProjectReference Include="..\Akka.Coordination.KubernetesApi\Akka.Coordination.KubernetesApi.csproj" />
     </ItemGroup>
+
+  <!-- Security: override vulnerable transitive dependency with a patched version (version pinned centrally in Directory.Packages.props). -->
+  <ItemGroup>
+    <PackageReference Include="Scriban.Signed" />
+  </ItemGroup>
 </Project>
