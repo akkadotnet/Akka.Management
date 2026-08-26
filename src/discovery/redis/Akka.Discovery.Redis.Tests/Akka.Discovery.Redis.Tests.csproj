@@ -27,4 +27,9 @@
       <ProjectReference Include="..\..\..\management\Akka.Management\Akka.Management.csproj" />
       <ProjectReference Include="..\Akka.Discovery.Redis\Akka.Discovery.Redis.csproj" />
     </ItemGroup>
+
+  <!-- Security: override vulnerable transitive dependency with a patched version (version pinned centrally in Directory.Packages.props). -->
+  <ItemGroup>
+    <PackageReference Include="SSH.NET" />
+  </ItemGroup>
 </Project>

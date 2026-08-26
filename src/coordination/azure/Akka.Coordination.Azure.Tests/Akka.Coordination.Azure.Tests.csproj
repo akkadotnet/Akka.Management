@@ -35,4 +35,10 @@
       </Compile>
     </ItemGroup>
 
+
+  <!-- Security: override vulnerable transitive dependency with a patched version (version pinned centrally in Directory.Packages.props). -->
+  <ItemGroup>
+    <PackageReference Include="Scriban.Signed" />
+    <PackageReference Include="SSH.NET" />
+  </ItemGroup>
 </Project>
