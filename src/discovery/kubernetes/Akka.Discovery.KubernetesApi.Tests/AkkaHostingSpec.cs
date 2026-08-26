@@ -38,7 +38,7 @@ namespace Akka.Discovery.KubernetesApi.Tests
                 
             var system = host.Services.GetRequiredService<ActorSystem>();
                 
-            var settings = KubernetesDiscovery.Get(system).Settings;
+            var settings = KubernetesDiscoverySettings.Create(system);
             Assert.Equal("underTest", settings.PodNamespace);
                 
             Assert.Equal("kubernetes-api", system.Settings.Config.GetString("akka.discovery.method"));

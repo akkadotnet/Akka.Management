@@ -71,7 +71,7 @@ namespace Akka.Discovery.Azure.Tests
             {
                 entries.Add(entry);
             }
-            Assert.Equal(1, entries.Count);
+            Assert.Single(entries);
 
             var tableEntity = ClusterMember.FromEntity(entries[0]);
             Assert.Equal(tableEntity, entity);

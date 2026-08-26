@@ -645,7 +645,7 @@ namespace Akka.Coordination.Azure.Tests
                 var conflictVersion = new ETag((CurrentVersionCount + 5).ToString());
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
-                        new LeaseResource(null, conflictVersion, CurrentTime)));
+                        new LeaseResource(null!, conflictVersion, CurrentTime)));
 
                 // Step 4: Retry write is dispatched — expect it with the new version
                 await UpdateProbe.ExpectMsgAsync((OwnerName, conflictVersion));
@@ -688,7 +688,7 @@ namespace Akka.Coordination.Azure.Tests
                 var conflictVersion = new ETag((CurrentVersionCount + 5).ToString());
                 UpdateProbe.Reply(
                     new Left<LeaseResource, LeaseResource>(
-                        new LeaseResource(null, conflictVersion, CurrentTime)));
+                        new LeaseResource(null!, conflictVersion, CurrentTime)));
 
                 // Step 4: Retry dispatched
                 await UpdateProbe.ExpectMsgAsync((OwnerName, conflictVersion));

@@ -58,7 +58,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap
             };
         }
 
-        public IDisposable BeginScope<TState>(TState state)
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull
         {
             throw new NotImplementedException();
         }

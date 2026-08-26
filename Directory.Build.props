@@ -13,7 +13,13 @@
   <PropertyGroup>
     <LangVersion>12.0</LangVersion>
     <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Fail the build on high/critical NuGet audit advisories. NU1902 (moderate) stays a warning
+         until the remaining OpenTelemetry.Api transitive is bumped separately. -->
+    <WarningsAsErrors>$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1902</WarningsNotAsErrors>
   </PropertyGroup>
+
   <PropertyGroup>
     <AkkaPackageTags>akka;actors;actor model;Akka;concurrency;service discovery;cluster;clustering;</AkkaPackageTags>
     <LibraryFramework>netstandard2.0</LibraryFramework>

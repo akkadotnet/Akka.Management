@@ -18,7 +18,7 @@ namespace Akka.Discovery.AwsApi.Tests
         public void ParseEmptyString()
         {
             var result = Ec2TagBasedServiceDiscovery.ParseFiltersString("");
-            Assert.Equal(0, result.Count);
+            Assert.Empty(result);
         }
         
         [Fact(DisplayName = "Can parse simple filter")]
@@ -26,9 +26,9 @@ namespace Akka.Discovery.AwsApi.Tests
         {
             var filters = "tag:purpose=demo";
             var result = Ec2TagBasedServiceDiscovery.ParseFiltersString(filters);
-            Assert.Equal(1, result.Count);
+            Assert.Single(result);
             Assert.Equal("tag:purpose", result[0].Name);
-            Assert.Equal(1, result[0].Values.Count);
+            Assert.Single(result[0].Values);
             Assert.Equal("demo", result[0].Values[0]);
         }
 

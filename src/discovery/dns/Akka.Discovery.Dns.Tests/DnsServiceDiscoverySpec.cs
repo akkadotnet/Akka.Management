@@ -180,7 +180,7 @@ public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , 
     public async Task DnsServiceDiscoveryShouldHandleLookup(string serviceName, string? portName, string? protocol,
         string description)
     {
-        Output.WriteLine($"Testing SRV lookup for {description}: _{portName}._{protocol}.{serviceName}");
+        Output!.WriteLine($"Testing SRV lookup for {description}: _{portName}._{protocol}.{serviceName}");
         var serviceDiscovery = new Dns.DnsServiceDiscovery((ExtendedActorSystem)Sys);
 
         var lookup = new Lookup(serviceName, portName, protocol);
@@ -217,7 +217,7 @@ public abstract class DnsServiceDiscoveryBaseSpec(Configuration.Config config , 
     public async Task DnsServiceDiscoveryShouldHandleLookupOfA(string serviceName,
         string description)
     {
-        Output.WriteLine($"Testing A/AAAA lookup for {description}: {serviceName}");
+        Output!.WriteLine($"Testing A/AAAA lookup for {description}: {serviceName}");
         var serviceDiscovery = new Dns.DnsServiceDiscovery((ExtendedActorSystem)Sys);
 
         var lookup = new Lookup(serviceName);

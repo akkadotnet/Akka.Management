@@ -29,7 +29,7 @@ public sealed class LocalStackFixture: IAsyncLifetime
     private readonly LocalStackContainer _container;
 
     public bool IsWindows { get; private set; }
-    public string Endpoint { get; private set; }
+    public string Endpoint { get; private set; } = string.Empty;
     public AmazonCloudFormationClient? CfCClient { get; private set; }
     public AmazonEC2Client? Ec2Client { get; private set; }
     public AmazonS3Client? S3Client { get; private set; }

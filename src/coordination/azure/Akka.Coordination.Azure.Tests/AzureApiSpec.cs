@@ -56,8 +56,6 @@ namespace Akka.Coordination.Azure.Tests
             Assert.Equal(Done.Instance, (await _underTest.RemoveLease(LeaseName)));
             var leaseRecord = await _underTest.ReadOrCreateLeaseResource(LeaseName);
             Assert.Null(leaseRecord.Owner);
-            // Version is a non-nullable ETag struct; FA's boxed NotBeNull() was vacuously true — preserved via boxing
-            Assert.NotNull((object)leaseRecord.Version);
         }
 
         [Fact(DisplayName = "Azure lease resource should update a lease successfully")]
@@ -120,8 +118,6 @@ namespace Akka.Coordination.Azure.Tests
             var secondInstance = new AzureApiImpl(Sys, _settings);
             var secondLease = await secondInstance.ReadOrCreateLeaseResource(LeaseName);
             Assert.Null(secondLease.Owner);
-            // Version is a non-nullable ETag struct; FA's boxed NotBeNull() was vacuously true — preserved via boxing
-            Assert.NotNull((object)secondLease.Version);
         }
 
         // Verifies that multiple independent AzureApiImpl instances can operate concurrently

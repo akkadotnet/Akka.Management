@@ -64,7 +64,7 @@ namespace Akka.Http.Shim.Tests
             var result = await client.GetAsync(url);
             if (result.StatusCode != expectedResult)
             {
-                Output.WriteLine(await result.Content.ReadAsStringAsync());
+                Output!.WriteLine(await result.Content.ReadAsStringAsync());
             }
             Assert.Equal(expectedResult, result.StatusCode);
         }
