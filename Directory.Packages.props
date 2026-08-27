@@ -71,6 +71,12 @@
 
   <!-- OpenTelemetry packages (Aspire samples) -->
   <ItemGroup>
+    <!-- OpenTelemetry.Api pinned to 1.15.3: Akka.Hosting floors the OpenTelemetry SDK at 1.10.0,
+         whose transitive OpenTelemetry.Api 1.10.0 is flagged by GHSA-g94r-2vxg-569j (moderate;
+         patched in 1.15.3). Only the Api is overridden (via a direct reference in every project that
+         pulls Akka.Hosting); pinning the full SDK would drag in Microsoft.Extensions 10.x. The SDK's
+         dependency on the Api is a >= floor, so 1.15.3 satisfies it. -->
+    <PackageVersion Include="OpenTelemetry.Api" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />

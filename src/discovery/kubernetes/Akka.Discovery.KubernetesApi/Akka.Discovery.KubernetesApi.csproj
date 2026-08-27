@@ -26,4 +26,10 @@
     <ItemGroup>
       <InternalsVisibleTo Include="Akka.Discovery.KubernetesApi.Tests" />
     </ItemGroup>
+
+  <!-- Security: override the OpenTelemetry version pulled transitively via Akka.Hosting
+       (OpenTelemetry.Api 1.10.0 advisory GHSA-g94r-2vxg-569j; version pinned in Directory.Packages.props). -->
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Api" />
+  </ItemGroup>
 </Project>

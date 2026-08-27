@@ -16,11 +16,12 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Fail the build on high/critical NuGet audit advisories. NU1902 (moderate) stays a warning
          until the remaining OpenTelemetry.Api transitive is bumped separately. -->
-    <WarningsAsErrors>$(WarningsAsErrors);NU1903;NU1904</WarningsAsErrors>
-    <!-- NU1902 (moderate audit): stays a warning until OpenTelemetry.Api is bumped.
-         NU5048 (pack): 'PackageIconUrl' is deprecated in favour of an embedded 'PackageIcon';
+    <!-- Fail the build on ALL NuGet audit advisories (moderate/high/critical) now that the
+         transitive OpenTelemetry.Api has been bumped past its advisory. -->
+    <WarningsAsErrors>$(WarningsAsErrors);NU1902;NU1903;NU1904</WarningsAsErrors>
+    <!-- NU5048 (pack): 'PackageIconUrl' is deprecated in favour of an embedded 'PackageIcon';
          keep it a warning here — migrating the package icon is a separate packaging change. -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1902;NU5048</WarningsNotAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU5048</WarningsNotAsErrors>
   </PropertyGroup>
 
   <PropertyGroup>
