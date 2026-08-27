@@ -21,7 +21,7 @@ namespace Akka.Discovery.AwsApi.Tests
         {
             var list = Enumerable.Range(0, 10).Select(i => i.ToString());
             var chunked = list.ChunkBy(20).ToList();
-            Assert.Equal(1, chunked.Count);
+            Assert.Single(chunked);
             // converted from BeEquivalentTo (order-insensitive)
             Assert.Equal(Enumerable.Range(0, 10).Select(i => i.ToString()).OrderBy(x => x), chunked[0].OrderBy(x => x));
         }

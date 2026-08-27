@@ -135,8 +135,14 @@ namespace Akka.Discovery.KubernetesApi.Tests
 
             using (var sys = ActorSystem.Create(nameof(KubernetesDiscoverySettingsSpec), setup))
             {
+                // TODO: KubernetesDiscovery.Settings is obsolete since 1.5.26, but this test deliberately
+                // verifies that a KubernetesDiscoverySetup is applied to the resolved settings — behavior
+                // that only the extension performs. KubernetesDiscoverySettings.Create(sys) reads config
+                // only and would not apply the Setup, so we intentionally exercise the obsolete member here.
+#pragma warning disable CS0618 // Type or member is obsolete
                 var settings = KubernetesDiscovery.Get(sys).Settings;
-                
+#pragma warning restore CS0618
+
                 Assert.Equal("a", settings.ApiCaPath);
                 Assert.Equal("b", settings.ApiTokenPath);
                 Assert.Equal("c", settings.ApiServiceHostEnvName);

@@ -106,7 +106,7 @@ namespace Akka.Discovery.Azure.Model
             return (parts[0], IPAddress.Parse(parts[1]), int.Parse(parts[2]));
         }
 
-        public bool Equals(ClusterMember other)
+        public bool Equals(ClusterMember? other)
         {
             if (ReferenceEquals(null, other)) return false;
             if (ReferenceEquals(this, other)) return true;
@@ -120,7 +120,7 @@ namespace Akka.Discovery.Azure.Model
                 LastUpdate.Equals(other.LastUpdate);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
             => obj is ClusterMember entity && Equals(entity);
 
         public override int GetHashCode()

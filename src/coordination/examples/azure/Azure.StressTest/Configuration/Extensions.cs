@@ -18,7 +18,8 @@ public static class Extensions
         Action<ClusterOptions>? clusterConfiguration = null)
     {
         var configuration = provider.GetRequiredService<IConfiguration>();
-        var clusterConfigOptions = configuration.GetSection("cluster").Get<ClusterConfigOptions>();
+        var clusterConfigOptions = configuration.GetSection("cluster").Get<ClusterConfigOptions>()
+            ?? throw new InvalidOperationException("Missing 'cluster' configuration section.");
 
         var remoteOptions = new RemoteOptions
         {

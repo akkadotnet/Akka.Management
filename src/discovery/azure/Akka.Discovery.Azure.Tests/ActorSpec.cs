@@ -90,7 +90,7 @@ akka.remote.dot-netty.tcp.port = 0
             });
 
             var members = await GetEntriesAsync();
-            Assert.Equal(1, members.Count);
+            Assert.Single(members);
 
             Assert.True(members[0].LastUpdate > firstEntry.LastUpdate);
         }

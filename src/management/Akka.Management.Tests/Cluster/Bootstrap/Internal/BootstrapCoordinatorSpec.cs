@@ -77,7 +77,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
                 Assert.True(targetsToCheck.Count >= 2);
                 Assert.Contains("host1", targetsToCheck.Select(t => t.Host));
                 Assert.Contains("host2", targetsToCheck.Select(t => t.Host));
-                Assert.Equal(0, targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count);
+                Assert.Empty(targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet());
             });
             
             coordinator.Tell(new JoinOtherSeedNodes(new [] {Akka.Cluster.Cluster.Get(Sys).SelfAddress}.ToImmutableHashSet()));
@@ -111,7 +111,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
                 Assert.True(targetsToCheck.Count >= 2);
                 Assert.Contains("host1", targetsToCheck.Select(t => t.Host));
                 Assert.Contains("host2", targetsToCheck.Select(t => t.Host));
-                Assert.Equal(0, targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count);
+                Assert.Empty(targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet());
             });
             
             coordinator.Tell(JoinSelf.Instance);
@@ -174,7 +174,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.Internal
                 Assert.True(targetsToCheck.Count >= 2);
                 Assert.Contains("host1", targetsToCheck.Select(t => t.Host));
                 Assert.Contains("host2", targetsToCheck.Select(t => t.Host));
-                Assert.Equal(0, targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet().Count);
+                Assert.Empty(targetsToCheck.Where(t => t.Port != null).Select(t => t.Port).ToImmutableHashSet());
             });
         }
         

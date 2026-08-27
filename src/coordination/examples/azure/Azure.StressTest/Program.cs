@@ -58,7 +58,8 @@ using var host = new HostBuilder()
             
             // Add Akka.Management support
             var configuration = provider.GetRequiredService<IConfiguration>();
-            var clusterConfigOptions = configuration.GetSection("cluster").Get<ClusterConfigOptions>();
+            var clusterConfigOptions = configuration.GetSection("cluster").Get<ClusterConfigOptions>()
+                ?? throw new InvalidOperationException("Missing 'cluster' configuration section.");
             builder.WithAkkaManagement(setup =>
             {
                 setup.Http.HostName = clusterConfigOptions.Ip;

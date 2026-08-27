@@ -187,7 +187,7 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
             {
                 var (coordinatorProbe, coordinator) = tuple;
                 coordinatorProbe.ExpectTerminated(coordinator);
-                Assert.Equal(0, ((RepointableActorRef) coordinator).Children.ToList().Count);
+                Assert.Empty(((RepointableActorRef) coordinator).Children.ToList());
             }
         }
         

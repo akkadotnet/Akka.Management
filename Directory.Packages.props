@@ -111,13 +111,15 @@
     <PackageVersion Include="Petabridge.Cmd.Remote" Version="$(PbmVersion)" />
   </ItemGroup>
 
-  <!-- Security: pin vulnerable transitive dependencies to patched versions.
-       MessagePack 2.5.192 (high), Scriban.Signed 5.5.0 (critical), SSH.NET 2024.2.0 (high)
-       are pulled in transitively (mostly by test/example projects). -->
+  <!-- Security: pin vulnerable transitive dependencies (pulled in by test/example projects) to
+       genuinely-patched versions per the GitHub advisory DB:
+         MessagePack   2.5.192 (high)                -> 2.5.302
+         Scriban.Signed 5.5.0  (critical; fixed 7.0.0, DoS fixed 7.2.0) -> 7.2.6
+         SSH.NET       2024.2.0 (high; fixed 2026.0.0) -> 2026.0.0 -->
   <ItemGroup>
     <PackageVersion Include="MessagePack" Version="2.5.302" />
-    <PackageVersion Include="Scriban.Signed" Version="6.6.0" />
-    <PackageVersion Include="SSH.NET" Version="2025.1.0" />
+    <PackageVersion Include="Scriban.Signed" Version="7.2.6" />
+    <PackageVersion Include="SSH.NET" Version="2026.0.0" />
   </ItemGroup>
 
   <!-- Other packages -->
