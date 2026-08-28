@@ -6,8 +6,8 @@
     <CoverletVersion>10.0.1</CoverletVersion>
     <TestSdkVersion>17.13.0</TestSdkVersion>
     <WireMockVersion>1.8.4</WireMockVersion>
-    <AkkaVersion>1.5.70</AkkaVersion>
-    <AkkaHostingVersion>1.5.68</AkkaHostingVersion>
+    <AkkaVersion>1.5.71</AkkaVersion>
+    <AkkaHostingVersion>1.5.71</AkkaHostingVersion>
     <PbmVersion>1.4.5</PbmVersion>
     <KubernetesClientVersionNet>17.0.14</KubernetesClientVersionNet>
     <MicrosoftExtensionsVersion>9.0.0</MicrosoftExtensionsVersion>
