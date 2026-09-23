@@ -132,6 +132,6 @@
   <ItemGroup>
     <PackageVersion Include="Ceen.Httpd" Version="0.9.9" />
     <PackageVersion Include="Docker.DotNet" Version="3.125.15" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.303" />
   </ItemGroup>
 </Project>
