@@ -364,10 +364,18 @@ namespace Akka.Coordination.KubernetesApi
                     if (oldVersion == leftResponse.Version)
                         throw new LeaseException(
                             $"Update response from Kubernetes API should not return the same version: Response: {leftResponse}. Client: {data}");
-                    // Try again as lock version has moved on but is not taken
+                    // Try again as lock version has moved on but is not taken. Reset the operation start
+                    // time for this retry so the API-response latency guard (granting writes must complete
+                    // within HeartbeatTimeout/2) measures each write attempt independently rather than the
+                    // cumulative round-trip of the failed write plus this retry. Otherwise a conflict-and-
+                    // retry sequence can spuriously cross the budget on a slow CI agent and be reported as
+                    // a lease timeout even though each individual write was well within budget. Preserve
+                    // the original data.Version (the pre-conflict version) because the Granting handler
+                    // uses it as oldVersion for the "server must not echo the same version" sanity check.
+                    var retryData = new OperationInProgress(who, data.Version, leaseLost, DateTime.UtcNow);
                     _client.UpdateLeaseResource(leaseName, _ownerName, version)
                         .PipeTo(Self, success:result => new WriteResponse(result), failure: FlattenAggregateException);
-                    return Stay();
+                    return Stay().Using(retryData);
                 }
                 // The audacity, someone else has taken the lease :(
                 who.Tell(LeaseTaken.Instance);
