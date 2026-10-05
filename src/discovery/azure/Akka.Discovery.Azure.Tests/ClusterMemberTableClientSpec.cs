@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 //  <copyright file="ClusterMemberTableClientSpec.cs" company="Akka.NET Project">
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
@@ -48,15 +48,16 @@ namespace Akka.Discovery.Azure.Tests
             _rawClient = new TableClient(ConnectionString, TableName);
         }
         
-        public async ValueTask InitializeAsync()
+        public override async ValueTask InitializeAsync()
         {
+            await base.InitializeAsync();
             // Tables are wiped out at every test start
             await DbUtils.Cleanup(ConnectionString);
         }
 
-        public ValueTask DisposeAsync()
+        public override async ValueTask DisposeAsync()
         {
-            return ValueTask.CompletedTask;
+            await base.DisposeAsync();
         }
 
         [Fact(DisplayName = "GetOrCreateAsync should insert a new entry")]

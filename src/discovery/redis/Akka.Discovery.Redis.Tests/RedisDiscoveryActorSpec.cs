@@ -40,8 +40,9 @@ namespace Akka.Discovery.Redis.Tests
             _fixture = fixture;
         }
 
-        public async ValueTask InitializeAsync()
+        public override async ValueTask InitializeAsync()
         {
+            await base.InitializeAsync();
             _fixture.EnsureAvailable();
             await _fixture.ClearAsync();
 
@@ -54,7 +55,10 @@ namespace Akka.Discovery.Redis.Tests
                 .WithTtlHeartbeatInterval(TimeSpan.FromSeconds(1));
         }
 
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        public override async ValueTask DisposeAsync()
+        {
+            await base.DisposeAsync();
+        }
 
         [Fact(DisplayName = "Guardian should register self and return it on lookup")]
         public async Task GuardianShouldRegisterAndResolveSelf()

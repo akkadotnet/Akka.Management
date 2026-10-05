@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 //  <copyright file="AzureLeaseSpec.cs" company="Akka.NET Project">
 //      Copyright (C) 2013-2023 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
@@ -61,13 +61,14 @@ public class AzureLeaseSpec: TestKit.Xunit.TestKit, IAsyncLifetime
         Assert.True((await task1));
     }
 
-    public async ValueTask InitializeAsync()
+    public override async ValueTask InitializeAsync()
     {
+        await base.InitializeAsync();
         await Util.Cleanup(_fixture.ConnectionString);
     }
 
-    public ValueTask DisposeAsync()
+    public override async ValueTask DisposeAsync()
     {
-        return ValueTask.CompletedTask;
+        await base.DisposeAsync();
     }
 }

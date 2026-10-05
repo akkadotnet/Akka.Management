@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" VersionOverride="1.5.70" />
+    <PackageReference Include="Akka" VersionOverride="1.5.73" />
     <PackageReference Include="Akka.Cluster" />
     <PackageReference Include="Akka.Discovery" />
     <PackageReference Include="Akka.Hosting" />

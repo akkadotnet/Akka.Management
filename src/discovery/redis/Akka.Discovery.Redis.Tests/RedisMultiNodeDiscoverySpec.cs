@@ -40,16 +40,18 @@ namespace Akka.Discovery.Redis.Tests
             _fixture = fixture;
         }
 
-        public async ValueTask InitializeAsync()
+        public override async ValueTask InitializeAsync()
         {
+            await base.InitializeAsync();
             _fixture.EnsureAvailable();
             await _fixture.ClearAsync();
         }
 
-        public async ValueTask DisposeAsync()
+        public override async ValueTask DisposeAsync()
         {
             foreach (var system in _systems)
                 await system.Terminate();
+            await base.DisposeAsync();
         }
 
         private Configuration.Config NodeConfig(int index)

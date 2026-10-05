@@ -1,4 +1,4 @@
-﻿// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 //  <copyright file="ActorSpec.cs" company="Akka.NET Project">
 //      Copyright (C) 2013-2022 .NET Foundation <https://github.com/akkadotnet/akka.net>
 //  </copyright>
@@ -56,15 +56,16 @@ akka.remote.dot-netty.tcp.port = 0
             _rawClient = new TableClient(_connectionString, TableName);
         }
         
-        public async ValueTask InitializeAsync()
+        public override async ValueTask InitializeAsync()
         {
+            await base.InitializeAsync();
             // Tables are wiped out at every test start
             await DbUtils.Cleanup(_connectionString);
         }
 
-        public ValueTask DisposeAsync()
+        public override async ValueTask DisposeAsync()
         {
-            return ValueTask.CompletedTask;
+            await base.DisposeAsync();
         }
 
         [Fact(DisplayName = "HeartbeatActor should update ClusterMember entry")]
