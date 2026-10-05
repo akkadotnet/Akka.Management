@@ -41,8 +41,9 @@ namespace Akka.Discovery.Redis.Tests
                 .WithKeyPrefix(KeyPrefix);
         }
 
-        public async ValueTask InitializeAsync()
+        public override async ValueTask InitializeAsync()
         {
+            await base.InitializeAsync();
             _fixture.EnsureAvailable();
             await _fixture.ClearAsync();
 
@@ -51,10 +52,11 @@ namespace Akka.Discovery.Redis.Tests
             _client = new ClusterMemberRedisClient(_connection, _settings, Logging.GetLogger(Sys, nameof(ClusterMemberRedisClient)));
         }
 
-        public async ValueTask DisposeAsync()
+        public override async ValueTask DisposeAsync()
         {
             if (_connection is not null)
                 await _connection.DisposeAsync();
+            await base.DisposeAsync();
         }
 
         private Task SeedAsync(string host, int port, DateTime lastUpdate)

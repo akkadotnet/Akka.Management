@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="AzureApiSpec.cs" company="Akka.NET Project">
 //     Copyright (C) 2013-2021 .NET Foundation <https://github.com/akkadotnet/akka.net>
 // </copyright>
@@ -40,14 +40,15 @@ namespace Akka.Coordination.Azure.Tests
             _underTest = new AzureApiImpl(Sys, _settings);
         }
         
-        public async ValueTask InitializeAsync()
+        public override async ValueTask InitializeAsync()
         {
+            await base.InitializeAsync();
             await Util.Cleanup(_connectionString);
         }
 
-        public ValueTask DisposeAsync()
+        public override async ValueTask DisposeAsync()
         {
-            return ValueTask.CompletedTask;
+            await base.DisposeAsync();
         }
 
         [Fact(DisplayName = "Azure lease resource should be able to be created")]
