@@ -1,3 +1,9 @@
+#### 1.5.73 October 5th 2026 ####
+
+* Update to [Akka.NET v1.5.73](https://github.com/akkadotnet/akka.net/releases/tag/1.5.73)
+* Update to [Akka.Hosting v1.5.73](https://github.com/akkadotnet/Akka.Hosting/releases/tag/1.5.73)
+* Update to the 1.5.72/1.5.73 [Akka.TestKit.Xunit `IAsyncLifetime` breaking change](https://github.com/akkadotnet/akka.net/pull/8545) — `TestKit` now implements `InitializeAsync`/`DisposeAsync` directly. Derived test specs that declare their own must mark them `override` and chain to the base method, or the build fails with `CS0114`. Updated the affected Azure and Redis test specs accordingly. ([#3479](https://github.com/akkadotnet/Akka.Management/pull/3479))
+
 #### 1.5.70 August 18th 2026 ####
 
 * Update to [Akka.NET v1.5.70](https://github.com/akkadotnet/akka.net/releases/tag/1.5.70)
