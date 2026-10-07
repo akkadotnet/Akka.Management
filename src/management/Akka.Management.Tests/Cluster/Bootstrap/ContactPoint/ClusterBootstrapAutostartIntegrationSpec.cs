@@ -66,12 +66,14 @@ namespace Akka.Management.Tests.Cluster.Bootstrap.ContactPoint
                 logger.Tell(new InitializeLogger(system.EventStream));
 
                 var cluster = Akka.Cluster.Cluster.Get(system);
+                var host = cluster.SelfAddress.Host
+                    ?? throw new InvalidOperationException("Cluster self address has no host");
                 _clusters = _clusters.Add(cluster);
                 
                 targets.Add(new ServiceDiscovery.ResolvedTarget(
-                    host: cluster.SelfAddress.Host, 
+                    host: host, 
                     port: _contactPointPorts[id], 
-                    address: IPAddress.Parse(cluster.SelfAddress.Host)));
+                    address: IPAddress.Parse(host)));
             }
             
             // prepare the "mock DNS"

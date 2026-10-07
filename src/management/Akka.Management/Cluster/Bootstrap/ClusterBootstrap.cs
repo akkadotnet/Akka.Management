@@ -95,11 +95,10 @@ namespace Akka.Management.Cluster.Bootstrap
             _joinDecider = (IJoinDecider?)Activator.CreateInstance(joinDeciderType, system, Settings)
                 ?? throw new ConfigurationException($"Could not create an instance of {joinDeciderType} with argument (ActorSystem, ClusterBootstrapSettings)");
             
-            var autoStart = system.Settings.Config.GetStringList("akka.extensions")
-                .Any(s => s.Contains(nameof(ClusterBootstrapProvider)));
+            var autoStart = ExtensionAutoStart.IsRequested<ClusterBootstrapProvider>(system);
             if (autoStart)
             {
-                _log.Info("ClusterBootstrap loaded through 'akka.extensions' auto starting bootstrap.");
+                _log.Info("ClusterBootstrap loaded as a startup extension, auto starting bootstrap.");
                 // Akka Management hosts the HTTP routes used by bootstrap
                 // we can't let it block extension init, so run it in a different thread and let constructor complete
                 Task.Run(async () =>

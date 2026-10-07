@@ -117,10 +117,16 @@ namespace Akka.Coordination.Azure
             }
         }
 
+        // Akka.NET 1.6 annotates the lease-lost callback as Action<Exception>, but a lease lost to a
+        // heartbeat conflict has no exception to report, so the LeaseActor passes null, as it did on 1.5.
+        // Akka's own lease consumers (sharding, singleton) already handle a null reason.
+        private static Action<Exception?>? ToInternalCallback(Action<Exception>? leaseLostCallback)
+            => leaseLostCallback is null ? null : reason => leaseLostCallback(reason!);
+
         public override Task<bool> Acquire()
             => Acquire(null);
 
-        public override Task<bool> Acquire(Action<Exception?>? leaseLostCallback)
+        public override Task<bool> Acquire(Action<Exception>? leaseLostCallback)
         {
             lock (_acquireLock)
             {
@@ -143,7 +149,7 @@ namespace Akka.Coordination.Azure
                 try
                 {
                     using var cts = new CancellationTokenSource(_timeout);
-                    var result = await _leaseActor.Ask(new LeaseActor.Acquire(leaseLostCallback), cts.Token);
+                    var result = await _leaseActor.Ask(new LeaseActor.Acquire(ToInternalCallback(leaseLostCallback)), cts.Token);
                     cts.Token.ThrowIfCancellationRequested();
 
                     return result switch

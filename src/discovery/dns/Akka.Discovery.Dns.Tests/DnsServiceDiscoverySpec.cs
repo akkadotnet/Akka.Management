@@ -146,7 +146,7 @@ public class DnsServiceDiscoveryWithTcpFallback(ITestOutputHelper output) : DnsS
 
                     // Create a new received message with the modified data
                     var modifiedReceived = new Udp.Received(
-                        ByteString.FromBytes(data),
+                        data,
                         received.Sender);
 
                     // Process with the modified data

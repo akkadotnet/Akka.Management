@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Net;
@@ -102,7 +103,7 @@ internal class TcpDnsClient(IActorRef tcpManager, EndPoint nameserver, IActorRef
             Array.Copy(dnsMessage, 0, lengthPrefixed, 2, dnsMessage.Length);
                 
             // Send the message
-            _connection.Tell(Tcp.Write.Create(ByteString.FromBytes(lengthPrefixed)));
+            _connection.Tell(Tcp.Write.Create(lengthPrefixed));
         }
         catch (Exception ex)
         {

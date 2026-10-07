@@ -165,7 +165,7 @@ namespace Akka.Management.Cluster.Bootstrap
         {
             if (autoStart)
             {
-                // Inject ClusterBootstrapProvider into akka.extensions
+                // Load ClusterBootstrapProvider at startup; Akka.Hosting passes it through an ExtensionsSetup
                 builder.WithExtension<ClusterBootstrapProvider>();
             }
         

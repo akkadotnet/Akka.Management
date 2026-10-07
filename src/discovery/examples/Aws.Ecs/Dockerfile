@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/sdk:6.0 AS base
+﻿FROM mcr.microsoft.com/dotnet/sdk:10.0 AS base
 WORKDIR /app
 
 # should be a comma-delimited list
@@ -17,9 +17,9 @@ RUN dotnet tool install --global pbm
 
 # RUN pbm help
 
-COPY ./bin/Release/net6.0/publish/ /app
+COPY ./bin/Release/net10.0/publish/ /app
 
-FROM mcr.microsoft.com/dotnet/runtime:6.0 AS app
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS app
 WORKDIR /app
 
 COPY --from=base /app /app

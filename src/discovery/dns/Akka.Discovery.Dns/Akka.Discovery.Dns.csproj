@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+        <TargetFramework>$(LibraryFramework)</TargetFramework>
         <Description>Akka.NET DNS discovery module</Description>
         <PackageTags>$(AkkaPackageTags);DNS;</PackageTags>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -25,10 +25,4 @@
     <ItemGroup>
       <InternalsVisibleTo Include="Akka.Discovery.Dns.Tests" />
     </ItemGroup>
-
-  <!-- Security: override the OpenTelemetry version pulled transitively via Akka.Hosting
-       (OpenTelemetry.Api 1.10.0 advisory GHSA-g94r-2vxg-569j; version pinned in Directory.Packages.props). -->
-  <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Api" />
-  </ItemGroup>
 </Project>

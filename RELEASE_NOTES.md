@@ -1,3 +1,13 @@
+#### 1.6.0-beta3 October 7th 2026 ####
+
+* Built against [Akka.NET v1.6.0-beta3](https://github.com/akkadotnet/akka.net/releases/tag/1.6.0-beta3). Akka.Hosting, Akka.Cluster.Hosting and Akka.Remote.Hosting now ship from the akka.net repository at the same version as Akka.NET.
+* **Breaking: every package now targets `net10.0` only.** The `netstandard2.0`, `net6.0` and `net8.0` targets are gone. Apps on .NET Framework, .NET 6 or .NET 8, or still on Akka.NET 1.5, should stay on the 1.5.x releases (maintained on the `v1.5` branch).
+* **Breaking: requires Akka.NET 1.6.** These packages don't work with Akka.NET 1.5 assemblies; read the [Akka.NET v1.6 breaking changes](https://github.com/akkadotnet/akka.net/blob/dev/BREAKING_CHANGES_V1.6.md) before upgrading.
+* `Microsoft.Extensions.*` dependencies move to 10.x and `Google.Protobuf` to 3.36.1, matching Akka.NET 1.6.
+* Akka.Management and Cluster Bootstrap now auto-start when Akka.Hosting 1.6 loads them through an `ExtensionsSetup` (`WithAkkaManagement`, `WithClusterBootstrap`, `WithExtension<T>`), as well as from the `akka.extensions` HOCON list. Akka.Hosting 1.6 no longer writes startup extensions into `akka.extensions`.
+* Akka.Discovery.Dns moved off the removed `Akka.IO.ByteString` type.
+* Removed the direct `OpenTelemetry.Api` dependency that pinned a patched version; Akka.Hosting 1.6 already requires a patched OpenTelemetry.
+
 #### 1.5.73 October 5th 2026 ####
 
 * Update to [Akka.NET v1.5.73](https://github.com/akkadotnet/akka.net/releases/tag/1.5.73)

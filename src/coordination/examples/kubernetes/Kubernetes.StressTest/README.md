@@ -25,6 +25,8 @@ PS> kubectl logs stress-test-0 -n stress-test -f
 
 You will see pod 0 log streamed into the console window, this will show how Cluster.Bootstrap and Akka.Discovery.KubernetesApi work. Once all 10 pods are up and stable, we'll try to kill pod 2:
 
+> **Note:** Petabridge.Cmd has no Akka.NET 1.6 build yet, so the `pbm` commands below don't work on this branch until it ships one.
+
 ```
 kubectl exec stress-test-2 -n stress-test -it -- pbm test crash
 ```
