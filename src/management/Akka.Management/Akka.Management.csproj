@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+    <TargetFramework>$(LibraryFramework)</TargetFramework>
     <Description>Akka cluster management module for Akka.NET</Description>
     <PackageTags>$(AkkaPackageTags)</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" VersionOverride="1.5.73" />
+    <PackageReference Include="Akka" />
     <PackageReference Include="Akka.Cluster" />
     <PackageReference Include="Akka.Discovery" />
     <PackageReference Include="Akka.Hosting" />
@@ -28,11 +28,5 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Akka.Management.Tests" />
-  </ItemGroup>
-
-  <!-- Security: override the OpenTelemetry version pulled transitively via Akka.Hosting
-       (OpenTelemetry.Api 1.10.0 advisory GHSA-g94r-2vxg-569j; version pinned in Directory.Packages.props). -->
-  <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Api" />
   </ItemGroup>
 </Project>

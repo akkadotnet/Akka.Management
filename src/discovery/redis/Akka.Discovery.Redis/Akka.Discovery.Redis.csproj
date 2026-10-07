@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+        <TargetFramework>$(LibraryFramework)</TargetFramework>
         <Description>Redis-based service discovery plugin for Akka.NET. A lightweight alternative to Azure Table Storage for cluster member discovery, ideal for .NET Aspire local development and Redis-backed deployments.</Description>
         <PackageTags>$(AkkaPackageTags);Redis;Service Discovery</PackageTags>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -40,10 +40,4 @@
     <ItemGroup>
       <InternalsVisibleTo Include="Akka.Discovery.Redis.Tests" />
     </ItemGroup>
-
-  <!-- Security: override the OpenTelemetry version pulled transitively via Akka.Hosting
-       (OpenTelemetry.Api 1.10.0 advisory GHSA-g94r-2vxg-569j; version pinned in Directory.Packages.props). -->
-  <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Api" />
-  </ItemGroup>
 </Project>

@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Akka" VersionOverride="1.5.73" />
+    <PackageReference Include="Akka" />
     <PackageReference Include="Akka.Hosting" />
     <PackageReference Include="Akka.Cluster.Hosting" />
     <PackageReference Include="Akka.Remote.Hosting" />
@@ -26,10 +26,4 @@
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-
-  <!-- Security: override the OpenTelemetry version pulled transitively via Akka.Hosting
-       (OpenTelemetry.Api 1.10.0 advisory GHSA-g94r-2vxg-569j; version pinned in Directory.Packages.props). -->
-  <ItemGroup>
-    <PackageReference Include="OpenTelemetry.Api" />
-  </ItemGroup>
 </Project>

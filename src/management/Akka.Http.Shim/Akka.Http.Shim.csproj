@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>$(LibraryFramework);$(NetFramework)</TargetFrameworks>
+    <TargetFramework>$(LibraryFramework)</TargetFramework>
     <PackageTags>$(AkkaPackageTags)</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <RootNamespace>Akka.Http</RootNamespace>

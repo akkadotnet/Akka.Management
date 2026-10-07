@@ -57,11 +57,10 @@ namespace Akka.Management.Dsl
                     return Stop().ContinueWith(_ => Done.Instance);
                 });
             
-            var autoStart = system.Settings.Config.GetStringList("akka.extensions")
-                .Any(s => s.Contains(nameof(AkkaManagementProvider)));
+            var autoStart = ExtensionAutoStart.IsRequested<AkkaManagementProvider>(system);
             if (autoStart)
             {
-                _log.Info("Akka.Management loaded through 'akka.extensions' auto starting bootstrap.");
+                _log.Info("Akka.Management loaded as a startup extension, auto starting management.");
                 // Akka Management hosts the HTTP routes used by bootstrap
                 // we can't let it block extension init, so run it in a different thread and let constructor complete
                 Task.Run(async () =>

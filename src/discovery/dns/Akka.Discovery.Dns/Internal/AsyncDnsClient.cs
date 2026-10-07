@@ -305,8 +305,7 @@ internal class AsyncDnsClient(AsyncDnsCache cache, Configuration.Config config, 
         _inflightRequests[id] = new InFlightRequest(Sender, msg, false, linkedId);
         _log.Debug("Message [{0}] to [{1}]: [{2}]", id, nameserver, msg);
         
-        var data = ByteString.FromBytes(msg.Write());
-        _udpSocket.Tell(new Udp.Send(data, nameserver, Udp.NoAck.Instance));
+        _udpSocket.Tell(new Udp.Send(msg.Write(), nameserver, Udp.NoAck.Instance));
     }
     
 
