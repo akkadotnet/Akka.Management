@@ -21,6 +21,9 @@ variables:
     value: Akka.Management
   - name: githubRepositoryName
     value: akkadotnet/Akka.Management #replace this
+  # a tag with a suffix (1.6.0-beta3, 1.6.0-rc1) is a pre-release, so it never becomes the repo's "Latest" release
+  - name: isPreRelease
+    value: $[contains(variables['Build.SourceBranchName'], '-')]
 
 steps:
 - task: UseDotNet@2
@@ -54,5 +57,6 @@ steps:
     repositoryName: $(githubRepositoryName)
     title: '$(projectName) v$(Build.SourceBranchName)'
     releaseNotesFile: 'RELEASE_NOTES_LATEST.md'
+    isPreRelease: $(isPreRelease)
     assets: |
      $(Build.ArtifactStagingDirectory)/nuget/*.nupkg
