@@ -134,10 +134,6 @@ spec:
       containers:
       - name: stress-test
         image: kubernetes.stresstest:0.2.4
-        lifecycle:
-          preStop:
-            exec:
-              command: ["/bin/sh", "-c", "pbm 127.0.0.1:9110 cluster leave"]
         env:
         - name: ACTORSYSTEM
           value: ClusterSys
