@@ -14,7 +14,7 @@
     <AzureIdentityVersion>1.14.2</AzureIdentityVersion>
     <ProtobufVersion>3.30.2</ProtobufVersion>
     <GrpcToolsVersion>2.71.0</GrpcToolsVersion>
-    <AspireVersion>13.3.5</AspireVersion>
+    <AspireVersion>13.6.0</AspireVersion>
   </PropertyGroup>
 
   <!-- Akka.NET packages -->
