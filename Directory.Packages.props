@@ -6,15 +6,15 @@
     <CoverletVersion>10.0.1</CoverletVersion>
     <TestSdkVersion>17.13.0</TestSdkVersion>
     <WireMockVersion>1.8.4</WireMockVersion>
-    <AkkaVersion>1.6.0-beta3</AkkaVersion>
-    <AkkaHostingVersion>1.6.0-beta3</AkkaHostingVersion>
+    <AkkaVersion>1.6.0-beta4</AkkaVersion>
+    <AkkaHostingVersion>1.6.0-beta4</AkkaHostingVersion>
     <PbmVersion>1.4.5</PbmVersion>
     <KubernetesClientVersionNet>17.0.14</KubernetesClientVersionNet>
     <MicrosoftExtensionsVersion>10.0.0</MicrosoftExtensionsVersion>
     <AzureIdentityVersion>1.14.2</AzureIdentityVersion>
-    <ProtobufVersion>3.36.1</ProtobufVersion>
+    <ProtobufVersion>3.36.2</ProtobufVersion>
     <GrpcToolsVersion>2.71.0</GrpcToolsVersion>
-    <AspireVersion>13.3.5</AspireVersion>
+    <AspireVersion>13.6.4</AspireVersion>
   </PropertyGroup>
 
   <!-- Akka.NET packages -->
@@ -113,11 +113,11 @@
 
   <!-- Security: pin vulnerable transitive dependencies (pulled in by test/example projects) to
        genuinely-patched versions per the GitHub advisory DB:
-         MessagePack   2.5.192 (high)                -> 2.5.302
+         MessagePack   2.5.192 (high), 2.5.302 (moderate, GHSA-qhrr-8q5h-9q3h) -> 2.5.307
          Scriban.Signed 5.5.0  (critical; fixed 7.0.0, DoS fixed 7.2.0) -> 7.2.6
          SSH.NET       2024.2.0 (high; fixed 2026.0.0) -> 2026.0.0 -->
   <ItemGroup>
-    <PackageVersion Include="MessagePack" Version="2.5.302" />
+    <PackageVersion Include="MessagePack" Version="2.5.307" />
     <PackageVersion Include="Scriban.Signed" Version="7.2.6" />
     <PackageVersion Include="SSH.NET" Version="2026.0.0" />
   </ItemGroup>
