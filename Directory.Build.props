@@ -2,20 +2,16 @@
   <PropertyGroup>
     <Copyright>Copyright © 2013-$([System.DateTime]::Now.Year) Akka.NET Team</Copyright>
     <Authors>Akka.NET Team</Authors>
-    <VersionPrefix>1.6.0-beta3</VersionPrefix>
-    <PackageReleaseNotes>* Built against [Akka.NET v1.6.0-beta3](https://github.com/akkadotnet/akka.net/releases/tag/1.6.0-beta3). Akka.Hosting, Akka.Cluster.Hosting and Akka.Remote.Hosting now ship from the akka.net repository at the same version as Akka.NET.
-* **Breaking: every package now targets `net10.0` only.** The `netstandard2.0`, `net6.0` and `net8.0` targets are gone. Apps on .NET Framework, .NET 6 or .NET 8, or still on Akka.NET 1.5, should stay on the 1.5.x releases (maintained on the `v1.5` branch).
-* **Breaking: requires Akka.NET 1.6.** These packages don't work with Akka.NET 1.5 assemblies; read the [Akka.NET v1.6 breaking changes](https://github.com/akkadotnet/akka.net/blob/dev/BREAKING_CHANGES_V1.6.md) before upgrading.
-* `Microsoft.Extensions.*` dependencies move to 10.x and `Google.Protobuf` to 3.36.1, matching Akka.NET 1.6.
-* Akka.Management and Cluster Bootstrap now auto-start when Akka.Hosting 1.6 loads them through an `ExtensionsSetup` (`WithAkkaManagement`, `WithClusterBootstrap`, `WithExtension&lt;T&gt;`), as well as from the `akka.extensions` HOCON list. Akka.Hosting 1.6 no longer writes startup extensions into `akka.extensions`.
-* Akka.Discovery.Dns moved off the removed `Akka.IO.ByteString` type.
-* Removed the direct `OpenTelemetry.Api` dependency that pinned a patched version; Akka.Hosting 1.6 already requires a patched OpenTelemetry.</PackageReleaseNotes>
+    <VersionPrefix>1.6.0-beta5</VersionPrefix>
+    <PackageReleaseNotes>* Built against [Akka.NET v1.6.0-beta5](https://github.com/akkadotnet/akka.net/releases/tag/1.6.0-beta5) and Akka.Hosting 1.6.0-beta5.
+* Bumped to Akka.NET 1.6.0-beta4 in [#3502](https://github.com/akkadotnet/Akka.Management/pull/3502), which also raised Aspire to 13.6.4 and pinned MessagePack to 2.5.307 to clear the NU1902 advisory (GHSA-qhrr-8q5h-9q3h). Warnings are errors here, so the build failed without it.
+* NuGet publishing moves to GitHub Actions trusted publishing, replacing the Windows release pipeline. ([#3500](https://github.com/akkadotnet/Akka.Management/pull/3500))
+* Bumped to Akka.NET and Akka.Hosting 1.6.0-beta5 in [#3504](https://github.com/akkadotnet/Akka.Management/pull/3504). No other pins needed changing: beta5 keeps the MessagePack 3.1.12 and Google.Protobuf 3.36.2 that beta4 brought in.</PackageReleaseNotes>
     <PackageIcon>akkalogo.png</PackageIcon>
     <PackageProjectUrl>https://github.com/akkadotnet/Akka.Management</PackageProjectUrl>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <NoWarn>$(NoWarn);CS1591;xUnit1051</NoWarn>
   </PropertyGroup>
-
   <ItemGroup>
     <!-- Embed the package icon (replaces the deprecated PackageIconUrl); matches akka.net / Akka.Hosting. -->
     <None Include="$(MSBuildThisFileDirectory)\docs\images\akkalogo.png" Pack="true" Visible="false" PackagePath="\" />
@@ -27,7 +23,6 @@
     <!-- Fail the build on ALL NuGet audit advisories (moderate/high/critical). -->
     <WarningsAsErrors>$(WarningsAsErrors);NU1902;NU1903;NU1904</WarningsAsErrors>
   </PropertyGroup>
-
   <PropertyGroup>
     <AkkaPackageTags>akka;actors;actor model;Akka;concurrency;service discovery;cluster;clustering;</AkkaPackageTags>
     <LibraryFramework>net10.0</LibraryFramework>
