@@ -1,3 +1,10 @@
+#### 1.6.0-beta5 November 4th 2026 ####
+
+* Built against [Akka.NET v1.6.0-beta5](https://github.com/akkadotnet/akka.net/releases/tag/1.6.0-beta5) and Akka.Hosting 1.6.0-beta5.
+* Bumped to Akka.NET 1.6.0-beta4 in [#3502](https://github.com/akkadotnet/Akka.Management/pull/3502), which also raised Aspire to 13.6.4 and pinned MessagePack to 2.5.307 to clear the NU1902 advisory (GHSA-qhrr-8q5h-9q3h). Warnings are errors here, so the build failed without it.
+* NuGet publishing moves to GitHub Actions trusted publishing, replacing the Windows release pipeline. ([#3500](https://github.com/akkadotnet/Akka.Management/pull/3500))
+* Bumped to Akka.NET and Akka.Hosting 1.6.0-beta5 in [#3504](https://github.com/akkadotnet/Akka.Management/pull/3504). No other pins needed changing: beta5 keeps the MessagePack 3.1.12 and Google.Protobuf 3.36.2 that beta4 brought in.
+
 #### 1.6.0-beta3 October 7th 2026 ####
 
 * Built against [Akka.NET v1.6.0-beta3](https://github.com/akkadotnet/akka.net/releases/tag/1.6.0-beta3). Akka.Hosting, Akka.Cluster.Hosting and Akka.Remote.Hosting now ship from the akka.net repository at the same version as Akka.NET.
