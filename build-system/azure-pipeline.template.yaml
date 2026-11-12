@@ -4,6 +4,7 @@ parameters:
   vmImage: ''
   configFileName: '.incrementalist/incrementalist.json'
   timeoutInMinutes: 120
+  runAspireTests: false
 
 jobs:
   - job: ${{ parameters.name }}
@@ -38,6 +39,39 @@ jobs:
       - script: dotnet incrementalist run --config ${{ parameters.configFileName }} -- test -c Release --no-build --logger:trx --collect:"XPlat Code Coverage" --results-directory TestResults --settings coverlet.runsettings
         displayName: 'Run tests'
         continueOnError: true # Allow continuation even if tests fail
+
+      - ${{ if eq(parameters.runAspireTests, true) }}:
+        - script: dotnet test src/aspire/Akka.Aspire.Hosting.Tests/Akka.Aspire.Hosting.Tests.csproj -c Release --no-build --no-restore --logger "trx;LogFileName=aspire.trx" --results-directory "$(Agent.TempDirectory)/aspire-$(System.JobId)"
+          displayName: 'Run Aspire hosting tests'
+          continueOnError: true
+        - pwsh: |
+            $ErrorActionPreference = 'Stop'
+            [xml]$trx = Get-Content -Raw "$(Agent.TempDirectory)/aspire-$(System.JobId)/aspire.trx"
+            $results = @($trx.SelectNodes("/*[local-name()='TestRun']/*[local-name()='Results']/*[local-name()='UnitTestResult']"))
+            if ($results.Count -eq 0) { throw 'No Aspire test results found' }
+            foreach ($result in $results) {
+              if ($result.GetAttribute('outcome') -cne 'Passed') {
+                throw "Test did not pass: $($result.GetAttribute('testName')) ($($result.GetAttribute('outcome')))"
+              }
+            }
+            $required = @(
+              'Akka.Aspire.Hosting.Tests.AspireClusterFormationSpecs.Service_should_form_a_three_node_cluster_and_report_healthy'
+              'Akka.Aspire.Hosting.Tests.AspireClusterFormationSpecs.Service_should_respond_to_root_endpoint'
+            )
+            foreach ($name in $required) {
+              $matches = @($results | Where-Object { $_.GetAttribute('testName') -ceq $name })
+              if ($matches.Count -ne 1) { throw "Expected exactly one result for $name; found $($matches.Count)" }
+            }
+            Write-Host 'Aspire integration tests both passed'
+          displayName: 'Verify Aspire integration results'
+          continueOnError: true
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: VSTest
+            testResultsFiles: '$(Agent.TempDirectory)/aspire-$(System.JobId)/aspire.trx'
+            testRunTitle: 'Aspire hosting tests'
+            failTaskOnFailedTests: false
+            publishRunAttachments: true
 
       - task: PublishTestResults@2
         inputs:
