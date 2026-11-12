@@ -20,17 +20,16 @@ namespace Akka.Aspire.Hosting.Tests;
 /// <c>akka-cluster-membership</c> health check return Healthy (HTTP 200) — once all three nodes have
 /// discovered each other via Redis and formed a single cluster. A 200 from /healthz therefore proves
 /// the 3-node cluster actually formed, not merely that the app booted.
-/// Requires Docker + the Aspire tooling; skips gracefully when neither is available.
+/// Requires Docker and the Aspire tooling; startup failures fail the test.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class AspireClusterFormationSpecs : IAsyncLifetime
 {
     private DistributedApplication? _app;
-    private string? _skipReason;
 
     public async ValueTask InitializeAsync()
     {
-        try
+        await RunStartupAsync(async () =>
         {
             var builder = await DistributedApplicationTestingBuilder
                 .CreateAsync<Projects.Akka_Aspire_Sample_AppHost>();
@@ -42,26 +41,33 @@ public sealed class AspireClusterFormationSpecs : IAsyncLifetime
 
             await _app.ResourceNotifications
                 .WaitForResourceAsync("service", KnownResourceStates.Running, cts.Token);
-        }
-        catch (Exception e)
+        }, DisposeAsync);
+    }
+
+    internal static async Task RunStartupAsync(Func<Task> startup, Func<ValueTask> cleanup)
+    {
+        try
         {
-            // Docker / Aspire tooling unavailable (e.g. Windows or headless CI agents). Skip rather
-            // than fail; the test only has meaning where the distributed app can actually run.
-            _skipReason = $"Aspire distributed application could not start: {e.Message}";
-            if (_app is not null)
+            await startup();
+        }
+        catch (Exception startupException)
+        {
+            try
             {
-                await _app.DisposeAsync();
-                _app = null;
+                await cleanup();
             }
+            catch (Exception cleanupException)
+            {
+                throw new AggregateException("Aspire startup and cleanup both failed", startupException, cleanupException);
+            }
+
+            throw;
         }
     }
 
     [Fact]
     public async Task Service_should_form_a_three_node_cluster_and_report_healthy()
     {
-        if (_app is null)
-            Assert.Skip(_skipReason ?? "Aspire distributed application is not available");
-
         var endpoint = _app!.GetEndpoint("service", "http");
         using var client = new HttpClient { BaseAddress = endpoint };
 
@@ -94,9 +100,6 @@ public sealed class AspireClusterFormationSpecs : IAsyncLifetime
     [Fact]
     public async Task Service_should_respond_to_root_endpoint()
     {
-        if (_app is null)
-            Assert.Skip(_skipReason ?? "Aspire distributed application is not available");
-
         var endpoint = _app!.GetEndpoint("service", "http");
         using var client = new HttpClient { BaseAddress = endpoint };
         var response = await client.GetStringAsync("/");
@@ -106,6 +109,10 @@ public sealed class AspireClusterFormationSpecs : IAsyncLifetime
     public async ValueTask DisposeAsync()
     {
         if (_app is not null)
-            await _app.DisposeAsync();
+        {
+            var app = _app;
+            _app = null;
+            await app.DisposeAsync();
+        }
     }
 }
