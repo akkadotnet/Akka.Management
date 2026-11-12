@@ -13,6 +13,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Akka" VersionOverride="1.5.74" />
       <PackageReference Include="Microsoft.Extensions.Hosting" />
       <PackageReference Include="Akka.Cluster.Hosting" />
     </ItemGroup>
