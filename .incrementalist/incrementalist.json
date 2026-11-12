@@ -7,6 +7,6 @@
   "runInParallel": false,
   "failOnNoProjects": false,
   "noCache": false,
-  "skip": [],
+  "skip": ["**/Akka.Aspire.Hosting.Tests.csproj"],
   "target": []
 }

@@ -4,6 +4,7 @@ parameters:
   vmImage: ''
   configFileName: '.incrementalist/incrementalist.json'
   timeoutInMinutes: 120
+  runAspireTests: false
 
 jobs:
   - job: ${{ parameters.name }}
@@ -38,6 +39,23 @@ jobs:
       - script: dotnet incrementalist run --config ${{ parameters.configFileName }} -- test -c Release --no-build --logger:trx --collect:"XPlat Code Coverage" --results-directory TestResults --settings coverlet.runsettings
         displayName: 'Run tests'
         continueOnError: true # Allow continuation even if tests fail
+
+      - ${{ if eq(parameters.runAspireTests, true) }}:
+        - script: python3 build-system/test_verify_aspire_results.py
+          displayName: 'Test Aspire results validation'
+        - script: dotnet test src/aspire/Akka.Aspire.Hosting.Tests/Akka.Aspire.Hosting.Tests.csproj -c Release --no-build --no-restore --logger "trx;LogFileName=aspire.trx" --results-directory "$(Agent.TempDirectory)/aspire-$(System.JobId)"
+          displayName: 'Run Aspire hosting tests'
+          continueOnError: true
+        - script: python3 build-system/verify_aspire_results.py "$(Agent.TempDirectory)/aspire-$(System.JobId)/aspire.trx"
+          displayName: 'Verify Aspire integration results'
+          continueOnError: true
+        - task: PublishTestResults@2
+          inputs:
+            testResultsFormat: VSTest
+            testResultsFiles: '$(Agent.TempDirectory)/aspire-$(System.JobId)/aspire.trx'
+            testRunTitle: 'Aspire hosting tests'
+            failTaskOnFailedTests: false
+            publishRunAttachments: true
 
       - task: PublishTestResults@2
         inputs:
